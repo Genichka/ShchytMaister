@@ -9,7 +9,7 @@ function sandbox(fn){
 }
 const runFor = sec => { for(let t=0;t<sec;t+=0.5) solve(0.5); };
 const sbErrors = () => S.log.filter(l=>l.cls==="e").map(l=>l.msg.replace(/^\S+ /,""));
-function powerUp(which){ for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={U:230,lost:{}}); s.on=!which||which.includes(inp.id); s.U=230; s.lost={}; }
+function powerUp(which){ for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={U:230,lost:{}}); s.on=!which||which.includes(inp.id); s.U=230; s.lost={}; if(inp.inv) Object.assign(s,{soc:80,fault:0,low:false,ovl:0}); }
   for(const d of S.devices){ if(T[d.type].prot||T[d.type].rcd){ d.on=true; d.trip=null; } } S.heat={}; }
 function pressBtn(d){ d.pressed=true; runFor(1); d.pressed=false; runFor(1); }
 // ПЗВ, у яких верхня і нижня клеми N з’єднані дротами напряму (нуль в обхід)
@@ -37,13 +37,18 @@ function runChecks(){
   for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до апарата або шини."); }
   const pe=b.inputs.find(i=>i.terms.includes("PE"));
   if(pe&&b.xpe){ if(f0(pe.id+":PE")!==f0("xpe:0")) add("e","Шина PE не з’єднана з вводом PE","Захисний провідник має йти на XPE1 напряму, без апаратів."); else add("ok","Шина PE підключена до вводу напряму"); }
+  for(const iv of b.inputs.filter(i=>i.inv)){ const gi=b.inputs.find(i=>!i.inv&&i.terms.includes("N"));
+    const fp=build({ideal:true,open:new Set(S.devices.filter(d=>!T[d.type].prot).map(d=>d.id))});   // автомати замкнені, комутація (АВР, контактори) розімкнена
+    if(gi&&iv.terms.includes("N")&&fp(gi.id+":N")===fp(iv.id+":N")) add("w","Нуль інвертора з’єднано з нулем мережі напряму","АВР має перемикати і фазу, і нуль (2P). Багато інверторів у резервному режимі з’єднують N з PE всередині — спільний нуль з мережею дає хибні спрацювання ПЗВ.");
+  }
   // 2. Прогін під напругою
   const multi=b.inputs.length>1, res=sandbox(()=>{
     const out={}; powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
     out.g=G.map(g=>({id:g.id, ok:!!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)}));
     out.trips=S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip);
-    if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; powerUp([inp.id]); runFor(10);
-        return {inp, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
+    if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; powerUp([inp.id]); runFor(1);
+        const fed=G.filter(g=>S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral).map(g=>g.id); runFor(9);
+        return {inp, fed, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
       S.log=[]; powerUp(); runFor(8); S.src[b.inputs[0].id].on=false; runFor(10); S.src[b.inputs[0].id].on=true; runFor(12);
       out.back={err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip)}; }
     if(S.tplObj&&S.tplObj.checks){ out.tpl=[]; S.tplObj.checks((s,t,d)=>out.tpl.push({sev:s,t,d})); }
@@ -57,7 +62,11 @@ function runChecks(){
   if(multi){ for(const a of res.alt){ const bad=a.err.length||a.trips.length||a.g.length;
       if(bad){ for(const e of a.err) add("e",`Лише «${a.inp.label}»: аварія`,e); for(const t of a.trips) add("e",`Лише «${a.inp.label}»: спрацював захист`,t);
         if(a.g.length) add("e",`Лише «${a.inp.label}»: групи без живлення`,a.g.join(", ")+". АВР не перевів навантаження на резерв."); }
-      else add("ok",`Від «${a.inp.label}» живляться всі групи`,"Перевірено з вимкненим основним вводом."); }
+      else add("ok",`Від «${a.inp.label}» живляться всі групи`,"Перевірено з вимкненим основним вводом.");
+      if(a.inp.inv){ const fg=G.filter(g=>a.fed.includes(g.id)), kw=a.inp.inv.kw, on=fg.reduce((x,g)=>x+kwOf(g),0), all=fg.reduce((x,g)=>x+kwOf(g,true),0);
+        if(on>kw) add("e",`Від інвертора: увімкнено ${fmt(on,1)} кВт при номіналі ${fmt(kw,1)} кВт`,"Без мережі інвертор вимкнеться від перевантаження. На резерв залиште лише потрібне: холодильник, котел, світло, роутер — а бойлер чи плиту живіть лише від мережі (до АВР).");
+        else if(all>kw) add("w",`Усі прилади на резерві разом ${fmt(all,1)} кВт — більше за інвертор ${fmt(kw,1)} кВт`,"Від інвертора не вмикайте одночасно чайник, бойлер, праску.");
+        else if(fg.length) add("ok",`Інвертора ${fmt(kw,1)} кВт вистачає на всі групи резерву`); } }
     const bk=res.back; if(bk.err.length||bk.trips.length) for(const e of [...bk.err,...bk.trips]) add("e","Повернення на основний ввід: аварія",e);
     else add("ok","Перемикання туди й назад без зустрічного ввімкнення","Основний ввід вимкнули, потім повернули."); }
   // 3. Групи, кабелі, номінали

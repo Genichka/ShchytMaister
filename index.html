@@ -224,6 +224,7 @@ select.btn{padding-right:28px}
 .wz-opt{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;color:var(--fg)}
 .wz-opt b{font-size:14px;color:var(--strong)}.wz-opt span{font-size:12.5px;color:var(--muted)}
 .wz-opt[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 3px 0 0 var(--blue);background:color-mix(in srgb,var(--blue) 10%,var(--panel2))}
+.wz-inv{display:flex;flex-direction:column;gap:8px;padding:6px 2px 0}.wz-inv .row{flex-wrap:wrap;gap:6px;align-items:center}.wz-inv .lbl{min-width:64px}
 .wz-sum{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--r)}
 .wz-sum li{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);font-size:13.5px}.wz-sum li:last-child{border-bottom:0}.wz-sum span{color:var(--muted)}
 .chk{display:flex;gap:8px;align-items:center;font-size:13.5px}.chk input{width:18px;height:18px;accent-color:var(--blue)}
@@ -305,7 +306,7 @@ body.demo-on .toast{bottom:calc(min(38vh,100%) + 12px)}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"3.2.2", date:"2026-10-31", notes:["Перевірка схеми знаходить переплутані фазу й нуль на апараті","Перевірка знаходить нуль в обхід ПЗВ — коли верхня й нижня клеми N з’єднані через шину","Реле напруги, слабше за вступний автомат, — тепер помилка","Помічник: шину N живить лише нижня клема N ПЗВ, підказки для перемичок фази й нуля","Підпис нижньої клеми автомата 1P більше не налазить на наклейку"] };
+const APP = { v:"3.3", date:"2026-10-31", notes:["Новий щит і «Корпус і ввід»: варіант «2 вводи · мережа + інвертор» з вибором потужності інвертора й ємності АКБ","Інвертор у симуляції: межа потужності, розряд і заряд АКБ, вимкнення при 5 %, аварія при зустрічному ввімкненні з мережею","Новий шаблон з демонстрацією: «АВР: мережа + інвертор з АКБ (TOMZN)»","Перевірка: вистачає інвертора на групи резерву, нуль інвертора не з’єднаний з мережею напряму","Підписи нижніх клем більше не налазять на наклейки апаратів"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -426,11 +427,28 @@ const kwOf = (d,all) => d.group.loads.reduce((a,l)=>a+(all||l.on?l.kw:0),0);
 const poleClosed = (d,pi) => { const t=tdef(d); return t.closed ? t.closed(d,pi) : (d.on&&!d.trip); };
 const protIn = d => d.Ir || inA(d.rating);
 
+// Ввід від інвертора (inp.inv): вихід зникає при аварії (fault) або розрядженій АКБ (low)
+const invInp = id => S.board.inputs.find(i=>i.id===id&&i.inv);
+const srcLive = (inp,s) => !!(s&&s.on&&!(inp.inv&&(s.fault>0||s.low)));
+function invFault(id,sec,msg){ const s=S.src[id]; if(!s) return; s.fault=sec; s.ovl=0; logp("e","Інвертор: "+msg); if(typeof toast==="function") toast("Інвертор вимкнувся","e"); }
+function invTick(X,dt){ let loads=null;
+  for(const inp of S.board.inputs){ if(!inp.inv) continue; const s=S.src[inp.id]; if(!s) continue; if(s.soc===undefined) s.soc=80;
+    if(s.fault>0){ s.fault=Math.max(0,s.fault-dt); if(!s.fault&&s.on&&!s.low) logp("ok","Інвертор знову ввімкнувся"); }
+    const live=srcLive(inp,s); let P=0;
+    if(live){ loads=loads||computeLoads(X); for(const l of loads){ if(!l.a||!(l.I>0)) continue; const p=X.ph(l.a); if(p&&srcOf(p)===inp.id) P+=l.I*(l.U||230)/1000; } }
+    s.P=P; const kw=inp.inv.kw||5, kwh=inp.inv.kwh||5;
+    if(live&&P>kw+0.05){ s.ovl=(s.ovl||0)+dt; if(s.ovl>=2) invFault(inp.id,10,`перевантаження ${fmt(P,1)} кВт при номіналі ${fmt(kw,1)} кВт — вихід вимкнено на 10 с`); } else s.ovl=0;
+    const grid=S.board.inputs.some(i=>!i.inv&&srcLive(i,S.src[i.id])&&S.src[i.id].U>=187&&S.src[i.id].U<=253);
+    if(P>0) s.soc=Math.max(0,s.soc-P*(dt/60)/kwh*100);          // 1 с симуляції = 1 хв
+    else if(grid&&s.soc<100) s.soc=Math.min(100,s.soc+Math.min(1.5,kw/3)*(dt/60)/kwh*100);
+    s.chg=P===0&&grid&&s.soc<100;
+    if(!s.low&&s.soc<=5&&s.on){ s.low=true; logp("e","Інвертор: АКБ розряджено до 5 % — вихід вимкнено, щоб зберегти батарею"); if(typeof toast==="function") toast("АКБ інвертора розряджено","e"); }
+    if(s.low&&s.soc>=20){ s.low=false; if(s.on) logp("ok","Інвертор: АКБ заряджено до 20 % — вихід знову ввімкнено"); } } }
 function sources(){
   const out=[];
-  for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={on:false,U:230,lost:{}});
+  for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={on:false,U:230,lost:{}}), live=srcLive(inp,s);
     for(const t of inp.terms){ const key=inp.id+":"+t;
-      if(t==="N"||t==="PE") out.push([key,t]); else if(s.on&&!(s.lost&&s.lost[t])) out.push([key,inp.id+"."+(s.swap&&t==="L2"?"L3":s.swap&&t==="L3"?"L2":t)]); } }
+      if(t==="N"||t==="PE") out.push([key,t]); else if(live&&!(s.lost&&s.lost[t])) out.push([key,inp.id+"."+(s.swap&&t==="L2"?"L3":s.swap&&t==="L3"?"L2":t)]); } }
   for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.source) for(const [k,p] of t.source(d)) out.push([K(d,k),p]); }
   return out;
 }
@@ -509,10 +527,13 @@ function resolveFaults(){
       const test=d=>!still(makeX(build({open:new Set([d.id]),extra:shortsExtra()})));
       let cand=[];
       if(c.kind==="LPE") cand=rcdDevs().filter(test);
+      if(c.kind==="FEED"){ const iv=c.pots.filter(isPh).map(srcOf).find(invInp);
+        if(iv){ invFault(iv,30,"на вихід інвертора потрапила напруга іншого джерела (зустрічне ввімкнення) — аварійне вимкнення на 30 с. Справжній інвертор від цього може згоріти"); continue; } }
       if(!cand.length) cand=S.devices.filter(d=>T[d.type].prot&&d.on&&!d.trip).filter(test);
       if(cand.length){ cand.sort((a,b)=>(protIn(a)-protIn(b))||(affected(a,X,loads)-affected(b,X,loads))); trip(cand[0],FAULT[c.kind]); continue; }
       let acted=false;
-      for(const p of c.pots){ if(isPh(p)&&S.src[srcOf(p)]&&S.src[srcOf(p)].on){ S.src[srcOf(p)].on=false; acted=true;
+      for(const p of c.pots){ if(isPh(p)&&invInp(srcOf(p))&&srcLive(invInp(srcOf(p)),S.src[srcOf(p)])){ invFault(srcOf(p),10,`${FAULT[c.kind]} на виході — внутрішній захист вимкнув вихід на 10 с`); acted=true; continue; }
+        if(isPh(p)&&S.src[srcOf(p)]&&S.src[srcOf(p)].on){ S.src[srcOf(p)].on=false; acted=true;
           logp("e",`${FAULT[c.kind]} до захисних апаратів: спрацював захист джерела «${(S.board.inputs.find(i=>i.id===srcOf(p))||{}).label}», його вимкнено`); } }
       for(const d of S.field){ const t=FT[d.type]; if(t.onFault&&t.onFault(d,c)) acted=true; }
       if(typeof toast==="function") toast("Аварія: "+FAULT[c.kind],"e");
@@ -549,7 +570,7 @@ function poleCurrents(d,X,loads){
 function solve(dt=0){
   let X=evaluate({extra:shortsExtra()});
   if(dt>0){ for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.tick) t.tick(d,X,dt); }
-    if(S.tplObj&&S.tplObj.tick) S.tplObj.tick(X,dt); X=evaluate({extra:shortsExtra()}); }
+    if(S.tplObj&&S.tplObj.tick) S.tplObj.tick(X,dt); invTick(X,dt); X=evaluate({extra:shortsExtra()}); }
   if(anySource()){ resolveFaults(); X=evaluate({extra:shortsExtra()}); } else if(S.env.arc){ S.env.arc=false; }
   const loads=computeLoads(X), R={X, loads, I:{}, per:{}, liveW:new Set(), g:{}, totalI:0, chatter:!!X.chatter};
   for(const d of S.devices){ const t=T[d.type]; if(!(t.prot||t.meter)||(t.prot&&(!d.on||d.trip))) continue;
@@ -908,7 +929,7 @@ const laneY = (c,s,i) => { const sp=LSP[c+s]||7; return s==="l" ? devTop(c)-20-s
 const sideX = (side,i) => side==="L" ? 86-(SSP.L||7)*i : 754+(SSP.R||7)*i;
 const SW = {1.5:3,2.5:3.6,4:4.3,6:5,10:6,16:7,25:7.6,35:8.2,50:9};
 function inputX(){ const m={}; let x=120;
-  for(const inp of S.board.inputs){ inp.terms.forEach((t,i)=>{ m[inp.id+":"+t]=x+i*36; }); m[inp.id]=x; x+=inp.terms.length*36+34; } return m; }
+  for(const inp of S.board.inputs){ inp.terms.forEach((t,i)=>{ m[inp.id+":"+t]=x+i*36; }); m[inp.id]=x; x+=inp.terms.length*36+(S.board.inputs.length>1?64:34); } return m; }   // між вводами — місце для підпису
 function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, gaps=(m?2:1)*20;
   let sp=28; if(cnt*sp+gaps>600) sp=(600-gaps)/cnt; const pos={}; let x=124;
   for(let i=0;i<n;i++){ pos["xn:"+i]=x; x+=sp; } x+=20-sp+sp;
@@ -966,9 +987,12 @@ function devSVG(d){
   if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
   s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"/><rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"/>`;
   const sr=t.terms.filter(q=>q.s==="top").length>w/27?9:11;
+  const bx=t.terms.filter(q=>q.s==="bot").map(q=>termX(d,q)).sort((a,c)=>a-c), side=bx.every((v,i)=>!i||v-bx[i-1]>=44);
   for(const tm of t.terms){ const X=termX(d,tm);
     if(tm.s==="top") s+=screw(X,y+22,sr)+tx(X,y+42,tm.l,{fs:6.8});
-    else s+=screw(X,y+H-22,sr)+(Math.abs(X-cx)<w/5 ? tx(X+sr+3,y+H-19,tm.l,{fs:6.8,a:"start"}) : tx(X,y+H-36,tm.l,{fs:6.8})); }  // клема посередині — підпис збоку, щоб не налазив на наклейку
+    else { const lw=String(tm.l).length*3.9, fitL=X-sr-2-lw>=x+2, fitR=X+sr+2+lw<=x+w-2;   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку
+      s+=screw(X,y+H-22,sr)+((side||Math.abs(X-cx)<w/5)&&(fitL||fitR)
+        ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-36,tm.l,{fs:6.8})); } }
   s+=tx(cx,y+56,"EnergyUA",{fs:7,fw:700});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   const des=desig(d), pw=Math.max(38,des.length*7+12);
@@ -996,7 +1020,9 @@ function render(){
     for(const t of b.xt){ const x=xs("xt:"+t.k); s+=`<text class="lab" x="${x+3}" y="${B+20}" font-size="7.5" text-anchor="end" transform="rotate(-60 ${x+3} ${B+20})">${esc(t.l)}</text>`; } }
   for(const k of Object.keys(bp)) s+=screw(bp[k],B,sp<26?9:11);
   for(const inp of b.inputs){ const src=S.src[inp.id]||{}, x0=inx[inp.id];
-    s+=tx(x0-16,12,inp.label+(inp.terms.every(t=>t==="PE")?"":" · "+(src.on?"~"+Math.round(src.U*(inp.terms.includes("L1")?1.732:1))+" В":"0 В")),{c:"lab",fs:9.5,a:"start",fill:src.on?"var(--green)":undefined});
+    if(inp.inv){ const live=srcLive(inp,src), st=!src.on?"вимкнено":src.fault>0?"захист":src.low?"АКБ розряджена":"~230 В";
+      s+=tx(x0-16,12,`${inp.label} · ${st} · АКБ ${Math.round(src.soc??80)} %`,{c:"lab",fs:9.5,a:"start",fill:live?"var(--green)":src.on?"var(--red)":undefined}); }
+    else s+=tx(x0-16,12,inp.label+(inp.terms.every(t=>t==="PE")?"":" · "+(src.on?"~"+Math.round(src.U*(inp.terms.includes("L1")?1.732:1))+" В":"0 В")),{c:"lab",fs:9.5,a:"start",fill:src.on?"var(--green)":undefined});
     for(const t of inp.terms){ const x=inx[inp.id+":"+t]; s+=`<rect x="${x-16}" y="20" width="32" height="32" rx="3" fill="var(--panel2)" stroke="var(--line)"/>`+screw(x,G.INY)+tx(x,64,t,{c:"lab",fs:8.5}); } }
   if(S.mode==="mount") for(let r=0;r<b.rails;r++) for(let i=0;i<SLOTS;i++){ if(devAt(r,i)) continue; const fits=!S.pick||freeAt(r,i,T[S.pick].w);
     s+=`<rect class="slot" data-slot="${r}:${i}" x="${G.X0+i*G.MW+3}" y="${devTop(r)}" width="${G.MW-6}" height="240" rx="4" style="${S.pick&&fits?"stroke:var(--blue);opacity:1":""}${S.pick&&!fits?";opacity:.2":""}"/>`+tx(G.X0+i*G.MW+G.MW/2,devTop(r)+130,String(r*12+i+1),{c:"lab",fs:10}); }
@@ -1036,7 +1062,7 @@ function sandbox(fn){
 }
 const runFor = sec => { for(let t=0;t<sec;t+=0.5) solve(0.5); };
 const sbErrors = () => S.log.filter(l=>l.cls==="e").map(l=>l.msg.replace(/^\S+ /,""));
-function powerUp(which){ for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={U:230,lost:{}}); s.on=!which||which.includes(inp.id); s.U=230; s.lost={}; }
+function powerUp(which){ for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={U:230,lost:{}}); s.on=!which||which.includes(inp.id); s.U=230; s.lost={}; if(inp.inv) Object.assign(s,{soc:80,fault:0,low:false,ovl:0}); }
   for(const d of S.devices){ if(T[d.type].prot||T[d.type].rcd){ d.on=true; d.trip=null; } } S.heat={}; }
 function pressBtn(d){ d.pressed=true; runFor(1); d.pressed=false; runFor(1); }
 // ПЗВ, у яких верхня і нижня клеми N з’єднані дротами напряму (нуль в обхід)
@@ -1064,13 +1090,18 @@ function runChecks(){
   for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до апарата або шини."); }
   const pe=b.inputs.find(i=>i.terms.includes("PE"));
   if(pe&&b.xpe){ if(f0(pe.id+":PE")!==f0("xpe:0")) add("e","Шина PE не з’єднана з вводом PE","Захисний провідник має йти на XPE1 напряму, без апаратів."); else add("ok","Шина PE підключена до вводу напряму"); }
+  for(const iv of b.inputs.filter(i=>i.inv)){ const gi=b.inputs.find(i=>!i.inv&&i.terms.includes("N"));
+    const fp=build({ideal:true,open:new Set(S.devices.filter(d=>!T[d.type].prot).map(d=>d.id))});   // автомати замкнені, комутація (АВР, контактори) розімкнена
+    if(gi&&iv.terms.includes("N")&&fp(gi.id+":N")===fp(iv.id+":N")) add("w","Нуль інвертора з’єднано з нулем мережі напряму","АВР має перемикати і фазу, і нуль (2P). Багато інверторів у резервному режимі з’єднують N з PE всередині — спільний нуль з мережею дає хибні спрацювання ПЗВ.");
+  }
   // 2. Прогін під напругою
   const multi=b.inputs.length>1, res=sandbox(()=>{
     const out={}; powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
     out.g=G.map(g=>({id:g.id, ok:!!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)}));
     out.trips=S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip);
-    if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; powerUp([inp.id]); runFor(10);
-        return {inp, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
+    if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; powerUp([inp.id]); runFor(1);
+        const fed=G.filter(g=>S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral).map(g=>g.id); runFor(9);
+        return {inp, fed, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
       S.log=[]; powerUp(); runFor(8); S.src[b.inputs[0].id].on=false; runFor(10); S.src[b.inputs[0].id].on=true; runFor(12);
       out.back={err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip)}; }
     if(S.tplObj&&S.tplObj.checks){ out.tpl=[]; S.tplObj.checks((s,t,d)=>out.tpl.push({sev:s,t,d})); }
@@ -1084,7 +1115,11 @@ function runChecks(){
   if(multi){ for(const a of res.alt){ const bad=a.err.length||a.trips.length||a.g.length;
       if(bad){ for(const e of a.err) add("e",`Лише «${a.inp.label}»: аварія`,e); for(const t of a.trips) add("e",`Лише «${a.inp.label}»: спрацював захист`,t);
         if(a.g.length) add("e",`Лише «${a.inp.label}»: групи без живлення`,a.g.join(", ")+". АВР не перевів навантаження на резерв."); }
-      else add("ok",`Від «${a.inp.label}» живляться всі групи`,"Перевірено з вимкненим основним вводом."); }
+      else add("ok",`Від «${a.inp.label}» живляться всі групи`,"Перевірено з вимкненим основним вводом.");
+      if(a.inp.inv){ const fg=G.filter(g=>a.fed.includes(g.id)), kw=a.inp.inv.kw, on=fg.reduce((x,g)=>x+kwOf(g),0), all=fg.reduce((x,g)=>x+kwOf(g,true),0);
+        if(on>kw) add("e",`Від інвертора: увімкнено ${fmt(on,1)} кВт при номіналі ${fmt(kw,1)} кВт`,"Без мережі інвертор вимкнеться від перевантаження. На резерв залиште лише потрібне: холодильник, котел, світло, роутер — а бойлер чи плиту живіть лише від мережі (до АВР).");
+        else if(all>kw) add("w",`Усі прилади на резерві разом ${fmt(all,1)} кВт — більше за інвертор ${fmt(kw,1)} кВт`,"Від інвертора не вмикайте одночасно чайник, бойлер, праску.");
+        else if(fg.length) add("ok",`Інвертора ${fmt(kw,1)} кВт вистачає на всі групи резерву`); } }
     const bk=res.back; if(bk.err.length||bk.trips.length) for(const e of [...bk.err,...bk.trips]) add("e","Повернення на основний ввід: аварія",e);
     else add("ok","Перемикання туди й назад без зустрічного ввімкнення","Основний ввід вимкнули, потім повернули."); }
   // 3. Групи, кабелі, номінали
@@ -1175,8 +1210,14 @@ function atsGroups(r,s0){ const a=G1(r,s0,"B16",0,"Розетки",2.5,[["Хол
 function atsInputs(qf1,qf2){ W("in:L",k(qf1,"t1"),"L",10); W("in:N",k(qf1,"t2"),"N",10); W("in:PE","xpe:0","PE",10);
   W("in2:L",k(qf2,"t1"),"L",10); W("in2:N",k(qf2,"t2"),"N",10); }
 function feedFrom(){ const qd=byDes("QD1"); if(!qd||!S.sim) return "—"; const p=S.sim.X.ph(k(qd,"t1"));
-  return !p?"немає живлення":p.startsWith("in2")?"генератор (ввід 2)":"мережа (ввід 1)"; }
-const atsStatus = extra => () => [["Навантаження живиться від", feedFrom(), /генер/.test(feedFrom())?"w":/немає/.test(feedFrom())?"e":"ok"], ...(extra?extra():[])];
+  return !p?"немає живлення":p.startsWith("in2")?(invInp("in2")?"інвертор (ввід 2)":"генератор (ввід 2)"):"мережа (ввід 1)"; }
+const atsStatus = extra => () => [["Навантаження живиться від", feedFrom(), /генер|інверт/.test(feedFrom())?"w":/немає/.test(feedFrom())?"e":"ok"], ...(extra?extra():[])];
+// Інвертор на вводі 2: повзунок заряду АКБ і рядки стану
+const invSocCtl = id => ({type:"range",label:"АКБ інвертора, %",min:0,max:100,step:5,get:()=>Math.round((S.src[id]||{}).soc??80),set:v=>{ const s=S.src[id]; s.soc=v; if(v>=20) s.low=false; }});
+function invRows(inp){ const s=S.src[inp.id]||{}, soc=s.soc??80;
+  const st=!s.on?["вимкнено",""]:s.fault>0?[`захист, ще ${Math.ceil(s.fault)} с`,"e"]:s.low?["АКБ розряджена, вихід вимкнено","e"]:s.P>0?[`живить щит · ${fmt(s.P,2)} кВт`,"w"]:["в резерві, вихід 230 В","ok"];
+  return [[`Інвертор ${fmt(inp.inv.kw,inp.inv.kw%1?1:0)} кВт`,...st],["АКБ інвертора",`${fmt(soc,0)} %${s.chg?" · заряд від мережі":s.P>0?" · розряд":""}`,soc<20?"e":soc<40?"w":""]]; }
+const setLoad = (g,n,v) => { const d=groupsOf().find(x=>x.group.name===g), l=d&&d.group.loads.find(x=>x.n===n); if(l) l.on=v; };
 const ATS_CTRL = [{type:"src",id:"in",label:"Мережа"},{type:"src",id:"in2",label:"Генератор",noU:true}];
 const stepsBase = (wait2) => [
   {say:"Мережа є, генератор зупинено. Навантаження живиться від вводу 1.", do(){ say("in",true,230); say("in2",false); }, wait:5},
@@ -1256,6 +1297,34 @@ TPL.ats_km = { name:"АВР на контакторах і реле напруг
       {say:"Перенапруга 270 В при працюючому генераторі: KV1 знімає KM1, K1 відпускає — вмикається KM2.", do(){ say("in2",true,230); say("in",true,270); }, wait:3},
       {say:"Напруга в нормі: KV1 через 3 с повертає мережу.", do(){ say("in",true,230); }, wait:5},
       {say:"Кінець демонстрації.", do(){ say("in2",false); }, wait:1}]}};
+
+TPL.ats_inv = { name:"АВР: мережа + інвертор з АКБ (TOMZN)", cat:"АВР на 2 вводи",
+  info:"Резерв від інвертора 5 кВт з АКБ 5 кВт·год. Вихід інвертора заходить на ввід II модуля АВР, мережа — через реле напруги KV1 на ввід I. Інвертор вимикає вихід при перевантаженні й розрядженій АКБ, заряджається від мережі. 1 с симуляції — 1 хв реального часу.",
+  build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · інвертор",terms:["L","N"],inv:{kw:5,kwh:5}}], xn:6, xpe:6});
+    S.src.in2.soc=60;
+    const qf1=D("qf2p",0,0,"C40",{cap:"Ввід 1 мережа"}), qf2=D("qf2p",0,2,"C32",{cap:"Вихід інвертора"}), kv=D("kv",0,4,"63"),
+      qa=D("ats",0,6,"",{variant:"tomzn"}), qd=D("rcd",0,10,"63");
+    const g=G1(1,0,"B16",0,"Розетки",2.5,[["Холодильник",0.15,1],["Телевізор",0.15,1],["Роутер",0.01,1]]);
+    G1(1,1,"B10",1,"Освітлення",1.5,[["Освітлення",0.1,1]]);
+    G1(1,2,"C16",2,"Котел, насос",2.5,[["Газовий котел",0.15,1],["Насос",0.75,1]]);
+    G1(1,3,"B16",3,"Кухня",2.5,[["Чайник",2.0,0],["Мікрохвильовка",1.2,0]]);
+    G1(1,4,"C16",4,"Бойлер",2.5,[["Бойлер",2.0,0]]); S.comb={rail:1,from:0,to:4};
+    atsInputs(qf1,qf2);
+    W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(qa,"IL"),"L",10); W(k(kv,"t1"),k(qa,"IN"),"N",10);
+    W(k(qf2,"b1"),k(qa,"IIL"),"L",6); W(k(qf2,"b2"),k(qa,"IIN"),"N",6); W(k(qa,"L"),k(qd,"t1"),"L",10); W(k(qa,"N"),k(qd,"t2"),"N",10);
+    W(k(qd,"b1"),k(g,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10); },
+  demo:{ controls:[{type:"src",id:"in",label:"Мережа"},{type:"src",id:"in2",label:"Інвертор (ввід 2)",noU:true},invSocCtl("in2"),atsModeCtrl,
+      {type:"toggle",label:"Бойлер 2 кВт",get:()=>!!(groupsOf().find(x=>x.group.name==="Бойлер")||{group:{loads:[{}]}}).group.loads[0].on,set:v=>setLoad("Бойлер","Бойлер",v)}],
+    status:atsStatus(()=>invRows(S.board.inputs[1])),
+    script:[
+      {say:"Мережа є: через 3 с реле KV1 пропускає її, і АВР ставить щит на ввід I. Інвертор чекає в резерві, АКБ заряджається.", do(){ say("in",true,230); say("in2",true); S.src.in2.soc=60; }, wait:5},
+      {say:"Мережу відключили. АВР за мілісекунди переводить щит на інвертор — котел і холодильник працюють далі.", do(){ say("in",false); }, wait:4},
+      {say:"Вмикаємо чайник і бойлер — разом понад 5 кВт. Інвертор 2 с тримає перевантаження і вимикає вихід на 10 с.", do(){ setLoad("Кухня","Чайник",true); setLoad("Бойлер","Бойлер",true); }, wait:4},
+      {say:"Вимикаємо чайник і бойлер. Інвертор сам відновлює живлення, щойно мине 10 с захисту.", do(){ setLoad("Кухня","Чайник",false); setLoad("Бойлер","Бойлер",false); }, wait:10},
+      {say:"АКБ сідає: лишилось 7 %. На 5 % інвертор вимкне вихід, щоб не зіпсувати батарею.", do(){ S.src.in2.soc=7; }, wait:7},
+      {say:"Мережа повернулась. АВР повертає щит на ввід I, інвертор заряджає АКБ. Від 20 % резерв знову готовий.", do(){ say("in",true,230); }, wait:7},
+      {say:"Головне правило: вихід інвертора ніколи не з’єднують із мережею напряму. АВР-модуль механічно не замкне обидва вводи разом.", do(){}, wait:2}]},
+  checks(add){ add("ok","Бойлер і чайник — не одночасно від інвертора","Разом із базовим навантаженням вони перевищують 5 кВт. У реальному щиті бойлер часто живлять лише від мережі, до АВР."); }};
 /* ===== Шаблон: СЕС з гібридним інвертором ===== */
 const XT_PV = [["pa+","PV+","DC+"],["pa-","PV−","DC-"],["ip+","IP+","DC+"],["ip-","IP−","DC-"],["ba+","B+","DC+"],["ba-","B−","DC-"],["ib+","IB+","DC+"],["ib-","IB−","DC-"],
   ["gL","G-L","L"],["gN","G-N","N"],["oL","O-L","L"],["oN","O-N","N"],["pe","PE","PE"]].map(([k,l,r])=>({k,l,r}));
@@ -1812,17 +1881,18 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
   const feeds=b.inputs.filter(i=>i.terms.some(t=>/^L/.test(t)));
   const mainsOk=feeds.length>0&&feeds.every(i=>S.devices.some(d=>T[d.type].prot&&T[d.type].terms.some(t=>t.s==="top"&&f0(d.id+":"+t.k)===f0(i.id+":"+i.terms[0]))));
   return [
-    {id:"main", t:kind==="2in"?"Поставте два вступні автомати 2P — по одному на кожен ввід":kind==="3ph"?"Поставте вступний автомат 3P або 4P":"Поставте вступний автомат 2P",
+    {id:"main", t:kind==="2inv"?"Поставте два автомати 2P: вступний від мережі й на виході інвертора":kind==="2in"?"Поставте два вступні автомати 2P — по одному на кожен ввід":kind==="3ph"?"Поставте вступний автомат 3P або 4P":"Поставте вступний автомат 2P",
       h:"Вступний автомат стоїть першим і захищає весь щит. Номінал — за дозволеною потужністю вводу (для квартири зазвичай C25–C40).",
-      done:()=>S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)).length>=(kind==="2in"?2:1), short:"Вступний автомат", act:["Обрати автомат",null]},
+      done:()=>S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)).length>=(kind==="2in"||kind==="2inv"?2:1), short:"Вступний автомат", act:["Обрати автомат",null]},
     {id:"inwire", t:"Заведіть ввід на верхні клеми вступного автомата",
       h:kind==="3ph"?"У режимі «Проводка» оберіть вид дроту L1, L2, L3 і з’єднайте клеми вводу з клемами 1, 3, 5 автомата. Нуль N — на клему N автомата 4P або на шину N.":"У режимі «Проводка» оберіть «Фаза L» і з’єднайте клему вводу L з клемою 1 автомата, потім «Нуль N» — з клемою 3.",
       done:()=>mainsOk, act:["До проводки",()=>goWire(kind==="3ph"?"L1":"L")]},
     {id:"prot", opt:true, t:kind==="3ph"?"Захист від аварій мережі: реле контролю фаз, УЗІП":"Захист від перенапруги: реле напруги, УЗІП",
       h:kind==="3ph"?"Реле контролю фаз розімкне коло керування при обриві фази або неправильному чергуванні.":"Реле напруги відключить щит при стрибку напруги, УЗІП відведе імпульс блискавки на PE.",
       done:()=>has("kv","kvf","spdac"), short:"Захист від перенапруги", act:["Обрати реле",null]},
-    ...(kind==="2in"?[{id:"ats", t:"Перемикання вводів: модуль АВР або два контактори",
-      h:"Модуль АВР — найпростіше. Контактори з блокуванням через НЗ-контакти 21–22 — класика. Головне, щоб вводи ніколи не з’єднались між собою.",
+    ...(kind==="2in"||kind==="2inv"?[{id:"ats", t:kind==="2inv"?"Перемикання мережа ↔ інвертор: модуль АВР":"Перемикання вводів: модуль АВР або два контактори",
+      h:kind==="2inv"?"Мережа — на ввід I модуля АВР, вихід інвертора — на ввід II. АВР має перемикати і фазу, і нуль. Вихід інвертора ніколи не можна з’єднувати з мережею — інвертор згорить."
+        :"Модуль АВР — найпростіше. Контактори з блокуванням через НЗ-контакти 21–22 — класика. Головне, щоб вводи ніколи не з’єднались між собою.",
       done:()=>has("ats")||S.devices.filter(d=>d.type==="km2a").length>=2, short:"Перемикання вводів", act:["Обрати АВР",null]}]:[]),
     {id:"rcd", opt:kind==="3ph", t:"Захист людей: ПЗВ або диф-автомати",
       h:"ПЗВ 30 мА вимикає лінію при витоку струму на корпус. Номінал ПЗВ — не менший за вступний автомат.",
@@ -1938,24 +2008,32 @@ function openProjects(){ const db=projDB(), list=db.list.slice().sort((a,b)=>b.u
 
 // ---- Майстер нового щита і налаштування корпусу
 let WZ=null;
-const boardKind = b => b.inputs.length>1?"2in":b.inputs[0].terms.includes("L1")?"3ph":b.inputs[0].terms.length===1?"gnd":"1ph";
-const KINDS = [["1ph","1 фаза · 230 В","Квартира, дім, дача. Ввід L, N, PE."],["3ph","3 фази · 400 В","Будинок, майстерня, двигуни. Ввід L1, L2, L3, N, PE."],["2in","2 вводи · мережа + генератор","Резервне живлення через АВР. Ввід 1 — L, N, PE; ввід 2 — L, N."]];
+const boardKind = b => b.inputs.length>1?(b.inputs[1].inv?"2inv":"2in"):b.inputs[0].terms.includes("L1")?"3ph":b.inputs[0].terms.length===1?"gnd":"1ph";
+const KINDS = [["1ph","1 фаза · 230 В","Квартира, дім, дача. Ввід L, N, PE."],["3ph","3 фази · 400 В","Будинок, майстерня, двигуни. Ввід L1, L2, L3, N, PE."],["2in","2 вводи · мережа + генератор","Резервне живлення через АВР. Ввід 1 — L, N, PE; ввід 2 — L, N."],
+  ["2inv","2 вводи · мережа + інвертор","Резерв від інвертора з АКБ через АВР. Ввід 1 — мережа L, N, PE; ввід 2 — вихід інвертора L, N."]];
+const INV_KW=[3,3.6,5,6,8], INV_KWH=[2.5,5,10,15];
+const kindTitle = w => w.kind==="2inv"?`2 вводи · мережа + інвертор ${fmt(w.ikw,w.ikw%1?1:0)} кВт, АКБ ${fmt(w.ikwh,w.ikwh%1?1:0)} кВт·год`:(KINDS.find(x=>x[0]===w.kind)||["","DC-бокс"])[1];
 function boardFor(w){ const cur=S.board;
   const inputs = w.kind==="gnd"?cur.inputs : w.kind==="3ph"?[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}]
-    : w.kind==="2in"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}] : [{id:"in",label:"Ввід",terms:["L","N","PE"]}];
+    : w.kind==="2in"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}]
+    : w.kind==="2inv"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · інвертор",terms:["L","N"],inv:{kw:w.ikw,kwh:w.ikwh}}] : [{id:"in",label:"Ввід",terms:["L","N","PE"]}];
   return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[]}; }
 function openWizard(edit){ const b=S.board;
-  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,guide:false}
-    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,guide:true};
+  const iv=(b.inputs.find(i=>i.inv)||{}).inv||{kw:5,kwh:5};
+  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,guide:false,ikw:iv.kw,ikwh:iv.kwh}
+    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,guide:true,ikw:5,ikwh:5};
   renderWizard(); $("dlg").hidden=false; }
 function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпус","Шини","Готово"], first=w.edit?1:0, last=4; let b="";
   if(w.step===0) b=`<label class="lbl2" for="wzName">Як назвати щит?</label><input class="inp" id="wzName" value="${esc(w.name)}" maxlength="60"><p class="hint">Назва з’явиться в «Проєктах», щит зберігатиметься автоматично.</p>`;
-  if(w.step===1) b=(w.kind==="gnd"?`<p class="hint">У цьому щиті лише контур заземлення (DC-бокс), тип вводу не змінюється.</p>`:`<p class="hint">Звідки живиться щит?</p>`+KINDS.map(([k,t,d])=>`<button class="wz-opt" data-wk="${k}" aria-pressed="${w.kind===k}"><b>${t}</b><span>${d}</span></button>`).join(""));
+  if(w.step===1) b=(w.kind==="gnd"?`<p class="hint">У цьому щиті лише контур заземлення (DC-бокс), тип вводу не змінюється.</p>`:`<p class="hint">Звідки живиться щит?</p>`+KINDS.map(([k,t,d])=>`<button class="wz-opt" data-wk="${k}" aria-pressed="${w.kind===k}"><b>${t}</b><span>${d}</span></button>`).join("")
+    +(w.kind==="2inv"?`<div class="wz-inv"><div class="row"><span class="lbl">Інвертор</span>${INV_KW.map(v=>`<button class="chip mono" data-wikw="${v}" aria-pressed="${w.ikw===v}">${fmt(v,v%1?1:0)} кВт</button>`).join("")}</div>
+      <div class="row"><span class="lbl">АКБ</span>${INV_KWH.map(v=>`<button class="chip mono" data-wikwh="${v}" aria-pressed="${w.ikwh===v}">${fmt(v,v%1?1:0)} кВт·год</button>`).join("")}</div>
+      <p class="hint">Вихід інвертора заходить на ввід 2, АВР перемикає щит на нього, коли зникає мережа. АКБ заряджається від мережі, поки вона є.</p></div>`:""));
   if(w.step===2) b=`<p class="hint">Скільки DIN-рейок у корпусі? На кожній — 12 модулів.</p>`+[1,2,3,4].map(r=>`<button class="wz-opt" data-wr="${r}" aria-pressed="${w.rails===r}"><b>ЩРН-${r*12}</b><span>${r} рейк${r===1?"а":"и"} · ${r*12} модулів</span></button>`).join("");
   if(w.step===3) b=`<p class="hint">Скільки отворів на шинах? Кожна група займає по отвору на N і PE.</p>
     <div class="volt"><span class="lbl">Шина N</span><input type="range" id="wzXn" min="0" max="12" value="${w.xn}"><output class="mono" id="wzXnO">${w.xn}</output></div>
     <div class="volt"><span class="lbl">Шина PE</span><input type="range" id="wzXpe" min="2" max="12" value="${w.xpe}"><output class="mono" id="wzXpeO">${w.xpe}</output></div>`;
-  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${(KINDS.find(x=>x[0]===w.kind)||["","DC-бокс"])[1]}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}</b></li></ul>`
+  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}</b></li></ul>`
     +(w.edit?"":`<label class="chk"><input type="checkbox" id="wzGuide" ${w.guide?"checked":""}> Увімкнути покроковий помічник складання</label>`);
   $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щит"}</h2><ol class="wz-steps">${names.slice(first).map((n,j)=>`<li class="${j+first<w.step?"done":j+first===w.step?"cur":""}">${n}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
     <div class="row dlg-f"><button class="btn" data-wz="cancel">Скасувати</button>${w.step>first?`<button class="btn" data-wz="prev">Назад</button>`:""}${w.step<last?`<button class="btn primary" data-wz="next">Далі</button>`:`<button class="btn primary" data-wz="${w.edit?"apply":"create"}">${w.edit?"Застосувати":"Створити щит"}</button>`}</div>`;
@@ -2010,7 +2088,8 @@ function surgeAll(){ const f=build({ideal:true}), pe=S.board.inputs.find(i=>i.te
     else { logp("e","Імпульс з мережі пройшов у щит: немає справного УЗІП AC між фазою, N і PE — техніка під загрозою"); toast("Імпульс пройшов у щит без УЗІП","e"); } }
   if(S.field.some(x=>x.type==="pv")&&S.field.some(x=>x.type==="invpv")) surge(); }
 function autoControls(){ const c=[], b=S.board;
-  for(const i of b.inputs) if(i.terms.some(t=>/^L/.test(t))) c.push({type:"src",id:i.id,label:i.label,noU:i.id==="in2"});
+  for(const i of b.inputs) if(i.terms.some(t=>/^L/.test(t))){ c.push({type:"src",id:i.id,label:i.inv?"Інвертор (ввід 2)":i.label,noU:i.id==="in2"});
+    if(i.inv) c.push(invSocCtl(i.id)); }
   if(b.inputs.some(i=>i.terms.includes("L1"))){ const s=()=>S.src.in;
     c.push({type:"toggle",label:"Обрив фази L3",get:()=>!!(s().lost||{}).L3,set:v=>{ (s().lost||(s().lost={})).L3=v; }});
     c.push({type:"toggle",label:"Переплутано L2 і L3 на вводі",get:()=>!!s().swap,set:v=>{ s().swap=v; }}); }
@@ -2024,7 +2103,9 @@ function autoControls(){ const c=[], b=S.board;
   if(b.inputs.some(i=>i.terms.includes("N"))||S.field.some(f=>f.type==="pv")) c.push({type:"btn",label:"Удар блискавки поруч",act:surgeAll});
   return c; }
 function autoStatus(){ const R=S.sim, rows=[];
-  for(const i of S.board.inputs) if(i.terms.some(t=>/^L/.test(t))){ const s=S.src[i.id]||{}; rows.push([i.label,s.on?Math.round(s.U*(i.terms.includes("L1")?1.732:1))+" В":"вимкнено",s.on?"ok":""]); }
+  for(const i of S.board.inputs) if(i.terms.some(t=>/^L/.test(t))){ const s=S.src[i.id]||{};
+    if(i.inv){ rows.push(...invRows(i)); continue; }
+    rows.push([i.label,s.on?Math.round(s.U*(i.terms.includes("L1")?1.732:1))+" В":"вимкнено",s.on?"ok":""]); }
   rows.push(["Навантаження",fmt(totalKW(),2)+" кВт",""]);
   for(const f of S.field){ if(/^motor/.test(f.type)) rows.push([f.name,f.run?(f.dir<0?"обертається вліво":"обертається"):f.hum?"гуде, не обертається":"стоїть",f.run?"ok":f.hum?"e":""]);
     if(f.type==="inv") rows.push([f.name,({grid:"мережевий",backup:"резервний",off:"вимкнено",fault:"захист"})[f.mode]||"—",f.mode==="grid"?"ok":f.mode==="fault"?"e":"w"]);
@@ -2068,6 +2149,8 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
     if(a==="cancel") closeDlg(); if(a==="prev"){ w.step--; renderWizard(); } if(a==="next"){ w.step++; renderWizard(); }
     if(a==="create") wizardCreate(); if(a==="apply") wizardApply(); return; }
   if(el=q("[data-wk]")){ WZ.kind=el.dataset.wk; if(WZ.kind==="3ph"&&WZ.xn<4) WZ.xn=4; renderWizard(); return; }
+  if(el=q("[data-wikw]")){ WZ.ikw=+el.dataset.wikw; renderWizard(); return; }
+  if(el=q("[data-wikwh]")){ WZ.ikwh=+el.dataset.wikwh; renderWizard(); return; }
   if(el=q("[data-wr]")){ WZ.rails=+el.dataset.wr; renderWizard(); return; }
   if(el=q("[data-fadd]")){ addField(el.dataset.fadd); return; }
   if(el=q("[data-fdel]")){ const f=S.field.find(x=>x.id===el.dataset.fdel); if(f) removeField(f); return; }

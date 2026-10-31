@@ -65,24 +65,32 @@ function openProjects(){ const db=projDB(), list=db.list.slice().sort((a,b)=>b.u
 
 // ---- Майстер нового щита і налаштування корпусу
 let WZ=null;
-const boardKind = b => b.inputs.length>1?"2in":b.inputs[0].terms.includes("L1")?"3ph":b.inputs[0].terms.length===1?"gnd":"1ph";
-const KINDS = [["1ph","1 фаза · 230 В","Квартира, дім, дача. Ввід L, N, PE."],["3ph","3 фази · 400 В","Будинок, майстерня, двигуни. Ввід L1, L2, L3, N, PE."],["2in","2 вводи · мережа + генератор","Резервне живлення через АВР. Ввід 1 — L, N, PE; ввід 2 — L, N."]];
+const boardKind = b => b.inputs.length>1?(b.inputs[1].inv?"2inv":"2in"):b.inputs[0].terms.includes("L1")?"3ph":b.inputs[0].terms.length===1?"gnd":"1ph";
+const KINDS = [["1ph","1 фаза · 230 В","Квартира, дім, дача. Ввід L, N, PE."],["3ph","3 фази · 400 В","Будинок, майстерня, двигуни. Ввід L1, L2, L3, N, PE."],["2in","2 вводи · мережа + генератор","Резервне живлення через АВР. Ввід 1 — L, N, PE; ввід 2 — L, N."],
+  ["2inv","2 вводи · мережа + інвертор","Резерв від інвертора з АКБ через АВР. Ввід 1 — мережа L, N, PE; ввід 2 — вихід інвертора L, N."]];
+const INV_KW=[3,3.6,5,6,8], INV_KWH=[2.5,5,10,15];
+const kindTitle = w => w.kind==="2inv"?`2 вводи · мережа + інвертор ${fmt(w.ikw,w.ikw%1?1:0)} кВт, АКБ ${fmt(w.ikwh,w.ikwh%1?1:0)} кВт·год`:(KINDS.find(x=>x[0]===w.kind)||["","DC-бокс"])[1];
 function boardFor(w){ const cur=S.board;
   const inputs = w.kind==="gnd"?cur.inputs : w.kind==="3ph"?[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}]
-    : w.kind==="2in"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}] : [{id:"in",label:"Ввід",terms:["L","N","PE"]}];
+    : w.kind==="2in"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}]
+    : w.kind==="2inv"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · інвертор",terms:["L","N"],inv:{kw:w.ikw,kwh:w.ikwh}}] : [{id:"in",label:"Ввід",terms:["L","N","PE"]}];
   return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[]}; }
 function openWizard(edit){ const b=S.board;
-  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,guide:false}
-    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,guide:true};
+  const iv=(b.inputs.find(i=>i.inv)||{}).inv||{kw:5,kwh:5};
+  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,guide:false,ikw:iv.kw,ikwh:iv.kwh}
+    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,guide:true,ikw:5,ikwh:5};
   renderWizard(); $("dlg").hidden=false; }
 function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпус","Шини","Готово"], first=w.edit?1:0, last=4; let b="";
   if(w.step===0) b=`<label class="lbl2" for="wzName">Як назвати щит?</label><input class="inp" id="wzName" value="${esc(w.name)}" maxlength="60"><p class="hint">Назва з’явиться в «Проєктах», щит зберігатиметься автоматично.</p>`;
-  if(w.step===1) b=(w.kind==="gnd"?`<p class="hint">У цьому щиті лише контур заземлення (DC-бокс), тип вводу не змінюється.</p>`:`<p class="hint">Звідки живиться щит?</p>`+KINDS.map(([k,t,d])=>`<button class="wz-opt" data-wk="${k}" aria-pressed="${w.kind===k}"><b>${t}</b><span>${d}</span></button>`).join(""));
+  if(w.step===1) b=(w.kind==="gnd"?`<p class="hint">У цьому щиті лише контур заземлення (DC-бокс), тип вводу не змінюється.</p>`:`<p class="hint">Звідки живиться щит?</p>`+KINDS.map(([k,t,d])=>`<button class="wz-opt" data-wk="${k}" aria-pressed="${w.kind===k}"><b>${t}</b><span>${d}</span></button>`).join("")
+    +(w.kind==="2inv"?`<div class="wz-inv"><div class="row"><span class="lbl">Інвертор</span>${INV_KW.map(v=>`<button class="chip mono" data-wikw="${v}" aria-pressed="${w.ikw===v}">${fmt(v,v%1?1:0)} кВт</button>`).join("")}</div>
+      <div class="row"><span class="lbl">АКБ</span>${INV_KWH.map(v=>`<button class="chip mono" data-wikwh="${v}" aria-pressed="${w.ikwh===v}">${fmt(v,v%1?1:0)} кВт·год</button>`).join("")}</div>
+      <p class="hint">Вихід інвертора заходить на ввід 2, АВР перемикає щит на нього, коли зникає мережа. АКБ заряджається від мережі, поки вона є.</p></div>`:""));
   if(w.step===2) b=`<p class="hint">Скільки DIN-рейок у корпусі? На кожній — 12 модулів.</p>`+[1,2,3,4].map(r=>`<button class="wz-opt" data-wr="${r}" aria-pressed="${w.rails===r}"><b>ЩРН-${r*12}</b><span>${r} рейк${r===1?"а":"и"} · ${r*12} модулів</span></button>`).join("");
   if(w.step===3) b=`<p class="hint">Скільки отворів на шинах? Кожна група займає по отвору на N і PE.</p>
     <div class="volt"><span class="lbl">Шина N</span><input type="range" id="wzXn" min="0" max="12" value="${w.xn}"><output class="mono" id="wzXnO">${w.xn}</output></div>
     <div class="volt"><span class="lbl">Шина PE</span><input type="range" id="wzXpe" min="2" max="12" value="${w.xpe}"><output class="mono" id="wzXpeO">${w.xpe}</output></div>`;
-  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${(KINDS.find(x=>x[0]===w.kind)||["","DC-бокс"])[1]}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}</b></li></ul>`
+  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}</b></li></ul>`
     +(w.edit?"":`<label class="chk"><input type="checkbox" id="wzGuide" ${w.guide?"checked":""}> Увімкнути покроковий помічник складання</label>`);
   $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щит"}</h2><ol class="wz-steps">${names.slice(first).map((n,j)=>`<li class="${j+first<w.step?"done":j+first===w.step?"cur":""}">${n}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
     <div class="row dlg-f"><button class="btn" data-wz="cancel">Скасувати</button>${w.step>first?`<button class="btn" data-wz="prev">Назад</button>`:""}${w.step<last?`<button class="btn primary" data-wz="next">Далі</button>`:`<button class="btn primary" data-wz="${w.edit?"apply":"create"}">${w.edit?"Застосувати":"Створити щит"}</button>`}</div>`;
@@ -137,7 +145,8 @@ function surgeAll(){ const f=build({ideal:true}), pe=S.board.inputs.find(i=>i.te
     else { logp("e","Імпульс з мережі пройшов у щит: немає справного УЗІП AC між фазою, N і PE — техніка під загрозою"); toast("Імпульс пройшов у щит без УЗІП","e"); } }
   if(S.field.some(x=>x.type==="pv")&&S.field.some(x=>x.type==="invpv")) surge(); }
 function autoControls(){ const c=[], b=S.board;
-  for(const i of b.inputs) if(i.terms.some(t=>/^L/.test(t))) c.push({type:"src",id:i.id,label:i.label,noU:i.id==="in2"});
+  for(const i of b.inputs) if(i.terms.some(t=>/^L/.test(t))){ c.push({type:"src",id:i.id,label:i.inv?"Інвертор (ввід 2)":i.label,noU:i.id==="in2"});
+    if(i.inv) c.push(invSocCtl(i.id)); }
   if(b.inputs.some(i=>i.terms.includes("L1"))){ const s=()=>S.src.in;
     c.push({type:"toggle",label:"Обрив фази L3",get:()=>!!(s().lost||{}).L3,set:v=>{ (s().lost||(s().lost={})).L3=v; }});
     c.push({type:"toggle",label:"Переплутано L2 і L3 на вводі",get:()=>!!s().swap,set:v=>{ s().swap=v; }}); }
@@ -151,7 +160,9 @@ function autoControls(){ const c=[], b=S.board;
   if(b.inputs.some(i=>i.terms.includes("N"))||S.field.some(f=>f.type==="pv")) c.push({type:"btn",label:"Удар блискавки поруч",act:surgeAll});
   return c; }
 function autoStatus(){ const R=S.sim, rows=[];
-  for(const i of S.board.inputs) if(i.terms.some(t=>/^L/.test(t))){ const s=S.src[i.id]||{}; rows.push([i.label,s.on?Math.round(s.U*(i.terms.includes("L1")?1.732:1))+" В":"вимкнено",s.on?"ok":""]); }
+  for(const i of S.board.inputs) if(i.terms.some(t=>/^L/.test(t))){ const s=S.src[i.id]||{};
+    if(i.inv){ rows.push(...invRows(i)); continue; }
+    rows.push([i.label,s.on?Math.round(s.U*(i.terms.includes("L1")?1.732:1))+" В":"вимкнено",s.on?"ok":""]); }
   rows.push(["Навантаження",fmt(totalKW(),2)+" кВт",""]);
   for(const f of S.field){ if(/^motor/.test(f.type)) rows.push([f.name,f.run?(f.dir<0?"обертається вліво":"обертається"):f.hum?"гуде, не обертається":"стоїть",f.run?"ok":f.hum?"e":""]);
     if(f.type==="inv") rows.push([f.name,({grid:"мережевий",backup:"резервний",off:"вимкнено",fault:"захист"})[f.mode]||"—",f.mode==="grid"?"ok":f.mode==="fault"?"e":"w"]);
@@ -195,6 +206,8 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
     if(a==="cancel") closeDlg(); if(a==="prev"){ w.step--; renderWizard(); } if(a==="next"){ w.step++; renderWizard(); }
     if(a==="create") wizardCreate(); if(a==="apply") wizardApply(); return; }
   if(el=q("[data-wk]")){ WZ.kind=el.dataset.wk; if(WZ.kind==="3ph"&&WZ.xn<4) WZ.xn=4; renderWizard(); return; }
+  if(el=q("[data-wikw]")){ WZ.ikw=+el.dataset.wikw; renderWizard(); return; }
+  if(el=q("[data-wikwh]")){ WZ.ikwh=+el.dataset.wikwh; renderWizard(); return; }
   if(el=q("[data-wr]")){ WZ.rails=+el.dataset.wr; renderWizard(); return; }
   if(el=q("[data-fadd]")){ addField(el.dataset.fadd); return; }
   if(el=q("[data-fdel]")){ const f=S.field.find(x=>x.id===el.dataset.fdel); if(f) removeField(f); return; }

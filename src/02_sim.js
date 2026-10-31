@@ -17,11 +17,28 @@ const kwOf = (d,all) => d.group.loads.reduce((a,l)=>a+(all||l.on?l.kw:0),0);
 const poleClosed = (d,pi) => { const t=tdef(d); return t.closed ? t.closed(d,pi) : (d.on&&!d.trip); };
 const protIn = d => d.Ir || inA(d.rating);
 
+// Ввід від інвертора (inp.inv): вихід зникає при аварії (fault) або розрядженій АКБ (low)
+const invInp = id => S.board.inputs.find(i=>i.id===id&&i.inv);
+const srcLive = (inp,s) => !!(s&&s.on&&!(inp.inv&&(s.fault>0||s.low)));
+function invFault(id,sec,msg){ const s=S.src[id]; if(!s) return; s.fault=sec; s.ovl=0; logp("e","Інвертор: "+msg); if(typeof toast==="function") toast("Інвертор вимкнувся","e"); }
+function invTick(X,dt){ let loads=null;
+  for(const inp of S.board.inputs){ if(!inp.inv) continue; const s=S.src[inp.id]; if(!s) continue; if(s.soc===undefined) s.soc=80;
+    if(s.fault>0){ s.fault=Math.max(0,s.fault-dt); if(!s.fault&&s.on&&!s.low) logp("ok","Інвертор знову ввімкнувся"); }
+    const live=srcLive(inp,s); let P=0;
+    if(live){ loads=loads||computeLoads(X); for(const l of loads){ if(!l.a||!(l.I>0)) continue; const p=X.ph(l.a); if(p&&srcOf(p)===inp.id) P+=l.I*(l.U||230)/1000; } }
+    s.P=P; const kw=inp.inv.kw||5, kwh=inp.inv.kwh||5;
+    if(live&&P>kw+0.05){ s.ovl=(s.ovl||0)+dt; if(s.ovl>=2) invFault(inp.id,10,`перевантаження ${fmt(P,1)} кВт при номіналі ${fmt(kw,1)} кВт — вихід вимкнено на 10 с`); } else s.ovl=0;
+    const grid=S.board.inputs.some(i=>!i.inv&&srcLive(i,S.src[i.id])&&S.src[i.id].U>=187&&S.src[i.id].U<=253);
+    if(P>0) s.soc=Math.max(0,s.soc-P*(dt/60)/kwh*100);          // 1 с симуляції = 1 хв
+    else if(grid&&s.soc<100) s.soc=Math.min(100,s.soc+Math.min(1.5,kw/3)*(dt/60)/kwh*100);
+    s.chg=P===0&&grid&&s.soc<100;
+    if(!s.low&&s.soc<=5&&s.on){ s.low=true; logp("e","Інвертор: АКБ розряджено до 5 % — вихід вимкнено, щоб зберегти батарею"); if(typeof toast==="function") toast("АКБ інвертора розряджено","e"); }
+    if(s.low&&s.soc>=20){ s.low=false; if(s.on) logp("ok","Інвертор: АКБ заряджено до 20 % — вихід знову ввімкнено"); } } }
 function sources(){
   const out=[];
-  for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={on:false,U:230,lost:{}});
+  for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={on:false,U:230,lost:{}}), live=srcLive(inp,s);
     for(const t of inp.terms){ const key=inp.id+":"+t;
-      if(t==="N"||t==="PE") out.push([key,t]); else if(s.on&&!(s.lost&&s.lost[t])) out.push([key,inp.id+"."+(s.swap&&t==="L2"?"L3":s.swap&&t==="L3"?"L2":t)]); } }
+      if(t==="N"||t==="PE") out.push([key,t]); else if(live&&!(s.lost&&s.lost[t])) out.push([key,inp.id+"."+(s.swap&&t==="L2"?"L3":s.swap&&t==="L3"?"L2":t)]); } }
   for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.source) for(const [k,p] of t.source(d)) out.push([K(d,k),p]); }
   return out;
 }
@@ -100,10 +117,13 @@ function resolveFaults(){
       const test=d=>!still(makeX(build({open:new Set([d.id]),extra:shortsExtra()})));
       let cand=[];
       if(c.kind==="LPE") cand=rcdDevs().filter(test);
+      if(c.kind==="FEED"){ const iv=c.pots.filter(isPh).map(srcOf).find(invInp);
+        if(iv){ invFault(iv,30,"на вихід інвертора потрапила напруга іншого джерела (зустрічне ввімкнення) — аварійне вимкнення на 30 с. Справжній інвертор від цього може згоріти"); continue; } }
       if(!cand.length) cand=S.devices.filter(d=>T[d.type].prot&&d.on&&!d.trip).filter(test);
       if(cand.length){ cand.sort((a,b)=>(protIn(a)-protIn(b))||(affected(a,X,loads)-affected(b,X,loads))); trip(cand[0],FAULT[c.kind]); continue; }
       let acted=false;
-      for(const p of c.pots){ if(isPh(p)&&S.src[srcOf(p)]&&S.src[srcOf(p)].on){ S.src[srcOf(p)].on=false; acted=true;
+      for(const p of c.pots){ if(isPh(p)&&invInp(srcOf(p))&&srcLive(invInp(srcOf(p)),S.src[srcOf(p)])){ invFault(srcOf(p),10,`${FAULT[c.kind]} на виході — внутрішній захист вимкнув вихід на 10 с`); acted=true; continue; }
+        if(isPh(p)&&S.src[srcOf(p)]&&S.src[srcOf(p)].on){ S.src[srcOf(p)].on=false; acted=true;
           logp("e",`${FAULT[c.kind]} до захисних апаратів: спрацював захист джерела «${(S.board.inputs.find(i=>i.id===srcOf(p))||{}).label}», його вимкнено`); } }
       for(const d of S.field){ const t=FT[d.type]; if(t.onFault&&t.onFault(d,c)) acted=true; }
       if(typeof toast==="function") toast("Аварія: "+FAULT[c.kind],"e");
@@ -140,7 +160,7 @@ function poleCurrents(d,X,loads){
 function solve(dt=0){
   let X=evaluate({extra:shortsExtra()});
   if(dt>0){ for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.tick) t.tick(d,X,dt); }
-    if(S.tplObj&&S.tplObj.tick) S.tplObj.tick(X,dt); X=evaluate({extra:shortsExtra()}); }
+    if(S.tplObj&&S.tplObj.tick) S.tplObj.tick(X,dt); invTick(X,dt); X=evaluate({extra:shortsExtra()}); }
   if(anySource()){ resolveFaults(); X=evaluate({extra:shortsExtra()}); } else if(S.env.arc){ S.env.arc=false; }
   const loads=computeLoads(X), R={X, loads, I:{}, per:{}, liveW:new Set(), g:{}, totalI:0, chatter:!!X.chatter};
   for(const d of S.devices){ const t=T[d.type]; if(!(t.prot||t.meter)||(t.prot&&(!d.on||d.trip))) continue;

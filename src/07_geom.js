@@ -10,7 +10,7 @@ const laneY = (c,s,i) => { const sp=LSP[c+s]||7; return s==="l" ? devTop(c)-20-s
 const sideX = (side,i) => side==="L" ? 86-(SSP.L||7)*i : 754+(SSP.R||7)*i;
 const SW = {1.5:3,2.5:3.6,4:4.3,6:5,10:6,16:7,25:7.6,35:8.2,50:9};
 function inputX(){ const m={}; let x=120;
-  for(const inp of S.board.inputs){ inp.terms.forEach((t,i)=>{ m[inp.id+":"+t]=x+i*36; }); m[inp.id]=x; x+=inp.terms.length*36+34; } return m; }
+  for(const inp of S.board.inputs){ inp.terms.forEach((t,i)=>{ m[inp.id+":"+t]=x+i*36; }); m[inp.id]=x; x+=inp.terms.length*36+(S.board.inputs.length>1?64:34); } return m; }   // між вводами — місце для підпису
 function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, gaps=(m?2:1)*20;
   let sp=28; if(cnt*sp+gaps>600) sp=(600-gaps)/cnt; const pos={}; let x=124;
   for(let i=0;i<n;i++){ pos["xn:"+i]=x; x+=sp; } x+=20-sp+sp;
@@ -68,9 +68,12 @@ function devSVG(d){
   if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
   s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"/><rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"/>`;
   const sr=t.terms.filter(q=>q.s==="top").length>w/27?9:11;
+  const bx=t.terms.filter(q=>q.s==="bot").map(q=>termX(d,q)).sort((a,c)=>a-c), side=bx.every((v,i)=>!i||v-bx[i-1]>=44);
   for(const tm of t.terms){ const X=termX(d,tm);
     if(tm.s==="top") s+=screw(X,y+22,sr)+tx(X,y+42,tm.l,{fs:6.8});
-    else s+=screw(X,y+H-22,sr)+(Math.abs(X-cx)<w/5 ? tx(X+sr+3,y+H-19,tm.l,{fs:6.8,a:"start"}) : tx(X,y+H-36,tm.l,{fs:6.8})); }  // клема посередині — підпис збоку, щоб не налазив на наклейку
+    else { const lw=String(tm.l).length*3.9, fitL=X-sr-2-lw>=x+2, fitR=X+sr+2+lw<=x+w-2;   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку
+      s+=screw(X,y+H-22,sr)+((side||Math.abs(X-cx)<w/5)&&(fitL||fitR)
+        ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-36,tm.l,{fs:6.8})); } }
   s+=tx(cx,y+56,"EnergyUA",{fs:7,fw:700});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   const des=desig(d), pw=Math.max(38,des.length*7+12);
@@ -98,7 +101,9 @@ function render(){
     for(const t of b.xt){ const x=xs("xt:"+t.k); s+=`<text class="lab" x="${x+3}" y="${B+20}" font-size="7.5" text-anchor="end" transform="rotate(-60 ${x+3} ${B+20})">${esc(t.l)}</text>`; } }
   for(const k of Object.keys(bp)) s+=screw(bp[k],B,sp<26?9:11);
   for(const inp of b.inputs){ const src=S.src[inp.id]||{}, x0=inx[inp.id];
-    s+=tx(x0-16,12,inp.label+(inp.terms.every(t=>t==="PE")?"":" · "+(src.on?"~"+Math.round(src.U*(inp.terms.includes("L1")?1.732:1))+" В":"0 В")),{c:"lab",fs:9.5,a:"start",fill:src.on?"var(--green)":undefined});
+    if(inp.inv){ const live=srcLive(inp,src), st=!src.on?"вимкнено":src.fault>0?"захист":src.low?"АКБ розряджена":"~230 В";
+      s+=tx(x0-16,12,`${inp.label} · ${st} · АКБ ${Math.round(src.soc??80)} %`,{c:"lab",fs:9.5,a:"start",fill:live?"var(--green)":src.on?"var(--red)":undefined}); }
+    else s+=tx(x0-16,12,inp.label+(inp.terms.every(t=>t==="PE")?"":" · "+(src.on?"~"+Math.round(src.U*(inp.terms.includes("L1")?1.732:1))+" В":"0 В")),{c:"lab",fs:9.5,a:"start",fill:src.on?"var(--green)":undefined});
     for(const t of inp.terms){ const x=inx[inp.id+":"+t]; s+=`<rect x="${x-16}" y="20" width="32" height="32" rx="3" fill="var(--panel2)" stroke="var(--line)"/>`+screw(x,G.INY)+tx(x,64,t,{c:"lab",fs:8.5}); } }
   if(S.mode==="mount") for(let r=0;r<b.rails;r++) for(let i=0;i<SLOTS;i++){ if(devAt(r,i)) continue; const fits=!S.pick||freeAt(r,i,T[S.pick].w);
     s+=`<rect class="slot" data-slot="${r}:${i}" x="${G.X0+i*G.MW+3}" y="${devTop(r)}" width="${G.MW-6}" height="240" rx="4" style="${S.pick&&fits?"stroke:var(--blue);opacity:1":""}${S.pick&&!fits?";opacity:.2":""}"/>`+tx(G.X0+i*G.MW+G.MW/2,devTop(r)+130,String(r*12+i+1),{c:"lab",fs:10}); }
