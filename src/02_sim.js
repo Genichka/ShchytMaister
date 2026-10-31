@@ -45,7 +45,7 @@ function makeX(f){
       for(const pa of A){ if(isPh(pa)){ if(B.has("N")||B.has("PE")) return srcU(pa);
           for(const pb of B) if(isPh(pb)&&pb!==pa&&srcOf(pb)===srcOf(pa)) return srcU(pa)*1.732; } }
       for(const pb of B) if(isPh(pb)&&(A.has("N")||A.has("PE"))) return srcU(pb);
-      if(A.has("pv+")&&B.has("pv-")) return S.env.pvV||0; if(A.has("bat+")&&B.has("bat-")) return 51;
+      if(A.has("pv+")&&B.has("pv-")) return S.env.sun>0?417:0; if(A.has("bat+")&&B.has("bat-")) return 51;
       return 0; } };
   return X;
 }
@@ -84,6 +84,10 @@ function affected(d,X,loads){ const Y=makeX(build({open:new Set([d.id])})); retu
 function resolveFaults(){
   for(let it=0; it<16; it++){
     const X=evaluate({extra:shortsExtra()}), C=conflicts(X);
+    const arcC=C.filter(z=>z.kind==="DC"&&z.pots.every(p=>p.startsWith("pv")));
+    if(arcC.length&&!S.env.arc){ S.env.arc=true; logp("e","Дуга DC! Струм КЗ стрінга ≈ Isc (близько 14 А) — запобіжники й автомат самі не спрацюють. Вимкніть DC-автомат вручну."); if(typeof toast==="function") toast("Дуга DC: вимкніть DC-автомат!","e"); }
+    if(!arcC.length&&S.env.arc){ S.env.arc=false; logp("ok","Дугу DC погашено"); }
+    C.splice(0,C.length,...C.filter(z=>!arcC.includes(z)));
     if(C.length){ const c=C[0], still=Y=>conflicts(Y).some(z=>z.sig===c.sig), loads=computeLoads(X);
       const test=d=>!still(makeX(build({open:new Set([d.id]),extra:shortsExtra()})));
       let cand=[];
@@ -112,7 +116,7 @@ function resolveFaults(){
     return;
   }
 }
-function shortsExtra(){ return [...S.short].filter(id=>devById(id)).map(id=>{ const d=devById(id); return [gL(d),gN(d)]; }); }
+function shortsExtra(){ return [...S.short].filter(id=>devById(id)).map(id=>{ const d=devById(id); return [gL(d),gN(d)]; }).concat(S.tplObj&&S.tplObj.extra?S.tplObj.extra():[]); }
 const anySource = () => Object.values(S.src).some(s=>s.on) || S.field.some(d=>FT[d.type].source&&FT[d.type].source(d).length);
 
 function poleCurrents(d,X,loads){
@@ -121,7 +125,7 @@ function poleCurrents(d,X,loads){
     const Y=makeX(build({openPole:new Set([d.id+":"+pi]),extra:shortsExtra()})); let I=0;
     for(const l of loads){ if(l.abc){ l.abc.forEach((k,i)=>{ if(X.ph(k)&&!Y.ph(k)) I+=l.Is[i]; }); }
       else if(l.a&&l.I>0){ if(p.r==="N"){ if(X.hasN(l.b)&&!Y.hasN(l.b)) I+=l.I; } else if(X.ph(l.a)&&!Y.ph(l.a)) I+=l.I;
-        else if(l.dc&&X.P(l.a).size&&!Y.P(l.a).size) I+=l.I; } }
+        else if(l.dc&&((X.P(l.a).size&&!Y.P(l.a).size)||(X.P(l.b).size&&!Y.P(l.b).size))) I+=l.I; } }
     per.push(I); max=Math.max(max,I); });
   return {max, per};
 }
@@ -129,14 +133,14 @@ function solve(dt=0){
   let X=evaluate({extra:shortsExtra()});
   if(dt>0){ for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.tick) t.tick(d,X,dt); }
     if(S.tplObj&&S.tplObj.tick) S.tplObj.tick(X,dt); X=evaluate({extra:shortsExtra()}); }
-  if(anySource()){ resolveFaults(); X=evaluate({extra:shortsExtra()}); }
+  if(anySource()){ resolveFaults(); X=evaluate({extra:shortsExtra()}); } else if(S.env.arc){ S.env.arc=false; }
   const loads=computeLoads(X), R={X, loads, I:{}, per:{}, liveW:new Set(), g:{}, totalI:0, chatter:!!X.chatter};
   for(const d of S.devices){ const t=T[d.type]; if(!(t.prot||t.meter)||(t.prot&&(!d.on||d.trip))) continue;
     const pc=poleCurrents(d,X,loads); R.I[d.id]=pc.max; R.per[d.id]=pc.per;
     if(dt>0&&t.prot){ const In=protIn(d), I=pc.max; let k=I/In;
       if(t.prot==="mpcb"){ const nz=pc.per.filter(x=>x>0.3*In).length; if(nz>0&&nz<pc.per.length&&pc.per.length===3) k*=1.6; }
       if(k>1.13){ S.heat[d.id]=(S.heat[d.id]||0)+dt*Math.min(0.5,(k*k-1)/6);
-        if(S.heat[d.id]>=1){ trip(d,`перевантаження ${fmt(I)} А при ${t.prot==="mpcb"?"уставці":"номіналі"} ${fmt(In,In%1?1:0)} А`); return solve(0); } }
+        if(S.heat[d.id]>=1){ trip(d,t.prot==="fuse"?`вставка згоріла: ${fmt(I)} А при номіналі ${fmt(In,0)} А`:`перевантаження ${fmt(I)} А при ${t.prot==="mpcb"?"уставці":"номіналі"} ${fmt(In,In%1?1:0)} А`); return solve(0); } }
       else S.heat[d.id]=Math.max(0,(S.heat[d.id]||0)-dt*0.3); } }
   for(const d of groupsOf()){ const l=loads.find(x=>x.own===d.id&&x.grp);
     R.g[d.id]={phase:!!X.ph(gL(d)), neutral:X.hasN(gN(d)), U:l.U, I:l.I, kw:kwOf(d)}; R.totalI+=l.I; }

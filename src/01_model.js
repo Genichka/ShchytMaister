@@ -20,6 +20,7 @@ const PHK = ["L","L1","L2","L3"];
 // Сумісність виду дроту з роллю клеми
 function kindFits(kind, role){
   if(!role || role==="any") return true;
+  if(role==="DC") return kind==="DC+"||kind==="DC-";
   if(role==="P"||role==="L") return PHK.includes(kind)||kind==="C";
   if(role==="C") return kind!=="PE" && kind!=="DC+" && kind!=="DC-";
   if(PHK.includes(role)) return PHK.includes(kind)||kind==="C";

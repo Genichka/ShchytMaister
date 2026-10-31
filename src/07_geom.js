@@ -95,7 +95,7 @@ function render(){
     for(const t of b.xt){ const x=xs("xt:"+t.k); s+=`<text class="lab" x="${x+3}" y="${B+20}" font-size="7.5" text-anchor="end" transform="rotate(-60 ${x+3} ${B+20})">${esc(t.l)}</text>`; } }
   for(const k of Object.keys(bp)) s+=screw(bp[k],B,sp<26?9:11);
   for(const inp of b.inputs){ const src=S.src[inp.id]||{}, x0=inx[inp.id];
-    s+=tx(x0-16,12,inp.label+" · "+(src.on?"~"+Math.round(src.U*(inp.terms.includes("L1")?1.732:1))+" В":"0 В"),{c:"lab",fs:9.5,a:"start",fill:src.on?"var(--green)":undefined});
+    s+=tx(x0-16,12,inp.label+(inp.terms.every(t=>t==="PE")?"":" · "+(src.on?"~"+Math.round(src.U*(inp.terms.includes("L1")?1.732:1))+" В":"0 В")),{c:"lab",fs:9.5,a:"start",fill:src.on?"var(--green)":undefined});
     for(const t of inp.terms){ const x=inx[inp.id+":"+t]; s+=`<rect x="${x-16}" y="20" width="32" height="32" rx="3" fill="var(--panel2)" stroke="var(--line)"/>`+screw(x,G.INY)+tx(x,64,t,{c:"lab",fs:8.5}); } }
   if(S.mode==="mount") for(let r=0;r<b.rails;r++) for(let i=0;i<SLOTS;i++){ if(devAt(r,i)) continue; const fits=!S.pick||freeAt(r,i,T[S.pick].w);
     s+=`<rect class="slot" data-slot="${r}:${i}" x="${G.X0+i*G.MW+3}" y="${devTop(r)}" width="${G.MW-6}" height="240" rx="4" style="${S.pick&&fits?"stroke:var(--blue);opacity:1":""}${S.pick&&!fits?";opacity:.2":""}"/>`+tx(G.X0+i*G.MW+G.MW/2,devTop(r)+130,String(r*12+i+1),{c:"lab",fs:10}); }

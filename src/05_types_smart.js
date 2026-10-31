@@ -38,9 +38,10 @@ defType("kr2",{name:"Реле крана 2-канальне", short:"Реле к
 defType("qfdc",{...brk, name:"Автомат DC 2P", short:"Автомат DC", cat:"СЕС", w:2, pre:"QF",
   terms:[{k:"p1",s:"top",r:"DC+",l:"+"},{k:"m1",s:"top",r:"DC-",l:"−"},{k:"p2",s:"bot",r:"DC+",l:"+"},{k:"m2",s:"bot",r:"DC-",l:"−"}],
   poles:[{a:"p1",b:"p2",r:"L"},{a:"m1",b:"m2",r:"L"}], ratings:["C16","C25","C32","C63","C125"], def:"C16", cap:"DC",
-  face(d,g){ return tx(g.cx,g.y+70,"DC 1000 В",{fs:7,fw:700})+breakerFace(d,g); }});
+  face(d,g){ return tx(g.cx,g.y+70,d.model||"DC 1000 В",{fs:7,fw:700})+breakerFace(d,g); }});
 defType("spdc",{name:"УЗІП DC 1000 В", short:"УЗІП DC", cat:"СЕС", w:2, pre:"FV",
   terms:[{k:"p",s:"top",r:"DC+",l:"+"},{k:"m",s:"top",r:"DC-",l:"−"},{k:"pe",s:"bot",r:"PE",l:"PE"}], cap:"Захист від імпульсів",
-  face(d,g){ return tx(g.cx,g.y+68,"УЗІП Т2 · DC",{fs:7,fw:700})+tx(g.cx,g.y+80,"Uc 1000 В · In 20 кА",{fs:6.3})
-    +[0,1].map(i=>`<rect x="${g.x+14+i*(g.w/2)}" y="${g.y+92}" width="${g.w/2-28}" height="36" rx="2" fill="#2a2d33"/><rect x="${g.x+18+i*(g.w/2)}" y="${g.y+120}" width="${g.w/2-36}" height="5" fill="#3fbf4a"/>`).join("")
-    +tx(g.cx,g.y+146,"індикатор: справний",{fs:6.5}); }});
+  face(d,g){ const worn=(d.wear||0)>=2, c=worn?"#e23b3b":"#3fbf4a";
+    return (d.model?`<rect x="${g.x+5}" y="${g.y+60}" width="${g.w-10}" height="104" rx="2" fill="#e8492f"/>`:"")+tx(g.cx,g.y+70,d.model||"УЗІП Т2 · DC",{fs:7,fw:700,fill:d.model?"#fff":undefined})+tx(g.cx,g.y+81,"Uc 1000 В · In 20 кА",{fs:6.3,fill:d.model?"#fff":undefined})
+    +[0,1].map(i=>`<rect x="${g.x+14+i*(g.w/2)}" y="${g.y+92}" width="${g.w/2-28}" height="36" rx="2" fill="#2a2d33"/><rect x="${g.x+18+i*(g.w/2)}" y="${g.y+100}" width="${g.w/2-36}" height="14" fill="${c}"/>`).join("")
+    +tx(g.cx,g.y+146,worn?"картридж замінити":"індикатор: справний",{fs:6.5,fw:worn?700:400,fill:d.model?"#fff":undefined}); }});
