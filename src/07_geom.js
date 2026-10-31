@@ -118,7 +118,7 @@ function render(){
     if(R.liveW.has(w.id)) s+=`<path class="flow" d="${d}" stroke-width="${Math.max(1.5,sw-2.5)}"/>`;
     for(const [x,y] of [pts[0],pts[pts.length-1]]) s+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--brass)"/>`;
     if(S.selWire===w.id){ const ends=[["a",pts[0]],["b",pts[pts.length-1]]]; for(const [e,[x,y]] of ends) s+=`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="var(--blue)" stroke-width="2.5"${S.moveEnd&&S.moveEnd.end===e?' stroke-dasharray="4 3"':""}/>`; }
-    if(S.mode==="wire"&&!S.moveEnd) s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
+    if(!S.moveEnd&&!S.demo) s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
   if(S.mode==="wire"){ for(const k of allTermKeys()){ const p=termPos(k); if(!p) continue;
       if(S.pend===k) s+=`<circle class="term-sel" cx="${p.x}" cy="${p.y}" r="14"/>`;
       else if(S.moveEnd){ const mw=wireById(S.moveEnd.id); if(mw&&kindFits(mw.kind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`; }

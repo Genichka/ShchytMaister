@@ -306,12 +306,8 @@ body.demo-on .toast{bottom:calc(min(38vh,100%) + 12px)}
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
 /* ===== Версія застосунку (з неї build.sh генерує version.json) ===== */
-const APP = { v:"3.2", date:"2026-10-31", notes:[
-  "Дріт: торкніться його — панель внизу з усіма діями",
-  "Перенести початок або кінець дроту на іншу клему",
-  "Змінити вид, колір ізоляції, переріз; переріз для всієї лінії одразу",
-  "Список «Усі дроти» і перемикання ◀ ▶ — зручно на телефоні",
-  "Перевірка кольорів: синій лише N, жовто-зелений лише PE" ] };
+const APP = { v:"3.2.1", date:"2026-10-31", notes:[
+  "Дріт можна вибрати дотиком у будь-якому режимі — застосунок сам перейде в «Проводку» і відкриє панель дроту" ] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1022,7 +1018,7 @@ function render(){
     if(R.liveW.has(w.id)) s+=`<path class="flow" d="${d}" stroke-width="${Math.max(1.5,sw-2.5)}"/>`;
     for(const [x,y] of [pts[0],pts[pts.length-1]]) s+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--brass)"/>`;
     if(S.selWire===w.id){ const ends=[["a",pts[0]],["b",pts[pts.length-1]]]; for(const [e,[x,y]] of ends) s+=`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="var(--blue)" stroke-width="2.5"${S.moveEnd&&S.moveEnd.end===e?' stroke-dasharray="4 3"':""}/>`; }
-    if(S.mode==="wire"&&!S.moveEnd) s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
+    if(!S.moveEnd&&!S.demo) s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
   if(S.mode==="wire"){ for(const k of allTermKeys()){ const p=termPos(k); if(!p) continue;
       if(S.pend===k) s+=`<circle class="term-sel" cx="${p.x}" cy="${p.y}" r="14"/>`;
       else if(S.moveEnd){ const mw=wireById(S.moveEnd.id); if(mw&&kindFits(mw.kind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`; }
@@ -1636,7 +1632,8 @@ document.addEventListener("click",e=>{
   if(!q(".tpl-dd")&&!$("tplMenu").hidden){ $("tplMenu").hidden=true; $("tplBtn").setAttribute("aria-expanded","false"); }
   if(el=q(".modes button")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; renderAll(); return; }
   if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }
-  if(el=q("[data-wire]")){ if(S.selWire===el.dataset.wire){ S.selWire=null; renderAll(); } else selectWire(el.dataset.wire); return; }
+  if(el=q("[data-wire]")){ const id=el.dataset.wire; if(S.mode!=="wire"){ S.mode="wire"; S.pend=null; S.pick=null; S.selDev=null; selectWire(id); renderAll(true); toast("Проводка: дріт вибрано — дії в панелі внизу"); return; }
+    if(S.selWire===id){ S.selWire=null; renderAll(); } else selectWire(id); return; }
   if(el=q("[data-press]")){ if(S.mode==="wire") return; livePress(devById(el.dataset.press)); return; }
   if(el=q("[data-lever]")){ if(S.mode==="wire") return; const d=devById(el.dataset.lever), t=T[d.type];
     if(t.tap){ if(t.tap(d)) commit(false); return; }
