@@ -69,7 +69,8 @@ function devSVG(d){
   s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"/><rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"/>`;
   const sr=t.terms.filter(q=>q.s==="top").length>w/27?9:11;
   for(const tm of t.terms){ const X=termX(d,tm);
-    if(tm.s==="top") s+=screw(X,y+22,sr)+tx(X,y+42,tm.l,{fs:6.8}); else s+=screw(X,y+H-22,sr)+tx(X,y+H-36,tm.l,{fs:6.8}); }
+    if(tm.s==="top") s+=screw(X,y+22,sr)+tx(X,y+42,tm.l,{fs:6.8});
+    else s+=screw(X,y+H-22,sr)+(Math.abs(X-cx)<w/5 ? tx(X+sr+3,y+H-19,tm.l,{fs:6.8,a:"start"}) : tx(X,y+H-36,tm.l,{fs:6.8})); }  // клема посередині — підпис збоку, щоб не налазив на наклейку
   s+=tx(cx,y+56,"EnergyUA",{fs:7,fw:700});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   const des=desig(d), pw=Math.max(38,des.length*7+12);
