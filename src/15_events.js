@@ -64,7 +64,7 @@ document.addEventListener("click",e=>{
     if(q("#devDel")){ removeDev(d); return; } }
   if(q("#sheetClose")){ S.selDev=null; renderAll(false); return; }
   if(q("#btnCheck")){ checkNow(); return; }
-  if(q("#zIn")){ S.zoom=Math.min(2.5,S.zoom+0.5); renderAll(false); return; }
+  if(q("#zIn")){ S.zoom=Math.min(4,S.zoom+0.5); renderAll(false); return; }
   if(q("#zOut")){ S.zoom=Math.max(1,S.zoom-0.5); renderAll(false); return; }
   if(q("#zFit")){ S.zoom=1; renderAll(false); return; }
 });
