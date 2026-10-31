@@ -19,6 +19,11 @@ function runChecks(){
   let roleErr=0; const cnt={};
   for(const w of S.wires){ for(const k of [w.a,w.b]){ cnt[k]=(cnt[k]||0)+1; const r=termRole(k);
       if(r&&!kindFits(w.kind,r)){ roleErr++; add("e",`Провід ${WK[w.kind][0]} на клемі ${r==="C"?"керування":r}`,`${termName(k)}: вид дроту не відповідає призначенню клеми.`); } } }
+  for(const w of S.wires){ if(!w.col) continue; const c=w.col, nm=WCOL[c][0].toLowerCase(), where=`${termName(w.a)} → ${termName(w.b)}`;
+    if((PHK.includes(w.kind)||w.kind==="C")&&(c==="blue"||c==="pe")){ roleErr++; add("e",`Фаза в ${nm} ізоляції`,where+": синій колір — лише для N, жовто-зелений — лише для PE."); }
+    else if(w.kind==="N"&&c!=="blue") add("w",`Нуль N у ${nm} ізоляції`,where+": нульовий робочий провідник позначають синім.");
+    else if(w.kind==="PE"&&c!=="pe"){ roleErr++; add("e",`PE у ${nm} ізоляції`,where+": захисний провідник — лише жовто-зелений."); }
+    else if(w.kind!=="PE"&&c==="pe"){ roleErr++; add("e","Жовто-зелений провід не на PE",where+": цей колір дозволений лише для захисного провідника."); } }
   if(!roleErr&&S.wires.length) add("ok","Кольори дротів відповідають клемам","Фаза, нуль (синій), PE (жовто-зелений), керування, DC + і −.");
   for(const [k,n] of Object.entries(cnt)) if(n>2&&!/^x(n|pe):/.test(k)) add("w",`${termName(k)}: ${n} дроти під одним гвинтом`,"Більше двох дротів під клемою — ненадійний контакт. Використайте шину або клемник.");
   for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до апарата або шини."); }

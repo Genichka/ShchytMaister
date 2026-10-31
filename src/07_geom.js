@@ -110,16 +110,18 @@ function render(){
         s+=`<path d="M${X} ${B+12} V${enclB()+6+k*3} H${cx-12+k*5} V${fy}" fill="none" stroke="#6b7380" stroke-width="2.4" stroke-linejoin="round"/>`; k++; }
       s+=`<g data-field="${f.id}" style="cursor:pointer">${ft.draw(f,x,fy)}</g>`+(S.selDev===f.id?`<rect x="${x-3}" y="${fy-3}" width="${ft.fw+6}" height="156" rx="10" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`:""); } }
   const P=route();
-  for(const w of S.wires){ const pts=P[w.id]; if(!pts) continue; const d=rpath(pts), sw=SW[w.sec]||4, col=WK[w.kind]?WK[w.kind][1]:"#888";
-    if(S.selWire===w.id) s+=`<path class="wsel" d="${d}" stroke-width="${sw+9}"/>`;
-    s+=`<path class="wire" d="${d}" stroke="${w.kind==="L2"||w.kind==="DC-"?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
-    if(w.kind==="PE") s+=`<path class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
+  for(const w of S.wires){ const pts=P[w.id]; if(!pts) continue; const d=rpath(pts), sw=SW[w.sec]||4, col=wHex(w), pe=wColKey(w)==="pe";
+    if(S.selWire===w.id) s+=`<path class="wsel${S.moveEnd?" moving":""}" d="${d}" stroke-width="${sw+10}"/>`;
+    s+=`<path class="wire" d="${d}" stroke="${wDark(w)?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
+    if(pe) s+=`<path class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
     else s+=`<path class="wire" d="${d}" stroke="${col}" stroke-width="${sw}"/>`;
     if(R.liveW.has(w.id)) s+=`<path class="flow" d="${d}" stroke-width="${Math.max(1.5,sw-2.5)}"/>`;
     for(const [x,y] of [pts[0],pts[pts.length-1]]) s+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--brass)"/>`;
-    if(S.mode==="wire") s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
+    if(S.selWire===w.id){ const ends=[["a",pts[0]],["b",pts[pts.length-1]]]; for(const [e,[x,y]] of ends) s+=`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="var(--blue)" stroke-width="2.5"${S.moveEnd&&S.moveEnd.end===e?' stroke-dasharray="4 3"':""}/>`; }
+    if(S.mode==="wire"&&!S.moveEnd) s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
   if(S.mode==="wire"){ for(const k of allTermKeys()){ const p=termPos(k); if(!p) continue;
       if(S.pend===k) s+=`<circle class="term-sel" cx="${p.x}" cy="${p.y}" r="14"/>`;
+      else if(S.moveEnd){ const mw=wireById(S.moveEnd.id); if(mw&&kindFits(mw.kind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`; }
       else if(S.pend&&kindFits(S.wireKind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`;
       s+=`<circle class="term-hit" data-term="${k}" cx="${p.x}" cy="${p.y}" r="15"/>`; } }
   svg.innerHTML=s;

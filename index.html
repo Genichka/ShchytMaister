@@ -139,7 +139,20 @@ select.btn{padding-right:28px}
 .flow{fill:none;stroke:#fff;stroke-linecap:round;stroke-dasharray:2 14;opacity:.75;animation:flow .9s linear infinite}
 @keyframes flow{to{stroke-dashoffset:-16}}
 .wsel{fill:none;stroke:var(--blue);opacity:.45;stroke-linecap:round;stroke-linejoin:round}
-.wire-hit{fill:none;stroke:transparent;stroke-width:16;cursor:pointer}
+.wire-hit{fill:none;stroke:transparent;stroke-width:22;cursor:pointer}
+.wsel.moving{stroke:var(--orange);opacity:.55}
+.wends{display:flex;flex-direction:column;gap:4px}.wend{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:3px;padding:4px 6px}
+.wend.on{border-color:var(--orange);background:color-mix(in srgb,var(--orange) 10%,transparent)}.wend .lbl{min-width:58px}
+.wterm{flex:1;min-width:0;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wend .btn{min-height:30px;padding:3px 10px;font-size:12.5px}
+.wmove{font-size:13px;color:var(--orange);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wwarn{margin:0;font-size:12.5px;color:var(--red)}
+.wlist{display:flex;flex-direction:column;max-height:46vh;overflow:auto;border-top:1px solid var(--line)}
+.wli{display:flex;align-items:center;gap:8px;background:none;border:0;border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;color:var(--fg)}
+.wli[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 14%,transparent)}
+.wli-t{display:flex;flex-direction:column;min-width:0}.wli-t b{font-size:12.5px;font-weight:600}.wli-t small{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet{max-height:52vh;overflow:auto}
+.sheet .chip{min-height:30px;padding:3px 8px;font-size:12.5px}.sheet .row{gap:5px}.sheet .sw{width:14px}
+.sheet .sheet-h{position:sticky;top:-12px;background:var(--panel);z-index:1;padding:4px 0}
 .heat{animation:heat 1s ease-in-out infinite}
 @keyframes heat{50%{opacity:.35}}
 @media (prefers-reduced-motion: reduce){.flow,.heat{animation:none}}
@@ -293,10 +306,12 @@ body.demo-on .toast{bottom:calc(min(38vh,100%) + 12px)}
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
 /* ===== Версія застосунку (з неї build.sh генерує version.json) ===== */
-const APP = { v:"3.1", date:"2026-10-31", notes:[
-  "Помічник: кнопка кроку показує лише потрібні апарати — вступні автомати, реле, ПЗВ, групові автомати",
-  "Варіанти одразу з номіналами (C25, C32, B16…) і підказкою, для чого вони",
-  "«Показати всі апарати» повертає повний каталог" ] };
+const APP = { v:"3.2", date:"2026-10-31", notes:[
+  "Дріт: торкніться його — панель внизу з усіма діями",
+  "Перенести початок або кінець дроту на іншу клему",
+  "Змінити вид, колір ізоляції, переріз; переріз для всієї лінії одразу",
+  "Список «Усі дроти» і перемикання ◀ ▶ — зручно на телефоні",
+  "Перевірка кольорів: синій лише N, жовто-зелений лише PE" ] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -999,16 +1014,18 @@ function render(){
         s+=`<path d="M${X} ${B+12} V${enclB()+6+k*3} H${cx-12+k*5} V${fy}" fill="none" stroke="#6b7380" stroke-width="2.4" stroke-linejoin="round"/>`; k++; }
       s+=`<g data-field="${f.id}" style="cursor:pointer">${ft.draw(f,x,fy)}</g>`+(S.selDev===f.id?`<rect x="${x-3}" y="${fy-3}" width="${ft.fw+6}" height="156" rx="10" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`:""); } }
   const P=route();
-  for(const w of S.wires){ const pts=P[w.id]; if(!pts) continue; const d=rpath(pts), sw=SW[w.sec]||4, col=WK[w.kind]?WK[w.kind][1]:"#888";
-    if(S.selWire===w.id) s+=`<path class="wsel" d="${d}" stroke-width="${sw+9}"/>`;
-    s+=`<path class="wire" d="${d}" stroke="${w.kind==="L2"||w.kind==="DC-"?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
-    if(w.kind==="PE") s+=`<path class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
+  for(const w of S.wires){ const pts=P[w.id]; if(!pts) continue; const d=rpath(pts), sw=SW[w.sec]||4, col=wHex(w), pe=wColKey(w)==="pe";
+    if(S.selWire===w.id) s+=`<path class="wsel${S.moveEnd?" moving":""}" d="${d}" stroke-width="${sw+10}"/>`;
+    s+=`<path class="wire" d="${d}" stroke="${wDark(w)?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
+    if(pe) s+=`<path class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
     else s+=`<path class="wire" d="${d}" stroke="${col}" stroke-width="${sw}"/>`;
     if(R.liveW.has(w.id)) s+=`<path class="flow" d="${d}" stroke-width="${Math.max(1.5,sw-2.5)}"/>`;
     for(const [x,y] of [pts[0],pts[pts.length-1]]) s+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--brass)"/>`;
-    if(S.mode==="wire") s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
+    if(S.selWire===w.id){ const ends=[["a",pts[0]],["b",pts[pts.length-1]]]; for(const [e,[x,y]] of ends) s+=`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="var(--blue)" stroke-width="2.5"${S.moveEnd&&S.moveEnd.end===e?' stroke-dasharray="4 3"':""}/>`; }
+    if(S.mode==="wire"&&!S.moveEnd) s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
   if(S.mode==="wire"){ for(const k of allTermKeys()){ const p=termPos(k); if(!p) continue;
       if(S.pend===k) s+=`<circle class="term-sel" cx="${p.x}" cy="${p.y}" r="14"/>`;
+      else if(S.moveEnd){ const mw=wireById(S.moveEnd.id); if(mw&&kindFits(mw.kind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`; }
       else if(S.pend&&kindFits(S.wireKind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`;
       s+=`<circle class="term-hit" data-term="${k}" cx="${p.x}" cy="${p.y}" r="15"/>`; } }
   svg.innerHTML=s;
@@ -1034,6 +1051,11 @@ function runChecks(){
   let roleErr=0; const cnt={};
   for(const w of S.wires){ for(const k of [w.a,w.b]){ cnt[k]=(cnt[k]||0)+1; const r=termRole(k);
       if(r&&!kindFits(w.kind,r)){ roleErr++; add("e",`Провід ${WK[w.kind][0]} на клемі ${r==="C"?"керування":r}`,`${termName(k)}: вид дроту не відповідає призначенню клеми.`); } } }
+  for(const w of S.wires){ if(!w.col) continue; const c=w.col, nm=WCOL[c][0].toLowerCase(), where=`${termName(w.a)} → ${termName(w.b)}`;
+    if((PHK.includes(w.kind)||w.kind==="C")&&(c==="blue"||c==="pe")){ roleErr++; add("e",`Фаза в ${nm} ізоляції`,where+": синій колір — лише для N, жовто-зелений — лише для PE."); }
+    else if(w.kind==="N"&&c!=="blue") add("w",`Нуль N у ${nm} ізоляції`,where+": нульовий робочий провідник позначають синім.");
+    else if(w.kind==="PE"&&c!=="pe"){ roleErr++; add("e",`PE у ${nm} ізоляції`,where+": захисний провідник — лише жовто-зелений."); }
+    else if(w.kind!=="PE"&&c==="pe"){ roleErr++; add("e","Жовто-зелений провід не на PE",where+": цей колір дозволений лише для захисного провідника."); } }
   if(!roleErr&&S.wires.length) add("ok","Кольори дротів відповідають клемам","Фаза, нуль (синій), PE (жовто-зелений), керування, DC + і −.");
   for(const [k,n] of Object.entries(cnt)) if(n>2&&!/^x(n|pe):/.test(k)) add("w",`${termName(k)}: ${n} дроти під одним гвинтом`,"Більше двох дротів під клемою — ненадійний контакт. Використайте шину або клемник.");
   for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до апарата або шини."); }
@@ -1498,7 +1520,7 @@ function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) re
 
 function hint(){ let h="";
   if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b> (${T[S.pick].w} мод.): торкніться вільного місця на рейці.`:"Оберіть апарат нижче і поставте на рейку. Торкніться апарата, щоб змінити його налаштування.";
-  if(S.mode==="wire") h=S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
+  if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
   $("hint").innerHTML=h; }
 function ctlHTML(c,i){
@@ -1521,10 +1543,10 @@ function renderTools(){ const el=$("tools"), gh=(typeof guideHTML==="function"?g
     s+=`<details class="dd2" id="fldDD"${S.fldOpen?" open":""}><summary><span>Обладнання поза щитом (XT1)</span><span class="cnt">${S.field.length?S.field.length+" підключено":"двигуни, бойлер, PV…"}</span></summary><div class="cat"><div class="cat-g">`
       +FIELD_LIB.map(L=>`<button class="cat-i" data-fadd="${L.type}"><span>${esc(L.name)}</span><small>+${Object.keys(L.t).length} кл.</small></button>`).join("")+`</div></div></details>`;
     s+=`<div class="row"><span class="lbl">Шини</span><button class="chip" id="combBtn">${S.comb?"Зняти гребінку":"Поставити гребінку 1P"}</button><button class="btn" id="undoBtn" ${S.hist&&S.hist.length?"":"disabled"}>↶ Скасувати</button></div><p class="hint" style="margin:0">Гребінка з’єднує верхні клеми автоматів 1P поруч. Торкніться апарата або обладнання, щоб змінити підпис, номінал чи прибрати його.</p>`; }
-  if(S.mode==="wire"){ const sw=S.selWire&&S.wires.find(w=>w.id===S.selWire), kind=sw?sw.kind:S.wireKind, sec=sw?sw.sec:S.wireSec;
-    s+=`<div class="row"><span class="lbl">Провід</span>`+Object.keys(WK).map(x=>`<button class="chip" data-kind="${x}" aria-pressed="${kind===x}"><span class="sw" style="background:${x==="PE"?"linear-gradient(90deg,var(--wPEy) 50%,var(--wPEg) 50%)":WK[x][1]}"></span>${WK[x][0]}</button>`).join("")+`</div>`;
+  if(S.mode==="wire"){ const kind=S.wireKind, sec=S.wireSec;
+    s+=`<div class="row"><span class="lbl">Новий дріт</span>`+Object.keys(WK).map(x=>`<button class="chip" data-kind="${x}" aria-pressed="${kind===x}"><span class="sw" style="background:${x==="PE"?"linear-gradient(90deg,var(--wPEy) 50%,var(--wPEg) 50%)":WK[x][1]}"></span>${WK[x][0]}</button>`).join("")+`</div>`;
     s+=`<div class="row"><span class="lbl">Переріз</span>`+SECS.map(x=>`<button class="chip mono" data-sec="${x}" aria-pressed="${sec===x}">${fmt(x,x%1?1:0)}</button>`).join("")+`<span class="hint" style="flex:0 0 auto">мм²</span></div>`;
-    if(sw) s+=`<div class="row"><span class="lbl">Вибрано</span><span class="mono" style="font-size:12.5px;min-width:0;flex:1 1 200px">${WK[sw.kind][0]} ${fmt(sw.sec,sw.sec%1?1:0)} мм²: ${esc(termName(sw.a))} → ${esc(termName(sw.b))}</span><button class="btn danger" id="delWire">Видалити дріт</button></div>`;
+    s+=wireListHTML();
     s+=`<div class="row"><button class="btn" id="undoBtn" ${S.hist&&S.hist.length?"":"disabled"}>↶ Скасувати</button><button class="btn danger" id="clearWires" ${S.wires.length?"":"disabled"}>${clearArm>Date.now()?"Натисніть ще раз для очищення":"Прибрати всі дроти"}</button></div>`; }
   if(S.mode==="test"){ const dm=S.tplObj&&S.tplObj.demo||{controls:[{type:"src",id:S.board.inputs[0].id}],script:[]};
     s+=`<p class="tplinfo"><b>${esc(S.tplObj?S.tplObj.name:"")}.</b> ${esc(S.tplObj?S.tplObj.info:"")}</p>`;
@@ -1552,7 +1574,8 @@ function totalKW(){ const R=S.sim; if(!R) return 0; let p=0; for(const l of R.lo
 function renderSummary(){ const mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
   $("summary").innerHTML=[["Модулі",`${mods}<small> / ${SLOTS*S.board.rails}</small>`],["Апарати",S.devices.length],["Дроти",S.wires.length],["Навантаження",`${fmt(totalKW(),2)}<small> кВт</small>`]]
     .map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join(""); }
-function renderSheet(){ const f=S.selDev&&S.field.find(x=>x.id===S.selDev); if(f){ renderFieldSheet(f); return; }
+function renderSheet(){ const sw=S.mode==="wire"&&S.selWire&&wireById(S.selWire); if(sw){ renderWireSheet(sw); return; }
+  const f=S.selDev&&S.field.find(x=>x.id===S.selDev); if(f){ renderFieldSheet(f); return; }
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), sh=$("sheet"); if(!d){ sh.hidden=true; return; } sh.hidden=false; const t=T[d.type];
   let s=`<div class="sheet-h"><b>${desig(d)} · ${t.name}</b><button class="btn" id="sheetClose">Готово</button></div>`;
   s+=`<div class="row nowrap"><span class="lbl">Підпис</span><input class="inp" id="capIn" data-capfor="${d.id}" value="${esc(d.group?d.group.name:(d.cap||t.cap||t.short))}" maxlength="40" aria-label="Підпис (наклейка)"></div>`;
@@ -1593,7 +1616,7 @@ function placeDev(type,r,slot){ const w=T[type].w;
   S.pick=null; S.pickRating=null; S.pickExtra=null; toast(`${desig(d)} ${d.rating?d.rating+(T[type].unit||"")+" ":""}встановлено`,"ok"); commit(); }
 function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>!w.a.startsWith(d.id+":")&&!w.b.startsWith(d.id+":")); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
 function termTap(key){
-  if(!S.pend){ S.pend=key; S.selWire=null; renderAll(); return; }
+  if(!S.pend){ S.pend=key; S.selWire=null; S.moveEnd=null; renderAll(); return; }
   if(S.pend===key){ S.pend=null; renderAll(); return; }
   const a=S.pend, b=key; S.pend=null;
   if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){ toast("Такий дріт уже є","w"); renderAll(); return; }
@@ -1611,9 +1634,9 @@ function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw
 document.addEventListener("click",e=>{
   const q=s=>e.target.closest(s); let el;
   if(!q(".tpl-dd")&&!$("tplMenu").hidden){ $("tplMenu").hidden=true; $("tplBtn").setAttribute("aria-expanded","false"); }
-  if(el=q(".modes button")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; renderAll(); return; }
-  if(el=q("[data-term]")){ termTap(el.dataset.term); return; }
-  if(el=q("[data-wire]")){ S.selWire=S.selWire===el.dataset.wire?null:el.dataset.wire; renderAll(); return; }
+  if(el=q(".modes button")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; renderAll(); return; }
+  if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }
+  if(el=q("[data-wire]")){ if(S.selWire===el.dataset.wire){ S.selWire=null; renderAll(); } else selectWire(el.dataset.wire); return; }
   if(el=q("[data-press]")){ if(S.mode==="wire") return; livePress(devById(el.dataset.press)); return; }
   if(el=q("[data-lever]")){ if(S.mode==="wire") return; const d=devById(el.dataset.lever), t=T[d.type];
     if(t.tap){ if(t.tap(d)) commit(false); return; }
@@ -1634,8 +1657,8 @@ document.addEventListener("click",e=>{
 
   if(q("#combBtn")){ if(S.comb) S.comb=null; else { const p=S.devices.filter(d=>d.type==="qf1p"); if(p.length<2){ toast("Потрібно щонайменше два автомати 1P","w"); return; }
       const r=p[0].rail||0, sl=p.filter(d=>(d.rail||0)===r).map(d=>d.slot); S.comb={rail:r,from:Math.min(...sl),to:Math.max(...sl)}; } commit(); return; }
-  if(el=q("[data-kind]")){ const sw=S.selWire&&S.wires.find(w=>w.id===S.selWire); if(sw){ sw.kind=el.dataset.kind; commit(); } else { S.wireKind=el.dataset.kind; renderAll(); } return; }
-  if(el=q("[data-sec]")){ const v=+el.dataset.sec, sw=S.selWire&&S.wires.find(w=>w.id===S.selWire); if(sw){ sw.sec=v; commit(); } else { S.wireSec=v; renderAll(); } return; }
+  if(el=q("[data-kind]")){ S.wireKind=el.dataset.kind; renderAll(); return; }
+  if(el=q("[data-sec]")){ S.wireSec=+el.dataset.sec; renderAll(); return; }
   if(q("#delWire")){ S.wires=S.wires.filter(w=>w.id!==S.selWire); S.selWire=null; commit(); return; }
   if(q("#clearWires")){ if(clearArm>Date.now()){ S.wires=[]; clearArm=0; S.selWire=null; commit(); } else { clearArm=Date.now()+3000; renderTools(); setTimeout(()=>{ if(S.mode==="wire") renderTools(); },3100); } return; }
   if(el=q("[data-srcon]")){ const s=S.src[el.dataset.srcon]; s.on=!s.on; if(s.on) s.blown=false; logp(s.on?"ok":"w",`${(S.board.inputs.find(i=>i.id===el.dataset.srcon)||{}).label}: ${s.on?"напругу подано":"напругу знято"}`); commit(false); return; }
@@ -2051,6 +2074,55 @@ document.addEventListener("input",e=>{ const t=e.target;
   if(t.id==="wzXn"){ WZ.xn=+t.value; $("wzXnO").textContent=t.value; } if(t.id==="wzXpe"){ WZ.xpe=+t.value; $("wzXpeO").textContent=t.value; } });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("dlg").hidden) closeDlg(); if(e.key==="Enter"&&e.target.id==="wzName"){ e.preventDefault(); $("dlgCard").querySelector("[data-wz=next]")?.click(); } });
 document.addEventListener("toggle",e=>{ if(e.target.id==="fldDD") S.fldOpen=e.target.open; },true);
+/* ===== Керування дротами: вид, колір ізоляції, переріз, перенесення кінців, видалення ===== */
+const WCOL = { red:["Червоний","#e0352b"], brown:["Коричневий","#8b5a2b"], black:["Чорний","#26282c"], grey:["Сірий","#9aa0a6"],
+  blue:["Синій","#2f6fdf"], pe:["Жовто-зелений",null], orange:["Помаранчевий","#f08c2e"], white:["Білий","#eef0f2"] };
+const wColKey = w => w.col || (w.kind==="PE" ? "pe" : null);
+const wHex = w => { const c=w.col; if(c) return WCOL[c][1]; return WK[w.kind] ? WK[w.kind][1] : "#888"; };
+const wDark = w => ["black"].includes(w.col) || (!w.col && (w.kind==="L2"||w.kind==="DC-"));
+const wireById = id => S.wires.find(w=>w.id===id);
+const wNo = w => S.wires.indexOf(w)+1;
+const swatch = (kindOrCol,isCol) => { const pe=isCol?kindOrCol==="pe":kindOrCol==="PE";
+  const bg=pe?"linear-gradient(90deg,var(--wPEy) 50%,var(--wPEg) 50%)":(isCol?WCOL[kindOrCol][1]:WK[kindOrCol][1]); return `<span class="sw" style="background:${bg}"></span>`; };
+function wireLabel(w){ return `${WK[w.kind][0]} · ${fmt(w.sec,w.sec%1?1:0)} мм²${w.col?" · "+WCOL[w.col][0].toLowerCase():""}`; }
+function selectWire(id){ S.selWire=id; S.moveEnd=null; S.pend=null; S.selDev=null; renderAll(false); renderTools(); }
+function renderWireSheet(w){ const sh=$("sheet"); sh.hidden=false; const me=S.moveEnd&&S.moveEnd.id===w.id?S.moveEnd.end:null, colKey=wColKey(w);
+  let s=`<div class="sheet-h"><b>Дріт ${wNo(w)} з ${S.wires.length} · ${esc(wireLabel(w))}</b><div class="row nowrap"><button class="btn" data-wnav="-1" aria-label="Попередній дріт">◀</button><button class="btn" data-wnav="1" aria-label="Наступний дріт">▶</button><button class="btn" id="wClose">Готово</button></div></div>`;
+  if(me) s+=`<div class="wmove">Торкніться нової клеми для ${me==="a"?"початку":"кінця"} дроту. <button class="btn" data-wmove="cancel">Скасувати перенесення</button></div>`;
+  s+=`<div class="wends">${["a","b"].map(e=>`<div class="wend${me===e?" on":""}"><span class="lbl">${e==="a"?"Початок":"Кінець"}</span><span class="wterm">${esc(termName(w[e]))}</span><button class="btn" data-wmove="${e}">Перенести</button></div>`).join("")}</div>`;
+  s+=`<div class="row"><span class="lbl">Вид</span>`+Object.keys(WK).map(x=>`<button class="chip" data-skind="${x}" aria-pressed="${w.kind===x}">${swatch(x)}${WK[x][0]}</button>`).join("")+`</div>`;
+  s+=`<div class="row"><span class="lbl">Колір</span><button class="chip" data-scol="" aria-pressed="${!w.col}">За видом</button>`+Object.keys(WCOL).map(c=>`<button class="chip" data-scol="${c}" aria-pressed="${w.col===c}">${swatch(c,true)}${WCOL[c][0]}</button>`).join("")+`</div>`;
+  s+=`<div class="row"><span class="lbl">Переріз</span>`+SECS.map(x=>`<button class="chip mono" data-ssec="${x}" aria-pressed="${w.sec===x}">${fmt(x,x%1?1:0)}</button>`).join("")+`<span class="hint" style="flex:0 0 auto">мм²</span></div>`;
+  s+=`<div class="row"><button class="btn" data-wall="sec">Цей переріз — усім дротам лінії</button><button class="btn danger" data-wdel>Видалити дріт</button></div>`;
+  if(colKey&&((PHK.includes(w.kind)||w.kind==="C")&&(colKey==="blue"||colKey==="pe")||w.kind==="N"&&colKey!=="blue"||w.kind==="PE"&&colKey!=="pe"||w.kind!=="PE"&&colKey==="pe"))
+    s+=`<p class="wwarn">Колір не за правилами: синій — лише нуль N, жовто-зелений — лише PE. Перевірка схеми покаже це як помилку.</p>`;
+  $("sheetIn").innerHTML=s; }
+function wireListHTML(){ if(!S.wires.length) return "";
+  return `<details class="dd2" id="wireDD"${S.wListOpen?" open":""}><summary><span>Усі дроти</span><span class="cnt">${S.wires.length}</span></summary><div class="wlist">`
+    +S.wires.map((w,i)=>`<button class="wli" data-wsel="${w.id}" aria-pressed="${S.selWire===w.id}">${swatch(w.col||w.kind,!!w.col)}<span class="wli-t"><b>${i+1}. ${esc(wireLabel(w))}</b><small>${esc(termName(w.a))} → ${esc(termName(w.b))}</small></span></button>`).join("")+`</div></details>`; }
+function lineWires(w){ // дроти того ж виду, з’єднані без апаратів (одна «лінія»)
+  const f=build({allOpen:true}), r=f(w.a); return S.wires.filter(x=>x.kind===w.kind&&f(x.a)===r); }
+function moveEnd(key){ const m=S.moveEnd, w=wireById(m.id); if(!w){ S.moveEnd=null; return; }
+  const other=m.end==="a"?w.b:w.a;
+  if(key===other){ toast("Обидва кінці не можуть бути на одній клемі","w"); return; }
+  if(S.wires.some(x=>x!==w&&((x.a===key&&x.b===other)||(x.b===key&&x.a===other)))){ toast("Такий дріт уже є","w"); return; }
+  if(S.wires.filter(x=>x!==w&&(x.a===key||x.b===key)).length>=2&&!/^x(n|pe):/.test(key)) toast("Під одну клему — не більше двох дротів","w");
+  w[m.end]=key; S.moveEnd=null; toast(`Перенесено на ${termName(key)}`,"ok"); commit(false); renderTools(); }
+document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el; const w=S.selWire&&wireById(S.selWire);
+  if(el=q("[data-wsel]")){ selectWire(el.dataset.wsel); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  if(!w) return;
+  if(el=q("[data-skind]")){ w.kind=el.dataset.skind; commit(false); renderTools(); return; }
+  if(el=q("[data-scol]")){ w.col=el.dataset.scol||undefined; if(!w.col) delete w.col; commit(false); renderTools(); return; }
+  if(el=q("[data-ssec]")){ w.sec=+el.dataset.ssec; commit(false); renderTools(); return; }
+  if(q("[data-wall]")){ const L=lineWires(w); L.forEach(x=>x.sec=w.sec); toast(`Переріз ${fmt(w.sec,w.sec%1?1:0)} мм² — для ${L.length} дрот${L.length===1?"у":"ів"} лінії`,"ok"); commit(false); renderTools(); return; }
+  if(q("[data-wdel]")){ S.wires=S.wires.filter(x=>x!==w); S.selWire=null; S.moveEnd=null; toast("Дріт видалено. «Скасувати» поверне його"); commit(); return; }
+  if(el=q("[data-wmove]")){ const v=el.dataset.wmove; S.moveEnd=v==="cancel"?null:{id:w.id,end:v}; S.pend=null; renderAll(false); return; }
+  if(el=q("[data-wnav]")){ const i=S.wires.indexOf(w), n=S.wires.length; selectWire(S.wires[(i+(+el.dataset.wnav)+n)%n].id); return; }
+  if(q("#wClose")){ S.selWire=null; S.moveEnd=null; renderAll(true); return; } });
+document.addEventListener("keydown",e=>{ if(S.mode!=="wire"||!S.selWire||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if(e.key==="Delete"||e.key==="Backspace"){ e.preventDefault(); document.querySelector("[data-wdel]")?.click(); }
+  if(e.key==="Escape"){ S.selWire=null; S.moveEnd=null; renderAll(true); } });
+document.addEventListener("toggle",e=>{ if(e.target.id==="wireDD") S.wListOpen=e.target.open; },true);
 /* ===== Старт ===== */
 (function init(){
   const db=projDB(); let ok=false;
