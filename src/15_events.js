@@ -2,8 +2,10 @@
 function placeDev(type,r,slot){ const w=T[type].w;
   if(!freeAt(r,slot,w)){ let alt=null; for(let rr=0;rr<S.board.rails&&alt===null;rr++) for(let i=0;i<SLOTS;i++) if(freeAt(rr,i,w)){ alt=[rr,i]; break; }
     if(!alt){ toast("На рейках немає місця для "+w+" мод.","w"); return; } [r,slot]=alt; }
-  const n=groupsOf().length; const d=mkDev(type,r,slot,null,T[type].group?{group:mkGroup(n,"Група "+(n+1),2.5,[])}:null); S.devices.push(d);
-  S.pick=null; toast(`${desig(d)} встановлено`,"ok"); commit(); }
+  const n=groupsOf().length, ex=Object.assign({},S.pickExtra||{}), asG=ex.asGroup; delete ex.asGroup;
+  if(T[type].group&&(!T[type].groupOpt||asG)) ex.group=mkGroup(n,"Група "+(n+1),2.5,[]);
+  const d=mkDev(type,r,slot,S.pickRating||null,ex); S.devices.push(d);
+  S.pick=null; S.pickRating=null; S.pickExtra=null; toast(`${desig(d)} ${d.rating?d.rating+(T[type].unit||"")+" ":""}встановлено`,"ok"); commit(); }
 function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>!w.a.startsWith(d.id+":")&&!w.b.startsWith(d.id+":")); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
 function termTap(key){
   if(!S.pend){ S.pend=key; S.selWire=null; renderAll(); return; }
@@ -35,7 +37,10 @@ document.addEventListener("click",e=>{
     if(d.on&&!d.trip&&X.volt(k(d,"t1"),k(d,"t2"))>=150){ trip(d,"кнопка «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює, лише коли ПЗВ під напругою і ввімкнений","w"); return; }
   if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть апарат нижче"); return; }
   if(el=q("[data-dev]")){ if(S.mode==="wire") return; S.selDev=el.dataset.dev; renderAll(false); return; }
-  if(el=q("[data-pick]")){ S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.selDev=null; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); } renderAll(); return; }
+  if(el=q("[data-pick]")){ S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.pickRating=null; S.pickExtra=null; S.selDev=null; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); } renderAll(); return; }
+  if(el=q("[data-fpick]")){ const o=S.devFilter.opts[+el.dataset.fpick]; S.pick=o[0]; S.pickRating=o[1]||null; S.pickExtra=o[3]||null; S.selDev=null;
+    toast(`${o[2]}: торкніться вільного місця на рейці`); renderAll(); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  if(q("[data-fall]")){ S.devFilter=null; S.devOpen=true; renderAll(); return; }
   if(q("#tplBtn")){ const m=$("tplMenu"); if(m.hidden) renderTplMenu(); m.hidden=!m.hidden; $("tplBtn").setAttribute("aria-expanded",!m.hidden); return; }
   if(el=q("[data-tpl]")){ $("tplMenu").hidden=true; $("tplBtn").setAttribute("aria-expanded","false"); const key=el.dataset.tpl;
     if(key==="__new"){ confirmLeave(()=>openWizard(false)); return; }

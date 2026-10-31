@@ -17,7 +17,7 @@ function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) re
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
 function hint(){ let h="";
-  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}</b> (${T[S.pick].w} мод.): торкніться вільного місця на рейці.`:"Оберіть апарат нижче і поставте на рейку. Торкніться апарата, щоб змінити його налаштування.";
+  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b> (${T[S.pick].w} мод.): торкніться вільного місця на рейці.`:"Оберіть апарат нижче і поставте на рейку. Торкніться апарата, щоб змінити його налаштування.";
   if(S.mode==="wire") h=S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
   $("hint").innerHTML=h; }
@@ -30,9 +30,12 @@ function ctlHTML(c,i){
   if(c.type==="choice") return `<div class="row"><span class="lbl">${esc(c.label)}</span>`+c.opts.map(([v,l])=>`<button class="chip" data-ctl="${i}" data-v="${v}" aria-pressed="${c.get()===v}">${esc(l)}</button>`).join("")+`</div>`;
   if(c.type==="btn") return `<button class="btn ${c.cls||""}" data-ctl="${i}">${esc(c.label)}</button>`;
   return ""; }
-function renderTools(){ const el=$("tools"); let s="";
+function renderTools(){ const el=$("tools"), gh=(typeof guideHTML==="function"?guideHTML():""); let s="";
   if(S.mode==="mount"){
-    const listed=new Set(DEV_GROUPS.flatMap(g=>g[1])), rest=Object.keys(T).filter(x=>!listed.has(x));
+    const listed=new Set(DEV_GROUPS.flatMap(g=>g[1])), rest=Object.keys(T).filter(x=>!listed.has(x)), F=S.devFilter;
+    if(F) s+=`<details class="dd2 dd-f" id="devDD" open><summary><span>${esc(F.title)}: оберіть апарат</span><span class="cnt">${F.opts.length} варіант${F.opts.length===1?"":F.opts.length<5?"и":"ів"}</span></summary><div class="cat"><div class="cat-g">`
+      +F.opts.map((o,i)=>`<button class="cat-i" data-fpick="${i}" aria-pressed="${S.pick===o[0]&&(S.pickRating||null)===(o[1]||null)&&JSON.stringify(S.pickExtra||null)===JSON.stringify(o[3]||null)}"><span>${esc(o[2])}</span><small>${T[o[0]].w} мод.</small></button>`).join("")
+      +`</div></div><div class="row" style="padding:0 10px 10px"><button class="btn" data-fall>Показати всі апарати</button></div></details>`; else
     s+=`<details class="dd2" id="devDD"${S.devOpen?" open":""}><summary><span>${S.pick?"Ставимо: <b>"+esc(T[S.pick].short)+"</b>":"Додати апарат"}</span><span class="cnt">${Object.keys(T).length} апаратів</span></summary><div class="cat">`
       +[...DEV_GROUPS,...(rest.length?[["Інше",rest]]:[])].map(([g,ks])=>`<div class="cat-g"><div class="cat-h">${esc(g)}</div>`+ks.filter(x=>T[x]).map(x=>`<button class="cat-i" data-pick="${x}" aria-pressed="${S.pick===x}"><span>${esc(T[x].name)}</span><small>${T[x].w} мод.</small></button>`).join("")+`</div>`).join("")+`</div></details>`;
     s+=`<details class="dd2" id="fldDD"${S.fldOpen?" open":""}><summary><span>Обладнання поза щитом (XT1)</span><span class="cnt">${S.field.length?S.field.length+" підключено":"двигуни, бойлер, PV…"}</span></summary><div class="cat"><div class="cat-g">`
@@ -50,7 +53,7 @@ function renderTools(){ const el=$("tools"); let s="";
     s+=`<div class="ctl">`+dm.controls.map(ctlHTML).join("")+`</div>`;
     s+=`<div class="stl" id="stl"></div><div class="row"><button class="btn" id="allOn">Увімкнути всі апарати</button>${groupsOf().length?`<button class="btn" id="clrFaults" ${S.leak.size||S.short.size?"":"disabled"}>Прибрати аварії</button>`:""}</div>`;
     s+=`<div class="log" id="log" aria-live="polite"></div>`; }
-  el.innerHTML=(typeof guideHTML==="function"?guideHTML():"")+s; if(S.mode==="test") updateLive(); }
+  el.innerHTML=gh+s; if(S.mode==="test") updateLive(); }
 function gStatus(d){ const R=S.sim&&S.sim.g[d.id]; if(!R||!anySource()) return `<span class="pill off">Знеструмлено</span>`;
   if(R.phase&&R.neutral) return (R.U>U_MAX||R.U<U_MIN)?`<span class="pill bad">${Math.round(R.U)} В!</span>`:`<span class="pill ok">Під напругою</span>`;
   return `<span class="pill bad">${R.phase?"Немає N":"Немає фази"}</span>`; }
