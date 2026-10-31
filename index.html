@@ -1,4 +1,5 @@
 <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#111217"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>ЩитМайстер</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -223,7 +224,9 @@ select.btn{padding-right:28px}
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
 /* ===== Версія застосунку (з неї build.sh генерує version.json) ===== */
-const APP = { v:"2.4", date:"2026-10-31", notes:[
+const APP = { v:"2.5", date:"2026-10-31", notes:[
+  "Іконка застосунку: щит встановлюється на телефон як окрема програма",
+  "Працює без інтернету; нова версія ставиться лише після «Оновити зараз»",
   "Кнопка «Оновити»: нова версія встановлюється лише після вашого підтвердження",
   "Номер версії й дата в шапці; натисніть на них, щоб побачити, що нового",
   "Шаблон «PV комбайнер-бокс 2 входи / 2 виходи (600 В)» з двома MPPT і тінню на стрінгу",
@@ -1550,7 +1553,11 @@ setInterval(()=>{ if(!S.demo) return; S.demo.left-=0.25; if(S.demo.left<=0) demo
       if(cmp(remote.v,APP.v)>0){ btn.classList.add("has"); btn.title=`Доступна версія v${remote.v}`; if(!silent) show("new",remote); }
       else { btn.classList.remove("has"); btn.title="Перевірити оновлення"; if(!silent) toast(`У вас остання версія v${APP.v} від ${fmtD(APP.date)}`,"ok"); } }
     catch(e){ if(!silent) toast("Не вдалося перевірити оновлення. Перевірте підключення до інтернету.","w"); } }
-  function apply(){ save(); const u=new URL(location.href); u.searchParams.set("v",remote.v); location.replace(u.toString()); }
+  const swUpdate = () => new Promise((res,rej)=>{ const ch=new MessageChannel(); ch.port1.onmessage=e=>e.data&&e.data.ok?res():rej(new Error("sw"));
+    navigator.serviceWorker.controller.postMessage({type:"update"},[ch.port2]); setTimeout(()=>rej(new Error("timeout")),15000); });
+  async function apply(){ save(); toast("Завантажую нову версію…");
+    if(navigator.serviceWorker&&navigator.serviceWorker.controller){ try{ await swUpdate(); location.reload(); return; }catch(e){ toast("Не вдалося завантажити оновлення. Спробуйте пізніше.","w"); return; } }
+    const u=new URL(location.href); u.searchParams.set("v",remote.v); location.replace(u.toString()); }
   document.addEventListener("click",e=>{
     if(e.target.closest("#updBtn")){ check(false); return; }
     if(e.target.closest("#ver")){ show("cur",APP); return; }
@@ -1562,5 +1569,6 @@ setInterval(()=>{ if(!S.demo) return; S.demo.left-=0.25; if(S.demo.left<=0) demo
     localStorage.setItem("shchyt-ver",APP.v); }catch(e){}
   try{ const u=new URL(location.href); if(u.searchParams.has("v")){ u.searchParams.delete("v"); history.replaceState(null,"",u.toString()); } }catch(e){}
   setTimeout(()=>check(true),1500); setInterval(()=>check(true),30*60*1000);
+  if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)&&!/claude\.ai|claudeusercontent/.test(location.host)) navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
 </script></body></html>

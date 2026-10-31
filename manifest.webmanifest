@@ -1,0 +1,18 @@
+{
+  "name": "ЩитМайстер — симулятор електрощитів",
+  "short_name": "ЩитМайстер",
+  "description": "Симулятор складання електрощитів: апарати, проводка, перевірка схеми, демонстрації АВР, СЕС, двигунів і розумного будинку.",
+  "lang": "uk",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#111217",
+  "theme_color": "#111217",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

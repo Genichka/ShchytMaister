@@ -19,7 +19,11 @@
       if(cmp(remote.v,APP.v)>0){ btn.classList.add("has"); btn.title=`Доступна версія v${remote.v}`; if(!silent) show("new",remote); }
       else { btn.classList.remove("has"); btn.title="Перевірити оновлення"; if(!silent) toast(`У вас остання версія v${APP.v} від ${fmtD(APP.date)}`,"ok"); } }
     catch(e){ if(!silent) toast("Не вдалося перевірити оновлення. Перевірте підключення до інтернету.","w"); } }
-  function apply(){ save(); const u=new URL(location.href); u.searchParams.set("v",remote.v); location.replace(u.toString()); }
+  const swUpdate = () => new Promise((res,rej)=>{ const ch=new MessageChannel(); ch.port1.onmessage=e=>e.data&&e.data.ok?res():rej(new Error("sw"));
+    navigator.serviceWorker.controller.postMessage({type:"update"},[ch.port2]); setTimeout(()=>rej(new Error("timeout")),15000); });
+  async function apply(){ save(); toast("Завантажую нову версію…");
+    if(navigator.serviceWorker&&navigator.serviceWorker.controller){ try{ await swUpdate(); location.reload(); return; }catch(e){ toast("Не вдалося завантажити оновлення. Спробуйте пізніше.","w"); return; } }
+    const u=new URL(location.href); u.searchParams.set("v",remote.v); location.replace(u.toString()); }
   document.addEventListener("click",e=>{
     if(e.target.closest("#updBtn")){ check(false); return; }
     if(e.target.closest("#ver")){ show("cur",APP); return; }
@@ -31,4 +35,5 @@
     localStorage.setItem("shchyt-ver",APP.v); }catch(e){}
   try{ const u=new URL(location.href); if(u.searchParams.has("v")){ u.searchParams.delete("v"); history.replaceState(null,"",u.toString()); } }catch(e){}
   setTimeout(()=>check(true),1500); setInterval(()=>check(true),30*60*1000);
+  if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)&&!/claude\.ai|claudeusercontent/.test(location.host)) navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
