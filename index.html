@@ -309,7 +309,10 @@ function logp(cls,msg){ const t=new Date(); const p=n=>String(n).padStart(2,"0")
   S.log.unshift({cls,msg:`${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())} ${msg}`}); S.log.length=Math.min(S.log.length,60); }
 /* ===== Рушій v2: мережі, потенціали, логіка апаратів, аварії, струми ===== */
 const isPh = p => /\.(L|L1|L2|L3)$/.test(p);
-const isDC = p => /^(pv|bat)[+-]$/.test(p);
+const isDC = p => /^(pv\d*|bat)[+-]$/.test(p);
+const pvDev = sid => S.field.find(f=>f.type==="pv"&&(f.sid||"pv")===sid);
+const pvKW = sid => { const d=pvDev(sid); return d&&!d.fault ? (d.n||10)*0.55*(S.env.sun||0)/100*(1-(S.env["shade_"+sid]||0)/100) : 0; };
+const pvVmp = sid => ((pvDev(sid)||{}).n||10)*41.7;
 const srcOf = p => p.split(".")[0];
 const PH_ANG = {L:0,L1:0,L2:120,L3:240};
 function srcU(p){ const s=srcOf(p); if(S.src[s]) return S.src[s].U; if(s==="inv") return 230; return 0; }
@@ -354,7 +357,7 @@ function makeX(f){
       for(const pa of A){ if(isPh(pa)){ if(B.has("N")||B.has("PE")) return srcU(pa);
           for(const pb of B) if(isPh(pb)&&pb!==pa&&srcOf(pb)===srcOf(pa)) return srcU(pa)*1.732; } }
       for(const pb of B) if(isPh(pb)&&(A.has("N")||A.has("PE"))) return srcU(pb);
-      if(A.has("pv+")&&B.has("pv-")) return S.env.sun>0?417:0; if(A.has("bat+")&&B.has("bat-")) return 51;
+      for(const pa of A){ const m=/^(pv\d*)\+$/.exec(pa); if(m&&B.has(m[1]+"-")) return S.env.sun>0?pvVmp(m[1]):0; } if(A.has("bat+")&&B.has("bat-")) return 51;
       return 0; } };
   return X;
 }
@@ -370,7 +373,7 @@ function conflicts(X){
   for(const [r,ps] of X.pot){ const a=[...ps]; const ph=a.filter(isPh), dc=a.filter(isDC);
     let kind=null;
     if(dc.length&&(ph.length||ps.has("N"))) kind="ACDC";
-    else if((ps.has("pv+")&&ps.has("pv-"))||(ps.has("bat+")&&ps.has("bat-"))) kind="DC";
+    else if(a.some(p=>{ const m=/^(pv\d*)\+$/.exec(p); return m&&ps.has(m[1]+"-"); })||(ps.has("bat+")&&ps.has("bat-"))) kind="DC";
     else if(ph.length>1) kind=new Set(ph.map(srcOf)).size>1?"FEED":"LL";
     else if(ph.length&&ps.has("N")) kind="LN";
     else if(ph.length&&ps.has("PE")) kind="LPE";
@@ -634,7 +637,7 @@ defType("qfdc",{...brk, name:"Автомат DC 2P", short:"Автомат DC", 
 defType("spdc",{name:"УЗІП DC 1000 В", short:"УЗІП DC", cat:"СЕС", w:2, pre:"FV",
   terms:[{k:"p",s:"top",r:"DC+",l:"+"},{k:"m",s:"top",r:"DC-",l:"−"},{k:"pe",s:"bot",r:"PE",l:"PE"}], cap:"Захист від імпульсів",
   face(d,g){ const worn=(d.wear||0)>=2, c=worn?"#e23b3b":"#3fbf4a";
-    return (d.model?`<rect x="${g.x+5}" y="${g.y+60}" width="${g.w-10}" height="104" rx="2" fill="#e8492f"/>`:"")+tx(g.cx,g.y+70,d.model||"УЗІП Т2 · DC",{fs:7,fw:700,fill:d.model?"#fff":undefined})+tx(g.cx,g.y+81,"Uc 1000 В · In 20 кА",{fs:6.3,fill:d.model?"#fff":undefined})
+    return (d.model?`<rect x="${g.x+5}" y="${g.y+60}" width="${g.w-10}" height="104" rx="2" fill="#e8492f"/>`:"")+tx(g.cx,g.y+70,d.model||"УЗІП Т2 · DC",{fs:7,fw:700,fill:d.model?"#fff":undefined})+tx(g.cx,g.y+81,"Uc "+(d.uc||1000)+" В · In 20 кА",{fs:6.3,fill:d.model?"#fff":undefined})
     +[0,1].map(i=>`<rect x="${g.x+14+i*(g.w/2)}" y="${g.y+92}" width="${g.w/2-28}" height="36" rx="2" fill="#2a2d33"/><rect x="${g.x+18+i*(g.w/2)}" y="${g.y+100}" width="${g.w/2-36}" height="14" fill="${c}"/>`).join("")
     +tx(g.cx,g.y+146,worn?"картридж замінити":"індикатор: справний",{fs:6.5,fw:worn?700:400,fill:d.model?"#fff":undefined}); }});
 /* ===== Польове обладнання (поза щитом, через клемник XT1) ===== */
@@ -669,11 +672,11 @@ defField("motor3",{name:"Двигун 3~ 4 кВт", pre:"M", fw:220, fh:150, ter
       +fst(x+10,y+132,d.run?(d.n===2?`Двофазний режим! ${fmt(I)} А`:`Обертається · ${fmt(I)} А`):d.hum?`Гуде, не запускається · ${fmt(I)} А`:"Зупинено",d.run&&d.n===3?"var(--green)":d.hum||d.n===2?"var(--red)":"var(--muted)")
       +fst(x+10,y+145,d.jam?"Вал заклинило":"Навантаження номінальне","var(--muted)"); }});
 defField("pv",{name:"Сонячні панелі", fw:170, fh:150, terms:["p","m"],
-  source:d=>(S.env.sun>0&&!d.fault)?[["p","pv+"],["m","pv-"]]:[],
+  source:d=>{ const s=d.sid||"pv"; return (S.env.sun>0&&!d.fault)?[["p",s+"+"],["m",s+"-"]]:[]; },
   onFault(d,c){ if(c.pots.some(p=>/^pv/.test(p))){ d.fault=true; logp("e","DC: коротке замикання стрінга — PV-струм не вимикається сам, потрібен DC-автомат!"); return true; } return false; },
-  draw(d,x,y){ const sun=S.env.sun||0; let s=fbox(x,y,170,150,"PV · 10 × 550 Вт");
-    for(let i=0;i<10;i++) s+=`<rect x="${x+10+(i%5)*31}" y="${y+24+Math.floor(i/5)*42}" width="28" height="38" fill="#1d3557" stroke="#5b8ff0" stroke-width=".8"/>`;
-    return s+fst(x+10,y+126,`Сонце ${sun}% · ${fmt(5.5*sun/100,2)} кВт`,"var(--yellow)")+fst(x+10,y+142,d.fault?"Аварія DC!":`${S.env.sun>0?"~400":"0"} В DC`,d.fault?"var(--red)":"var(--muted)"); }});
+  draw(d,x,y){ const sid=d.sid||"pv", n=d.n||10, sun=S.env.sun||0, sh=S.env["shade_"+sid]||0; let s=fbox(x,y,170,150,`${sid==="pv"?"PV":sid.toUpperCase()} · ${n} × 550 Вт`);
+    for(let i=0;i<n;i++) s+=`<rect x="${x+10+(i%5)*31}" y="${y+24+Math.floor(i/5)*42}" width="28" height="38" fill="${sh&&i>=n*(1-sh/100)?"#2a2f38":"#1d3557"}" stroke="#5b8ff0" stroke-width=".8"/>`;
+    return s+fst(x+10,y+126,`Сонце ${sun}%${sh?" · тінь "+sh+"%":""} · ${fmt(pvKW(sid),2)} кВт`,"var(--yellow)")+fst(x+10,y+142,d.fault?"Аварія DC!":`Voc ≈ ${Math.round(n*49.6)} В · Isc 14 А`,d.fault?"var(--red)":"var(--muted)"); }});
 defField("bat",{name:"Акумулятор LiFePO4", fw:120, fh:150, terms:["p","m"],
   source:()=>(S.env.soc>0)?[["p","bat+"],["m","bat-"]]:[],
   draw(d,x,y){ const soc=S.env.soc||0, h=Math.round(80*soc/100);
@@ -688,7 +691,7 @@ defField("inv",{name:"Гібридний інвертор 6 кВт", fw:230, fh:
     return false; },
   aux:d=>d.mode==="grid"?[["gL","oL"],["gN","oN"]]:[], source:d=>d.mode==="backup"?[["oL","inv.L"],["oN","N"]]:[],
   onFault(d,c){ if(c.pots.includes("inv.L")){ d.faultT=10; d.mode="fault"; logp("e","Інвертор: коротке замикання або зворотне живлення на виході — захист вимкнув інвертор на 10 с"); return true; } return false; },
-  tick(d,X,dt){ d.faultT=Math.max(0,d.faultT-dt); const ppv=(d.pvOK?5.5*(S.env.sun||0)/100:0);
+  tick(d,X,dt){ d.faultT=Math.max(0,d.faultT-dt); const ppv=(d.pvOK?pvKW("pv"):0);
     const Y=makeX(build({open:new Set([d.id]),extra:shortsExtra()})); let pl=0;
     for(const l of computeLoads(X)) if(l.a&&l.I>0&&X.ph(l.a)&&X.P(l.a).has(d.mode==="backup"?"inv.L":"__")||(d.mode==="grid"&&l.a&&l.I>0&&X.ph(l.a)&&!Y.ph(l.a))) pl+=l.I*(l.U||230)/1000;
     let bat=0, grid=0, pvUse=0;
@@ -1081,7 +1084,7 @@ TPL.pv = { name:"СЕС: гібридний інвертор, АКБ, резер
       {type:"choice",label:"Перемикач QS1",opts:[["1","1 · мережа"],["0","0"],["2","2 · інвертор"]],get:()=>String(byDes("QS1").pos),set:v=>{ const q=byDes("QS1"); q.pos=+v; q.seqI=undefined; }}],
     status:()=>{ const i=inv()||{}, f=S.env.flow||{}, back=["QFD1","QFD2","QFD3"].every(s=>{ const g=byDes(s); return S.sim&&S.sim.g[g.id]&&S.sim.g[g.id].phase; });
       return [["Режим інвертора",({grid:"мережевий",backup:"резервний",off:"вимкнено",fault:"захист"})[i.mode]||"—",i.mode==="grid"?"ok":i.mode==="fault"?"e":"w"],
-        ["Заряд АКБ",fmt(S.env.soc||0,0)+" %",(S.env.soc||0)>30?"ok":"w"],["PV",fmt(5.5*(S.env.sun||0)/100,2)+" кВт",""],
+        ["Заряд АКБ",fmt(S.env.soc||0,0)+" %",(S.env.soc||0)>30?"ok":"w"],["PV",fmt(pvKW("pv"),2)+" кВт",""],
         ["Мережа",f.grid>0?"споживання "+fmt(f.grid,2)+" кВт":f.grid<0?"експорт "+fmt(-f.grid,2)+" кВт":"0",""],["Резервні групи",back?"живляться":"без живлення",back?"ok":"e"]]; },
     script:[
       {say:"Ранок, сонце 30 %. Мережа є: інвертор у мережевому режимі, PV частково покриває резервні групи.", do(){ S.env.sun=30; say("in",true,230); }, wait:6},
@@ -1156,7 +1159,7 @@ TPL.motor3 = { name:"Пуск трифазного двигуна (прямий 
     S.src.in.lost.L3=true; pressBtn(byDes("SB2")); runFor(4); if(byDes("QM1").trip) add("ok","Обрив фази: QM1 вимикає двигун"); }); }};
 function swapVW(){ const a=S.wires.find(w=>w.b==="xt:V"||w.a==="xt:V"), b=S.wires.find(w=>w.b==="xt:W"||w.a==="xt:W"); if(!a||!b) return;
   const ea=a.b==="xt:V"?"b":"a", eb=b.b==="xt:W"?"b":"a"; a[ea]="xt:W"; b[eb]="xt:V"; logp("w","Фази на двигуні V і W поміняно місцями"); save(); }
-/* ===== PV DC-бокс: запобіжники в тримачах, УЗІП DC, DC-автомат ===== */
+/* ===== PV DC-бокси: запобіжники в тримачах, УЗІП DC, DC-автомати ===== */
 defType("fudc",{name:"Запобіжник DC 10×38 у тримачі", short:"Запобіжник DC", cat:"СЕС", w:1, pre:"FU", prot:"fuse",
   terms:[{k:"t",s:"top",r:"DC",l:"1"},{k:"b",s:"bot",r:"DC",l:"2"}], poles:[{a:"b",b:"t",r:"L"}],
   ratings:["10 А","15 А","20 А","25 А","32 А"], def:"25 А", cap:"PV",
@@ -1165,44 +1168,65 @@ defType("fudc",{name:"Запобіжник DC 10×38 у тримачі", short:"
       if(I>0.5){ logp("e",`${desig(d)}: тримач розімкнено під струмом ${fmt(I)} А — дуга! Тримач не призначений для комутації: спочатку вимкніть DC-автомат.`); toast("Дуга при розмиканні тримача під навантаженням!","e"); }
       d.on=false; } else d.on=true; return true; },
   face(d,g){ const open=!d.on, blown=!!d.trip;
-    return tx(g.cx,g.y+64,d.model||"10×38",{fs:6.3,fw:700})+tx(g.cx,g.y+74,"DC 1100 В",{fs:6})
+    return tx(g.cx,g.y+64,d.model||"10×38",{fs:6.3,fw:700})+tx(g.cx,g.y+74,"DC "+(d.uc||1100)+" В",{fs:6})
       +`<g data-lever="${d.id}" style="cursor:pointer"><g transform="rotate(${open?-14:0} ${g.cx} ${g.y+156})"><rect x="${g.x+6}" y="${g.y+80}" width="${g.w-12}" height="76" rx="4" fill="#c9ccd2" stroke="#8a8f98"/>`
       +`<rect x="${g.cx-11}" y="${g.y+92}" width="22" height="34" rx="3" fill="${blown?"#3a2a2a":"#f2efe6"}" stroke="#8a8f98"/>`+(blown?`<path d="M${g.cx-8} ${g.y+96} l16 26 M${g.cx+8} ${g.y+96} l-16 26" stroke="#e23b3b" stroke-width="3"/>`:"")
       +`<rect x="${g.cx-12}" y="${g.y+136}" width="24" height="10" rx="3" fill="#8a8f98"/></g></g>`+tx(g.cx,g.y+163,blown?"згоріла":"gPV "+d.rating,{fs:6.5,fw:700,fill:blown?"#c0261c":undefined}); }});
-defField("invpv",{name:"Інвертор (вхід PV)", fw:210, fh:150, terms:["p","m"],
-  load(d,X){ const P=X.P(K(d,"p")), M=X.P(K(d,"m")), sh=P.has("pv+")&&P.has("pv-"); d.short=sh;
-    const ok=P.has("pv+")&&M.has("pv-")&&!sh&&!d.dead; d.on=ok; d.kw=ok?5.5*(S.env.sun||0)/100*0.98:0; return [{a:"p",b:"m",I:ok?d.kw*1000/417:0,U:417,dc:true}]; },
-  draw(d,x,y){ const I=d.on?d.kw*1000/417:0, col=d.dead||d.short?"var(--red)":d.on?"var(--green)":"var(--muted)";
-    return fbox(x,y,210,150,"Інвертор · вхід PV (MPPT)")+`<rect x="${x+12}" y="${y+24}" width="80" height="96" rx="6" fill="#2b2f36"/><rect x="${x+20}" y="${y+34}" width="64" height="30" rx="2" fill="#16181c"/>`
-      +`<text x="${x+52}" y="${y+54}" font-size="10" text-anchor="middle" font-family="var(--mono)" fill="${d.on?"#a6e3ff":"#3a3f47"}">${d.dead?"ERR":d.short?"ISO!":d.on?fmt(d.kw,2)+"kW":"NO DC"}</text>`
-      +led(x+34,y+82,d.on?"#3fbf4a":"#5a5e66")+led(x+70,y+82,d.dead||d.short?"#e23b3b":"#5a5e66")
-      +fst(x+102,y+44,d.on?"417 В DC":"—")+fst(x+102,y+62,d.on?fmt(I,1)+" А":"0 А","var(--muted)")+fst(x+102,y+80,d.on?fmt(d.kw,2)+" кВт":"",(d.on?"var(--yellow)":"var(--muted)"))
-      +fst(x+10,y+142,d.dead?"Пошкоджено імпульсом перенапруги":d.short?"Коротке замикання на вході":d.on?"Працює від PV":"Немає напруги DC",col); }});
-const fv1 = () => byDes("FV1"), invp = () => S.field.find(f=>f.type==="invpv");
-function surge(){ const fv=fv1(), inv=invp(), pv=S.field.find(f=>f.type==="pv"), f=build({ideal:true});
-  const linked=fv&&f(k(fv,"p"))===f(pv.map.p)&&f(k(fv,"m"))===f(pv.map.m), grounded=fv&&f(k(fv,"pe"))===f("gnd:PE"), fresh=fv&&(fv.wear||0)<2;
-  if(linked&&grounded&&fresh){ fv.wear=(fv.wear||0)+1; logp("ok",`Імпульс перенапруги: ${desig(fv)} відвів його на PE, інвертор цілий${fv.wear>=2?". Картридж відпрацював — індикатор червоний, замініть його":""}`); toast("УЗІП відвів імпульс","ok"); }
-  else { inv.dead=true; logp("e","Імпульс перенапруги пройшов в інвертор — пошкоджено вхід MPPT! "+(!fv?"УЗІП немає.":!fresh?"Картридж УЗІП був відпрацьований.":!grounded?"УЗІП не з’єднаний із заземленням.":"УЗІП не підключений до ліній PV.")); toast("Інвертор пошкоджено імпульсом","e"); } }
+const PV_PAIRS = [["p","m"],["p2","m2"]];
+const pvStrings = () => S.field.filter(f=>f.type==="pv");
+const pvName = s => (s.sid||"pv")==="pv"?"PV":(s.sid||"").toUpperCase();
+defField("invpv",{name:"Інвертор (входи PV)", fw:210, fh:150, terms:["p","m","p2","m2"],
+  load(d,X){ const L=[]; d.ch=[];
+    for(const [a,b] of PV_PAIRS){ if(!d.map[a]) continue; const P=X.P(K(d,a)), M=X.P(K(d,b));
+      const ss=[...P].map(p=>/^(pv\d*)\+$/.exec(p)).filter(Boolean).map(m=>m[1]), short=ss.some(s=>P.has(s+"-")), ok=ss.filter(s=>M.has(s+"-"));
+      const kw=(short||d.dead)?0:ok.reduce((t,s)=>t+pvKW(s)*0.98,0), V=ok.length?pvVmp(ok[0]):0, I=V?kw*1000/V:0;
+      d.ch.push({kw,I,V,short,ok:ok.length>0&&!short,crossed:ss.length>0&&!ok.length&&[...M].some(p=>/^pv\d*-$/.test(p))}); L.push({a,b,I,U:V,dc:true}); }
+    d.on=!d.dead&&d.ch.some(c=>c.ok); d.short=d.ch.some(c=>c.short); d.kw=d.ch.reduce((t,c)=>t+c.kw,0); return L; },
+  draw(d,x,y){ const ch=d.ch||[], col=d.dead||d.short?"var(--red)":d.on?"var(--green)":"var(--muted)";
+    let s=fbox(x,y,210,150,ch.length>1?"Інвертор · 2 MPPT":"Інвертор · вхід PV (MPPT)")+`<rect x="${x+12}" y="${y+24}" width="72" height="96" rx="6" fill="#2b2f36"/><rect x="${x+18}" y="${y+34}" width="60" height="30" rx="2" fill="#16181c"/>`
+      +`<text x="${x+48}" y="${y+54}" font-size="10" text-anchor="middle" font-family="var(--mono)" fill="${d.on?"#a6e3ff":"#3a3f47"}">${d.dead?"ERR":d.short?"ISO!":d.on?fmt(d.kw,2)+"kW":"NO DC"}</text>`
+      +led(x+30,y+82,d.on?"#3fbf4a":"#5a5e66")+led(x+66,y+82,d.dead||d.short?"#e23b3b":"#5a5e66");
+    ch.forEach((c,i)=>{ s+=fst(x+92,y+40+i*36,`MPPT${ch.length>1?i+1:""}: ${c.short?"КЗ!":c.crossed?"переплутано!":c.ok?Math.round(c.V)+" В":"—"}`,c.short||c.crossed?"var(--red)":undefined)+fst(x+92,y+56+i*36,c.ok?`${fmt(c.I,1)} А · ${fmt(c.kw,2)} кВт`:"0 А","var(--muted)"); });
+    return s+fst(x+10,y+142,d.dead?"Пошкоджено імпульсом перенапруги":d.short?"Коротке замикання на вході":d.on?"Працює від PV":"Немає напруги DC",col); }});
+const invp = () => S.field.find(f=>f.type==="invpv");
+const spds = () => S.devices.filter(d=>d.type==="spdc");
+function spdFor(pv,f){ return spds().filter(fv=>f(k(fv,"p"))===f(pv.map.p)&&f(k(fv,"m"))===f(pv.map.m)&&f(k(fv,"pe"))===f("gnd:PE")); }
+function surge(){ const f=build({ideal:true}), inv=invp(), bad=[];
+  for(const pv of pvStrings()){ const ok=spdFor(pv,f).filter(fv=>(fv.wear||0)<2);
+    if(ok.length){ ok.forEach(fv=>{ fv.wear=(fv.wear||0)+1; logp("ok",`Імпульс на ${pvName(pv)}: ${desig(fv)} відвів його на PE${fv.wear>=2?". Картридж відпрацював — індикатор червоний, замініть його":""}`); }); }
+    else bad.push(pvName(pv)); }
+  if(bad.length){ inv.dead=true; logp("e",`Імпульс перенапруги з ${bad.join(", ")} пройшов в інвертор — пошкоджено вхід MPPT! Немає справного УЗІП, з’єднаного з цим стрінгом і з PE.`); toast("Інвертор пошкоджено імпульсом","e"); }
+  else toast("УЗІП відвели імпульс","ok"); }
+function pvStatus(){ const inv=invp(), sun=S.env.sun||0, rows=[];
+  pvStrings().forEach(pv=>{ const sid=pv.sid||"pv", c=(inv.ch||[]).find((c,i)=>{ const P=S.sim&&S.sim.X.P(K(inv,PV_PAIRS[i][0])); return P&&P.has(sid+"+"); });
+    rows.push([`Стрінг ${pvName(pv)}`, sun>0?(c&&c.ok?`${Math.round(c.V)} В · ${fmt(c.I,1)} А`:`≈ ${Math.round((pv.n||10)*49.6)} В (холостий хід)`):"0 В (ніч)", sun>0?"ok":""]); });
+  rows.push(["Інвертор",inv.dead?"пошкоджено":inv.short?"КЗ на вході":inv.on?"працює, "+fmt(inv.kw,2)+" кВт":"без DC",inv.dead||inv.short?"e":inv.on?"ok":"w"]);
+  spds().forEach(fv=>rows.push([`УЗІП ${desig(fv)}`,(fv.wear||0)>=2?"картридж відпрацював":"справний",(fv.wear||0)>=2?"e":"ok"]));
+  rows.push(["Дуга DC",S.env.arc?"ГОРИТЬ":"немає",S.env.arc?"e":"ok"]); return rows; }
+function pvChecks(add){ const f=build({ideal:true}), fus=S.devices.filter(d=>d.type==="fudc"), vmax=Math.min(...spds().map(d=>d.uc||1000),...S.devices.filter(d=>d.type==="qfdc").map(d=>d.uc||1000));
+  for(const pv of pvStrings()){ const nm=pvName(pv), on=key=>fus.some(d=>f(k(d,"b"))===f(key)||f(k(d,"t"))===f(key));
+    if(on(pv.map.p)&&on(pv.map.m)) add("ok",`${nm}: запобіжники на обох полюсах`); else add("w",`${nm}: запобіжник лише на одному полюсі або немає`,"Для незаземленого стрінга ставлять запобіжники на + і −.");
+    add(spdFor(pv,f).length?"ok":"e",spdFor(pv,f).length?`${nm}: УЗІП між + / − і PE`:`${nm}: немає УЗІП або він не з’єднаний з PE`,spdFor(pv,f).length?"Імпульс перенапруги піде в землю, а не в інвертор.":"Клеми УЗІП мають іти на + і − цього стрінга, вивід PE — на заземлення.");
+    const voc=(pv.n||10)*49.6; add(voc*1.1<=vmax?"ok":"e",`${nm}: Voc ${Math.round(voc)} В, узимку ≈ ${Math.round(voc*1.1)} В`,voc*1.1<=vmax?`У межах ${vmax} В апаратів щита.`:`Перевищує ${vmax} В апаратів щита — зменшіть кількість панелей у стрінгу.`); }
+  for(const d of fus){ const In=inA(d.rating); if(In<21) add("w",`${desig(d)} gPV ${d.rating} замалий для панелей 550 Вт`,"Номінал вставки — не менше 1,5 × Isc ≈ 21 А, інакше вона може згоріти в сонячний день.");
+    else if(In>25) add("w",`${desig(d)} gPV ${d.rating} завеликий`,"Не більше за максимальний струм запобіжника панелі (зазвичай 25 А)."); }
+  add("ok","Один стрінг на канал: запобіжники — додатковий захист","Обов’язкові вони зазвичай від 3 паралельних стрінгів, коли зворотний струм інших стрінгів може перевищити допустимий для панелі."); }
+function pvChannel(slot,n,xp,xm,ip,im,pe,o){ const fu1=D("fudc",0,slot,o.fuse,{model:o.fmodel,uc:o.uc,cap:`PV${n} +`}), fu2=D("fudc",0,slot+o.gap1,o.fuse,{model:o.fmodel,uc:o.uc,cap:`PV${n} −`}),
+    fv=D("spdc",0,o.spdSlot(slot),"",{model:o.smodel,uc:o.uc}), qf=D("qfdc",0,slot+4,o.brk,{model:o.bmodel,uc:o.uc,cap:`На MPPT${n}`});
+  W(xp,k(fu1,"b"),"DC+",4); W(xm,k(fu2,"b"),"DC-",4); W(k(fu1,"t"),k(fv,"p"),"DC+",4); W(k(fu1,"t"),k(qf,"p1"),"DC+",4);
+  W(k(fu2,"t"),k(fv,"m"),"DC-",4); W(k(fu2,"t"),k(qf,"m1"),"DC-",4); W(k(fv,"pe"),pe,"PE",6); W(k(qf,"p2"),ip,"DC+",4); W(k(qf,"m2"),im,"DC-",4); }
+const pvCtl = extra => [{type:"range",label:"Сонце, %",min:0,max:100,step:5,get:()=>S.env.sun,set:v=>{ S.env.sun=v; }}, ...extra,
+  {type:"btn",label:"Удар блискавки поруч",act:surge},{type:"btn",label:"Замінити картриджі УЗІП",act:()=>{ spds().forEach(f=>f.wear=0); logp("ok","Картриджі УЗІП замінено"); }},
+  {type:"btn",label:"Відремонтувати інвертор",act:()=>{ invp().dead=false; }}];
+const GND = {id:"gnd",label:"Контур заземлення",terms:["PE"]};
+
 TPL.pvdc = { name:"PV DC-бокс: запобіжники, УЗІП, DC-автомат (TOMZN)", cat:"Сонячна станція",
   info:"Захист стрінга панелей перед інвертором. + і − стрінга йдуть через запобіжники gPV 10×38 у тримачах (тип TOPV-32). Після них стоїть УЗІП DC (тип TZG40-PV) між + / − і PE, далі двополюсний DC-автомат (тип TOB1Z-63) до інвертора. Стрінг: 10 панелей по 550 Вт, Voc ≈ 496 В, Isc ≈ 14 А.",
   extra:()=>S.env.dcShort?[["xt:ip+","xt:ip-"]]:[],
-  build(){ tplStart({rails:1, inputs:[{id:"gnd",label:"Контур заземлення",terms:["PE"]}], xn:0, xpe:3,
-      xt:[{k:"pa+",l:"PV+",r:"DC+"},{k:"pa-",l:"PV−",r:"DC-"},{k:"ip+",l:"Інв +",r:"DC+"},{k:"ip-",l:"Інв −",r:"DC-"}]});
-    S.env={sun:70};
-    const fu1=D("fudc",0,0,"25 А",{model:"TOPV-32",cap:"PV +"}), fv=D("spdc",0,1,"",{model:"TZG40-PV"}), fu2=D("fudc",0,3,"25 А",{model:"TOPV-32",cap:"PV −"}), qf=D("qfdc",0,4,"C32",{model:"TOB1Z-63",cap:"На інвертор"});
-    F("pv",{p:"xt:pa+",m:"xt:pa-"}); F("invpv",{p:"xt:ip+",m:"xt:ip-"});
-    W("xt:pa+",k(fu1,"b"),"DC+",4); W("xt:pa-",k(fu2,"b"),"DC-",4);
-    W(k(fu1,"t"),k(fv,"p"),"DC+",4); W(k(fu1,"t"),k(qf,"p1"),"DC+",4); W(k(fu2,"t"),k(fv,"m"),"DC-",4); W(k(fu2,"t"),k(qf,"m1"),"DC-",4);
-    W(k(fv,"pe"),"xpe:0","PE",6); W("gnd:PE","xpe:2","PE",6); W(k(qf,"p2"),"xt:ip+","DC+",4); W(k(qf,"m2"),"xt:ip-","DC-",4); },
-  demo:{ controls:[{type:"range",label:"Сонце, %",min:0,max:100,step:5,get:()=>S.env.sun,set:v=>{ S.env.sun=v; }},
-      {type:"toggle",label:"КЗ у кабелі до інвертора (+ на −)",get:()=>!!S.env.dcShort,set:v=>{ S.env.dcShort=v; }},
-      {type:"btn",label:"Удар блискавки поруч",act:surge},
-      {type:"btn",label:"Замінити картридж УЗІП",act:()=>{ const f=fv1(); if(f){ f.wear=0; logp("ok","Картридж УЗІП замінено"); } }},
-      {type:"btn",label:"Відремонтувати інвертор",act:()=>{ invp().dead=false; }}],
-    status:()=>{ const inv=invp(), fv=fv1(), sun=S.env.sun||0, I=inv&&inv.on?inv.kw*1000/417:0;
-      return [["Стрінг PV",sun>0?(inv&&inv.on?"417 В · "+fmt(I,1)+" А":"≈ 496 В (холостий хід)"):"0 В (ніч)",sun>0?"ok":""],
-        ["Інвертор",inv.dead?"пошкоджено":inv.short?"КЗ на вході":inv.on?"працює, "+fmt(inv.kw,2)+" кВт":"без DC",inv.dead||inv.short?"e":inv.on?"ok":"w"],
-        ["УЗІП FV1",!fv?"немає":(fv.wear||0)>=2?"картридж відпрацював":"справний",!fv||(fv.wear||0)>=2?"e":"ok"],["Дуга DC",S.env.arc?"ГОРИТЬ":"немає",S.env.arc?"e":"ok"]]; },
+  build(){ tplStart({rails:1, inputs:[GND], xn:0, xpe:3, xt:[{k:"pa+",l:"PV+",r:"DC+"},{k:"pa-",l:"PV−",r:"DC-"},{k:"ip+",l:"Інв +",r:"DC+"},{k:"ip-",l:"Інв −",r:"DC-"}]}); S.env={sun:70};
+    pvChannel(0,"","xt:pa+","xt:pa-","xt:ip+","xt:ip-","xpe:0",{fuse:"25 А",fmodel:"TOPV-32",smodel:"TZG40-PV",bmodel:"TOB1Z-63",brk:"C32",gap1:3,spdSlot:s=>s+1});
+    W("gnd:PE","xpe:2","PE",6); F("pv",{p:"xt:pa+",m:"xt:pa-"},{sid:"pv",n:10}); F("invpv",{p:"xt:ip+",m:"xt:ip-"}); },
+  demo:{ controls:pvCtl([{type:"toggle",label:"КЗ у кабелі до інвертора (+ на −)",get:()=>!!S.env.dcShort,set:v=>{ S.env.dcShort=v; }}]), status:pvStatus,
     script:[
       {say:"Сонце 80 %: струм іде від панелей через запобіжники FU1, FU2 і DC-автомат QF1 на інвертор.", do(){ S.env.sun=80; }, wait:4},
       {say:"Вимикаємо QF1 для обслуговування. Інвертор знеструмлено, але до QF1 напруга лишається: панелі під сонцем завжди під напругою.", do(){ byDes("QF1").on=false; }, wait:5},
@@ -1212,16 +1236,27 @@ TPL.pvdc = { name:"PV DC-бокс: запобіжники, УЗІП, DC-авто
       {say:"Пошкодили кабель до інвертора: КЗ між + і −. Струм КЗ стрінга ≈ Isc 14 А, це менше за номінал запобіжників і автомата. Нічого не спрацьовує, горить дуга!", do(){ S.env.dcShort=true; }, wait:6},
       {say:"Вимикаємо QF1 вручну: DC-автомат розриває дугу. Тому на DC потрібен саме DC-автомат.", do(){ byDes("QF1").on=false; }, wait:4},
       {say:"Кабель відремонтовано, QF1 увімкнено. Кінець демонстрації.", do(){ S.env.dcShort=false; byDes("QF1").on=true; }, wait:2}]},
-  checks(add){ const fus=S.devices.filter(d=>d.type==="fudc"), f=build({ideal:true}), pv=S.field.find(x=>x.type==="pv");
-    const onP=fus.some(d=>f(k(d,"b"))===f(pv.map.p)||f(k(d,"t"))===f(pv.map.p)), onM=fus.some(d=>f(k(d,"b"))===f(pv.map.m)||f(k(d,"t"))===f(pv.map.m));
-    if(onP&&onM) add("ok","Запобіжники стоять на обох полюсах стрінга","Ізольована PV-система: захищено і +, і −."); else add("w","Запобіжник лише на одному полюсі","Для незаземленого PV-стрінга ставлять запобіжники на + і −.");
-    for(const d of fus){ const In=inA(d.rating); if(In<21) add("w",`${desig(d)} gPV ${d.rating} замалий`,"Номінал вставки — не менше 1,5 × Isc ≈ 21 А, інакше вона може згоріти в сонячний день.");
-      else if(In>25) add("w",`${desig(d)} gPV ${d.rating} завеликий`,"Не більше за максимальний струм запобіжника панелі (зазвичай 25 А)."); }
-    const fv=fv1(); if(fv){ const ok=f(k(fv,"pe"))===f("gnd:PE")&&f(k(fv,"p"))===f(pv.map.p)&&f(k(fv,"m"))===f(pv.map.m);
-      add(ok?"ok":"e",ok?"УЗІП підключено між + / − і PE":"УЗІП підключено неправильно",ok?"Імпульс перенапруги піде в землю, а не в інвертор.":"Його клеми мають іти на лінії + і − стрінга, а вивід PE — на заземлення."); }
-    else add("e","Немає УЗІП DC","Інвертор не захищений від імпульсних перенапруг.");
-    add("ok","Напруга стрінга 496 В у межах 1000 В апаратів","Voc для 10 панелей; узимку вона зростає приблизно на 10 %.");
-    add("ok","Одиночний стрінг: запобіжники — додатковий захист","Обов’язкові вони зазвичай від 3 паралельних стрінгів, коли зворотний струм інших стрінгів може перевищити допустимий для панелі."); }};
+  checks:pvChecks };
+
+TPL.pvbox2 = { name:"PV комбайнер-бокс 2 входи / 2 виходи (600 В)", cat:"Сонячна станція",
+  info:"Два незалежні канали, як у боксі XIONGI SOLAR 600 V 2in2out. Кожен стрінг іде через свої запобіжники + і −, свій УЗІП DC і DC-автомат на окремий MPPT-вхід інвертора. Стрінги можуть мати різну довжину й орієнтацію. Штатні вставки 15 А підходять для панелей з Isc до 10 А, тому для панелей 550 Вт (Isc ≈ 14 А) у шаблоні стоять 25 А. Автомат 63 А тут працює як роз’єднувач: струм стрінга не перевищує Isc.",
+  extra:()=>S.env.dcShort1?[["xt:i1+","xt:i1-"]]:[],
+  build(){ tplStart({rails:1, inputs:[GND], xn:0, xpe:4, xt:[["p1+","PV1+","DC+"],["p1-","PV1−","DC-"],["p2+","PV2+","DC+"],["p2-","PV2−","DC-"],["i1+","M1+","DC+"],["i1-","M1−","DC-"],["i2+","M2+","DC+"],["i2-","M2−","DC-"]].map(([k,l,r])=>({k,l,r}))});
+    S.env={sun:70};
+    const o={fuse:"25 А",fmodel:"10×38",uc:600,smodel:"SPD DC 600 В",bmodel:"DC 600 В",brk:"C63",gap1:1,spdSlot:s=>s+2};
+    pvChannel(0,1,"xt:p1+","xt:p1-","xt:i1+","xt:i1-","xpe:0",o); pvChannel(6,2,"xt:p2+","xt:p2-","xt:i2+","xt:i2-","xpe:1",o); W("gnd:PE","xpe:3","PE",6);
+    F("pv",{p:"xt:p1+",m:"xt:p1-"},{sid:"pv1",n:10}); F("pv",{p:"xt:p2+",m:"xt:p2-"},{sid:"pv2",n:8}); F("invpv",{p:"xt:i1+",m:"xt:i1-",p2:"xt:i2+",m2:"xt:i2-"}); },
+  demo:{ controls:pvCtl([{type:"range",label:"Тінь на PV2, %",min:0,max:100,step:10,get:()=>S.env.shade_pv2||0,set:v=>{ S.env.shade_pv2=v; }},
+      {type:"toggle",label:"КЗ у кабелі PV1 до інвертора",get:()=>!!S.env.dcShort1,set:v=>{ S.env.dcShort1=v; }}]), status:pvStatus,
+    script:[
+      {say:"Сонце 80 %. Кожен стрінг іде своїм каналом (запобіжники, УЗІП, DC-автомат) на свій MPPT-вхід інвертора.", do(){ S.env.sun=80; }, wait:4},
+      {say:"Тінь на стрінгу PV2: його потужність падає, а PV1 працює на повну. Саме тому стрінги підключають на різні MPPT.", do(){ S.env.shade_pv2=70; }, wait:5},
+      {say:"Обслуговуємо канал 2: вимикаємо QF2. Канал 1 працює далі.", do(){ S.env.shade_pv2=0; byDes("QF2").on=false; }, wait:4},
+      {say:"Вмикаємо QF2. Удар блискавки поруч: обидва УЗІП відводять імпульс на PE.", do(){ byDes("QF2").on=true; surge(); }, wait:4},
+      {say:"Пошкодили кабель PV1 до інвертора: КЗ + на −. Струм ≈ Isc 14 А, автомат 63 А не спрацює, горить дуга!", do(){ S.env.dcShort1=true; }, wait:5},
+      {say:"Вимикаємо QF1 вручну: дуга гасне, канал 2 працює далі.", do(){ byDes("QF1").on=false; }, wait:4},
+      {say:"Кабель відремонтовано, QF1 увімкнено. Кінець демонстрації.", do(){ S.env.dcShort1=false; byDes("QF1").on=true; }, wait:2}]},
+  checks:pvChecks };
 /* ===== Шаблон: розумний будинок ===== */
 const XT_SM = [["lL","Св L","L"],["lN","Св N","N"],["bL","Бойл L","L"],["bN","Бойл N","N"],["fL","Підл L","L"],["fN","Підл N","N"],["vO","Кран ↑","L"],["vC","Кран ↓","L"],["vN","Кран N","N"],["pe","PE","PE"]].map(([k,l,r])=>({k,l,r}));
 const scene = name => { const sr1=byDes("SR1"), sr2=byDes("SR2"), tr=byDes("TR1");

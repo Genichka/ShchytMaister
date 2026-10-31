@@ -30,11 +30,11 @@ defField("motor3",{name:"Двигун 3~ 4 кВт", pre:"M", fw:220, fh:150, ter
       +fst(x+10,y+132,d.run?(d.n===2?`Двофазний режим! ${fmt(I)} А`:`Обертається · ${fmt(I)} А`):d.hum?`Гуде, не запускається · ${fmt(I)} А`:"Зупинено",d.run&&d.n===3?"var(--green)":d.hum||d.n===2?"var(--red)":"var(--muted)")
       +fst(x+10,y+145,d.jam?"Вал заклинило":"Навантаження номінальне","var(--muted)"); }});
 defField("pv",{name:"Сонячні панелі", fw:170, fh:150, terms:["p","m"],
-  source:d=>(S.env.sun>0&&!d.fault)?[["p","pv+"],["m","pv-"]]:[],
+  source:d=>{ const s=d.sid||"pv"; return (S.env.sun>0&&!d.fault)?[["p",s+"+"],["m",s+"-"]]:[]; },
   onFault(d,c){ if(c.pots.some(p=>/^pv/.test(p))){ d.fault=true; logp("e","DC: коротке замикання стрінга — PV-струм не вимикається сам, потрібен DC-автомат!"); return true; } return false; },
-  draw(d,x,y){ const sun=S.env.sun||0; let s=fbox(x,y,170,150,"PV · 10 × 550 Вт");
-    for(let i=0;i<10;i++) s+=`<rect x="${x+10+(i%5)*31}" y="${y+24+Math.floor(i/5)*42}" width="28" height="38" fill="#1d3557" stroke="#5b8ff0" stroke-width=".8"/>`;
-    return s+fst(x+10,y+126,`Сонце ${sun}% · ${fmt(5.5*sun/100,2)} кВт`,"var(--yellow)")+fst(x+10,y+142,d.fault?"Аварія DC!":`${S.env.sun>0?"~400":"0"} В DC`,d.fault?"var(--red)":"var(--muted)"); }});
+  draw(d,x,y){ const sid=d.sid||"pv", n=d.n||10, sun=S.env.sun||0, sh=S.env["shade_"+sid]||0; let s=fbox(x,y,170,150,`${sid==="pv"?"PV":sid.toUpperCase()} · ${n} × 550 Вт`);
+    for(let i=0;i<n;i++) s+=`<rect x="${x+10+(i%5)*31}" y="${y+24+Math.floor(i/5)*42}" width="28" height="38" fill="${sh&&i>=n*(1-sh/100)?"#2a2f38":"#1d3557"}" stroke="#5b8ff0" stroke-width=".8"/>`;
+    return s+fst(x+10,y+126,`Сонце ${sun}%${sh?" · тінь "+sh+"%":""} · ${fmt(pvKW(sid),2)} кВт`,"var(--yellow)")+fst(x+10,y+142,d.fault?"Аварія DC!":`Voc ≈ ${Math.round(n*49.6)} В · Isc 14 А`,d.fault?"var(--red)":"var(--muted)"); }});
 defField("bat",{name:"Акумулятор LiFePO4", fw:120, fh:150, terms:["p","m"],
   source:()=>(S.env.soc>0)?[["p","bat+"],["m","bat-"]]:[],
   draw(d,x,y){ const soc=S.env.soc||0, h=Math.round(80*soc/100);
@@ -49,7 +49,7 @@ defField("inv",{name:"Гібридний інвертор 6 кВт", fw:230, fh:
     return false; },
   aux:d=>d.mode==="grid"?[["gL","oL"],["gN","oN"]]:[], source:d=>d.mode==="backup"?[["oL","inv.L"],["oN","N"]]:[],
   onFault(d,c){ if(c.pots.includes("inv.L")){ d.faultT=10; d.mode="fault"; logp("e","Інвертор: коротке замикання або зворотне живлення на виході — захист вимкнув інвертор на 10 с"); return true; } return false; },
-  tick(d,X,dt){ d.faultT=Math.max(0,d.faultT-dt); const ppv=(d.pvOK?5.5*(S.env.sun||0)/100:0);
+  tick(d,X,dt){ d.faultT=Math.max(0,d.faultT-dt); const ppv=(d.pvOK?pvKW("pv"):0);
     const Y=makeX(build({open:new Set([d.id]),extra:shortsExtra()})); let pl=0;
     for(const l of computeLoads(X)) if(l.a&&l.I>0&&X.ph(l.a)&&X.P(l.a).has(d.mode==="backup"?"inv.L":"__")||(d.mode==="grid"&&l.a&&l.I>0&&X.ph(l.a)&&!Y.ph(l.a))) pl+=l.I*(l.U||230)/1000;
     let bat=0, grid=0, pvUse=0;

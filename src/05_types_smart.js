@@ -42,6 +42,6 @@ defType("qfdc",{...brk, name:"Автомат DC 2P", short:"Автомат DC", 
 defType("spdc",{name:"УЗІП DC 1000 В", short:"УЗІП DC", cat:"СЕС", w:2, pre:"FV",
   terms:[{k:"p",s:"top",r:"DC+",l:"+"},{k:"m",s:"top",r:"DC-",l:"−"},{k:"pe",s:"bot",r:"PE",l:"PE"}], cap:"Захист від імпульсів",
   face(d,g){ const worn=(d.wear||0)>=2, c=worn?"#e23b3b":"#3fbf4a";
-    return (d.model?`<rect x="${g.x+5}" y="${g.y+60}" width="${g.w-10}" height="104" rx="2" fill="#e8492f"/>`:"")+tx(g.cx,g.y+70,d.model||"УЗІП Т2 · DC",{fs:7,fw:700,fill:d.model?"#fff":undefined})+tx(g.cx,g.y+81,"Uc 1000 В · In 20 кА",{fs:6.3,fill:d.model?"#fff":undefined})
+    return (d.model?`<rect x="${g.x+5}" y="${g.y+60}" width="${g.w-10}" height="104" rx="2" fill="#e8492f"/>`:"")+tx(g.cx,g.y+70,d.model||"УЗІП Т2 · DC",{fs:7,fw:700,fill:d.model?"#fff":undefined})+tx(g.cx,g.y+81,"Uc "+(d.uc||1000)+" В · In 20 кА",{fs:6.3,fill:d.model?"#fff":undefined})
     +[0,1].map(i=>`<rect x="${g.x+14+i*(g.w/2)}" y="${g.y+92}" width="${g.w/2-28}" height="36" rx="2" fill="#2a2d33"/><rect x="${g.x+18+i*(g.w/2)}" y="${g.y+100}" width="${g.w/2-36}" height="14" fill="${c}"/>`).join("")
     +tx(g.cx,g.y+146,worn?"картридж замінити":"індикатор: справний",{fs:6.5,fw:worn?700:400,fill:d.model?"#fff":undefined}); }});

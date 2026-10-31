@@ -1,6 +1,9 @@
 /* ===== Рушій v2: мережі, потенціали, логіка апаратів, аварії, струми ===== */
 const isPh = p => /\.(L|L1|L2|L3)$/.test(p);
-const isDC = p => /^(pv|bat)[+-]$/.test(p);
+const isDC = p => /^(pv\d*|bat)[+-]$/.test(p);
+const pvDev = sid => S.field.find(f=>f.type==="pv"&&(f.sid||"pv")===sid);
+const pvKW = sid => { const d=pvDev(sid); return d&&!d.fault ? (d.n||10)*0.55*(S.env.sun||0)/100*(1-(S.env["shade_"+sid]||0)/100) : 0; };
+const pvVmp = sid => ((pvDev(sid)||{}).n||10)*41.7;
 const srcOf = p => p.split(".")[0];
 const PH_ANG = {L:0,L1:0,L2:120,L3:240};
 function srcU(p){ const s=srcOf(p); if(S.src[s]) return S.src[s].U; if(s==="inv") return 230; return 0; }
@@ -45,7 +48,7 @@ function makeX(f){
       for(const pa of A){ if(isPh(pa)){ if(B.has("N")||B.has("PE")) return srcU(pa);
           for(const pb of B) if(isPh(pb)&&pb!==pa&&srcOf(pb)===srcOf(pa)) return srcU(pa)*1.732; } }
       for(const pb of B) if(isPh(pb)&&(A.has("N")||A.has("PE"))) return srcU(pb);
-      if(A.has("pv+")&&B.has("pv-")) return S.env.sun>0?417:0; if(A.has("bat+")&&B.has("bat-")) return 51;
+      for(const pa of A){ const m=/^(pv\d*)\+$/.exec(pa); if(m&&B.has(m[1]+"-")) return S.env.sun>0?pvVmp(m[1]):0; } if(A.has("bat+")&&B.has("bat-")) return 51;
       return 0; } };
   return X;
 }
@@ -61,7 +64,7 @@ function conflicts(X){
   for(const [r,ps] of X.pot){ const a=[...ps]; const ph=a.filter(isPh), dc=a.filter(isDC);
     let kind=null;
     if(dc.length&&(ph.length||ps.has("N"))) kind="ACDC";
-    else if((ps.has("pv+")&&ps.has("pv-"))||(ps.has("bat+")&&ps.has("bat-"))) kind="DC";
+    else if(a.some(p=>{ const m=/^(pv\d*)\+$/.exec(p); return m&&ps.has(m[1]+"-"); })||(ps.has("bat+")&&ps.has("bat-"))) kind="DC";
     else if(ph.length>1) kind=new Set(ph.map(srcOf)).size>1?"FEED":"LL";
     else if(ph.length&&ps.has("N")) kind="LN";
     else if(ph.length&&ps.has("PE")) kind="LPE";

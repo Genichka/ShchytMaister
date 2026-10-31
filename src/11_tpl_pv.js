@@ -31,7 +31,7 @@ TPL.pv = { name:"СЕС: гібридний інвертор, АКБ, резер
       {type:"choice",label:"Перемикач QS1",opts:[["1","1 · мережа"],["0","0"],["2","2 · інвертор"]],get:()=>String(byDes("QS1").pos),set:v=>{ const q=byDes("QS1"); q.pos=+v; q.seqI=undefined; }}],
     status:()=>{ const i=inv()||{}, f=S.env.flow||{}, back=["QFD1","QFD2","QFD3"].every(s=>{ const g=byDes(s); return S.sim&&S.sim.g[g.id]&&S.sim.g[g.id].phase; });
       return [["Режим інвертора",({grid:"мережевий",backup:"резервний",off:"вимкнено",fault:"захист"})[i.mode]||"—",i.mode==="grid"?"ok":i.mode==="fault"?"e":"w"],
-        ["Заряд АКБ",fmt(S.env.soc||0,0)+" %",(S.env.soc||0)>30?"ok":"w"],["PV",fmt(5.5*(S.env.sun||0)/100,2)+" кВт",""],
+        ["Заряд АКБ",fmt(S.env.soc||0,0)+" %",(S.env.soc||0)>30?"ok":"w"],["PV",fmt(pvKW("pv"),2)+" кВт",""],
         ["Мережа",f.grid>0?"споживання "+fmt(f.grid,2)+" кВт":f.grid<0?"експорт "+fmt(-f.grid,2)+" кВт":"0",""],["Резервні групи",back?"живляться":"без живлення",back?"ok":"e"]]; },
     script:[
       {say:"Ранок, сонце 30 %. Мережа є: інвертор у мережевому режимі, PV частково покриває резервні групи.", do(){ S.env.sun=30; say("in",true,230); }, wait:6},
