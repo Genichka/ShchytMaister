@@ -182,7 +182,8 @@ select.btn{padding-right:28px}
 .cat-i:hover{background:var(--panel)}.cat-i[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 16%,var(--panel));color:var(--strong)}
 .ver{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 8px;cursor:pointer;white-space:nowrap}
 .ver:hover{color:var(--fg);border-color:var(--muted)}
-.btn.upd{position:relative}.btn.upd .dot{display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 2px var(--bg)}
+.verrow{display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap}
+.btn.upd{position:relative;min-height:28px;padding:3px 10px;font-size:12.5px}.btn.upd .dot{display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 2px var(--bg)}
 .btn.upd.has{border-color:var(--orange);color:var(--orange)}.btn.upd.has .dot{display:block}
 .modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;
   padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
@@ -202,11 +203,10 @@ select.btn{padding-right:28px}
     <div class="brand">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4 13.5h6.5L9.5 22 20 9.5h-6.6z" fill="#ffb21f" stroke="#e8741a" stroke-width="1.2" stroke-linejoin="round"/></svg>
       <h1><span class="t1">Щит</span><span class="t2">Майстер</span></h1>
-      <span class="ver mono" id="ver" role="button" tabindex="0" title="Що нового"></span>
+      <span class="verrow"><span class="ver mono" id="ver" role="button" tabindex="0" title="Що нового"></span><button class="btn upd" id="updBtn" title="Перевірити оновлення"><span aria-hidden="true">↻</span> Оновити<i class="dot" aria-hidden="true"></i></button></span>
     </div>
     <div class="actions">
       <div class="tpl-dd"><button class="btn tpl-btn" id="tplBtn" aria-haspopup="true" aria-expanded="false"><span class="tpl-k">Шаблон</span><span id="tplName">…</span><span aria-hidden="true">▾</span></button><div class="tpl-menu" id="tplMenu" hidden></div></div>
-      <button class="btn upd" id="updBtn" title="Перевірити оновлення"><span aria-hidden="true">↻</span> Оновити<i class="dot" aria-hidden="true"></i></button>
       <button class="btn primary" id="btnCheck">Перевірити схему</button>
     </div>
   </header>
@@ -244,7 +244,8 @@ select.btn{padding-right:28px}
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
 /* ===== Версія застосунку (з неї build.sh генерує version.json) ===== */
-const APP = { v:"2.6", date:"2026-10-31", notes:[
+const APP = { v:"2.7", date:"2026-10-31", notes:[
+  "Кнопка «Оновити» тепер завжди в рядку з номером версії й датою",
   "Шаблони — у власному меню з дрібнішим шрифтом, розкладені по групах",
   "Апарати для конструктора сховано у список «Додати апарат» із групами",
   "Нові порожні щити в «Конструкторі»: 3 фази з двигуном і 2 вводи",
