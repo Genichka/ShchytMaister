@@ -1,0 +1,92 @@
+/* ===== Події, демонстрація, таймери, старт ===== */
+function placeDev(type,r,slot){ const w=T[type].w;
+  if(!freeAt(r,slot,w)){ let alt=null; for(let rr=0;rr<S.board.rails&&alt===null;rr++) for(let i=0;i<SLOTS;i++) if(freeAt(rr,i,w)){ alt=[rr,i]; break; }
+    if(!alt){ toast("На рейках немає місця для "+w+" мод.","w"); return; } [r,slot]=alt; }
+  const n=groupsOf().length; const d=mkDev(type,r,slot,null,T[type].group?{group:mkGroup(n,"Група "+(n+1),2.5,[])}:null); S.devices.push(d);
+  S.pick=null; toast(`${desig(d)} встановлено`,"ok"); commit(); }
+function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>!w.a.startsWith(d.id+":")&&!w.b.startsWith(d.id+":")); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
+function termTap(key){
+  if(!S.pend){ S.pend=key; S.selWire=null; renderAll(); return; }
+  if(S.pend===key){ S.pend=null; renderAll(); return; }
+  const a=S.pend, b=key; S.pend=null;
+  if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){ toast("Такий дріт уже є","w"); renderAll(); return; }
+  if(S.wires.filter(w=>w.a===b||w.b===b).length>=2&&!/^x(n|pe):/.test(b)) toast("Під одну клему — не більше двох дротів","w");
+  S.wires.push({id:uid("w"),a,b,kind:S.wireKind,sec:S.wireSec}); commit(); }
+function demoStop(){ S.demo=null; renderTools(); hint(); }
+function demoStart(){ resetRuntime(); S.demo={i:-1,left:0}; demoNext(); }
+function demoNext(){ const sc=S.tplObj.demo.script; S.demo.i++; if(S.demo.i>=sc.length){ demoStop(); toast("Демонстрацію завершено","ok"); return; }
+  const st=sc[S.demo.i]; try{ st.do(); }catch(e){ console.error(e); } S.demo.left=st.wait; logp("ok","▶ "+st.say); commit(false); renderTools(); }
+function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length;
+  $("checks").innerHTML=C.map(c=>`<div class="ck"><span class="sev ${c.sev}">${c.sev==="e"?"Помилка":c.sev==="w"?"Увага":"OK"}</span><div><div class="t">${esc(c.t)}</div>${c.d?`<div class="d">${esc(c.d)}</div>`:""}</div></div>`).join("");
+  $("score").innerHTML=ne?`<span style="color:var(--red)">${ne} помил.</span> · <span style="color:var(--orange)">${nw} попер.</span>`:nw?`<span style="color:var(--orange)">${nw} попередж.</span>`:`<span style="color:var(--green)">Схема правильна</span>`;
+  $("checkOut").hidden=false; solve(0); renderAll(false); $("checkOut").scrollIntoView({behavior:"smooth",block:"start"}); }
+
+document.addEventListener("click",e=>{
+  const q=s=>e.target.closest(s); let el;
+  if(el=q(".modes button")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; renderAll(); return; }
+  if(el=q("[data-term]")){ termTap(el.dataset.term); return; }
+  if(el=q("[data-wire]")){ S.selWire=S.selWire===el.dataset.wire?null:el.dataset.wire; renderAll(); return; }
+  if(el=q("[data-press]")){ if(S.mode==="wire") return; livePress(devById(el.dataset.press)); return; }
+  if(el=q("[data-lever]")){ if(S.mode==="wire") return; const d=devById(el.dataset.lever), t=T[d.type];
+    if(t.tap){ if(t.tap(d)) commit(false); return; }
+    if(t.prot||t.rcd){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; S.heat[d.id]=0; } commit(false); } return; }
+  if(el=q("[data-test]")){ const d=devById(el.dataset.test), X=evaluate({extra:shortsExtra()});
+    if(d.on&&!d.trip&&X.volt(k(d,"t1"),k(d,"t2"))>=150){ trip(d,"кнопка «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює, лише коли ПЗВ під напругою і ввімкнений","w"); return; }
+  if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть апарат нижче"); return; }
+  if(el=q("[data-dev]")){ if(S.mode==="wire") return; S.selDev=el.dataset.dev; renderAll(false); return; }
+  if(el=q("[data-pick]")){ S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.selDev=null; renderAll(); return; }
+  if(q("#combBtn")){ if(S.comb) S.comb=null; else { const p=S.devices.filter(d=>d.type==="qf1p"); if(p.length<2){ toast("Потрібно щонайменше два автомати 1P","w"); return; }
+      const r=p[0].rail||0, sl=p.filter(d=>(d.rail||0)===r).map(d=>d.slot); S.comb={rail:r,from:Math.min(...sl),to:Math.max(...sl)}; } commit(); return; }
+  if(el=q("[data-kind]")){ const sw=S.selWire&&S.wires.find(w=>w.id===S.selWire); if(sw){ sw.kind=el.dataset.kind; commit(); } else { S.wireKind=el.dataset.kind; renderAll(); } return; }
+  if(el=q("[data-sec]")){ const v=+el.dataset.sec, sw=S.selWire&&S.wires.find(w=>w.id===S.selWire); if(sw){ sw.sec=v; commit(); } else { S.wireSec=v; renderAll(); } return; }
+  if(q("#delWire")){ S.wires=S.wires.filter(w=>w.id!==S.selWire); S.selWire=null; commit(); return; }
+  if(q("#undoWire")){ S.wires.pop(); S.selWire=null; commit(); return; }
+  if(q("#clearWires")){ if(clearArm>Date.now()){ S.wires=[]; clearArm=0; S.selWire=null; commit(); } else { clearArm=Date.now()+3000; renderTools(); setTimeout(()=>{ if(S.mode==="wire") renderTools(); },3100); } return; }
+  if(el=q("[data-srcon]")){ const s=S.src[el.dataset.srcon]; s.on=!s.on; if(s.on) s.blown=false; logp(s.on?"ok":"w",`${(S.board.inputs.find(i=>i.id===el.dataset.srcon)||{}).label}: ${s.on?"напругу подано":"напругу знято"}`); commit(false); return; }
+  if(el=q("[data-ctl]")){ const c=S.tplObj.demo.controls[+el.dataset.ctl]; if(!c||c.type==="range") return;
+    if(c.type==="toggle") c.set(!c.get()); else if(c.type==="choice") c.set(el.dataset.v); else if(c.type==="btn") c.act(); commit(false); return; }
+  if(q("#demoBtn")){ if(S.demo) demoStop(); else demoStart(); return; }
+  if(q("#allOn")){ S.devices.forEach(d=>{ if(T[d.type].prot||T[d.type].rcd){ d.on=true; d.trip=null; } }); S.heat={}; commit(false); return; }
+  if(q("#clrFaults")){ S.leak.clear(); S.short.clear(); S.leakWarned.clear(); commit(); return; }
+  if(el=q("[data-leak]")){ const id=el.dataset.leak; S.leak.has(id)?S.leak.delete(id):S.leak.add(id); S.leakWarned.delete(id); commit(); return; }
+  if(el=q("[data-short]")){ const id=el.dataset.short; S.short.has(id)?S.short.delete(id):S.short.add(id); commit(); return; }
+  if(el=q("[data-del]")){ const [id,i]=el.dataset.del.split(":"); devById(id).group.loads.splice(+i,1); commit(); return; }
+  const d=S.selDev&&devById(S.selDev);
+  if(d){
+    if(el=q("[data-rate]")){ d.rating=el.dataset.rate; if(d.type==="qm") d.Ir=mprHi(d.rating); commit(); return; }
+    if(el=q("[data-move]")){ const ns=d.slot+(+el.dataset.move); if(freeAt(d.rail||0,ns,T[d.type].w,d)){ d.slot=ns; commit(); } else toast("Там зайнято","w"); return; }
+    if(el=q("[data-mrail]")){ const nr=(d.rail||0)+(+el.dataset.mrail); if(freeAt(nr,d.slot,T[d.type].w,d)){ d.rail=nr; commit(); } else toast("На іншій рейці це місце зайняте","w"); return; }
+    if(el=q("[data-atsm]")){ d.manual=el.dataset.atsm==="1"; commit(false); return; }
+    if(el=q("[data-atsv]")){ d.variant=el.dataset.atsv; commit(false); return; }
+    if(el=q("[data-cmd]")){ d.cmd=el.dataset.cmd==="1"; commit(false); return; }
+    if(el=q("[data-hlc]")){ d.col=el.dataset.hlc; commit(false); return; }
+    if(q("#devToggle")){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; } commit(false); return; }
+    if(q("#devDel")){ removeDev(d); return; } }
+  if(q("#sheetClose")){ S.selDev=null; renderAll(false); return; }
+  if(q("#btnCheck")){ checkNow(); return; }
+  if(q("#zIn")){ S.zoom=Math.min(2.5,S.zoom+0.5); renderAll(false); return; }
+  if(q("#zOut")){ S.zoom=Math.max(1,S.zoom-0.5); renderAll(false); return; }
+  if(q("#zFit")){ S.zoom=1; renderAll(false); return; }
+});
+document.addEventListener("change",e=>{ const t=e.target;
+  if(t.dataset.load){ const [id,i]=t.dataset.load.split(":"); devById(id).group.loads[+i].on=t.checked; save(); solve(0); render(); renderSummary();
+    const d=devById(id), L=gLoad(d); document.querySelector(`[data-gload="${id}"]`).innerHTML=L.txt; document.querySelector(`[data-gbar="${id}"]`).innerHTML=L.bar; return; }
+  if(t.dataset.add){ if(t.value==="") return; const l=LOADS[+t.value]; devById(t.dataset.add).group.loads.push({n:l[0],kw:l[1],on:true}); commit(); return; }
+  if(t.dataset.gsec){ devById(t.dataset.gsec).group.sec=+t.value; commit(); return; }
+  if(t.dataset.gname){ devById(t.dataset.gname).group.name=t.value.trim()||"Група"; save(); render(); return; }
+  if(t.id==="tpl"&&t.value){ applyTemplate(t.value); t.value=""; $("checkOut").hidden=true; S.mode=S.tplObj.demo&&S.tplObj.demo.script.length&&S.tpl!=="empty"?"test":"mount"; toast("Шаблон завантажено","ok"); commit(); return; }
+});
+document.addEventListener("input",e=>{ const t=e.target;
+  if(t.dataset.srcu){ const s=S.src[t.dataset.srcu]; s.U=+t.value; const three=S.board.inputs.find(i=>i.id===t.dataset.srcu).terms.includes("L1");
+    $("uo-"+t.dataset.srcu).textContent=three?Math.round(s.U*1.732)+" В лін.":s.U+" В"; solve(0); render(); updateLive(); return; }
+  if(t.dataset.ctl){ const c=S.tplObj.demo.controls[+t.dataset.ctl]; if(c&&c.type==="range"){ c.set(+t.value); $("co-"+t.dataset.ctl).textContent=t.value; solve(0); render(); updateLive(); } return; }
+  if(t.id==="irset"){ const d=devById(S.selDev); d.Ir=+t.value; $("irout").textContent=fmt(d.Ir,1)+" А"; save(); render(); }
+});
+setInterval(()=>{ if(!anySource()&&!S.demo) return; solve(0.5); render(); renderSummary(); hint(); updateLive(); },500);
+setInterval(()=>{ if(!S.demo) return; S.demo.left-=0.25; if(S.demo.left<=0) demoNext(); },250);
+(function init(){
+  const sel=$("tpl"), cats=[...new Set(Object.values(TPL).map(t=>t.cat))];
+  sel.innerHTML=`<option value="">Шаблон…</option>`+cats.map(c=>`<optgroup label="${esc(c)}">`+Object.entries(TPL).filter(([,t])=>t.cat===c).map(([key,t])=>`<option value="${key}">${esc(t.name)}</option>`).join("")+`</optgroup>`).join("");
+  if(load()&&TPL[S.tpl]){ S.tplObj=TPL[S.tpl]; S.env0=S.env0||JSON.parse(JSON.stringify(S.env)); } else applyTemplate("flat");
+  commit();
+})();

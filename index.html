@@ -142,6 +142,25 @@ select.btn{padding-right:28px}
 .heat{animation:heat 1s ease-in-out infinite}
 @keyframes heat{50%{opacity:.35}}
 @media (prefers-reduced-motion: reduce){.flow,.heat{animation:none}}
+.tplinfo{margin:0;font-size:13px;color:var(--muted);max-width:75ch}
+.demo{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:var(--r);padding:10px;background:color-mix(in srgb,var(--blue) 6%,var(--panel))}
+.demo-say{font-size:14px;color:var(--strong);border-left:3px solid var(--blue);padding:4px 10px;line-height:1.5}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl .mains,.ctl .volt,.ctl .row{flex:1 1 100%}
+.switch.sm{min-height:36px;font-weight:500;font-size:13px}
+.switch.sm .knob{width:36px;height:20px}.switch.sm .knob::after{width:14px;height:14px}
+.switch.sm[aria-pressed="true"] .knob::after{left:19px}
+.btn.go{background:#2e9a3e;border-color:#2e9a3e;color:#fff;font-weight:600}.btn.stop{background:#d6332a;border-color:#d6332a;color:#fff;font-weight:600}
+.stl{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.stl:empty{display:none}
+.sl{background:var(--panel2);padding:6px 10px;display:flex;justify-content:space-between;gap:8px;font-size:12.5px;align-items:baseline}
+.sl span{color:var(--muted)} .sl b{font-weight:600;text-align:right} .sl b.ok{color:var(--green)} .sl b.w{color:var(--orange)} .sl b.e{color:var(--red)}
+.spin{animation:spin .45s linear infinite;transform-box:fill-box;transform-origin:center}.spin.rev{animation-direction:reverse}
+.hum{animation:hum .09s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}} @keyframes hum{50%{transform:rotate(6deg)}}
+#tpl{max-width:min(320px,100%)}
+@media (prefers-reduced-motion: reduce){.spin,.hum{animation:none}}
+
 @media (max-width:520px){h1{font-size:19px}.actions .btn{padding:6px 9px}.groups{padding:10px;gap:10px}}
 </style></head><body>
 
@@ -152,11 +171,7 @@ select.btn{padding-right:28px}
       <h1><span class="t1">Щит</span><span class="t2">Майстер</span></h1>
     </div>
     <div class="actions">
-      <select class="btn" id="tpl" aria-label="Шаблон щита">
-        <option value="">Шаблон…</option>
-        <option value="flat">Приклад: квартира</option>
-        <option value="empty">Порожній щит</option>
-      </select>
+      <select class="btn" id="tpl" aria-label="Шаблон щита"><option value="">Шаблон…</option></select>
       <button class="btn primary" id="btnCheck">Перевірити схему</button>
     </div>
   </header>
@@ -172,7 +187,8 @@ select.btn{padding-right:28px}
       <div class="hint" id="hint"></div>
       <div class="zoom"><button class="btn" id="zOut" aria-label="Зменшити">−</button><button class="btn" id="zFit">100%</button><button class="btn" id="zIn" aria-label="Збільшити">+</button></div>
     </div>
-    <div class="scroller" id="scroller"><svg id="svg" viewBox="0 0 840 612" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="scroller" id="scroller"><svg id="svg" viewBox="0 0 840 612" role="img" aria-label="Електрощит" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="summary" id="summary" style="border-top:1px solid var(--line)"></div>
     <div class="tools" id="tools"></div>
   </section>
 
@@ -181,544 +197,1188 @@ select.btn{padding-right:28px}
     <div class="checks" id="checks"></div>
   </section>
 
-  <section class="panel">
+  <section class="panel" id="groupsWrap">
     <div class="panel-h"><h2>Групи споживачів</h2><span class="hint" style="flex:0 1 auto">Кабель від автомата до приміщення</span></div>
-    <div class="summary" id="summary"></div>
     <div class="groups" id="groups"></div>
   </section>
-  <p class="foot">Навчальний симулятор. Номінали кабелів наведено за поширеною практикою монтажу для мідного кабелю в прихованій прокладці.</p>
+  <p class="foot">Навчальний симулятор. Номінали кабелів наведено за поширеною практикою монтажу для мідного кабелю в прихованій прокладці. Моделі АВР-модулів спрощені: пріоритет вводу I, перемикання за мілісекунди, реакція лише на зникнення напруги.</p>
 </div>
 
 <div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheetIn"></div></div>
 <div class="toast" id="toast" style="opacity:0"></div>
 <script>
 "use strict";
-/* ===== Модель: типи апаратів, навантаження, шаблони, стан ===== */
-const T = {
-  qf2p:{name:"Автомат 2P",short:"Вступний 2P",w:2,pre:"QF",breaker:true,
-    terms:[{k:"t1",m:0,s:"top",r:"L",l:"1"},{k:"t2",m:1,s:"top",r:"N",l:"3"},{k:"b1",m:0,s:"bot",r:"L",l:"2"},{k:"b2",m:1,s:"bot",r:"N",l:"4"}],
-    poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}],ratings:["C16","C20","C25","C32","C40","C50","C63"],def:"C32"},
-  kv:{name:"Реле напруги",short:"Реле напруги",w:2,pre:"KV",relay:true,
-    terms:[{k:"t1",m:0,s:"top",r:"N",l:"N"},{k:"t2",m:1,s:"top",r:"L",l:"L вх"},{k:"b2",m:1,s:"bot",r:"L",l:"L вих"}],
-    poles:[{a:"t2",b:"b2",r:"L"}],ratings:["40","63"],def:"40"},
-  rcd:{name:"ПЗВ 30 мА",short:"ПЗВ (УЗО)",w:2,pre:"QD",rcd:true,
-    terms:[{k:"t1",m:0,s:"top",r:"L",l:"1"},{k:"t2",m:1,s:"top",r:"N",l:"N"},{k:"b1",m:0,s:"bot",r:"L",l:"2"},{k:"b2",m:1,s:"bot",r:"N",l:"N"}],
-    poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}],ratings:["25","40","63"],def:"40"},
-  qf1p:{name:"Автомат 1P",short:"Автомат 1P",w:1,pre:"QF",breaker:true,group:true,
-    terms:[{k:"t1",m:0,s:"top",r:"L",l:"1"},{k:"b1",m:0,s:"bot",r:"L",l:"2"}],
-    poles:[{a:"t1",b:"b1",r:"L"}],ratings:["B6","B10","B16","B20","B25","C10","C16","C20","C25","C32","C40"],def:"B16"},
-  rcbo:{name:"Диф-автомат",short:"Диф-автомат",w:2,pre:"QFD",breaker:true,rcd:true,group:true,
-    terms:[{k:"t1",m:0,s:"top",r:"L",l:"1"},{k:"t2",m:1,s:"top",r:"N",l:"N"},{k:"b1",m:0,s:"bot",r:"L",l:"2"},{k:"b2",m:1,s:"bot",r:"N",l:"N"}],
-    poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}],ratings:["B10","B16","C16","C20","C25","C32"],def:"C16"}
-};
-const ORDER = ["qf2p","kv","rcd","qf1p","rcbo"];
+/* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
+const T = {};   // апарати на DIN-рейці
+const FT = {};  // польове обладнання (двигуни, СЕС, клапани…)
+const defType = (k, d) => { d.k = k; T[k] = d; };
+const defField = (k, d) => { d.k = k; FT[k] = d; };
 const SLOTS = 12;
+const CAB = {1.5:10,2.5:16,4:25,6:32,10:50,16:63,25:80,35:100,50:125};
+const SECS = [1.5,2.5,4,6,10,16,25,35,50];
+const U_MIN = 170, U_MAX = 250, KV_DELAY = 3;
+const GCOL = ["#ff9830","#5b8ff0","#4fae4f","#b877d9","#e85c8a","#e0b400","#3fb6c9","#e8735a"];
 const LOADS = [["Плита",4.0],["Духова шафа",3.5],["Електрокотел",6.0],["Чайник",2.0],["Мікрохвильовка",1.2],["Пральна машина",2.2],
   ["Посудомийна машина",1.8],["Бойлер",2.0],["Холодильник",0.15],["Кондиціонер",1.0],["Обігрівач",2.0],["Тепла підлога",1.5],
   ["Пилосос",1.6],["Праска",2.2],["Комп’ютер",0.35],["Телевізор",0.15],["Фен",1.8],["Сушильна машина",2.5],["Блендер",0.6],
-  ["Тостер",0.9],["Зарядки",0.02],["Освітлення",0.1],["Роутер",0.01],["Домофон",0.02],["Зарядка електромобіля",3.7]];
-const GCOL = ["#ff9830","#5b8ff0","#4fae4f","#b877d9","#e85c8a","#e0b400","#3fb6c9","#e8735a"];
-const CAB = {1.5:10,2.5:16,4:25,6:32,10:50,16:63}; // макс. номінал автомата для перерізу, А
-const SECS = [1.5,2.5,4,6,10,16];
-const U_MIN = 170, U_MAX = 250, KV_DELAY = 3;
-
-const inA = r => parseInt(String(r).replace(/\D/g,""),10) || 0;      // "C32" → 32
-const curve = r => /^[BC]/.test(r) ? r[0] : "";
-const secFor = I => SECS.find(s => CAB[s] >= I) || 16;
-const fmt = (v,d=1) => v.toFixed(d).replace(".",",");
+  ["Тостер",0.9],["Зарядки",0.02],["Освітлення",0.1],["Роутер",0.01],["Домофон",0.02],["Газовий котел",0.15],["Насос",0.75],["Зарядка електромобіля",3.7]];
+// Види дротів: колір і підпис
+const WK = { L:["Фаза L","#e0352b"], L1:["L1","#8b5a2b"], L2:["L2","#26282c"], L3:["L3","#9aa0a6"], N:["Нуль N","#2f6fdf"],
+  PE:["PE",null], C:["Керування","#f08c2e"], "DC+":["DC +","#d42a4a"], "DC-":["DC −","#26282c"] };
+const PHK = ["L","L1","L2","L3"];
+// Сумісність виду дроту з роллю клеми
+function kindFits(kind, role){
+  if(!role || role==="any") return true;
+  if(role==="P"||role==="L") return PHK.includes(kind)||kind==="C";
+  if(role==="C") return kind!=="PE" && kind!=="DC+" && kind!=="DC-";
+  if(PHK.includes(role)) return PHK.includes(kind)||kind==="C";
+  return kind===role;
+}
+const inA = r => parseFloat(String(r).replace(",",".").replace(/^[^\d]*/,"")) || 0;
+const secFor = I => SECS.find(s => CAB[s] >= I) || 50;
+const fmt = (v,d=1) => (Math.round(v*10**d)/10**d).toFixed(d).replace(".",",");
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let UID = 1; const uid = p => p + (UID++);
 
-function mkGroup(i,name,sec,loads){ return {name, sec, color:GCOL[i%GCOL.length], loads:loads.map(([n,kw,on])=>({n,kw,on:!!on}))}; }
-function mkDev(type,slot,rating,group){ const d={id:uid("d"),type,slot,rating:rating||T[type].def,on:true,trip:null}; if(T[type].group) d.group=group||mkGroup(slot,"Нова група",2.5,[]); return d; }
+function mkGroup(i,name,sec,loads){ return {name, sec, color:GCOL[i%GCOL.length], loads:(loads||[]).map(([n,kw,on])=>({n,kw,on:!!on}))}; }
+function mkDev(type, rail, slot, rating, extra){
+  const t=T[type]; const d={id:uid("d"), type, rail, slot, rating:rating||t.def||"", on:true, trip:null};
+  if(t.init) t.init(d);
+  if(t.group && !(extra&&(extra.group||extra.noGroup))) d.group=mkGroup(slot,"Нова група",2.5,[]);
+  return Object.assign(d, extra||{});
+}
+function mkField(type, map, extra){ const d={id:uid("f"), type, map}; if(FT[type].init) FT[type].init(d); return Object.assign(d, extra||{}); }
 
-const TEMPLATES = {
-  flat(){
-    const D=[mkDev("qf2p",0,"C32"),mkDev("kv",2,"40"),mkDev("rcd",4,"40"),
-      mkDev("qf1p",6,"C32",mkGroup(0,"Плита, духовка",6,[["Плита",4.0,1],["Духова шафа",3.5,0]])),
-      mkDev("qf1p",7,"B16",mkGroup(1,"Кухня, розетки",2.5,[["Чайник",2.0,1],["Блендер",0.6,0],["Тостер",0.9,0],["Холодильник",0.15,1]])),
-      mkDev("qf1p",8,"B16",mkGroup(2,"Зал, розетки",2.5,[["Пилосос",1.6,0],["Праска",2.2,0],["Комп’ютер",0.35,1],["Зарядки",0.02,1]])),
-      mkDev("qf1p",9,"B16",mkGroup(3,"Ванна кімната",2.5,[["Фен",1.8,0],["Зарядки",0.02,1],["Сушильна машина",2.5,0]])),
-      mkDev("qf1p",10,"B10",mkGroup(4,"Освітлення, домофон",1.5,[["Освітлення",0.1,1],["Роутер",0.01,1],["Домофон",0.02,1]]))];
-    const [qf1,kv,qd,qf2]=D, W=(a,b,kind,sec)=>({id:uid("w"),a,b,kind,sec});
-    return {devices:D, comb:{from:6,to:10}, wires:[
-      W("in:L",qf1.id+":t1","L",6), W("in:N",qf1.id+":t2","N",6), W("in:PE","xpe:7","PE",6),
-      W(qf1.id+":b1",kv.id+":t2","L",6), W(qf1.id+":b2",qd.id+":t2","N",6), W(qd.id+":t2",kv.id+":t1","N",1.5),
-      W(kv.id+":b2",qd.id+":t1","L",6), W(qd.id+":b1",qf2.id+":t1","L",6), W(qd.id+":b2","xn:0","N",6)]};
-  },
-  empty(){ return {devices:[],wires:[],comb:null}; }
-};
+const DEFAULT_BOARD = () => ({ rails:1, inputs:[{id:"in",label:"Ввід",terms:["L","N","PE"]}], xn:8, xpe:8, xt:[] });
+const S = { tpl:"flat", board:DEFAULT_BOARD(), devices:[], field:[], wires:[], comb:null, src:{in:{on:false,U:230,lost:{}}}, env:{},
+  mode:"mount", pend:null, pick:null, selWire:null, selDev:null, wireKind:"L", wireSec:2.5, zoom:1, log:[],
+  leak:new Set(), short:new Set(), leakWarned:new Set(), heat:{}, sim:null, demo:null, uWarned:false };
 
-const S = { devices:[], wires:[], comb:null, mains:false, U:230, mode:"mount", pend:null, pick:null, selWire:null, selDev:null,
-  wireKind:"L", wireSec:2.5, zoom:1, log:[], leak:new Set(), short:new Set(), kv:{}, heat:{}, combPick:null };
-
-const KEY = "shchyt-majster-v1";
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify({devices:S.devices,wires:S.wires,comb:S.comb,UID})); }catch(e){} }
+const KEY = "shchyt-majster-v2";
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify({tpl:S.tpl, board:S.board, devices:S.devices, field:S.field, wires:S.wires, comb:S.comb,
+    src:S.src, env:S.env, env0:S.env0, UID})); }catch(e){}
+}
 function load(){
-  try{ const j=JSON.parse(localStorage.getItem(KEY)||"null"); if(j&&Array.isArray(j.devices)){ S.devices=j.devices; S.wires=j.wires||[]; S.comb=j.comb||null; UID=Math.max(UID,j.UID||1); return true; } }catch(e){}
+  try{ const j=JSON.parse(localStorage.getItem(KEY)||"null");
+    if(j && Array.isArray(j.devices) && j.board){ Object.assign(S,{tpl:j.tpl, board:j.board, devices:j.devices, field:j.field||[], wires:j.wires||[],
+      comb:j.comb||null, src:j.src||{}, env:j.env||{}, env0:j.env0}); UID=Math.max(UID,j.UID||1);
+      for(const k of Object.keys(S.src)) S.src[k].on=false;   // після перезавантаження джерела вимкнені
+      return true; } }catch(e){}
   return false;
 }
-function applyTemplate(name){
-  const t=TEMPLATES[name](); S.devices=t.devices; S.wires=t.wires; S.comb=t.comb;
-  S.mains=false; S.pend=null; S.selWire=null; S.selDev=null; S.pick=null; S.leak.clear(); S.short.clear(); S.kv={}; S.heat={}; S.log=[];
-  save();
+const devById = id => S.devices.find(d=>d.id===id) || S.field.find(d=>d.id===id);
+const railDevs = r => S.devices.filter(d=>(d.rail||0)===r);
+const devAt = (r,slot) => railDevs(r).find(d=>slot>=d.slot && slot<d.slot+T[d.type].w);
+function freeAt(r,slot,w,ignore){ if(r<0||r>=S.board.rails||slot<0||slot+w>SLOTS) return false;
+  for(let i=slot;i<slot+w;i++){ const d=devAt(r,i); if(d&&d!==ignore) return false; } return true; }
+function desig(d){
+  if(!T[d.type]) return d.name || FT[d.type].pre;
+  const p=T[d.type].pre; const same=S.devices.filter(x=>T[x.type].pre===p).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
+  return p+(same.findIndex(x=>x.id===d.id)+1);
 }
-const devById = id => S.devices.find(d=>d.id===id);
-const devAt = slot => S.devices.find(d=>slot>=d.slot && slot<d.slot+T[d.type].w);
-function freeAt(slot,w,ignore){ if(slot<0||slot+w>SLOTS) return false; for(let i=slot;i<slot+w;i++){ const d=devAt(i); if(d&&d!==ignore) return false; } return true; }
-function desig(d){ // позиційні позначення за порядком на рейці
-  const p=T[d.type].pre; const same=S.devices.filter(x=>T[x.type].pre===p).sort((a,b)=>a.slot-b.slot);
-  return p+(same.indexOf(d)+1);
+// Клеми: "in:L", "in2:N", "xn:3", "xpe:0", "xt:U", "d12:A1"
+function termDef(key){
+  const [o,k]=key.split(":"); const d=S.devices.find(x=>x.id===o); if(!d) return null;
+  return T[d.type].terms.find(t=>t.k===k)||null;
 }
 function termRole(key){
   const [o,k]=key.split(":");
-  if(o==="in") return k; if(o==="xn") return "N"; if(o==="xpe") return "PE";
-  const d=devById(o); if(!d) return null; const t=T[d.type].terms.find(t=>t.k===k); return t?t.r:null;
+  if(S.board.inputs.some(i=>i.id===o)) return k==="N"?"N":k==="PE"?"PE":k;
+  if(o==="xn") return "N"; if(o==="xpe") return "PE";
+  if(o==="xt"){ const x=S.board.xt.find(x=>x.k===k); return x?x.r:null; }
+  const t=termDef(key); return t?t.r:null;
 }
 function termName(key){
   const [o,k]=key.split(":");
-  if(o==="in") return "Ввід "+k; if(o==="xn") return "Шина N (XN1)"; if(o==="xpe") return "Шина PE (XPE1)";
-  const d=devById(o); if(!d) return key; const t=T[d.type].terms.find(t=>t.k===k);
+  const inp=S.board.inputs.find(i=>i.id===o); if(inp) return inp.label+" "+k;
+  if(o==="xn") return "Шина N (XN1)"; if(o==="xpe") return "Шина PE (XPE1)";
+  if(o==="xt"){ const x=S.board.xt.find(x=>x.k===k); return "Клема XT1 «"+(x?x.l:k)+"»"; }
+  const d=S.devices.find(x=>x.id===o); if(!d) return key; const t=termDef(key);
   return desig(d)+" клема «"+(t?t.l:k)+"»";
 }
-function rLabel(d){ return T[d.type].relay||T[d.type].rcd&&!T[d.type].breaker ? d.rating+" А" : d.rating; }
-/* ===== Геометрія, трасування дротів, SVG ===== */
-const G = { W:840, H:612, X0:96, MW:54, DT:208, DB:448, TY:230, BY:426, BUSY:566, INY:36 };
-const IN_X = {L:130, N:166, PE:202};
-const XN_X = i => 124 + 28*i, XPE_X = i => 514 + 28*i;
-const topLaneY = i => 188 - 7*i, botLaneY = i => 468 + 7*i;
-const sideX = (side,i) => side==="L" ? 84 - 7*i : 756 + 7*i;
-const SW = {1.5:3,2.5:3.6,4:4.3,6:5,10:6,16:7};
-
-function termPos(key){
-  const [o,k]=key.split(":");
-  if(o==="in") return {x:IN_X[k], y:G.INY, ch:"top"};
-  if(o==="xn") return {x:XN_X(+k), y:G.BUSY, ch:"bot"};
-  if(o==="xpe") return {x:XPE_X(+k), y:G.BUSY, ch:"bot"};
-  const d=devById(o); if(!d) return null; const t=T[d.type].terms.find(t=>t.k===k); if(!t) return null;
-  return {x:G.X0+(d.slot+t.m)*G.MW+G.MW/2, y:t.s==="top"?G.TY:G.BY, ch:t.s==="top"?"top":"bot"};
+function allTermKeys(){
+  const keys=[]; for(const inp of S.board.inputs) for(const t of inp.terms) keys.push(inp.id+":"+t);
+  for(let i=0;i<S.board.xn;i++) keys.push("xn:"+i); for(let i=0;i<S.board.xpe;i++) keys.push("xpe:"+i);
+  for(const x of S.board.xt) keys.push("xt:"+x.k);
+  for(const d of S.devices) for(const t of T[d.type].terms) keys.push(d.id+":"+t.k);
+  return keys;
 }
-
-function route(){ // повертає {wireId: points[]}
-  const items=[];
-  for(const w of S.wires){
-    const A=termPos(w.a), B=termPos(w.b); if(!A||!B) continue;
-    if(A.ch===B.ch) items.push({w,A,B,cross:false,span:Math.abs(A.x-B.x)});
-    else { const top=A.ch==="top"?A:B, bot=A.ch==="top"?B:A; const side=(top.x+bot.x)/2<G.W/2?"L":"R"; const sx=sideX(side,0);
-      items.push({w,A:top,B:bot,cross:true,side,span:Math.abs(top.x-sx)+Math.abs(bot.x-sx)}); }
-  }
-  const lanes={top:[],bot:[]};
-  const take=(ch,a,b)=>{ const lo=Math.min(a,b)-7, hi=Math.max(a,b)+7; let i=0;
-    for(;;i++){ const L=lanes[ch][i]||(lanes[ch][i]=[]); if(!L.some(([p,q])=>lo<q&&p<hi)){ L.push([lo,hi]); return i; } } };
-  items.sort((p,q)=>p.span-q.span);
-  for(const it of items){
-    if(!it.cross){ it.lane=take(it.A.ch,it.A.x,it.B.x); }
-    else { const sx=sideX(it.side,3); it.lt=take("top",it.A.x,sx); it.lb=take("bot",it.B.x,sx); }
-  }
-  for(const side of ["L","R"]){ const cs=items.filter(i=>i.cross&&i.side===side).sort((p,q)=>(p.lt+p.lb)-(q.lt+q.lb)); cs.forEach((it,i)=>it.ls=i); }
-  const out={};
-  for(const it of items){
-    const {A,B}=it; let pts;
-    if(!it.cross){ const y=A.ch==="top"?topLaneY(it.lane):botLaneY(it.lane); pts=[[A.x,A.y],[A.x,y],[B.x,y],[B.x,B.y]]; }
-    else { const sx=sideX(it.side,it.ls), yt=topLaneY(it.lt), yb=botLaneY(it.lb); pts=[[A.x,A.y],[A.x,yt],[sx,yt],[sx,yb],[B.x,yb],[B.x,B.y]]; }
-    out[it.w.id]=pts;
-  }
-  return out;
-}
-function rpath(pts,r=7){
-  const p=pts.filter((q,i)=>i===0||q[0]!==pts[i-1][0]||q[1]!==pts[i-1][1]);
-  let d="M"+p[0][0]+" "+p[0][1];
-  for(let i=1;i<p.length-1;i++){
-    const [x0,y0]=p[i-1],[x1,y1]=p[i],[x2,y2]=p[i+1];
-    const l1=Math.hypot(x1-x0,y1-y0), l2=Math.hypot(x2-x1,y2-y1), rr=Math.min(r,l1/2,l2/2);
-    if(rr<1||(x0===x1&&x1===x2)||(y0===y1&&y1===y2)){ d+=" L"+x1+" "+y1; continue; }
-    const ax=x1-(x1-x0)/l1*rr, ay=y1-(y1-y0)/l1*rr, bx=x1+(x2-x1)/l2*rr, by=y1+(y2-y1)/l2*rr;
-    d+=` L${ax.toFixed(1)} ${ay.toFixed(1)} Q${x1} ${y1} ${bx.toFixed(1)} ${by.toFixed(1)}`;
-  }
-  const q=p[p.length-1]; return d+" L"+q[0]+" "+q[1];
-}
-const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const screw = (x,y) => `<circle class="screw" cx="${x}" cy="${y}" r="11"/><path class="screw-x" d="M${x-6} ${y}h12M${x} ${y-6}v12"/>`;
-
-function devSVG(d,R){
-  const t=T[d.type], x=G.X0+d.slot*G.MW+1, w=t.w*G.MW-2, cx=x+w/2, y=G.DT, des=desig(d);
-  const on=d.on&&!d.trip, heat=R.heat[d.id]||0;
-  let s=`<g data-dev="${d.id}">`;
-  if(heat>0.15) s+=`<rect class="heat" x="${x-3}" y="${y-3}" width="${w+6}" height="${G.DB-y+6}" rx="6" fill="none" stroke="var(--orange)" stroke-width="3"/>`;
-  if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${G.DB-y+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
-  s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${G.DB-y}" rx="4"/>`;
-  s+=`<rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="${118}" rx="2"/>`;
-  for(const tm of t.terms){ const tx=G.X0+(d.slot+tm.m)*G.MW+G.MW/2;
-    if(tm.s==="top") s+=screw(tx,G.TY)+`<text class="svs" x="${tx}" y="${G.TY+20}" font-size="7.5" text-anchor="middle">${esc(tm.l)}</text>`;
-    else s+=screw(tx,G.BY)+`<text class="svs" x="${tx}" y="${G.BY-16}" font-size="7.5" text-anchor="middle">${esc(tm.l)}</text>`; }
-  s+=`<text class="svs" x="${cx}" y="${y+60}" font-size="7.5" font-weight="700" text-anchor="middle" letter-spacing=".5">EnergyUA</text>`;
-  if(t.relay){
-    const st=R.kv[d.id]||{}, lcd=st.powered?(st.delay>0?"⏱"+Math.ceil(st.delay):String(Math.round(S.U))):"---";
-    s+=`<rect x="${x+8}" y="${y+66}" width="${w-16}" height="30" rx="2" fill="#16181c"/>`;
-    s+=`<text x="${cx}" y="${y+87}" font-size="17" text-anchor="middle" font-family="var(--mono)" font-weight="600" fill="${st.powered?(st.closed?"#5fe36b":"#ff5a5a"):"#3a3f47"}">${lcd}</text>`;
-    s+=`<text class="svs" x="${cx}" y="${y+110}" font-size="7" font-weight="700" text-anchor="middle">РЕЛЕ НАПРУГИ</text>`;
-    s+=`<text class="svs" x="${cx}" y="${y+121}" font-size="6.5" text-anchor="middle">${d.rating} А · ${U_MIN}–${U_MAX} В</text>`;
-    s+=`<circle cx="${x+16}" cy="${y+138}" r="5" fill="${st.powered?(st.closed?"#3fbf4a":"#e23b3b"):"#9aa0aa"}" stroke="#555"/>`;
-    s+=`<circle cx="${x+w-16}" cy="${y+138}" r="5" fill="${st.powered&&st.closed?"#ffd23f":"#9aa0aa"}" stroke="#555"/>`;
-  } else {
-    if(t.rcd&&!t.breaker){ s+=`<text class="svs" x="${cx}" y="${y+72}" font-size="7" text-anchor="middle">ПЗВ · ΔI 30 мА</text>`;
-      s+=`<text class="svt" x="${cx}" y="${y+90}" font-size="15" text-anchor="middle">${d.rating} А</text>`; }
-    else s+=`<text class="svt" x="${cx}" y="${y+84}" font-size="${t.w>1?17:15}" text-anchor="middle">${esc(d.rating)}</text>`;
-    if(t.rcd&&t.breaker) s+=`<text class="svs" x="${cx}" y="${y+98}" font-size="7" text-anchor="middle">30 мА</text>`;
-    const lw=t.w>1?44:20, lx=cx-lw/2, ly=y+102;
-    s+=`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${lx-4}" y="${ly-4}" width="${lw+8}" height="48" rx="3" fill="#2a2d33"/>`;
-    s+=`<rect x="${lx}" y="${on?ly:ly+20}" width="${lw}" height="20" rx="2" fill="${t.rcd&&!t.breaker?"#2f6fdf":"#45494f"}" stroke="#1a1c20"/>`;
-    s+=`<rect x="${lx+3}" y="${(on?ly:ly+20)+4}" width="${lw-6}" height="2" fill="#777"/><rect x="${lx+3}" y="${(on?ly:ly+20)+9}" width="${lw-6}" height="2" fill="#777"/></g>`;
-    s+=`<rect x="${cx-6}" y="${y+150}" width="12" height="6" rx="1" fill="${on?"#e0352b":"#2e9a3e"}"/>`;
-    if(t.rcd) s+=`<g data-test="${d.id}" style="cursor:pointer"><circle cx="${x+w-11}" cy="${y+72+(t.breaker?0:0)}" r="8" fill="#f2c400" stroke="#8a6d00"/><text x="${x+w-11}" y="${y+75}" font-size="9" font-weight="700" text-anchor="middle" fill="#222">T</text></g>`;
-  }
-  s+=`<rect x="${cx-19}" y="${y+168}" width="38" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/><text x="${cx}" y="${y+179}" font-size="9.5" font-weight="700" text-anchor="middle" font-family="var(--mono)" fill="#222">${des}</text>`;
-  const gc=d.group?d.group.color:(t.relay?"#8f93a2":t.rcd?"#8f93a2":"#e0352b");
-  s+=`<rect x="${x+2}" y="${y+188}" width="${w-4}" height="5" fill="${gc}"/>`;
-  const cap=d.group?d.group.name:(t.relay?"Контроль напруги":t.rcd?"Захист від ураження":"Ввід 230 В");
-  const words=String(cap).split(/\s+/), lines=[]; let cur="";
-  const maxc=t.w>1?13:7; for(const wd of words){ if((cur+" "+wd).trim().length>maxc&&cur){ lines.push(cur); cur=wd; } else cur=(cur+" "+wd).trim(); } if(cur) lines.push(cur);
-  lines.slice(0,2).forEach((ln,i)=>{ s+=`<text class="svs" x="${cx}" y="${y+203+i*9}" font-size="7" text-anchor="middle">${esc(ln.length>maxc+2?ln.slice(0,maxc+1)+"…":ln)}</text>`; });
-  if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
-  return s+"</g>";
-}
-
-function render(){
-  const R=S.sim||{liveW:new Set(),kv:{},heat:{}}; const svg=document.getElementById("svg"); let s="";
-  s+=`<rect class="encl" x="14" y="70" width="812" height="532" rx="10"/><rect class="encl-in" x="26" y="82" width="788" height="508" rx="6"/>`;
-  for(const [cx,cy] of [[44,100],[796,100],[44,572],[796,572]]) s+=`<circle cx="${cx}" cy="${cy}" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="1.6" fill="var(--muted)"/>`;
-  s+=`<rect class="rail" x="40" y="${G.DT+64}" width="760" height="46" rx="2" opacity=".55"/><rect class="rail" x="40" y="${G.DT+74}" width="760" height="26" opacity=".9"/>`;
-  s+=`<text class="lab" x="420" y="596" font-size="10" text-anchor="middle">ЩРН-12 · ${SLOTS} модулів · зайнято ${S.devices.reduce((a,d)=>a+T[d.type].w,0)}</text>`;
-  // шини
-  s+=`<rect x="108" y="554" width="228" height="24" rx="3" fill="#2f6fdf"/><rect x="498" y="554" width="228" height="24" rx="3" fill="#f2c400"/>`;
-  for(let i=0;i<8;i++){ s+=`<rect x="${502+i*28}" y="554" width="14" height="24" fill="#2e9a3e" opacity=".85"/>`; }
-  for(let i=0;i<8;i++){ s+=screw(XN_X(i),G.BUSY)+screw(XPE_X(i),G.BUSY); }
-  s+=`<text class="lab" x="108" y="548" font-size="10">N · XN1</text><text class="lab" x="498" y="548" font-size="10">PE · XPE1</text>`;
-  // ввід
-  s+=`<text class="lab" x="36" y="40" font-size="10">Ввід</text><text class="lab" x="36" y="53" font-size="10" fill="${S.mains?"var(--green)":"var(--muted)"}">${S.mains?"~"+Math.round(S.U)+" В":"0 В"}</text>`;
-  for(const k of ["L","N","PE"]){ const x=IN_X[k]; s+=`<rect x="${x-16}" y="20" width="32" height="32" rx="3" fill="var(--panel2)" stroke="var(--line)"/>`+screw(x,G.INY)+`<text class="lab" x="${x}" y="15" font-size="10" text-anchor="middle">${k}</text>`; }
-  // слоти
-  if(S.mode==="mount"){ for(let i=0;i<SLOTS;i++){ if(devAt(i)) continue; const fits=!S.pick||freeAt(i,T[S.pick].w);
-    s+=`<rect class="slot" data-slot="${i}" x="${G.X0+i*G.MW+3}" y="${G.DT}" width="${G.MW-6}" height="${G.DB-G.DT}" rx="4" style="${S.pick&&fits?"stroke:var(--blue);opacity:1":""}${S.pick&&!fits?";opacity:.2":""}"/>`;
-    s+=`<text class="lab" x="${G.X0+i*G.MW+G.MW/2}" y="${G.DT+130}" font-size="10" text-anchor="middle" pointer-events="none">${i+1}</text>`; } }
-  for(const d of S.devices) s+=devSVG(d,R);
-  // гребінка
-  if(S.comb){ const cov=S.devices.filter(d=>d.type==="qf1p"&&d.slot>=S.comb.from&&d.slot<=S.comb.to).map(d=>G.X0+d.slot*G.MW+G.MW/2);
-    if(cov.length){ const a=Math.min(...cov)-10,b=Math.max(...cov)+10; for(const x of cov) s+=`<rect x="${x-3}" y="198" width="6" height="24" fill="var(--brass)"/>`;
-      s+=`<rect x="${a}" y="194" width="${b-a}" height="9" rx="2" fill="var(--brass)" stroke="#9b7d22"/><text class="lab" x="${a}" y="190" font-size="8.5">Гребінка 1P · ${cov.length} мод.</text>`; } }
-  // дроти
-  const P=route();
-  for(const w of S.wires){ const pts=P[w.id]; if(!pts) continue; const d=rpath(pts), sw=SW[w.sec]||4;
-    if(S.selWire===w.id) s+=`<path class="wsel" d="${d}" stroke-width="${sw+9}"/>`;
-    s+=`<path class="wire" d="${d}" stroke="var(--encl-in)" stroke-width="${sw+2.5}"/>`;
-    if(w.kind==="PE") s+=`<path class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
-    else s+=`<path class="wire" d="${d}" stroke="var(--w${w.kind})" stroke-width="${sw}"/>`;
-    if(R.liveW.has(w.id)) s+=`<path class="flow" d="${d}" stroke-width="${Math.max(1.5,sw-2.5)}"/>`;
-    for(const [x,y] of [pts[0],pts[pts.length-1]]) s+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--brass)"/>`;
-    if(S.mode==="wire") s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
-  // клеми для монтажу проводів
-  if(S.mode==="wire"){ const keys=["in:L","in:N","in:PE"]; for(let i=0;i<8;i++) keys.push("xn:"+i,"xpe:"+i);
-    for(const d of S.devices) for(const tm of T[d.type].terms) keys.push(d.id+":"+tm.k);
-    for(const k of keys){ const p=termPos(k); if(!p) continue;
-      if(S.pend===k) s+=`<circle class="term-sel" cx="${p.x}" cy="${p.y}" r="15"/>`;
-      else if(S.pend){ if(termRole(k)===S.wireKind) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="14"/>`; }
-      s+=`<circle class="term-hit" data-term="${k}" cx="${p.x}" cy="${p.y}" r="18"/>`; } }
-  svg.innerHTML=s;
-}
-/* ===== Електрична модель: топологія, КЗ, ПЗВ, перевантаження ===== */
-// opts: ideal — усі апарати ввімкнені, реле замкнені; open — Set("devId:poleIdx"); extra — [[a,b]]; skip — id дроту, який ігноруємо; allOpen — усі полюси розімкнені
-function topo(opts={}){
-  const par=new Map(); const f=k=>{ let r=k; while(par.has(r)&&par.get(r)!==r) r=par.get(r); let c=k; while(c!==r){ const n=par.get(c); par.set(c,r); c=n; } return r; };
-  const u=(a,b)=>{ const ra=f(a), rb=f(b); if(ra!==rb) par.set(ra,rb); };
-  for(const w of S.wires) if(w.id!==opts.skip) u(w.a,w.b);
-  for(let i=1;i<8;i++){ u("xn:"+i,"xn:0"); u("xpe:"+i,"xpe:0"); }
-  if(S.comb){ const cov=S.devices.filter(d=>d.type==="qf1p"&&d.slot>=S.comb.from&&d.slot<=S.comb.to); for(let i=1;i<cov.length;i++) u(cov[0].id+":t1",cov[i].id+":t1"); }
-  for(const d of S.devices){ const t=T[d.type];
-    t.poles.forEach((p,pi)=>{ if(opts.allOpen) return; if(opts.open&&opts.open.has(d.id+":"+pi)) return;
-      const closed=opts.ideal ? true : (d.on&&!d.trip&&(!t.relay||(S.kv[d.id]&&S.kv[d.id].closed)));
-      if(closed) u(d.id+":"+p.a,d.id+":"+p.b); }); }
-  for(const [a,b] of (opts.extra||[])) u(a,b);
-  return f;
-}
-const groupsOf = () => S.devices.filter(d=>T[d.type].group).sort((a,b)=>a.slot-b.slot);
+function logp(cls,msg){ const t=new Date(); const p=n=>String(n).padStart(2,"0");
+  S.log.unshift({cls,msg:`${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())} ${msg}`}); S.log.length=Math.min(S.log.length,60); }
+/* ===== Рушій v2: мережі, потенціали, логіка апаратів, аварії, струми ===== */
+const isPh = p => /\.(L|L1|L2|L3)$/.test(p);
+const isDC = p => /^(pv|bat)[+-]$/.test(p);
+const srcOf = p => p.split(".")[0];
+const PH_ANG = {L:0,L1:0,L2:120,L3:240};
+function srcU(p){ const s=srcOf(p); if(S.src[s]) return S.src[s].U; if(s==="inv") return 230; return 0; }
+const tdef = d => T[d.type] || FT[d.type];
+const K = (d,k) => T[d.type] ? d.id+":"+k : (d.map[k]||"");
+const groupsOf = () => S.devices.filter(d=>T[d.type].group&&d.group).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
 const gL = d => d.id+":b1", gN = d => d.type==="rcbo" ? d.id+":b2" : "xn:0";
 const kwOf = (d,all) => d.group.loads.reduce((a,l)=>a+(all||l.on?l.kw:0),0);
-const phaseOK=(f,d)=>f(gL(d))===f("in:L"), neutOK=(f,d)=>f(gN(d))===f("in:N");
-const openPole=(d,pi,o={})=>topo({...o,open:new Set([d.id+":"+pi])});
-const openAll=(d,o={})=>topo({...o,open:new Set(T[d.type].poles.map((p,i)=>d.id+":"+i))});
-const lPole = d => T[d.type].poles.findIndex(p=>p.r==="L");
-const nPole = d => T[d.type].poles.findIndex(p=>p.r==="N");
-function feeds(d,o={}){ const f=topo(o), g=openPole(d,lPole(d),o); return groupsOf().filter(x=>phaseOK(f,x)&&!phaseOK(g,x)); }
-function shortsExtra(){ return [...S.short].filter(id=>devById(id)).map(id=>{ const d=devById(id); return [gL(d),gN(d)]; }); }
+const poleClosed = (d,pi) => { const t=tdef(d); return t.closed ? t.closed(d,pi) : (d.on&&!d.trip); };
+const protIn = d => d.Ir || inA(d.rating);
 
-function logp(cls,msg){ const t=new Date(); S.log.unshift({cls,msg:`${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}:${String(t.getSeconds()).padStart(2,"0")} ${msg}`}); S.log.length=Math.min(S.log.length,40); }
-function trip(d,why){ d.on=false; d.trip=why; S.heat[d.id]=0; logp("e",`${desig(d)} спрацював: ${why}`); toast(`${desig(d)}: ${why}`,"e"); }
-
-function updateRelays(dt){
-  const f=topo({extra:shortsExtra()});
-  for(const d of S.devices){ if(!T[d.type].relay) continue; const st=S.kv[d.id]||(S.kv[d.id]={powered:false,closed:false,delay:KV_DELAY});
-    const pw=S.mains&&f(d.id+":t2")===f("in:L")&&f(d.id+":t1")===f("in:N");
-    if(!pw){ st.powered=false; st.closed=false; st.delay=KV_DELAY; continue; }
-    st.powered=true; const bad=S.U>U_MAX||S.U<U_MIN;
-    if(bad){ if(st.closed) logp("w",`${desig(d)} відключив навантаження: ${S.U>U_MAX?"перенапруга":"знижена напруга"} ${Math.round(S.U)} В`); st.closed=false; st.delay=KV_DELAY; }
-    else if(!st.closed){ st.delay-=dt; if(st.delay<=0){ st.closed=true; st.delay=0; logp("ok",`${desig(d)} увімкнув навантаження, U = ${Math.round(S.U)} В`); } } }
+function sources(){
+  const out=[];
+  for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={on:false,U:230,lost:{}});
+    for(const t of inp.terms){ const key=inp.id+":"+t;
+      if(t==="N"||t==="PE") out.push([key,t]); else if(s.on&&!(s.lost&&s.lost[t])) out.push([key,inp.id+"."+t]); } }
+  for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.source) for(const [k,p] of t.source(d)) out.push([K(d,k),p]); }
+  return out;
 }
+function build(o={}){
+  const par=new Map();
+  const f=k=>{ let r=k; while(par.has(r)&&par.get(r)!==r) r=par.get(r); let c=k; while(c!==r){ const n=par.get(c); par.set(c,r); c=n; } return r; };
+  const u=(a,b)=>{ if(!a||!b) return; const ra=f(a), rb=f(b); if(ra!==rb) par.set(ra,rb); };
+  for(const w of S.wires) if(w.id!==o.skip) u(w.a,w.b);
+  for(let i=1;i<S.board.xn;i++) u("xn:"+i,"xn:0"); for(let i=1;i<S.board.xpe;i++) u("xpe:"+i,"xpe:0");
+  if(S.comb){ const cov=S.devices.filter(d=>d.type==="qf1p"&&(d.rail||0)===(S.comb.rail||0)&&d.slot>=S.comb.from&&d.slot<=S.comb.to); for(let i=1;i<cov.length;i++) u(cov[0].id+":t1",cov[i].id+":t1"); }
+  for(const d of [...S.devices,...S.field]){ const t=tdef(d);
+    if(t.links) for(const [a,b] of t.links(d)) u(K(d,a),K(d,b));
+    if(o.open&&o.open.has(d.id)) continue;
+    (t.poles||[]).forEach((p,pi)=>{ if(o.openPole&&o.openPole.has(d.id+":"+pi)) return; if(o.ideal&&t.prot ? true : poleClosed(d,pi)) u(K(d,p.a),K(d,p.b)); });
+    if(t.aux) for(const [a,b] of t.aux(d)) u(K(d,a),K(d,b)); }
+  for(const [a,b] of (o.extra||[])) u(a,b);
+  return f;
+}
+function makeX(f){
+  const pot=new Map(); for(const [k,p] of sources()){ const r=f(k); if(!pot.has(r)) pot.set(r,new Set()); pot.get(r).add(p); }
+  const P=k=>pot.get(f(k))||new Set();
+  const X={f, pot, P,
+    ph:k=>{ for(const p of P(k)) if(isPh(p)) return p; return null; },
+    phs:k=>[...P(k)].filter(isPh), hasN:k=>P(k).has("N"), hasPE:k=>P(k).has("PE"),
+    volt(a,b){ const A=P(a), B=P(b);
+      for(const pa of A){ if(isPh(pa)){ if(B.has("N")||B.has("PE")) return srcU(pa);
+          for(const pb of B) if(isPh(pb)&&pb!==pa&&srcOf(pb)===srcOf(pa)) return srcU(pa)*1.732; } }
+      for(const pb of B) if(isPh(pb)&&(A.has("N")||A.has("PE"))) return srcU(pb);
+      if(A.has("pv+")&&B.has("pv-")) return S.env.pvV||0; if(A.has("bat+")&&B.has("bat-")) return 51;
+      return 0; } };
+  return X;
+}
+function evaluate(o={}){
+  let X;
+  for(let it=0; it<12; it++){ X=makeX(build(o)); let ch=false;
+    for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.logic&&t.logic(d,X)) ch=true; }
+    if(!ch) return X; if(it===11) X.chatter=true; }
+  return X;
+}
+function conflicts(X){
+  const C=[];
+  for(const [r,ps] of X.pot){ const a=[...ps]; const ph=a.filter(isPh), dc=a.filter(isDC);
+    let kind=null;
+    if(dc.length&&(ph.length||ps.has("N"))) kind="ACDC";
+    else if((ps.has("pv+")&&ps.has("pv-"))||(ps.has("bat+")&&ps.has("bat-"))) kind="DC";
+    else if(ph.length>1) kind=new Set(ph.map(srcOf)).size>1?"FEED":"LL";
+    else if(ph.length&&ps.has("N")) kind="LN";
+    else if(ph.length&&ps.has("PE")) kind="LPE";
+    if(kind) C.push({kind, sig:a.sort().join("|"), pots:a}); }
+  return C;
+}
+const FAULT = {LN:"коротке замикання L–N", LPE:"замикання фази на PE", LL:"міжфазне коротке замикання", FEED:"зустрічне ввімкнення двох джерел", DC:"коротке замикання на стороні DC", ACDC:"змішування кіл AC і DC"};
+
+function computeLoads(X){
+  const L=[];
+  for(const d of groupsOf()){ const U=X.volt(gL(d),gN(d)), kw=kwOf(d); L.push({own:d.id, a:gL(d), b:gN(d), I:U>100?kw*1000/U:0, U, grp:true}); }
+  for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.load) for(const l of t.load(d,X)){ l.own=d.id; if(l.a) l.a=K(d,l.a); if(l.b) l.b=K(d,l.b); if(l.abc) l.abc=l.abc.map(k=>K(d,k)); L.push(l); } }
+  return L;
+}
+function trip(d,why){ d.on=false; d.trip=why; S.heat[d.id]=0; logp("e",`${desig(d)} спрацював: ${why}`); if(typeof toast==="function") toast(`${desig(d)}: ${why}`,"e"); }
+const rcdDevs = () => S.devices.filter(d=>T[d.type].rcd&&d.on&&!d.trip);
+const lPole = d => tdef(d).poles.findIndex(p=>p.r!=="N"), nPole = d => tdef(d).poles.findIndex(p=>p.r==="N");
+function affected(d,X,loads){ const Y=makeX(build({open:new Set([d.id])})); return loads.filter(l=>l.a&&X.ph(l.a)&&!Y.ph(l.a)).length; }
 
 function resolveFaults(){
-  for(let it=0; it<14; it++){
-    const X=shortsExtra(), f=topo({extra:X});
-    const ln=f("in:L")===f("in:N"), lpe=f("in:L")===f("in:PE");
-    if(ln||lpe){
-      const still=g=>g("in:L")===g(ln?"in:N":"in:PE");
+  for(let it=0; it<16; it++){
+    const X=evaluate({extra:shortsExtra()}), C=conflicts(X);
+    if(C.length){ const c=C[0], still=Y=>conflicts(Y).some(z=>z.sig===c.sig), loads=computeLoads(X);
+      const test=d=>!still(makeX(build({open:new Set([d.id]),extra:shortsExtra()})));
       let cand=[];
-      if(!ln) cand=S.devices.filter(d=>T[d.type].rcd&&d.on&&!d.trip&&!still(openAll(d,{extra:X})));
-      const why=ln?"коротке замикання":"замикання фази на PE";
-      if(!cand.length) cand=S.devices.filter(d=>T[d.type].breaker&&d.on&&!d.trip&&!still(openAll(d,{extra:X})));
-      if(!cand.length){ S.mains=false; logp("e","КЗ до захисного апарата: згорів ввідний запобіжник, щит знеструмлено"); toast("КЗ до вступного автомата! Щит знеструмлено","e"); return; }
-      cand.sort((a,b)=>(inA(a.rating)-inA(b.rating))||(feeds(a,{extra:X}).length-feeds(b,{extra:X}).length));
-      trip(cand[0], why); continue;
+      if(c.kind==="LPE") cand=rcdDevs().filter(test);
+      if(!cand.length) cand=S.devices.filter(d=>T[d.type].prot&&d.on&&!d.trip).filter(test);
+      if(cand.length){ cand.sort((a,b)=>(protIn(a)-protIn(b))||(affected(a,X,loads)-affected(b,X,loads))); trip(cand[0],FAULT[c.kind]); continue; }
+      let acted=false;
+      for(const p of c.pots){ if(isPh(p)&&S.src[srcOf(p)]&&S.src[srcOf(p)].on){ S.src[srcOf(p)].on=false; acted=true;
+          logp("e",`${FAULT[c.kind]} до захисних апаратів: спрацював захист джерела «${(S.board.inputs.find(i=>i.id===srcOf(p))||{}).label}», його вимкнено`); } }
+      for(const d of S.field){ const t=FT[d.type]; if(t.onFault&&t.onFault(d,c)) acted=true; }
+      if(typeof toast==="function") toast("Аварія: "+FAULT[c.kind],"e");
+      if(acted) continue; return;
     }
-    let tripped=false;
-    for(const R of S.devices){ if(!T[R.type].rcd||!R.on||R.trip) continue;
-      const fL=openPole(R,lPole(R),{extra:X}), fN=openPole(R,nPole(R),{extra:X});
-      for(const g of groupsOf()){ if(!(phaseOK(f,g)&&neutOK(f,g))||kwOf(g)<=0) continue;
-        const pt=!phaseOK(fL,g), nt=!neutOK(fN,g);
-        if(pt!==nt){ trip(R,`дисбаланс струмів у групі «${g.group.name}» (N ${nt?"через ПЗВ, а фаза — ні":"йде в обхід ПЗВ"})`); tripped=true; break; } }
+    let tripped=false; const loads=computeLoads(X).filter(l=>l.a&&l.b&&l.I>0.015);
+    for(const R of rcdDevs()){ const lp=lPole(R), np=nPole(R); if(lp<0||np<0) continue;
+      const YL=makeX(build({openPole:new Set([R.id+":"+lp]),extra:shortsExtra()})), YN=makeX(build({openPole:new Set([R.id+":"+np]),extra:shortsExtra()}));
+      for(const l of loads){ const pt=!YL.ph(l.a), nt=!YN.hasN(l.b);
+        if(pt!==nt){ trip(R,`дисбаланс струмів: ${l.grp?"група «"+devById(l.own).group.name+"»":desig(devById(l.own))} (N ${nt?"через ПЗВ, а фаза — ні":"в обхід ПЗВ"})`); tripped=true; break; } }
       if(tripped) break; }
     if(tripped) continue;
-    for(const id of S.leak){ const g=devById(id); if(!g||!phaseOK(f,g)) continue;
-      const rs=S.devices.filter(R=>T[R.type].rcd&&R.on&&!R.trip&&!phaseOK(openPole(R,lPole(R),{extra:X}),g));
-      if(rs.length){ rs.sort((a,b)=>feeds(a,{extra:X}).length-feeds(b,{extra:X}).length); trip(rs[0],`витік струму в групі «${g.group.name}»`); tripped=true; break; }
-      if(!S.leakWarned.has(id)){ S.leakWarned.add(id); logp("e",`Група «${g.group.name}»: витік на корпус, ПЗВ немає — небезпека ураження!`); toast("Небезпека ураження: група без ПЗВ","e"); } }
+    for(const id of S.leak){ const g=devById(id); if(!g||!X.ph(gL(g))) continue;
+      const rs=rcdDevs().filter(R=>{ const lp=lPole(R); return !makeX(build({openPole:new Set([R.id+":"+lp])})).ph(gL(g)); });
+      if(rs.length){ rs.sort((a,b)=>affected(a,X,computeLoads(X))-affected(b,X,computeLoads(X))); trip(rs[0],`витік струму в групі «${g.group.name}»`); tripped=true; break; }
+      if(!S.leakWarned.has(id)){ S.leakWarned.add(id); logp("e",`Група «${g.group.name}»: витік на корпус, ПЗВ немає — небезпека ураження!`); if(typeof toast==="function") toast("Небезпека ураження: група без ПЗВ","e"); } }
     if(tripped) continue;
     return;
   }
 }
+function shortsExtra(){ return [...S.short].filter(id=>devById(id)).map(id=>{ const d=devById(id); return [gL(d),gN(d)]; }); }
+const anySource = () => Object.values(S.src).some(s=>s.on) || S.field.some(d=>FT[d.type].source&&FT[d.type].source(d).length);
 
+function poleCurrents(d,X,loads){
+  const t=tdef(d); let max=0; const per=[];
+  (t.poles||[]).forEach((p,pi)=>{ if(!poleClosed(d,pi)) { per.push(0); return; }
+    const Y=makeX(build({openPole:new Set([d.id+":"+pi]),extra:shortsExtra()})); let I=0;
+    for(const l of loads){ if(l.abc){ l.abc.forEach((k,i)=>{ if(X.ph(k)&&!Y.ph(k)) I+=l.Is[i]; }); }
+      else if(l.a&&l.I>0){ if(p.r==="N"){ if(X.hasN(l.b)&&!Y.hasN(l.b)) I+=l.I; } else if(X.ph(l.a)&&!Y.ph(l.a)) I+=l.I;
+        else if(l.dc&&X.P(l.a).size&&!Y.P(l.a).size) I+=l.I; } }
+    per.push(I); max=Math.max(max,I); });
+  return {max, per};
+}
 function solve(dt=0){
-  if(!S.leakWarned) S.leakWarned=new Set();
-  updateRelays(dt);
-  if(S.mains) resolveFaults();
-  updateRelays(0);
-  const R={liveW:new Set(),kv:S.kv,heat:S.heat,g:{},I:{},totalI:0};
-  if(!S.mains){ for(const d of groupsOf()) R.g[d.id]={phase:false,neutral:false,pe:false,I:0,kw:kwOf(d)}; S.sim=R; return R; }
-  const X=shortsExtra(), f=topo({extra:X}), L=f("in:L"), N=f("in:N");
-  for(const d of groupsOf()){ const ph=phaseOK(f,d), ne=neutOK(f,d), kw=kwOf(d), on=ph&&ne;
-    R.g[d.id]={phase:ph,neutral:ne,pe:f("xpe:0")===f("in:PE"),kw,I:on?kw*1000/S.U:0}; R.totalI+=R.g[d.id].I; }
-  for(const w of S.wires){ const c=f(w.a); if(c===L||(c===N&&R.totalI>0&&w.kind==="N")) R.liveW.add(w.id); }
-  for(const B of S.devices){ if(!T[B.type].breaker||!B.on||B.trip) continue; const g=openPole(B,lPole(B),{extra:X});
-    R.I[B.id]=groupsOf().reduce((a,d)=>a+(phaseOK(f,d)&&!phaseOK(g,d)?R.g[d.id].I:0),0);
-    if(dt>0){ const In=inA(B.rating), I=R.I[B.id];
-      if(I>1.13*In){ S.heat[B.id]=(S.heat[B.id]||0)+dt*((I/In)**2-1)/2; if(S.heat[B.id]>=1){ trip(B,`перевантаження ${fmt(I)} А при номіналі ${In} А`); return solve(0); } }
-      else S.heat[B.id]=Math.max(0,(S.heat[B.id]||0)-dt*0.3); } }
-  const bad=S.U>U_MAX||S.U<U_MIN, exposed=groupsOf().some(d=>R.g[d.id].phase&&R.g[d.id].neutral);
-  if(bad&&exposed&&!S.uWarned){ S.uWarned=true; logp("w",`${S.U>U_MAX?"Перенапруга":"Знижена напруга"} ${Math.round(S.U)} В доходить до споживачів`); }
+  let X=evaluate({extra:shortsExtra()});
+  if(dt>0){ for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.tick) t.tick(d,X,dt); }
+    if(S.tplObj&&S.tplObj.tick) S.tplObj.tick(X,dt); X=evaluate({extra:shortsExtra()}); }
+  if(anySource()){ resolveFaults(); X=evaluate({extra:shortsExtra()}); }
+  const loads=computeLoads(X), R={X, loads, I:{}, per:{}, liveW:new Set(), g:{}, totalI:0, chatter:!!X.chatter};
+  for(const d of S.devices){ const t=T[d.type]; if(!(t.prot||t.meter)||(t.prot&&(!d.on||d.trip))) continue;
+    const pc=poleCurrents(d,X,loads); R.I[d.id]=pc.max; R.per[d.id]=pc.per;
+    if(dt>0&&t.prot){ const In=protIn(d), I=pc.max; let k=I/In;
+      if(t.prot==="mpcb"){ const nz=pc.per.filter(x=>x>0.3*In).length; if(nz>0&&nz<pc.per.length&&pc.per.length===3) k*=1.6; }
+      if(k>1.13){ S.heat[d.id]=(S.heat[d.id]||0)+dt*Math.min(0.5,(k*k-1)/6);
+        if(S.heat[d.id]>=1){ trip(d,`перевантаження ${fmt(I)} А при ${t.prot==="mpcb"?"уставці":"номіналі"} ${fmt(In,In%1?1:0)} А`); return solve(0); } }
+      else S.heat[d.id]=Math.max(0,(S.heat[d.id]||0)-dt*0.3); } }
+  for(const d of groupsOf()){ const l=loads.find(x=>x.own===d.id&&x.grp);
+    R.g[d.id]={phase:!!X.ph(gL(d)), neutral:X.hasN(gN(d)), U:l.U, I:l.I, kw:kwOf(d)}; R.totalI+=l.I; }
+  const anyI=loads.some(l=>(l.I||0)>0||(l.Is&&l.Is.some(x=>x>0)));
+  for(const w of S.wires){ const ps=X.P(w.a); if([...ps].some(p=>isPh(p)||isDC(p))||(ps.has("N")&&anyI&&w.kind==="N")) R.liveW.add(w.id); }
+  const bad=Object.values(S.src).some(s=>s.on&&(s.U>U_MAX||s.U<U_MIN)), exposed=groupsOf().some(d=>R.g[d.id].phase&&R.g[d.id].neutral&&(R.g[d.id].U>U_MAX||R.g[d.id].U<U_MIN));
+  if(exposed&&!S.uWarned){ S.uWarned=true; logp("w","Напруга поза межами 170–250 В доходить до споживачів"); }
   if(!bad) S.uWarned=false;
   S.sim=R; return R;
 }
+/* ===== Допоміжні елементи малювання + базові апарати ===== */
+const tx = (x,y,s,o={}) => `<text class="${o.c||"svs"}" x="${x}" y="${y}" font-size="${o.fs||7.5}" text-anchor="${o.a||"middle"}"${o.fw?` font-weight="${o.fw}"`:""}${o.fill?` fill="${o.fill}"`:""}${o.ff?` font-family="${o.ff}"`:""}>${esc(s)}</text>`;
+function lever(d,cx,y,lw,on,col){
+  let s=`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${cx-lw/2-4}" y="${y-4}" width="${lw+8}" height="48" rx="3" fill="#2a2d33"/>`;
+  s+=`<rect x="${cx-lw/2}" y="${on?y:y+20}" width="${lw}" height="20" rx="2" fill="${col||"#45494f"}" stroke="#1a1c20"/>`;
+  return s+`<rect x="${cx-lw/2+3}" y="${(on?y:y+20)+4}" width="${lw-6}" height="2" fill="#777"/><rect x="${cx-lw/2+3}" y="${(on?y:y+20)+9}" width="${lw-6}" height="2" fill="#777"/></g>`;
+}
+const flag = (cx,y,on) => `<rect x="${cx-6}" y="${y}" width="12" height="6" rx="1" fill="${on?"#e0352b":"#2e9a3e"}"/>`;
+const led = (x,y,c) => `<circle cx="${x}" cy="${y}" r="4.5" fill="${c}" stroke="#555"/>`;
+const lcd = (x,y,w,h,txt,on,col) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="#16181c"/>`+(Array.isArray(txt)?txt:[txt]).map((t,i,a)=>`<text x="${x+w/2}" y="${y+(h/(a.length))*(i+0.5)+ (a.length>1?3:5)}" font-size="${a.length>1?8:15}" text-anchor="middle" font-family="var(--mono)" font-weight="600" fill="${on?(col||"#5fe36b"):"#3a3f47"}">${esc(t)}</text>`).join("");
+function breakerFace(d,g){ let s=tx(g.cx,g.y+84,d.rating,{c:"svt",fs:g.w>60?17:15}); s+=lever(d,g.cx,g.y+102,g.w>60?44:20,g.on); return s+flag(g.cx,g.y+150,g.on); }
+const brk = {prot:"breaker", sheetRatings:true};
 
-/* ===== Перевірка схеми (статичний аналіз при всіх увімкнених апаратах) ===== */
+defType("qf1p",{...brk, name:"Автомат 1P", short:"Автомат 1P", cat:"Захист", w:1, pre:"QF", group:true,
+  terms:[{k:"t1",s:"top",r:"L",l:"1"},{k:"b1",s:"bot",r:"L",l:"2"}], poles:[{a:"t1",b:"b1",r:"L"}],
+  ratings:["B6","B10","B16","B20","B25","C6","C10","C16","C20","C25","C32","C40"], def:"B16", face:breakerFace});
+defType("qf2p",{...brk, name:"Автомат 2P", short:"Автомат 2P", cat:"Захист", w:2, pre:"QF",
+  terms:[{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"3"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"4"}],
+  poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}], ratings:["C16","C20","C25","C32","C40","C50","C63"], def:"C32", face:breakerFace, cap:"Ввід 230 В"});
+defType("qf3p",{...brk, name:"Автомат 3P", short:"Автомат 3P", cat:"Захист", w:3, pre:"QF",
+  terms:[{k:"t1",s:"top",r:"P",l:"1"},{k:"t2",s:"top",r:"P",l:"3"},{k:"t3",s:"top",r:"P",l:"5"},{k:"b1",s:"bot",r:"P",l:"2"},{k:"b2",s:"bot",r:"P",l:"4"},{k:"b3",s:"bot",r:"P",l:"6"}],
+  poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"L"},{a:"t3",b:"b3",r:"L"}], ratings:["C10","C16","C25","C32","C40","C63"], def:"C25", face:breakerFace, cap:"Ввід 400 В"});
+defType("rcd",{name:"ПЗВ 30 мА", short:"ПЗВ (УЗО)", cat:"Захист", w:2, pre:"QD", rcd:true, sheetRatings:true,
+  terms:[{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"N"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"N"}],
+  poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}], ratings:["25","40","63"], def:"40", unit:" А", cap:"Захист від ураження",
+  face(d,g){ return tx(g.cx,g.y+72,"ПЗВ · ΔI 30 мА",{fs:7})+tx(g.cx,g.y+90,d.rating+" А",{c:"svt",fs:15})+lever(d,g.cx,g.y+102,44,g.on,"#2f6fdf")+flag(g.cx,g.y+150,g.on)+testBtn(d,g); }});
+const testBtn = (d,g) => `<g data-test="${d.id}" style="cursor:pointer"><circle cx="${g.x+g.w-11}" cy="${g.y+72}" r="8" fill="#f2c400" stroke="#8a6d00"/><text x="${g.x+g.w-11}" y="${g.y+75}" font-size="9" font-weight="700" text-anchor="middle" fill="#222">T</text></g>`;
+defType("rcbo",{...brk, name:"Диф-автомат", short:"Диф-автомат", cat:"Захист", w:2, pre:"QFD", rcd:true, group:true,
+  terms:[{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"N"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"N"}],
+  poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}], ratings:["B10","B16","C16","C20","C25","C32"], def:"C16",
+  face(d,g){ return breakerFace(d,g)+tx(g.cx,g.y+98,"30 мА",{fs:7})+testBtn(d,g); }});
+defType("kv",{name:"Реле напруги", short:"Реле напруги", cat:"Захист", w:2, pre:"KV", sheetRatings:true, unit:" А",
+  terms:[{k:"t1",s:"top",r:"N",l:"N"},{k:"t2",s:"top",r:"L",l:"L вх"},{k:"b2",s:"bot",r:"L",l:"L вих",m:1}],
+  poles:[{a:"t2",b:"b2",r:"L"}], ratings:["40","63"], def:"40", cap:"Контроль напруги",
+  closed:d=>!!(d.ks&&d.ks.closed),
+  logic(d,X){ const s=d.ks||(d.ks={closed:false,delay:KV_DELAY}); const U=X.volt(K(d,"t2"),K(d,"t1")); s.U=U; s.pw=U>60;
+    const bad=U>U_MAX||U<U_MIN;
+    if(!s.pw||bad){ s.delay=KV_DELAY; if(s.closed){ s.closed=false; if(s.pw) logp("w",`${desig(d)} відключив навантаження: ${U>U_MAX?"перенапруга":"знижена напруга"} ${Math.round(U)} В`); return true; } }
+    return false; },
+  tick(d,X,dt){ const s=d.ks; if(!s||!s.pw||s.closed||s.U>U_MAX||s.U<U_MIN) return; s.delay-=dt; if(s.delay<=0){ s.closed=true; s.delay=0; logp("ok",`${desig(d)} увімкнув навантаження, U = ${Math.round(s.U)} В`); } },
+  face(d,g){ const s=d.ks||{}; const t=s.pw?(s.closed?String(Math.round(s.U)):(s.U>U_MAX||s.U<U_MIN?String(Math.round(s.U)):"⏱"+Math.ceil(s.delay))):"---";
+    return lcd(g.x+8,g.y+66,g.w-16,30,t,s.pw,s.closed?"#5fe36b":"#ff5a5a")+tx(g.cx,g.y+110,"РЕЛЕ НАПРУГИ",{fs:7,fw:700})+tx(g.cx,g.y+121,`${d.rating} А · ${U_MIN}–${U_MAX} В`,{fs:6.5})
+      +led(g.x+16,g.y+138,s.pw?(s.closed?"#3fbf4a":"#e23b3b"):"#9aa0aa")+led(g.x+g.w-16,g.y+138,s.pw&&s.closed?"#ffd23f":"#9aa0aa"); }});
+/* ===== Апарати керування: контактори, реле, кнопки, лампи, МПЗ, LOGO!, АВР, перемикач ===== */
+const coilOn = (d,X,a,b) => X.volt(K(d,a),K(d,b))>=150;
+function coilLogic(d,X){ const p=coilOn(d,X,"A1","A2"); if(p!==!!d.pulled){ d.pulled=p; return true; } return false; }
+const C = (k,s,l,r="C") => ({k,s,l,r});
+function kmFace(d,g,label){ const p=!!d.pulled;
+  return tx(g.cx,g.y+68,label,{fs:7,fw:700})+tx(g.cx,g.y+79,"AC-3 · котушка 230 В",{fs:6.3})
+    +`<rect x="${g.cx-22}" y="${g.y+88}" width="44" height="30" rx="3" fill="#2a2d33"/><rect x="${g.cx-16}" y="${g.y+(p?100:93)}" width="32" height="12" rx="2" fill="${p?"#e0352b":"#8e9196"}"/>`
+    +tx(g.cx,g.y+132,p?"I · увімкнено":"O · вимкнено",{fs:7,fw:600,fill:p?"#c0261c":"#555"})+led(g.x+12,g.y+148,p?"#3fbf4a":"#9aa0aa"); }
+defType("km2a",{name:"Контактор 2НВ+1НВ/1НЗ", short:"Контактор 2P", cat:"Керування", w:3, pre:"KM",
+  terms:[C("A1","top","A1"),{k:"1",s:"top",r:"L",l:"1"},{k:"3",s:"top",r:"N",l:"3"},C("13","top","13"),C("21","top","21"),
+         C("A2","bot","A2"),{k:"2",s:"bot",r:"L",l:"2"},{k:"4",s:"bot",r:"N",l:"4"},C("14","bot","14"),C("22","bot","22")],
+  poles:[{a:"1",b:"2",r:"L"},{a:"3",b:"4",r:"N"}], closed:d=>!!d.pulled, aux:d=>d.pulled?[["13","14"]]:[["21","22"]],
+  logic:coilLogic, cap:"Контактор", face:(d,g)=>kmFace(d,g,"КОНТАКТОР 25 А")});
+defType("km3a",{name:"Контактор 3НВ+1НВ/1НЗ", short:"Контактор 3P", cat:"Керування", w:4, pre:"KM",
+  terms:[C("A1","top","A1"),{k:"1",s:"top",r:"P",l:"1"},{k:"3",s:"top",r:"P",l:"3"},{k:"5",s:"top",r:"P",l:"5"},C("13","top","13"),C("21","top","21"),
+         C("A2","bot","A2"),{k:"2",s:"bot",r:"P",l:"2"},{k:"4",s:"bot",r:"P",l:"4"},{k:"6",s:"bot",r:"P",l:"6"},C("14","bot","14"),C("22","bot","22")],
+  poles:[{a:"1",b:"2",r:"L"},{a:"3",b:"4",r:"L"},{a:"5",b:"6",r:"L"}], closed:d=>!!d.pulled, aux:d=>d.pulled?[["13","14"]]:[["21","22"]],
+  logic:coilLogic, cap:"Пускач двигуна", face:(d,g)=>kmFace(d,g,"КОНТАКТОР 25 А · 3P")});
+defType("rel",{name:"Реле проміжне 1CO", short:"Реле проміжне", cat:"Керування", w:2, pre:"K",
+  terms:[C("A1","top","A1"),C("11","top","11"),C("A2","bot","A2"),C("12","bot","12"),C("14","bot","14")],
+  aux:d=>d.pulled?[["11","14"]]:[["11","12"]], logic:coilLogic, cap:"Проміжне реле",
+  face(d,g){ return tx(g.cx,g.y+70,"РЕЛЕ 230 В~",{fs:7,fw:700})+tx(g.cx,g.y+82,"1 перекидний 16 А",{fs:6.3})
+    +`<rect x="${g.cx-14}" y="${g.y+92}" width="28" height="28" rx="3" fill="#2a2d33"/>`+led(g.cx,g.y+106,d.pulled?"#3fbf4a":"#5a5e66")+tx(g.cx,g.y+135,d.pulled?"11–14":"11–12",{fs:7,ff:"var(--mono)"}); }});
+function btnDef(kind){ const start=kind==="sbp";
+  return {name:start?"Кнопка «Пуск» (НВ)":"Кнопка «Стоп» (НЗ)", short:start?"Кнопка Пуск":"Кнопка Стоп", cat:"Керування", w:1, pre:"SB",
+    terms:start?[C("13","top","13"),C("14","bot","14")]:[C("11","top","11"),C("12","bot","12")],
+    aux:d=>start?(d.pressed?[["13","14"]]:[]):(d.pressed?[]:[["11","12"]]), cap:start?"Пуск":"Стоп", press:true,
+    face(d,g){ const c=start?"#2e9a3e":"#d6332a";
+      return `<g data-press="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+100}" r="${d.pressed?14:17}" fill="${c}" stroke="#1a1c20" stroke-width="2"/>`
+        +`<circle cx="${g.cx}" cy="${g.y+100}" r="${d.pressed?9:12}" fill="none" stroke="#fff" stroke-opacity=".35"/></g>`+tx(g.cx,g.y+72,start?"ПУСК":"СТОП",{fs:7.5,fw:700})+tx(g.cx,g.y+134,start?"НВ":"НЗ",{fs:7}); }}; }
+defType("sbp",btnDef("sbp")); defType("sbs",btnDef("sbs"));
+defType("hl",{name:"Лампа сигнальна", short:"Лампа", cat:"Керування", w:1, pre:"HL", terms:[C("X1","top","X1"),C("X2","bot","X2")], cap:"Робота",
+  init:d=>{ d.col=d.col||"#3fbf4a"; }, load:(d,X)=>{ const U=X.volt(K(d,"X1"),K(d,"X2")); return [{a:"X1",b:"X2",I:U>100?0.01:0}]; },
+  face(d,g){ const X=S.sim&&S.sim.X, on=X&&X.volt(K(d,"X1"),K(d,"X2"))>=150;
+    return (on?`<circle cx="${g.cx}" cy="${g.y+100}" r="22" fill="${d.col}" opacity=".35"/>`:"")+`<circle cx="${g.cx}" cy="${g.y+100}" r="14" fill="${on?d.col:"#5a5e66"}" stroke="#1a1c20" stroke-width="2"/>`+tx(g.cx,g.y+134,"230 В",{fs:7}); }});
+const MPR = ["1–1,6 А","1,6–2,5 А","2,5–4 А","4–6,3 А","6–10 А","9–14 А","13–18 А","17–23 А"];
+const mprHi = r => parseFloat(String(r).split("–")[1].replace(",",".")), mprLo = r => parseFloat(String(r).split("–")[0].replace(",","."));
+defType("qm",{name:"Автомат захисту двигуна", short:"Автомат двигуна (МПЗ)", cat:"Захист", w:3, pre:"QM", prot:"mpcb",
+  terms:[{k:"1",s:"top",r:"P",l:"1"},{k:"3",s:"top",r:"P",l:"3"},{k:"5",s:"top",r:"P",l:"5"},C("13","top","13"),
+         {k:"2",s:"bot",r:"P",l:"2"},{k:"4",s:"bot",r:"P",l:"4"},{k:"6",s:"bot",r:"P",l:"6"},C("14","bot","14")],
+  poles:[{a:"1",b:"2",r:"L"},{a:"3",b:"4",r:"L"},{a:"5",b:"6",r:"L"}], aux:d=>d.on&&!d.trip?[["13","14"]]:[],
+  ratings:MPR, def:"6–10 А", init:d=>{ if(!d.Ir) d.Ir=mprHi(d.rating||"6–10 А"); }, cap:"Захист двигуна",
+  face(d,g){ const on=g.on, a=on?0:-90;
+    return tx(g.cx,g.y+68,"Ir "+fmt(d.Ir,1)+" А",{c:"svt",fs:12})+tx(g.cx,g.y+80,d.rating,{fs:6.5})
+      +`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+110}" r="20" fill="#2a2d33"/><g transform="rotate(${a} ${g.cx} ${g.y+110})"><rect x="${g.cx-5}" y="${g.y+90}" width="10" height="40" rx="4" fill="${on?"#e0352b":"#8e9196"}"/></g></g>`
+      +tx(g.cx-26,g.y+114,"O",{fs:8,fw:700})+tx(g.cx,g.y+144,"I",{fs:8,fw:700})+(d.trip?tx(g.cx,g.y+156,"TRIP",{fs:7,fw:700,fill:"#c0261c"}):""); }});
+// Siemens LOGO! 230RCE — програма АВР з таймерами
+const LOGO_T = {T1:3, T2:1, T3:2, DEAD:1};
+defType("logo",{name:"Siemens LOGO! 230RCE", short:"LOGO! 230RCE", cat:"Керування", w:4, pre:"A",
+  terms:[C("L1","top","L1"),{k:"N",s:"top",r:"N",l:"N"},C("I1","top","I1"),C("I2","top","I2"),C("Q1a","bot","Q1"),C("Q1b","bot","Q1"),C("Q2a","bot","Q2"),C("Q2b","bot","Q2")],
+  aux:d=>(d.q||[]).flatMap((on,i)=>on?[["Q"+(i+1)+"a","Q"+(i+1)+"b"]]:[]), cap:"Логіка АВР",
+  init:d=>{ d.q=[false,false]; d.tm={i1on:0,i1off:0,i2on:0,dead:0}; },
+  logic(d,X){ const pw=X.volt(K(d,"L1"),K(d,"N"))>=150; d.pw=pw; d.in=[!!X.ph(K(d,"I1")),!!X.ph(K(d,"I2"))];
+    if(!pw&&d.q.some(Boolean)){ d.q=[false,false]; return true; } return false; },
+  tick(d,X,dt){ if(!d.pw) return; const m=d.tm, [i1,i2]=d.in||[false,false];
+    if(i1){ m.i1on+=dt; m.i1off=0; } else { m.i1off+=dt; m.i1on=0; } m.i2on=i2?m.i2on+dt:0; m.dead=Math.max(0,m.dead-dt);
+    const want = m.i1on>=LOGO_T.T1 ? 0 : (m.i1off>=LOGO_T.T2 && m.i2on>=LOGO_T.T3 ? 1 : (i1? (d.q[1]?1:-1) : -1));
+    const cur=d.q.indexOf(true);
+    if(cur!==want){ if(cur>=0){ d.q[cur]=false; m.dead=LOGO_T.DEAD; logp("w",`${desig(d)}: Q${cur+1} вимкнено`); }
+      else if(want>=0&&m.dead<=0){ d.q[want]=true; logp("ok",`${desig(d)}: Q${want+1} увімкнено → ${want?"генератор":"мережа"}`); } } },
+  face(d,g){ const [i1,i2]=d.in||[false,false]; const l=!d.pw?["",""]:[`I1:${i1?"OK":"--"} I2:${i2?"OK":"--"}`, d.q[0]?"Q1 МЕРЕЖА":d.q[1]?"Q2 ГЕНЕР.":(d.tm.dead>0?"ПАУЗА":"ОЧІКУВАННЯ")];
+    return `<rect x="${g.x+4}" y="${g.y+44}" width="${g.w-8}" height="118" fill="#cfd3d8"/>`+tx(g.x+10,g.y+60,"LOGO! 230RCE",{fs:8,fw:700,a:"start"})
+      +lcd(g.x+14,g.y+68,g.w-28,40,l,d.pw,"#a6e3ff")+[i1,i2].map((v,i)=>led(g.x+22+i*20,g.y+122,d.pw&&v?"#3fbf4a":"#7a7e86")+tx(g.x+22+i*20,g.y+138,"I"+(i+1),{fs:6.5})).join("")
+      +[0,1].map(i=>led(g.x+g.w-62+i*22,g.y+122,d.pw&&d.q[i]?"#ffb21f":"#7a7e86")+tx(g.x+g.w-62+i*22,g.y+138,"Q"+(i+1),{fs:6.5})).join(""); }});
+// Модульний АВР (тип TOQ5 TOMZN / G2R GEYA): пріоритет вводу I, без витримок
+defType("ats",{name:"Модуль АВР 2P 63 А", short:"АВР-модуль", cat:"Комутація", w:4, pre:"QA",
+  terms:[{k:"IL",s:"top",r:"L",l:"I L"},{k:"IN",s:"top",r:"N",l:"I N"},{k:"IIL",s:"top",r:"L",l:"II L"},{k:"IIN",s:"top",r:"N",l:"II N"},{k:"L",s:"bot",r:"L",l:"L"},{k:"N",s:"bot",r:"N",l:"N"}],
+  poles:[{a:"IL",b:"L",r:"L"},{a:"IN",b:"N",r:"N"},{a:"IIL",b:"L",r:"L"},{a:"IIN",b:"N",r:"N"}],
+  closed:(d,pi)=>pi<2?d.pos==="I":d.pos==="II", init:d=>{ d.pos=d.pos||"I"; d.manual=!!d.manual; d.variant=d.variant||"tomzn"; },
+  cap:"Перемикання вводів",
+  logic(d,X){ const okI=X.volt(K(d,"IL"),K(d,"IN"))>=187, okII=X.volt(K(d,"IIL"),K(d,"IIN"))>=187; d.ok=[okI,okII];
+    if(d.manual) return false; const t=okI?"I":okII?"II":d.pos;
+    if(t!==d.pos){ d.pos=t; logp(t==="I"?"ok":"w",`${desig(d)}: навантаження переведено на ввід ${t} (${t==="I"?"мережа":"резерв"}), < ${d.variant==="geya"?50:8} мс`); return true; } return false; },
+  tap(d){ if(!d.manual){ toast("АВР в автоматичному режимі. Перемкніть «Ручний» у налаштуваннях апарата","w"); return false; } d.pos=d.pos==="I"?"II":"I"; return true; },
+  face(d,g){ const ang=d.pos==="I"?-40:d.pos==="II"?40:0, ok=d.ok||[false,false];
+    return tx(g.cx,g.y+64,d.variant==="geya"?"GEYA · тип G2R-63 2P":"TOMZN · тип TOQ5-63/2P",{fs:7,fw:700})+tx(g.cx,g.y+75,d.manual?"РУЧНИЙ":"АВТО",{fs:7,fw:700,fill:d.manual?"#c25e00":"#1b855e"})
+      +`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+112}" r="24" fill="#2a2d33"/><g transform="rotate(${ang} ${g.cx} ${g.y+112})"><rect x="${g.cx-5}" y="${g.y+88}" width="10" height="30" rx="4" fill="#e0352b"/></g></g>`
+      +tx(g.cx-36,g.y+92,"I",{fs:10,fw:700})+tx(g.cx+36,g.y+92,"II",{fs:10,fw:700})+led(g.x+14,g.y+150,ok[0]?"#3fbf4a":"#9aa0aa")+led(g.x+g.w-14,g.y+150,ok[1]?"#3fbf4a":"#9aa0aa")
+      +tx(g.x+26,g.y+153,"I",{fs:7,a:"start"})+tx(g.x+g.w-26,g.y+153,"II",{fs:7,a:"end"}); }});
+defType("qs",{name:"Перемикач 1-0-2", short:"Перемикач 1-0-2", cat:"Комутація", w:3, pre:"QS",
+  terms:[{k:"1L",s:"top",r:"L",l:"1 L"},{k:"1N",s:"top",r:"N",l:"1 N"},{k:"2L",s:"top",r:"L",l:"2 L"},{k:"2N",s:"top",r:"N",l:"2 N"},{k:"L",s:"bot",r:"L",l:"L"},{k:"N",s:"bot",r:"N",l:"N"}],
+  poles:[{a:"1L",b:"L",r:"L"},{a:"1N",b:"N",r:"N"},{a:"2L",b:"L",r:"L"},{a:"2N",b:"N",r:"N"}],
+  closed:(d,pi)=>pi<2?d.pos===1:d.pos===2, init:d=>{ if(d.pos===undefined) d.pos=2; }, cap:"Обхід інвертора",
+  tap(d){ const seq=[1,0,2,0]; d.seqI=((d.seqI??seq.indexOf(d.pos))+1)%4; d.pos=seq[d.seqI]; logp("w",`${desig(d)}: положення ${d.pos}`); return true; },
+  face(d,g){ const ang=d.pos===1?-45:d.pos===2?45:0;
+    return tx(g.cx,g.y+64,"1 – 0 – 2 · 63 А",{fs:7,fw:700})+`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+110}" r="24" fill="#2a2d33"/><g transform="rotate(${ang} ${g.cx} ${g.y+110})"><rect x="${g.cx-6}" y="${g.y+84}" width="12" height="34" rx="5" fill="#1d1f23" stroke="#666"/></g></g>`
+      +tx(g.cx-34,g.y+90,"1",{fs:10,fw:700})+tx(g.cx,g.y+80,"0",{fs:9})+tx(g.cx+34,g.y+90,"2",{fs:10,fw:700})+tx(g.cx,g.y+150,d.pos===1?"Мережа напряму":d.pos===2?"Від інвертора":"Вимкнено",{fs:7,fw:600}); }});
+/* ===== Розумний будинок і DC-апарати ===== */
+const online = (d,X) => X.volt(K(d,"L"),K(d,"N"))>=150;
+const smartFace = (d,g,title,state,stOn) => tx(g.cx,g.y+64,title,{fs:g.w>60?7:6.2,fw:700})+`<rect x="${g.cx-(g.w>60?30:18)}" y="${g.y+76}" width="${g.w>60?60:36}" height="22" rx="3" fill="#16181c"/>`
+  +tx(g.cx,g.y+91,d.online?"Wi-Fi":"офлайн",{fs:7.5,ff:"var(--mono)",fill:d.online?"#6eb4ff":"#5a5e66"})+led(g.cx,g.y+112,d.online?(stOn?"#3fbf4a":"#ffb21f"):"#5a5e66")+tx(g.cx,g.y+132,state,{fs:7,fw:600});
+defType("ssw",{name:"Розумний вимикач Wi-Fi 1P+N", short:"Розумний вимикач", cat:"Розумний дім", w:1, pre:"SR",
+  terms:[{k:"L",s:"top",r:"L",l:"L"},{k:"N",s:"top",r:"N",l:"N"},{k:"Lo",s:"bot",r:"L",l:"L"},{k:"No",s:"bot",r:"N",l:"N"}],
+  poles:[{a:"L",b:"Lo",r:"L"}], links:()=>[["N","No"]], closed:d=>!!d.rel, init:d=>{ d.cmd=!!d.cmd; }, cap:"Розумне реле",
+  logic(d,X){ d.online=online(d,X); const r=d.online&&d.cmd; if(r!==!!d.rel){ d.rel=r; return true; } return false; },
+  load:(d,X)=>[{a:"L",b:"N",I:d.online?0.005:0}], face:(d,g)=>smartFace(d,g,"Wi-Fi 16А",d.rel?"УВІМК":"ВИМК",d.rel)});
+defType("pm",{name:"Лічильник енергії Wi-Fi", short:"Лічильник Wi-Fi", cat:"Розумний дім", w:2, pre:"PM", meter:true,
+  terms:[{k:"L",s:"top",r:"L",l:"L"},{k:"N",s:"top",r:"N",l:"N"},{k:"Lo",s:"bot",r:"L",l:"L"},{k:"No",s:"bot",r:"N",l:"N"}],
+  poles:[{a:"L",b:"Lo",r:"L"}], links:()=>[["N","No"]], closed:()=>true, init:d=>{ d.kwh=d.kwh||0; }, cap:"Облік енергії",
+  logic(d,X){ d.online=online(d,X); return false; },
+  tick(d,X,dt){ const I=(S.sim&&S.sim.I[d.id])||0; d.p=I*(X.volt(K(d,"L"),K(d,"N"))||0)/1000; d.kwh+=d.p*dt/60; },
+  face(d,g){ return tx(g.cx,g.y+64,"ЛІЧИЛЬНИК 1Ф · 63 А",{fs:7,fw:700})+lcd(g.x+8,g.y+72,g.w-16,38,[fmt(d.p||0,2)+" кВт",fmt(d.kwh||0,2)+" кВт·год"],d.online)
+    +tx(g.cx,g.y+124,d.online?"Wi-Fi · онлайн":"офлайн",{fs:7,fill:d.online?"#1f62e0":"#777"})+led(g.cx,g.y+142,d.online&&d.p>0.01?"#ff5a5a":"#5a5e66"); }});
+defType("tr",{name:"Терморегулятор теплої підлоги", short:"Терморегулятор", cat:"Розумний дім", w:2, pre:"TR",
+  terms:[{k:"L",s:"top",r:"L",l:"L"},{k:"N",s:"top",r:"N",l:"N"},{k:"Lo",s:"bot",r:"L",l:"L ⏚"},{k:"No",s:"bot",r:"N",l:"N"}],
+  poles:[{a:"L",b:"Lo",r:"L"}], links:()=>[["N","No"]], closed:d=>!!(d.online&&d.heat&&d.en),
+  init:d=>{ d.set=d.set??24; d.temp=d.temp??19; d.en=d.en??true; }, cap:"Тепла підлога",
+  logic(d,X){ const o=online(d,X); if(o!==!!d.online){ d.online=o; return true; } return false; },
+  tick(d,X,dt){ if(!d.online) { d.heat=false; } else { if(d.temp<d.set-0.5) d.heat=true; if(d.temp>d.set+0.5) d.heat=false; }
+    const on=X.volt(K(d,"Lo"),K(d,"No"))>=150; d.temp+= on ? dt*0.35 : -dt*0.12*Math.max(0,d.temp-17)/5; },
+  face(d,g){ return tx(g.cx,g.y+64,"ТЕРМОРЕГУЛЯТОР",{fs:7,fw:700})+lcd(g.x+8,g.y+72,g.w-16,38,[fmt(d.temp,1)+"°C",`задано ${fmt(d.set,0)}°`],d.online,"#ffb21f")
+    +led(g.cx,g.y+128,d.online&&d.heat&&d.en?"#ff5a5a":"#5a5e66")+tx(g.cx,g.y+146,d.en?"нагрів":"вимкнено",{fs:7}); }});
+defType("hub",{name:"Хаб Zigbee / контролер", short:"Хаб Zigbee", cat:"Розумний дім", w:2, pre:"A",
+  terms:[{k:"L",s:"top",r:"L",l:"L"},{k:"N",s:"top",r:"N",l:"N"}], cap:"Хаб автоматики",
+  logic(d,X){ const o=online(d,X); if(o!==!!d.online){ d.online=o; logp(o?"ok":"w",`${desig(d)}: хаб ${o?"онлайн":"офлайн — автоматизації не працюють"}`); } return false; },
+  load:(d,X)=>[{a:"L",b:"N",I:d.online?0.02:0}],
+  face(d,g){ return tx(g.cx,g.y+64,"HUB · Zigbee 3.0",{fs:7,fw:700})+`<circle cx="${g.cx}" cy="${g.y+104}" r="24" fill="#16181c"/>`
+    +[10,17,24].map(r=>`<path d="M${g.cx-r*0.7} ${g.y+108-r*0.35} Q${g.cx} ${g.y+108-r} ${g.cx+r*0.7} ${g.y+108-r*0.35}" fill="none" stroke="${d.online?"#6eb4ff":"#3a3f47"}" stroke-width="2.5"/>`).join("")
+    +tx(g.cx,g.y+146,d.online?"онлайн":"офлайн",{fs:7,fw:600}); }});
+defType("kr2",{name:"Реле крана 2-канальне", short:"Реле крана", cat:"Розумний дім", w:2, pre:"KR",
+  terms:[{k:"L",s:"top",r:"L",l:"L"},{k:"N",s:"top",r:"N",l:"N"},{k:"O1",s:"bot",r:"L",l:"Відкр."},{k:"O2",s:"bot",r:"L",l:"Закр."}],
+  aux:d=>!d.online?[]:d.cmd==="open"?[["L","O1"]]:d.cmd==="close"?[["L","O2"]]:[], init:d=>{ d.cmd=d.cmd||"open"; }, cap:"Кран води",
+  logic(d,X){ const o=online(d,X); if(o!==!!d.online){ d.online=o; return true; } return false; },
+  face:(d,g)=>smartFace(d,g,"РЕЛЕ КРАНА",d.cmd==="open"?"ВІДКРИТИ":"ЗАКРИТИ",d.cmd==="open")});
+defType("qfdc",{...brk, name:"Автомат DC 2P", short:"Автомат DC", cat:"СЕС", w:2, pre:"QF",
+  terms:[{k:"p1",s:"top",r:"DC+",l:"+"},{k:"m1",s:"top",r:"DC-",l:"−"},{k:"p2",s:"bot",r:"DC+",l:"+"},{k:"m2",s:"bot",r:"DC-",l:"−"}],
+  poles:[{a:"p1",b:"p2",r:"L"},{a:"m1",b:"m2",r:"L"}], ratings:["C16","C25","C32","C63","C125"], def:"C16", cap:"DC",
+  face(d,g){ return tx(g.cx,g.y+70,"DC 1000 В",{fs:7,fw:700})+breakerFace(d,g); }});
+defType("spdc",{name:"УЗІП DC 1000 В", short:"УЗІП DC", cat:"СЕС", w:2, pre:"FV",
+  terms:[{k:"p",s:"top",r:"DC+",l:"+"},{k:"m",s:"top",r:"DC-",l:"−"},{k:"pe",s:"bot",r:"PE",l:"PE"}], cap:"Захист від імпульсів",
+  face(d,g){ return tx(g.cx,g.y+68,"УЗІП Т2 · DC",{fs:7,fw:700})+tx(g.cx,g.y+80,"Uc 1000 В · In 20 кА",{fs:6.3})
+    +[0,1].map(i=>`<rect x="${g.x+14+i*(g.w/2)}" y="${g.y+92}" width="${g.w/2-28}" height="36" rx="2" fill="#2a2d33"/><rect x="${g.x+18+i*(g.w/2)}" y="${g.y+120}" width="${g.w/2-36}" height="5" fill="#3fbf4a"/>`).join("")
+    +tx(g.cx,g.y+146,"індикатор: справний",{fs:6.5}); }});
+/* ===== Польове обладнання (поза щитом, через клемник XT1) ===== */
+const fbox = (x,y,w,h,title) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="var(--panel2)" stroke="var(--line)"/>`+`<text class="lab" x="${x+8}" y="${y+14}" font-size="9.5">${esc(title)}</text>`;
+const fst = (x,y,s,col) => `<text x="${x}" y="${y}" font-size="9.5" font-family="var(--sans)" font-weight="600" fill="${col||"var(--fg)"}">${esc(s)}</text>`;
+function motorSVG(x,y,st,lbl){ // st: run, dir(+1/-1), hum
+  const cx=x+46, cy=y+62, cls=st.run?("spin"+(st.dir<0?" rev":"")):(st.hum?"hum":"");
+  return `<rect x="${x+12}" y="${y+30}" width="68" height="64" rx="10" fill="#5b6470" stroke="#3a4048"/>`+[0,1,2,3,4].map(i=>`<rect x="${x+16+i*13}" y="${y+28}" width="6" height="68" fill="#4a525c"/>`).join("")
+    +`<rect x="${x+80}" y="${y+56}" width="22" height="12" fill="#8c949e"/><g class="${cls}"><g transform="translate(${x+108} ${cy})">`
+    +[0,120,240].map(a=>`<rect x="-3" y="-26" width="6" height="26" rx="3" fill="${st.run?"#ffb21f":"#9aa0aa"}" transform="rotate(${a})"/>`).join("")+`<circle r="6" fill="#30343a"/></g></g>`
+    +`<rect x="${x+30}" y="${y+18}" width="30" height="14" rx="2" fill="#3a4048"/><text x="${x+45}" y="${y+28}" font-size="8" text-anchor="middle" fill="#fff" font-family="var(--mono)">${lbl}</text>`; }
+defField("motor1",{name:"Двигун 1~ 1,1 кВт", pre:"M", fw:200, fh:150, terms:["L","N","PE"], In:7.5,
+  init:d=>{ d.cap=d.cap??true; d.jam=!!d.jam; },
+  tick(d,X,dt){ const U=X.volt(K(d,"L"),K(d,"N")); d.U=U; const was=d.run; d.run=U>=150&&d.cap&&!d.jam; d.hum=U>=150&&!d.run;
+    if(d.run!==was) logp(d.run?"ok":"w",`${d.name||"M1"}: ${d.run?"запущено":"зупинено"}`); },
+  load(d,X){ const U=X.volt(K(d,"L"),K(d,"N")); if(U<150) return []; const run=d.cap&&!d.jam; return [{a:"L",b:"N",I:run?this.In:this.In*3.6}]; },
+  draw(d,x,y){ const I=S.sim?S.sim.loads.filter(l=>l.own===d.id).reduce((a,l)=>a+l.I,0):0;
+    return fbox(x,y,200,150,"M1 · двигун 1~ 1,1 кВт · з конденсатором")+motorSVG(x+6,y+12,{run:d.run,dir:1,hum:d.hum},"M1~")
+      +fst(x+10,y+132,d.run?`Обертається · ${fmt(I)} А`:d.hum?`Гуде, не запускається · ${fmt(I)} А`:"Зупинено",d.run?"var(--green)":d.hum?"var(--red)":"var(--muted)")
+      +fst(x+10,y+145,`Конденсатор: ${d.cap?"справний":"пробитий"}${d.jam?" · вал заклинило":""}`,"var(--muted)"); }});
+defField("motor3",{name:"Двигун 3~ 4 кВт", pre:"M", fw:220, fh:150, terms:["U","V","W","PE"], In:8.1,
+  init:d=>{ d.jam=!!d.jam; },
+  tick(d,X,dt){ const ps=["U","V","W"].map(k=>X.ph(K(d,k))); const set=new Set(ps.filter(Boolean)); const n=set.size, was=d.run;
+    if(n===3){ const a=ps.map(p=>PH_ANG[p.split(".")[1]]); d.dir=((a[1]-a[0]+360)%360===120)?1:-1; d.run=!d.jam; d.hum=d.jam; }
+    else if(n===2){ d.hum=true; if(!was) d.run=false; } else { d.run=false; d.hum=false; }
+    d.n=n; if(d.run!==was) logp(d.run?"ok":"w",`M1: ${d.run?"обертається "+(d.dir>0?"вправо":"вліво"):"зупинено"}`); },
+  load(d,X){ const ps=["U","V","W"].map(k=>X.ph(K(d,k))); const n=new Set(ps.filter(Boolean)).size; if(n<2) return [];
+    let I = n===3 ? (d.jam?this.In*6:this.In) : (d.run?this.In*1.73:this.In*6); return [{abc:["U","V","W"], Is:ps.map(p=>p?I:0)}]; },
+  draw(d,x,y){ const l=S.sim&&S.sim.loads.find(l=>l.own===d.id), I=l?Math.max(...l.Is):0;
+    return fbox(x,y,220,150,"M1 · двигун 3~ 4 кВт · Y/Δ 400 В")+motorSVG(x+6,y+12,{run:d.run,dir:d.dir,hum:d.hum},"M3~")
+      +fst(x+140,y+60,d.run?(d.dir>0?"⟳ вправо":"⟲ вліво"):"",d.dir>0?"var(--green)":"var(--orange)")
+      +fst(x+10,y+132,d.run?(d.n===2?`Двофазний режим! ${fmt(I)} А`:`Обертається · ${fmt(I)} А`):d.hum?`Гуде, не запускається · ${fmt(I)} А`:"Зупинено",d.run&&d.n===3?"var(--green)":d.hum||d.n===2?"var(--red)":"var(--muted)")
+      +fst(x+10,y+145,d.jam?"Вал заклинило":"Навантаження номінальне","var(--muted)"); }});
+defField("pv",{name:"Сонячні панелі", fw:170, fh:150, terms:["p","m"],
+  source:d=>(S.env.sun>0&&!d.fault)?[["p","pv+"],["m","pv-"]]:[],
+  onFault(d,c){ if(c.pots.some(p=>/^pv/.test(p))){ d.fault=true; logp("e","DC: коротке замикання стрінга — PV-струм не вимикається сам, потрібен DC-автомат!"); return true; } return false; },
+  draw(d,x,y){ const sun=S.env.sun||0; let s=fbox(x,y,170,150,"PV · 10 × 550 Вт");
+    for(let i=0;i<10;i++) s+=`<rect x="${x+10+(i%5)*31}" y="${y+24+Math.floor(i/5)*42}" width="28" height="38" fill="#1d3557" stroke="#5b8ff0" stroke-width=".8"/>`;
+    return s+fst(x+10,y+126,`Сонце ${sun}% · ${fmt(5.5*sun/100,2)} кВт`,"var(--yellow)")+fst(x+10,y+142,d.fault?"Аварія DC!":`${S.env.sun>0?"~400":"0"} В DC`,d.fault?"var(--red)":"var(--muted)"); }});
+defField("bat",{name:"Акумулятор LiFePO4", fw:120, fh:150, terms:["p","m"],
+  source:()=>(S.env.soc>0)?[["p","bat+"],["m","bat-"]]:[],
+  draw(d,x,y){ const soc=S.env.soc||0, h=Math.round(80*soc/100);
+    return fbox(x,y,120,150,"АКБ 51 В · 10 кВт·год")+`<rect x="${x+40}" y="${y+24}" width="40" height="86" rx="4" fill="none" stroke="var(--muted)" stroke-width="2"/><rect x="${x+52}" y="${y+19}" width="16" height="6" fill="var(--muted)"/>`
+      +`<rect x="${x+43}" y="${y+107-h}" width="34" height="${h}" fill="${soc>30?"var(--green)":"var(--orange)"}"/>`+fst(x+10,y+132,`${fmt(soc,0)} %`,"var(--fg)")+fst(x+10,y+145,(S.env.flow&&S.env.flow.bat)?(S.env.flow.bat>0?"розряд ":"заряд ")+fmt(Math.abs(S.env.flow.bat),1)+" кВт":"очікування","var(--muted)"); }});
+defField("inv",{name:"Гібридний інвертор 6 кВт", fw:230, fh:150, terms:["pp","pm","bp","bm","gL","gN","oL","oN","pe"],
+  init:d=>{ d.en=d.en??true; d.mode="off"; d.faultT=0; },
+  logic(d,X){ const pv=X.P(K(d,"pp")).has("pv+")&&X.P(K(d,"pm")).has("pv-"), bat=X.P(K(d,"bp")).has("bat+")&&X.P(K(d,"bm")).has("bat-")&&S.env.soc>5;
+    const gU=X.volt(K(d,"gL"),K(d,"gN")), grid=gU>=185&&gU<=253; d.pvOK=pv; d.batOK=bat; d.gridU=gU;
+    const m=!d.en?"off":d.faultT>0?"fault":grid?"grid":(pv||bat)?"backup":"off";
+    if(m!==d.mode){ const prev=d.mode; d.mode=m; if(prev) logp(m==="backup"?"w":m==="grid"?"ok":"w",`Інвертор: ${({grid:"мережевий режим (мережа є, синхронізовано)",backup:"резервний режим — живить навантаження від PV/АКБ",off:"вимкнено",fault:"аварійне вимкнення"})[m]}`); return true; }
+    return false; },
+  aux:d=>d.mode==="grid"?[["gL","oL"],["gN","oN"]]:[], source:d=>d.mode==="backup"?[["oL","inv.L"],["oN","N"]]:[],
+  onFault(d,c){ if(c.pots.includes("inv.L")){ d.faultT=10; d.mode="fault"; logp("e","Інвертор: коротке замикання або зворотне живлення на виході — захист вимкнув інвертор на 10 с"); return true; } return false; },
+  tick(d,X,dt){ d.faultT=Math.max(0,d.faultT-dt); const ppv=(d.pvOK?5.5*(S.env.sun||0)/100:0);
+    const Y=makeX(build({open:new Set([d.id]),extra:shortsExtra()})); let pl=0;
+    for(const l of computeLoads(X)) if(l.a&&l.I>0&&X.ph(l.a)&&X.P(l.a).has(d.mode==="backup"?"inv.L":"__")||(d.mode==="grid"&&l.a&&l.I>0&&X.ph(l.a)&&!Y.ph(l.a))) pl+=l.I*(l.U||230)/1000;
+    let bat=0, grid=0, pvUse=0;
+    if(d.mode==="grid"){ pvUse=Math.min(ppv,pl); const sur=ppv-pvUse; const ch=S.env.soc<100?Math.min(3,sur):0; bat=-ch; grid=pl-pvUse; const exp=sur-ch; if(exp>0) grid=-exp; }
+    else if(d.mode==="backup"){ const sup=ppv+(d.batOK?5:0);
+      if(pl>sup+0.05){ d.faultT=10; logp("e",`Інвертор: перевантаження ${fmt(pl,1)} кВт > ${fmt(sup,1)} кВт доступно — вимкнення на 10 с`); }
+      pvUse=Math.min(ppv,pl); bat=pl-pvUse; if(bat<0) bat=0; if(ppv>pl&&S.env.soc<100) bat=-Math.min(3,ppv-pl); }
+    S.env.soc=Math.max(0,Math.min(100,(S.env.soc||0)-bat*(dt/60)/10*100));
+    S.env.flow={pv:pvUse+(bat<0?-bat:0)+(grid<0?-grid:0), bat, grid, load:pl, mode:d.mode}; },
+  draw(d,x,y){ const f=S.env.flow||{}, m=d.mode;
+    const col={grid:"var(--green)",backup:"var(--orange)",off:"var(--muted)",fault:"var(--red)"}[m];
+    return fbox(x,y,230,150,"Гібридний інвертор 6 кВт · 48 В")+`<rect x="${x+12}" y="${y+24}" width="76" height="96" rx="6" fill="#2b2f36"/>`
+      +`<rect x="${x+20}" y="${y+34}" width="60" height="30" rx="2" fill="#16181c"/><text x="${x+50}" y="${y+54}" font-size="11" text-anchor="middle" font-family="var(--mono)" fill="${m==="off"?"#3a3f47":"#a6e3ff"}">${m==="grid"?"GRID":m==="backup"?"BACKUP":m==="fault"?"FAULT":"OFF"}</text>`
+      +led(x+30,y+80,m!=="off"?"#3fbf4a":"#5a5e66")+led(x+50,y+80,m==="backup"?"#ffb21f":"#5a5e66")+led(x+70,y+80,m==="fault"?"#e23b3b":"#5a5e66")
+      +fst(x+98,y+40,`PV → ${fmt(Math.max(0,f.pv||0),2)} кВт`,"var(--yellow)")+fst(x+98,y+58,`Навант. ${fmt(f.load||0,2)} кВт`)
+      +fst(x+98,y+76,f.bat>0?`АКБ розряд ${fmt(f.bat,2)}`:f.bat<0?`АКБ заряд ${fmt(-f.bat,2)}`:"АКБ 0","var(--muted)")
+      +fst(x+98,y+94,f.grid>0?`Мережа ← ${fmt(f.grid,2)}`:f.grid<0?`Експорт → ${fmt(-f.grid,2)}`:"Мережа 0",f.grid<0?"var(--green)":"var(--muted)")
+      +fst(x+10,y+142,({grid:"Мережевий режим",backup:"Резервний режим",off:d.en?"Немає джерела":"Вимкнено кнопкою",fault:"Захист: вимкнено "+Math.ceil(d.faultT)+" с"})[m],col); }});
+function simpleLoad(k,name,kw,icon){ defField(k,{name, fw:130, fh:150, terms:["L","N"], kw,
+  load(d,X){ const U=X.volt(K(d,"L"),K(d,"N")); d.on=U>=150; return [{a:"L",b:"N",I:U>=150?kw*1000/U:0,U}]; },
+  draw(d,x,y){ return fbox(x,y,130,150,name)+icon(x,y,d.on)+fst(x+10,y+132,d.on?`Працює · ${fmt(kw,1)} кВт`:"Без живлення",d.on?"var(--green)":"var(--muted)"); }}); }
+simpleLoad("lamp","Освітлення 0,2 кВт",0.2,(x,y,on)=>(on?`<circle cx="${x+65}" cy="${y+64}" r="34" fill="#ffd23f" opacity=".25"/>`:"")+`<circle cx="${x+65}" cy="${y+64}" r="20" fill="${on?"#ffd23f":"#5a5e66"}"/><rect x="${x+57}" y="${y+84}" width="16" height="14" fill="#8c949e"/>`);
+simpleLoad("boiler","Бойлер 2,0 кВт",2.0,(x,y,on)=>`<rect x="${x+42}" y="${y+24}" width="46" height="88" rx="20" fill="#e9eaee" stroke="#9aa0aa"/><path d="M${x+55} ${y+96} q5 -10 0 -20 q-5 -10 0 -20" stroke="${on?"#e0352b":"#9aa0aa"}" stroke-width="3" fill="none"/><path d="M${x+75} ${y+96} q5 -10 0 -20 q-5 -10 0 -20" stroke="${on?"#e0352b":"#9aa0aa"}" stroke-width="3" fill="none"/>`);
+simpleLoad("floor","Тепла підлога 1,5 кВт",1.5,(x,y,on)=>`<rect x="${x+14}" y="${y+40}" width="102" height="56" fill="#3a3530"/>`+[0,1,2,3].map(i=>`<path d="M${x+20} ${y+48+i*13} h90" stroke="${on?"#ff7a3d":"#6a6560"}" stroke-width="3"/>`).join(""));
+defField("valve",{name:"Кран з електроприводом", fw:150, fh:150, terms:["N","O","Cl"], init:d=>{ d.pos=d.pos??100; },
+  tick(d,X,dt){ const o=X.volt(K(d,"O"),K(d,"N"))>=150, c=X.volt(K(d,"Cl"),K(d,"N"))>=150, p0=d.pos;
+    if(o&&!c) d.pos=Math.min(100,d.pos+dt*34); if(c&&!o) d.pos=Math.max(0,d.pos-dt*34);
+    if(p0>0&&d.pos===0) logp("ok","Кран води закрито"); if(p0<100&&d.pos===100) logp("ok","Кран води відкрито"); },
+  load(d,X){ const o=X.volt(K(d,"O"),K(d,"N"))>=150, c=X.volt(K(d,"Cl"),K(d,"N"))>=150; return [{a:o?"O":"Cl",b:"N",I:((o&&d.pos<100)||(c&&d.pos>0))?0.03:0}]; },
+  draw(d,x,y){ const a=90*(1-d.pos/100);
+    return fbox(x,y,150,150,"Кран 3/4″ · 230 В · 3 дроти")+`<rect x="${x+14}" y="${y+70}" width="122" height="20" fill="#8c949e"/><circle cx="${x+75}" cy="${y+80}" r="22" fill="#c8a14a" stroke="#8a6d20"/>`
+      +`<rect x="${x+71}" y="${y+60}" width="8" height="40" fill="#2a2d33" transform="rotate(${a} ${x+75} ${y+80})"/><rect x="${x+55}" y="${y+26}" width="40" height="24" rx="4" fill="#2b2f36"/>`
+      +fst(x+10,y+132,d.pos>=100?"Відкрито":d.pos<=0?"Закрито":`Рух… ${Math.round(d.pos)} %`,d.pos<=0?"var(--orange)":"var(--green)"); }});
+/* ===== Геометрія щита, трасування дротів, малювання ===== */
+const G = { W:840, X0:96, MW:54, INY:36 };
+const devTop = r => 208 + r*380, devBot = r => devTop(r)+240;
+const busY = () => devBot(S.board.rails-1)+118, enclB = () => busY()+36, panelH = () => enclB()+10;
+const fieldY = () => panelH()+34, totalH = () => S.field.length ? fieldY()+170 : panelH();
+let LSP={}, SSP={L:7,R:7};
+const laneY = (c,s,i) => { const sp=LSP[c+s]||7; return s==="l" ? devTop(c)-20-sp*i : devBot(c-1)+20+sp*i; };
+const sideX = (side,i) => side==="L" ? 86-(SSP.L||7)*i : 754+(SSP.R||7)*i;
+const SW = {1.5:3,2.5:3.6,4:4.3,6:5,10:6,16:7,25:7.6,35:8.2,50:9};
+function inputX(){ const m={}; let x=120;
+  for(const inp of S.board.inputs){ inp.terms.forEach((t,i)=>{ m[inp.id+":"+t]=x+i*36; }); m[inp.id]=x; x+=inp.terms.length*36+34; } return m; }
+function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, gaps=(m?2:1)*20;
+  let sp=28; if(cnt*sp+gaps>600) sp=(600-gaps)/cnt; const pos={}; let x=124;
+  for(let i=0;i<n;i++){ pos["xn:"+i]=x; x+=sp; } x+=20-sp+sp;
+  if(m){ b.xt.forEach(t=>{ pos["xt:"+t.k]=x; x+=sp; }); x+=20; }
+  const shift=Math.max(0,716-(x+(p-1)*sp)); x+=shift; for(let i=0;i<p;i++){ pos["xpe:"+i]=x; x+=sp; }
+  return {pos,sp}; }
+let GEO=null;
+function geoCache(){ GEO={inx:inputX(), bus:busRow()}; return GEO; }
+function termX(d,t){ const def=T[d.type]; if(t.m!==undefined) return G.X0+(d.slot+t.m)*G.MW+G.MW/2;
+  const side=def.terms.filter(x=>x.s===t.s), i=side.indexOf(t); return G.X0+d.slot*G.MW+(i+0.5)*(def.w*G.MW)/side.length; }
+function termPos(key){
+  const [o,k]=key.split(":"), R=S.board.rails, g=GEO||geoCache();
+  if(S.board.inputs.some(i=>i.id===o)) return {x:g.inx[key], y:G.INY, c:0, s:"l"};
+  if(o==="xn"||o==="xpe"||o==="xt"){ const x=g.bus.pos[key]; return x===undefined?null:{x, y:busY(), c:R, s:"u"}; }
+  const d=S.devices.find(x=>x.id===o); if(!d) return null; const t=T[d.type].terms.find(t=>t.k===k); if(!t) return null; const r=d.rail||0;
+  return t.s==="top" ? {x:termX(d,t), y:devTop(r)+22, c:r, s:"l"} : {x:termX(d,t), y:devBot(r)-22, c:r+1, s:"u"};
+}
+function route(){
+  const items=[];
+  for(const w of S.wires){ let A=termPos(w.a), B=termPos(w.b); if(!A||!B) continue;
+    if(A.c===B.c){ const set=(A.s==="u"||B.s==="u")?"u":"l"; items.push({w,A,B,cross:false,set,span:Math.abs(A.x-B.x)}); }
+    else { if(A.c>B.c) [A,B]=[B,A]; const side=(A.x+B.x)/2<G.W/2?"L":"R", sx=sideX(side,0);
+      items.push({w,A,B,cross:true,side,span:Math.abs(A.x-sx)+Math.abs(B.x-sx)+Math.abs(A.c-B.c)*50}); } }
+  const lanes={};
+  const take=(key,a,b)=>{ const lo=Math.min(a,b)-7, hi=Math.max(a,b)+7, L=lanes[key]||(lanes[key]=[]);
+    for(let i=0;;i++){ const q=L[i]||(L[i]=[]); if(!q.some(([p,r])=>lo<r&&p<hi)){ q.push([lo,hi]); return i; } } };
+  items.sort((p,q)=>p.span-q.span);
+  for(const it of items){ if(!it.cross) it.lane=take(it.A.c+it.set,it.A.x,it.B.x);
+    else { const sx=sideX(it.side,3); it.la=take(it.A.c+it.A.s,it.A.x,sx); it.lb=take(it.B.c+it.B.s,it.B.x,sx); } }
+  for(const side of ["L","R"]){ const cs=items.filter(i=>i.cross&&i.side===side).sort((p,q)=>(p.la+p.lb)-(q.la+q.lb)); cs.forEach((it,i)=>it.ls=i); SSP[side]=Math.max(2.2,Math.min(7,60/Math.max(1,cs.length-0.5))); }
+  LSP={}; const R=S.board.rails, n=key=>(lanes[key]||[]).length;
+  for(const key of Object.keys(lanes)){ const c=parseInt(key), st=key.slice(-1); let avail;
+    if(st==="l"&&c===0) avail=devTop(0)-20-92; else if(st==="u"&&c===R) avail=busY()-30-(devBot(R-1)+20);
+    else avail=(devTop(c)-devBot(c-1)-40)*n(key)/Math.max(1,n(c+"u")+n(c+"l"));
+    LSP[key]=Math.max(2.5,Math.min(7,avail/Math.max(1,n(key)-0.5))); }
+  const out={};
+  for(const it of items){ const {A,B}=it;
+    if(!it.cross){ const y=laneY(A.c,it.set,it.lane); out[it.w.id]=[[A.x,A.y],[A.x,y],[B.x,y],[B.x,B.y]]; }
+    else { const sx=sideX(it.side,it.ls), ya=laneY(A.c,A.s,it.la), yb=laneY(B.c,B.s,it.lb); out[it.w.id]=[[A.x,A.y],[A.x,ya],[sx,ya],[sx,yb],[B.x,yb],[B.x,B.y]]; } }
+  return out;
+}
+function rpath(pts,r=7){
+  const p=pts.filter((q,i)=>i===0||q[0]!==pts[i-1][0]||q[1]!==pts[i-1][1]); let d="M"+p[0][0]+" "+p[0][1];
+  for(let i=1;i<p.length-1;i++){ const [x0,y0]=p[i-1],[x1,y1]=p[i],[x2,y2]=p[i+1];
+    const l1=Math.hypot(x1-x0,y1-y0), l2=Math.hypot(x2-x1,y2-y1), rr=Math.min(r,l1/2,l2/2);
+    if(rr<1||(x0===x1&&x1===x2)||(y0===y1&&y1===y2)){ d+=" L"+x1+" "+y1; continue; }
+    d+=` L${(x1-(x1-x0)/l1*rr).toFixed(1)} ${(y1-(y1-y0)/l1*rr).toFixed(1)} Q${x1} ${y1} ${(x1+(x2-x1)/l2*rr).toFixed(1)} ${(y1+(y2-y1)/l2*rr).toFixed(1)}`; }
+  const q=p[p.length-1]; return d+" L"+q[0]+" "+q[1];
+}
+const screw = (x,y,r=11) => `<circle class="screw" cx="${x}" cy="${y}" r="${r}"/><path class="screw-x" d="M${x-r*0.55} ${y}h${r*1.1}M${x} ${y-r*0.55}v${r*1.1}"/>`;
+function devSVG(d){
+  const t=T[d.type], r=d.rail||0, x=G.X0+d.slot*G.MW+1, w=t.w*G.MW-2, y=devTop(r), cx=x+w/2, on=d.on&&!d.trip, heat=S.heat[d.id]||0, H=240;
+  let s=`<g data-dev="${d.id}">`;
+  if(heat>0.15) s+=`<rect class="heat" x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--orange)" stroke-width="3"/>`;
+  if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
+  s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"/><rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"/>`;
+  const sr=t.terms.filter(q=>q.s==="top").length>w/27?9:11;
+  for(const tm of t.terms){ const X=termX(d,tm);
+    if(tm.s==="top") s+=screw(X,y+22,sr)+tx(X,y+42,tm.l,{fs:6.8}); else s+=screw(X,y+H-22,sr)+tx(X,y+H-36,tm.l,{fs:6.8}); }
+  s+=tx(cx,y+56,"EnergyUA",{fs:7,fw:700});
+  if(t.face) s+=t.face(d,{x,y,w,cx,on});
+  const des=desig(d), pw=Math.max(38,des.length*7+12);
+  s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});
+  const gc=d.group?d.group.color:(d.capColor||"#8f93a2"); s+=`<rect x="${x+2}" y="${y+188}" width="${w-4}" height="5" fill="${gc}"/>`;
+  const cap=d.group?d.group.name:(d.cap||t.cap||t.short), maxc=Math.max(7,Math.floor(w/7)); const lines=[]; let cur="";
+  for(const wd of String(cap).split(/\s+/)){ if((cur+" "+wd).trim().length>maxc&&cur){ lines.push(cur); cur=wd; } else cur=(cur+" "+wd).trim(); } if(cur) lines.push(cur);
+  lines.slice(0,2).forEach((ln,i)=>{ s+=tx(cx,y+203+i*9,ln.length>maxc+2?ln.slice(0,maxc+1)+"…":ln,{fs:7}); });
+  if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
+  return s+"</g>";
+}
+function render(){
+  geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
+  svg.setAttribute("viewBox",`0 0 840 ${H}`);
+  s+=`<rect class="encl" x="14" y="70" width="812" height="${enclB()-70}" rx="10"/><rect class="encl-in" x="26" y="82" width="788" height="${enclB()-94}" rx="6"/>`;
+  for(const [cx,cy] of [[44,100],[796,100],[44,enclB()-30],[796,enclB()-30]]) s+=`<circle cx="${cx}" cy="${cy}" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5"/>`;
+  for(let r=0;r<b.rails;r++) s+=`<rect class="rail" x="40" y="${devTop(r)+64}" width="760" height="46" rx="2" opacity=".55"/><rect class="rail" x="40" y="${devTop(r)+74}" width="760" height="26" opacity=".9"/>`;
+  const used=S.devices.reduce((a,d)=>a+T[d.type].w,0);
+  s+=`<text class="lab" x="810" y="78" font-size="10" text-anchor="end">${b.rails>1?"ЩРН-"+12*b.rails:"ЩРН-12"} · ${12*b.rails} модулів · зайнято ${used}</text>`;
+  const bp=GEO.bus.pos, sp=GEO.bus.sp, xs=k=>bp[k];
+  if(b.xn){ s+=`<rect x="${xs("xn:0")-16}" y="${B-12}" width="${xs("xn:"+(b.xn-1))-xs("xn:0")+32}" height="24" rx="3" fill="#2f6fdf"/>`+tx(xs("xn:0")-16,B-18,"N · XN1",{c:"lab",fs:10,a:"start"}); }
+  if(b.xpe){ const a=xs("xpe:0")-16, w=xs("xpe:"+(b.xpe-1))-xs("xpe:0")+32; s+=`<rect x="${a}" y="${B-12}" width="${w}" height="24" rx="3" fill="#f2c400"/>`;
+    for(let i=0;i<b.xpe;i++) s+=`<rect x="${xs("xpe:"+i)-7}" y="${B-12}" width="14" height="24" fill="#2e9a3e" opacity=".85"/>`; s+=tx(a,B-18,"PE · XPE1",{c:"lab",fs:10,a:"start"}); }
+  if(b.xt.length){ const a=xs("xt:"+b.xt[0].k)-14, z=xs("xt:"+b.xt[b.xt.length-1].k)+14; s+=`<rect x="${a}" y="${B-14}" width="${z-a}" height="28" rx="2" fill="#7c8590"/>`+tx(a,B-18,"XT1 · до обладнання",{c:"lab",fs:10,a:"start"});
+    for(const t of b.xt){ const x=xs("xt:"+t.k); s+=`<text class="lab" x="${x+3}" y="${B+20}" font-size="7.5" text-anchor="end" transform="rotate(-60 ${x+3} ${B+20})">${esc(t.l)}</text>`; } }
+  for(const k of Object.keys(bp)) s+=screw(bp[k],B,sp<26?9:11);
+  for(const inp of b.inputs){ const src=S.src[inp.id]||{}, x0=inx[inp.id];
+    s+=tx(x0-16,12,inp.label+" · "+(src.on?"~"+Math.round(src.U*(inp.terms.includes("L1")?1.732:1))+" В":"0 В"),{c:"lab",fs:9.5,a:"start",fill:src.on?"var(--green)":undefined});
+    for(const t of inp.terms){ const x=inx[inp.id+":"+t]; s+=`<rect x="${x-16}" y="20" width="32" height="32" rx="3" fill="var(--panel2)" stroke="var(--line)"/>`+screw(x,G.INY)+tx(x,64,t,{c:"lab",fs:8.5}); } }
+  if(S.mode==="mount") for(let r=0;r<b.rails;r++) for(let i=0;i<SLOTS;i++){ if(devAt(r,i)) continue; const fits=!S.pick||freeAt(r,i,T[S.pick].w);
+    s+=`<rect class="slot" data-slot="${r}:${i}" x="${G.X0+i*G.MW+3}" y="${devTop(r)}" width="${G.MW-6}" height="240" rx="4" style="${S.pick&&fits?"stroke:var(--blue);opacity:1":""}${S.pick&&!fits?";opacity:.2":""}"/>`+tx(G.X0+i*G.MW+G.MW/2,devTop(r)+130,String(r*12+i+1),{c:"lab",fs:10}); }
+  for(const d of S.devices) s+=devSVG(d);
+  if(S.comb){ const cr=S.comb.rail||0, cov=S.devices.filter(d=>d.type==="qf1p"&&(d.rail||0)===cr&&d.slot>=S.comb.from&&d.slot<=S.comb.to).map(d=>G.X0+d.slot*G.MW+G.MW/2), y=devTop(cr);
+    if(cov.length){ const a=Math.min(...cov)-10, z=Math.max(...cov)+10; for(const x of cov) s+=`<rect x="${x-3}" y="${y-10}" width="6" height="24" fill="var(--brass)"/>`;
+      s+=`<rect x="${a}" y="${y-14}" width="${z-a}" height="9" rx="2" fill="var(--brass)" stroke="#9b7d22"/>`+tx(a,y-18,`Гребінка 1P · ${cov.length} мод.`,{c:"lab",fs:8.5,a:"start"}); } }
+  if(S.field.length){ const fy=fieldY(); let x=24;
+    for(const f of S.field){ const ft=FT[f.type], cx=x+ft.fw/2; let k=0;
+      for(const tk of ft.terms){ const key=f.map[tk], X=bp[key]; if(X===undefined) continue;
+        s+=`<path d="M${X} ${B+12} V${enclB()+6+k*3} H${cx-12+k*5} V${fy}" fill="none" stroke="#6b7380" stroke-width="2.4" stroke-linejoin="round"/>`; k++; }
+      s+=`<g data-field="${f.id}">${ft.draw(f,x,fy)}</g>`; x+=ft.fw+14; } }
+  const P=route();
+  for(const w of S.wires){ const pts=P[w.id]; if(!pts) continue; const d=rpath(pts), sw=SW[w.sec]||4, col=WK[w.kind]?WK[w.kind][1]:"#888";
+    if(S.selWire===w.id) s+=`<path class="wsel" d="${d}" stroke-width="${sw+9}"/>`;
+    s+=`<path class="wire" d="${d}" stroke="${w.kind==="L2"||w.kind==="DC-"?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
+    if(w.kind==="PE") s+=`<path class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
+    else s+=`<path class="wire" d="${d}" stroke="${col}" stroke-width="${sw}"/>`;
+    if(R.liveW.has(w.id)) s+=`<path class="flow" d="${d}" stroke-width="${Math.max(1.5,sw-2.5)}"/>`;
+    for(const [x,y] of [pts[0],pts[pts.length-1]]) s+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--brass)"/>`;
+    if(S.mode==="wire") s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
+  if(S.mode==="wire"){ for(const k of allTermKeys()){ const p=termPos(k); if(!p) continue;
+      if(S.pend===k) s+=`<circle class="term-sel" cx="${p.x}" cy="${p.y}" r="14"/>`;
+      else if(S.pend&&kindFits(S.wireKind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`;
+      s+=`<circle class="term-hit" data-term="${k}" cx="${p.x}" cy="${p.y}" r="15"/>`; } }
+  svg.innerHTML=s;
+}
+/* ===== Перевірка схеми: статичні правила + прогін у «пісочниці» ===== */
+function sandbox(fn){
+  const snap=JSON.stringify({devices:S.devices, field:S.field, src:S.src, env:S.env, heat:S.heat});
+  const keep={leak:S.leak, short:S.short, log:S.log, lw:S.leakWarned, uw:S.uWarned, sim:S.sim};
+  S.quiet=true; S.leak=new Set(); S.short=new Set(); S.leakWarned=new Set(); S.log=[];
+  try{ return fn(); } finally {
+    const j=JSON.parse(snap); Object.assign(S,{devices:j.devices, field:j.field, src:j.src, env:j.env, heat:j.heat});
+    Object.assign(S,{leak:keep.leak, short:keep.short, log:keep.log, leakWarned:keep.lw, uWarned:keep.uw, sim:keep.sim}); S.quiet=false; }
+}
+const runFor = sec => { for(let t=0;t<sec;t+=0.5) solve(0.5); };
+const sbErrors = () => S.log.filter(l=>l.cls==="e").map(l=>l.msg.replace(/^\S+ /,""));
+function powerUp(which){ for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={U:230,lost:{}}); s.on=!which||which.includes(inp.id); s.U=230; s.lost={}; }
+  for(const d of S.devices){ if(T[d.type].prot||T[d.type].rcd){ d.on=true; d.trip=null; } } S.heat={}; }
+function pressBtn(d){ d.pressed=true; runFor(1); d.pressed=false; runFor(1); }
+
 function runChecks(){
-  const C=[], add=(sev,t,d="")=>C.push({sev,t,d});
-  const id={ideal:true}, f=topo(id), f0=topo({allOpen:true}), G=groupsOf();
-  for(const k of ["L","N","PE"]) if(!S.wires.some(w=>w.a==="in:"+k||w.b==="in:"+k)) add("e",`Не підключено ввід ${k}`,"Підведіть провід від вводу до вступного апарата або шини.");
-  let roleErr=0; for(const w of S.wires){ for(const k of [w.a,w.b]){ const r=termRole(k); if(r&&r!==w.kind){ roleErr++; add("e",`Провід ${w.kind} на клемі ${r}`,`${termName(k)}: колір дроту не відповідає призначенню клеми.`); } } }
-  if(!roleErr&&S.wires.length) add("ok","Кольори дротів відповідають клемам","L — фаза, N — нейтраль (синій), PE — жовто-зелений.");
-  if(f("in:L")===f("in:N")) add("e","Коротке замикання L–N","При ввімкненні щита спрацює захист. Перевірте, куди заведені фазні дроти.");
-  if(f("in:L")===f("in:PE")) add("e","Фаза замкнена на PE","Фазний провід потрапив на шину або провідник PE.");
-  if(f("in:PE")!==f("xpe:0")) add("e","Шина PE не з’єднана з вводом PE","Захисний провідник має йти на XPE1 напряму, без апаратів.");
-  else add("ok","Шина PE підключена до вводу");
-  const main=S.devices.filter(d=>d.type==="qf2p"&&f0(d.id+":t1")===f0("in:L")&&f0(d.id+":t2")===f0("in:N"))[0];
-  if(!main) add("e","Немає вступного автомата 2P одразу після вводу","Ввід L і N має заходити на верхні клеми 1 і 3 вступного автомата.");
-  else { add("ok",`Вступний автомат ${desig(main)} ${main.rating}`,"Ввід заведено на верхні клеми.");
-    const by=G.filter(g=>phaseOK(f,g)&&phaseOK(openPole(main,0,id),g)); if(by.length) add("e","Групи живляться в обхід вступного автомата",by.map(g=>desig(g)).join(", ")); }
-  for(const g of G){ const miss=[]; if(!phaseOK(f,g)) miss.push("фази"); if(!neutOK(f,g)) miss.push("нуля N"); if(f("xpe:0")!==f("in:PE")) miss.push("PE");
-    if(miss.length) add("e",`${desig(g)} «${g.group.name}»: немає ${miss.join(", ")}`,g.type==="rcbo"?"Нуль групи береться з нижньої клеми N диф-автомата.":"Нуль групи береться з шини XN1, фаза — з верхньої клеми або гребінки."); }
-  for(const R of S.devices.filter(d=>T[d.type].rcd)){ const fL=openPole(R,lPole(R),id), fN=openPole(R,nPole(R),id); let bad=null;
-    for(const g of G){ if(!(phaseOK(f,g)&&neutOK(f,g))) continue; if(!phaseOK(fL,g)!==!neutOK(fN,g)){ bad=g; break; } }
-    if(bad) add("e",`${desig(R)}: дисбаланс у групі «${bad.group.name}»`,"Фаза і нуль групи мають проходити через один і той самий ПЗВ. Інакше ПЗВ вибиватиме під навантаженням.");
-    else if(G.some(g=>phaseOK(f,g)&&!phaseOK(fL,g))) add("ok",`${desig(R)}: фаза й нуль груп проходять через ПЗВ`); }
-  for(const g of G){ const rs=S.devices.filter(R=>T[R.type].rcd&&phaseOK(f,g)&&!phaseOK(openPole(R,lPole(R),id),g));
-    if(phaseOK(f,g)&&!rs.length) add(/освітл/i.test(g.group.name)?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА."); }
-  const kvs=S.devices.filter(d=>d.type==="kv");
-  if(!kvs.length) add("w","Немає реле напруги","Без нього техніка не захищена від перенапруги та «перекосу фаз».");
-  for(const k of kvs){ if(f(k.id+":t1")!==f("in:N")) add("e",`${desig(k)} не отримує нуль`,"Підключіть клему N реле до нейтралі, інакше реле не ввімкне навантаження.");
-    const un=G.filter(g=>phaseOK(f,g)&&phaseOK(openPole(k,0,id),g)); if(un.length) add("w",`${desig(k)} захищає не всі групи`,"В обхід реле: "+un.map(desig).join(", "));
-    else if(G.length) add("ok",`${desig(k)} захищає всі групи`); }
-  if(main) for(const R of S.devices.filter(d=>d.type==="rcd")) if(inA(R.rating)<inA(main.rating)) add("e",`${desig(R)} ${R.rating} А слабший за вступний ${main.rating}`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за вступний автомат.");
+  const Cl=[], add=(sev,t,d="")=>Cl.push({sev,t,d}), b=S.board, f0=build({allOpen:true}), G=groupsOf();
+  // 1. Кольори дротів і клеми
+  let roleErr=0; const cnt={};
+  for(const w of S.wires){ for(const k of [w.a,w.b]){ cnt[k]=(cnt[k]||0)+1; const r=termRole(k);
+      if(r&&!kindFits(w.kind,r)){ roleErr++; add("e",`Провід ${WK[w.kind][0]} на клемі ${r==="C"?"керування":r}`,`${termName(k)}: вид дроту не відповідає призначенню клеми.`); } } }
+  if(!roleErr&&S.wires.length) add("ok","Кольори дротів відповідають клемам","Фаза, нуль (синій), PE (жовто-зелений), керування, DC + і −.");
+  for(const [k,n] of Object.entries(cnt)) if(n>2&&!/^x(n|pe):/.test(k)) add("w",`${termName(k)}: ${n} дроти під одним гвинтом`,"Більше двох дротів під клемою — ненадійний контакт. Використайте шину або клемник.");
+  for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до апарата або шини."); }
+  const pe=b.inputs.find(i=>i.terms.includes("PE"));
+  if(pe&&b.xpe){ if(f0(pe.id+":PE")!==f0("xpe:0")) add("e","Шина PE не з’єднана з вводом PE","Захисний провідник має йти на XPE1 напряму, без апаратів."); else add("ok","Шина PE підключена до вводу напряму"); }
+  // 2. Прогін під напругою
+  const multi=b.inputs.length>1, res=sandbox(()=>{
+    const out={}; powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
+    out.g=G.map(g=>({id:g.id, ok:S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral}));
+    out.trips=S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip);
+    if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; powerUp([inp.id]); runFor(10);
+        return {inp, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
+      S.log=[]; powerUp(); runFor(8); S.src[b.inputs[0].id].on=false; runFor(10); S.src[b.inputs[0].id].on=true; runFor(12);
+      out.back={err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip)}; }
+    if(S.tplObj&&S.tplObj.checks){ out.tpl=[]; S.tplObj.checks((s,t,d)=>out.tpl.push({sev:s,t,d})); }
+    return out; });
+  const hasFault=res.err.length||res.trips.length;
+  for(const e of res.err) add("e","Аварія при подачі напруги",e);
+  for(const t of res.trips) add("e","Спрацював захист при ввімкненні",t);
+  if(res.chatter) add("e","Схема «дзвенить»","Котушки вмикаються і вимикаються по колу. Перевірте блокувальні контакти.");
+  if(!hasFault&&!res.chatter) add("ok",multi?"Подача напруги на обидва вводи — без аварій":"Подача напруги — без коротких замикань і дисбалансу");
+  res.g.forEach((r,i)=>{ if(!r.ok) add("e",`${desig(G[i])} «${G[i].group.name}»: немає живлення`,G[i].type==="rcbo"?"Нуль групи береться з нижньої клеми N диф-автомата.":"Фаза — з верхньої клеми або гребінки, нуль — із шини XN1."); });
+  if(multi){ for(const a of res.alt){ const bad=a.err.length||a.trips.length||a.g.length;
+      if(bad){ for(const e of a.err) add("e",`Лише «${a.inp.label}»: аварія`,e); for(const t of a.trips) add("e",`Лише «${a.inp.label}»: спрацював захист`,t);
+        if(a.g.length) add("e",`Лише «${a.inp.label}»: групи без живлення`,a.g.join(", ")+". АВР не перевів навантаження на резерв."); }
+      else add("ok",`Від «${a.inp.label}» живляться всі групи`,"Перевірено з вимкненим основним вводом."); }
+    const bk=res.back; if(bk.err.length||bk.trips.length) for(const e of [...bk.err,...bk.trips]) add("e","Повернення на основний ввід: аварія",e);
+    else add("ok","Перемикання туди й назад без зустрічного ввімкнення","Основний ввід вимкнули, потім повернули."); }
+  // 3. Групи, кабелі, номінали
+  const main=S.devices.filter(d=>(d.type==="qf2p"||d.type==="qf3p")&&b.inputs.some(i=>f0(d.id+":t1")===f0(i.id+":"+i.terms[0])));
+  const mainIn=main.length?Math.min(...main.map(protIn)):0;
+  if(!main.length&&G.length) add("e","Немає вступного автомата одразу після вводу","Ввід має заходити на верхні клеми вступного автомата.");
+  else if(main.length) add("ok",`Вступн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);
+  for(const R of S.devices.filter(d=>d.type==="rcd")) if(mainIn&&inA(R.rating)<mainIn) add("e",`${desig(R)} ${R.rating} А слабший за вступний ${mainIn} А`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за вступний автомат.");
   for(const g of G){ const In=inA(g.rating), max=CAB[g.group.sec], I=kwOf(g,true)*1000/230;
     if(In>max) add("e",`${desig(g)} ${g.rating} на кабель ${fmt(g.group.sec)} мм²`,`Для ${fmt(g.group.sec)} мм² автомат не більше ${max} А, або кабель від ${fmt(secFor(In))} мм².`);
-    if(I>1.45*In) add("e",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Це понад 1,45 × ${In} А, автомат вибиватиме. Розділіть групу.`);
+    if(I>1.45*In) add("e",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Понад 1,45 × ${In} А, автомат вибиватиме. Розділіть групу.`);
     else if(I>In) add("w",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Більше за номінал ${In} А. При одночасній роботі можливе вимкнення.`);
-    if(main&&In>=inA(main.rating)) add("w",`${desig(g)} ${g.rating} не менший за вступний ${main.rating}`,"Немає селективності: при перевантаженні може вимкнутись увесь щит."); }
-  if(main){ const tot=G.reduce((a,g)=>a+kwOf(g,true),0)*1000/230; if(tot>inA(main.rating)) add("w",`Сумарне навантаження ${fmt(tot)} А`,`Якщо ввімкнути все одночасно, це більше за ${main.rating}. Зазвичай усе разом не працює, але врахуйте.`);
-    let low=0; for(const w of S.wires){ if(w.kind==="PE") continue; const g2=topo({ideal:true,skip:w.id}); const aff=G.filter(g=>(phaseOK(f,g)&&!phaseOK(g2,g))||(neutOK(f,g)&&!neutOK(g2,g)));
-      if(!aff.length) continue; const req=aff.length>1||!aff.some(g=>w.a===gL(g)||w.b===gL(g))?inA(main.rating):inA(aff[0].rating);
+    if(mainIn&&In>=mainIn) add("w",`${desig(g)} ${g.rating} не менший за вступний`,"Немає селективності: при перевантаженні може вимкнутись увесь щит.");
+    const rc=sandbox(()=>{ powerUp(); runFor(4); const X=S.sim.X; return S.devices.filter(R=>T[R.type].rcd&&!makeX(build({openPole:new Set([R.id+":"+lPole(R)])})).ph(gL(g))).length; });
+    if(!rc) add(/освітл|світл/i.test(g.group.name)?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА."); }
+  if(mainIn&&b.inputs.length===1){ let low=0;
+    for(const w of S.wires){ if(!["L","N"].includes(w.kind)) continue; const g2=build({ideal:true,skip:w.id}), g1=build({ideal:true});
+      const aff=G.filter(g=>(g1(gL(g))===g1("in:L")&&g2(gL(g))!==g2("in:L"))||(g1(gN(g))===g1("in:N")&&g2(gN(g))!==g2("in:N")));
+      if(!aff.length) continue; const req=aff.length>1||!aff.some(g=>w.a===gL(g)||w.b===gL(g))?mainIn:inA(aff[0].rating);
       if(CAB[w.sec]<req){ low++; add("e",`Замалий переріз ${fmt(w.sec)} мм²`,`${termName(w.a)} → ${termName(w.b)}: потрібно від ${fmt(secFor(req))} мм² (струм до ${req} А).`); } }
-    if(!low) add("ok","Перерізи перемичок відповідають вступному автомату"); }
+    if(!low&&S.wires.length) add("ok","Перерізи силових перемичок відповідають вступному автомату"); }
+  if(G.length&&b.inputs.length===1&&!S.devices.some(d=>d.type==="kv")&&!S.field.some(f=>f.type==="inv")) add("w","Немає реле напруги","Без нього техніка не захищена від перенапруги.");
+  for(const x of (res.tpl||[])) add(x.sev,x.t,x.d);
   for(const d of S.devices){ const used=S.wires.some(w=>w.a.startsWith(d.id+":")||w.b.startsWith(d.id+":"))||(S.comb&&d.type==="qf1p"&&d.slot>=S.comb.from&&d.slot<=S.comb.to);
     if(!used) add("w",`${desig(d)} не підключений`,"Апарат стоїть на рейці без жодного дроту."); }
   if(!S.devices.length) add("w","Щит порожній","Додайте апарати в режимі «Апарати».");
-  const order={e:0,w:1,ok:2}; C.sort((a,b)=>order[a.sev]-order[b.sev]); return C;
+  const ord={e:0,w:1,ok:2}; Cl.sort((a,c)=>ord[a.sev]-ord[c.sev]); return Cl;
 }
+/* ===== Шаблони: каркас + квартира + порожній щит ===== */
+const TPL = {};
+function tplStart(board){ S.board=Object.assign(DEFAULT_BOARD(), board||{}); S.devices=[]; S.field=[]; S.wires=[]; S.comb=null; S.env={}; S.src={};
+  for(const i of S.board.inputs) S.src[i.id]={on:false,U:230,lost:{}}; GEO=null; }
+const D = (type,rail,slot,rating,extra) => { const d=mkDev(type,rail,slot,rating,extra); S.devices.push(d); return d; };
+const F = (type,map,extra) => { const f=mkField(type,map,extra); S.field.push(f); return f; };
+const W = (a,b,kind,sec) => { S.wires.push({id:uid("w"),a,b,kind,sec}); };
+const k = (d,t) => d.id+":"+t;
+const G1 = (rail,slot,rating,i,name,sec,loads) => D("qf1p",rail,slot,rating,{group:mkGroup(i,name,sec,loads)});
+const byDes = s => S.devices.find(d=>desig(d)===s);
+const say = (src,on,U) => { const s=S.src[src]; if(on!==undefined) s.on=on; if(U!==undefined) s.U=U; };
+
+TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 5 груп", cat:"Квартира і дім",
+  info:"Типовий щит квартири: вступний автомат, реле напруги, ПЗВ 30 мА і групові автомати на гребінці.",
+  build(){ tplStart();
+    const qf1=D("qf2p",0,0,"C32"), kv=D("kv",0,2,"40"), qd=D("rcd",0,4,"40");
+    const g1=G1(0,6,"C32",0,"Плита, духовка",6,[["Плита",4.0,1],["Духова шафа",3.5,0]]);
+    G1(0,7,"B16",1,"Кухня, розетки",2.5,[["Чайник",2.0,1],["Блендер",0.6,0],["Тостер",0.9,0],["Холодильник",0.15,1]]);
+    G1(0,8,"B16",2,"Зал, розетки",2.5,[["Пилосос",1.6,0],["Праска",2.2,0],["Комп’ютер",0.35,1],["Зарядки",0.02,1]]);
+    G1(0,9,"B16",3,"Ванна кімната",2.5,[["Фен",1.8,0],["Зарядки",0.02,1],["Сушильна машина",2.5,0]]);
+    G1(0,10,"B10",4,"Освітлення, домофон",1.5,[["Освітлення",0.1,1],["Роутер",0.01,1],["Домофон",0.02,1]]);
+    S.comb={rail:0,from:6,to:10};
+    W("in:L",k(qf1,"t1"),"L",6); W("in:N",k(qf1,"t2"),"N",6); W("in:PE","xpe:7","PE",6);
+    W(k(qf1,"b1"),k(kv,"t2"),"L",6); W(k(qf1,"b2"),k(qd,"t2"),"N",6); W(k(qd,"t2"),k(kv,"t1"),"N",1.5);
+    W(k(kv,"b2"),k(qd,"t1"),"L",6); W(k(qd,"b1"),k(g1,"t1"),"L",6); W(k(qd,"b2"),"xn:0","N",6); },
+  demo:{ controls:[{type:"src",id:"in"}],
+    script:[
+      {say:"Подаємо мережу 230 В. Реле напруги KV1 відлічує 3 с і вмикає щит.", do(){ say("in",true,230); }, wait:5},
+      {say:"У мережі стрибок до 275 В — KV1 миттєво відключає всю квартиру.", do(){ say("in",true,275); }, wait:3},
+      {say:"Напруга повернулась у норму. Через 3 с KV1 вмикає щит знову.", do(){ say("in",true,230); }, wait:5},
+      {say:"Витік на корпус у ванній: ПЗВ QD1 вимикає всі групи за ним.", do(){ S.leak.add(byDes("QF5").id); }, wait:3},
+      {say:"Прибираємо аварію і знову вмикаємо QD1.", do(){ S.leak.clear(); S.leakWarned.clear(); const q=byDes("QD1"); q.on=true; q.trip=null; }, wait:3},
+      {say:"Коротке замикання на кухні: спрацьовує лише QF3, решта квартири працює.", do(){ S.short.add(byDes("QF3").id); }, wait:3},
+      {say:"Готово. Прибираємо КЗ і вмикаємо QF3.", do(){ S.short.clear(); const q=byDes("QF3"); q.on=true; q.trip=null; }, wait:1}]}};
+TPL.empty = { name:"Порожній щит (2 рейки)", cat:"Квартира і дім", info:"Збирайте власну схему: ставте апарати на рейки й прокладайте дроти.",
+  build(){ tplStart({rails:2}); }, demo:{controls:[{type:"src",id:"in"}], script:[]}};
+/* ===== Шаблони АВР на 2 вводи (1 фаза) ===== */
+const ATS_BOARD = () => ({rails:2, inputs:[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}], xn:6, xpe:6});
+function atsGroups(r,s0){ const a=G1(r,s0,"B16",0,"Розетки",2.5,[["Холодильник",0.15,1],["Чайник",2.0,0],["Телевізор",0.15,1]]);
+  G1(r,s0+1,"B10",1,"Освітлення",1.5,[["Освітлення",0.1,1],["Роутер",0.01,1]]);
+  G1(r,s0+2,"C16",2,"Котел, насос",2.5,[["Газовий котел",0.15,1],["Насос",0.75,1]]);
+  S.comb={rail:r,from:s0,to:s0+2}; return a; }
+function atsInputs(qf1,qf2){ W("in:L",k(qf1,"t1"),"L",10); W("in:N",k(qf1,"t2"),"N",10); W("in:PE","xpe:0","PE",10);
+  W("in2:L",k(qf2,"t1"),"L",10); W("in2:N",k(qf2,"t2"),"N",10); }
+function feedFrom(){ const qd=byDes("QD1"); if(!qd||!S.sim) return "—"; const p=S.sim.X.ph(k(qd,"t1"));
+  return !p?"немає живлення":p.startsWith("in2")?"генератор (ввід 2)":"мережа (ввід 1)"; }
+const atsStatus = extra => () => [["Навантаження живиться від", feedFrom(), /генер/.test(feedFrom())?"w":/немає/.test(feedFrom())?"e":"ok"], ...(extra?extra():[])];
+const ATS_CTRL = [{type:"src",id:"in",label:"Мережа"},{type:"src",id:"in2",label:"Генератор",noU:true}];
+const stepsBase = (wait2) => [
+  {say:"Мережа є, генератор зупинено. Навантаження живиться від вводу 1.", do(){ say("in",true,230); say("in2",false); }, wait:5},
+  {say:"Мережу відключили. Щит знеструмлено, поки генератор не запущено.", do(){ say("in",false); }, wait:2},
+  {say:"Запускаємо генератор. АВР переводить навантаження на ввід 2.", do(){ say("in2",true,230); }, wait:wait2},
+  {say:"Мережа повернулась. АВР повертає навантаження на ввід 1 (пріоритет).", do(){ say("in",true,230); }, wait:wait2+2},
+  {say:"Генератор можна глушити — навантаження вже на мережі.", do(){ say("in2",false); }, wait:2}];
+const atsModeCtrl = {type:"toggle", label:"Ручний режим АВР-модуля", get:()=>!!(byDes("QA1")||{}).manual, set(v){ const a=byDes("QA1"); a.manual=v; logp("w",`QA1: ${v?"ручний":"автоматичний"} режим`); }};
+
+TPL.ats_tomzn = { name:"АВР на модулі TOMZN (тип TOQ5) + реле напруги", cat:"АВР на 2 вводи",
+  info:"Модульний АВР з пріоритетом вводу I. Сам модуль реагує лише на зникнення напруги, тому перед ним на вводі 1 стоїть реле напруги KV1: при перенапрузі воно відкидає мережу, і АВР іде на генератор.",
+  build(){ tplStart(ATS_BOARD());
+    const qf1=D("qf2p",0,0,"C40",{cap:"Ввід 1 мережа"}), qf2=D("qf2p",0,2,"C40",{cap:"Ввід 2 генератор"}), kv=D("kv",0,4,"63"),
+      qa=D("ats",0,6,"",{variant:"tomzn"}), qd=D("rcd",0,10,"63"); const g=atsGroups(1,0); atsInputs(qf1,qf2);
+    W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(qa,"IL"),"L",10); W(k(kv,"t1"),k(qa,"IN"),"N",10);
+    W(k(qf2,"b1"),k(qa,"IIL"),"L",10); W(k(qf2,"b2"),k(qa,"IIN"),"N",10); W(k(qa,"L"),k(qd,"t1"),"L",10); W(k(qa,"N"),k(qd,"t2"),"N",10);
+    W(k(qd,"b1"),k(g,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10); },
+  demo:{ controls:[...ATS_CTRL, atsModeCtrl], status:atsStatus(()=>[["Реле KV1", (byDes("KV1").ks||{}).closed?"пропускає мережу":"мережу відкинуто", (byDes("KV1").ks||{}).closed?"ok":"w"]]),
+    script:[...stepsBase(3),
+      {say:"Тепер перенапруга: генератор працює, у мережі стрибок до 270 В.", do(){ say("in2",true,230); say("in",true,270); }, wait:3},
+      {say:"KV1 відкинув мережу, АВР-модуль бачить «немає вводу I» і переходить на генератор. Техніка захищена.", do(){}, wait:3},
+      {say:"Напруга в нормі: через 3 с KV1 пропускає мережу, АВР повертається на ввід I.", do(){ say("in",true,230); }, wait:6},
+      {say:"Кінець демонстрації.", do(){ say("in2",false); }, wait:1}]},
+  checks(add){ add("ok","АВР-модуль не бачить перенапругу","Тому KV1 стоїть перед вводом I: при 270 В навантаження переходить на генератор."); }};
+
+TPL.ats_geya = { name:"АВР на модулі GEYA (тип G2R) + реле після АВР", cat:"АВР на 2 вводи",
+  info:"Модуль G2R перемикається за < 50 мс, пріоритет — ввід I. Реле напруги тут стоїть після АВР і захищає техніку від будь-якого джерела, але на генератор при перенапрузі не переводить. Є ручний режим.",
+  build(){ tplStart(ATS_BOARD());
+    const qf1=D("qf2p",0,0,"C40",{cap:"Ввід 1 мережа"}), qf2=D("qf2p",0,2,"C40",{cap:"Ввід 2 генератор"}), qa=D("ats",0,4,"",{variant:"geya"}),
+      kv=D("kv",0,8,"63"), qd=D("rcd",0,10,"63"); const g=atsGroups(1,0); atsInputs(qf1,qf2);
+    W(k(qf1,"b1"),k(qa,"IL"),"L",10); W(k(qf1,"b2"),k(qa,"IN"),"N",10); W(k(qf2,"b1"),k(qa,"IIL"),"L",10); W(k(qf2,"b2"),k(qa,"IIN"),"N",10);
+    W(k(qa,"L"),k(kv,"t2"),"L",10); W(k(qa,"N"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(qd,"t1"),"L",10); W(k(kv,"t1"),k(qd,"t2"),"N",10);
+    W(k(qd,"b1"),k(g,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10); },
+  demo:{ controls:[...ATS_CTRL, atsModeCtrl], status:atsStatus(()=>[["АВР-модуль", (byDes("QA1").manual?"ручний, ":"авто, ")+"ввід "+byDes("QA1").pos, "ok"]]),
+    script:[...stepsBase(3),
+      {say:"Генератор працює, у мережі 270 В. Модуль G2R не реагує на перенапругу і лишається на вводі I…", do(){ say("in2",true,230); say("in",true,270); }, wait:3},
+      {say:"…але KV1 після АВР вимкнув навантаження. Техніка ціла, хоча генератор простоює.", do(){}, wait:3},
+      {say:"Ручний режим: перемикаємо модуль на ввід II ручкою. Генератор живить будинок навіть при поганій мережі.", do(){ const a=byDes("QA1"); a.manual=true; a.pos="II"; }, wait:6},
+      {say:"Мережа в нормі. Повертаємо модуль в автоматичний режим — він сам іде на ввід I.", do(){ say("in",true,230); byDes("QA1").manual=false; }, wait:5},
+      {say:"Кінець демонстрації.", do(){ say("in2",false); }, wait:1}]},
+  checks(add){ add("ok","Реле напруги після АВР","Захищає навантаження від обох джерел, але не переводить на генератор при перенапрузі."); }};
+
+function atsKmPower(){ const qf1=D("qf2p",0,0,"C40",{cap:"Ввід 1 мережа"}), qf2=D("qf2p",0,2,"C40",{cap:"Ввід 2 генератор"}),
+  km1=D("km2a",0,4,"",{cap:"Ввід 1"}), km2=D("km2a",0,7,"",{cap:"Ввід 2"}), qf3=D("qf1p",0,10,"B6",{noGroup:true,cap:"Керування 1"}), qf4=D("qf1p",0,11,"B6",{noGroup:true,cap:"Керування 2"});
+  atsInputs(qf1,qf2);
+  W(k(qf1,"b1"),k(km1,"1"),"L",10); W(k(qf1,"b2"),k(km1,"3"),"N",10); W(k(qf2,"b1"),k(km2,"1"),"L",10); W(k(qf2,"b2"),k(km2,"3"),"N",10);
+  W(k(qf1,"b1"),k(qf3,"t1"),"L",1.5); W(k(qf2,"b1"),k(qf4,"t1"),"L",1.5);
+  return {qf1,qf2,km1,km2,qf3,qf4}; }
+function atsKmOut(km1,km2,qd,g){ W(k(km1,"2"),k(qd,"t1"),"L",10); W(k(km2,"2"),k(qd,"t1"),"L",10); W(k(km1,"4"),k(qd,"t2"),"N",10); W(k(km2,"4"),k(qd,"t2"),"N",10);
+  W(k(qd,"b1"),k(g,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10); }
+const kmStatus = () => [["KM1 (мережа)", byDes("KM1").pulled?"увімкнено":"вимкнено", byDes("KM1").pulled?"ok":""],["KM2 (генератор)", byDes("KM2").pulled?"увімкнено":"вимкнено", byDes("KM2").pulled?"w":""]];
+
+TPL.ats_logo = { name:"АВР на Siemens LOGO! + 2 контактори", cat:"АВР на 2 вводи",
+  info:`Програма LOGO!: Q1 (мережа) вмикається через ${LOGO_T.T1} с стабільної мережі; після її зникнення через ${LOGO_T.T2} с і ${LOGO_T.T3} с роботи генератора — Q2. Між перемиканнями пауза ${LOGO_T.DEAD} с. Контактори мають електричне блокування через НЗ-контакти 21–22. Живлення LOGO! перемикає реле K1.`,
+  build(){ tplStart(ATS_BOARD()); const {qf1,qf2,km1,km2,qf3,qf4}=atsKmPower();
+    const k1=D("rel",1,0,"",{cap:"Живлення LOGO"}), a1=D("logo",1,2), qd=D("rcd",1,6,"63"); const g=atsGroups(1,8); atsKmOut(km1,km2,qd,g);
+    W(k(qf3,"b1"),k(k1,"A1"),"C",1.5); W(k(qf3,"b1"),k(k1,"14"),"C",1.5); W(k(qf4,"b1"),k(k1,"12"),"C",1.5); W(k(qf4,"b1"),k(a1,"I2"),"C",1.5);
+    W(k(k1,"11"),k(a1,"L1"),"C",1.5); W(k(k1,"A1"),k(a1,"I1"),"C",1.5);
+    W(k(qf1,"b2"),k(k1,"A2"),"N",1.5); W(k(k1,"A2"),k(a1,"N"),"N",1.5); W(k(a1,"N"),k(km1,"A2"),"N",1.5); W(k(km1,"A2"),k(km2,"A2"),"N",1.5);
+    W(k(a1,"L1"),k(a1,"Q1a"),"C",1.5); W(k(a1,"Q1a"),k(a1,"Q2a"),"C",1.5);
+    W(k(a1,"Q1b"),k(km2,"21"),"C",1.5); W(k(km2,"22"),k(km1,"A1"),"C",1.5); W(k(a1,"Q2b"),k(km1,"21"),"C",1.5); W(k(km1,"22"),k(km2,"A1"),"C",1.5); },
+  demo:{ controls:ATS_CTRL, status:atsStatus(()=>[...kmStatus(),["LOGO! живиться від", (byDes("K1").pulled?"мережі":"генератора")+(byDes("A1").pw?"":" — немає"), byDes("A1").pw?"ok":"e"]]),
+    script:[...stepsBase(5),
+      {say:"Перевіримо блокування: вмикаємо обидва джерела — LOGO! ніколи не тримає Q1 і Q2 разом.", do(){ say("in",true,230); say("in2",true,230); }, wait:4},
+      {say:"Кінець демонстрації.", do(){ say("in2",false); }, wait:1}]}};
+
+TPL.ats_km = { name:"АВР на контакторах і реле напруги", cat:"АВР на 2 вводи",
+  info:"Класична схема без контролера. KV1 контролює мережу і через 3 с вмикає KM1. Реле K1 знімає живлення з котушки KM2, коли мережа в нормі. НЗ-контакти 21–22 кожного контактора блокують інший.",
+  build(){ tplStart(ATS_BOARD()); const {qf1,qf2,km1,km2,qf3,qf4}=atsKmPower();
+    const kv=D("kv",1,0,"40",{cap:"Контроль мережі"}), k1=D("rel",1,2,"",{cap:"Блокування KM2"}), qd=D("rcd",1,4,"63"); const g=atsGroups(1,6); atsKmOut(km1,km2,qd,g);
+    W(k(qf3,"b1"),k(kv,"t2"),"L",1.5); W(k(qf1,"b2"),k(kv,"t1"),"N",1.5);
+    W(k(kv,"b2"),k(km2,"21"),"C",1.5); W(k(kv,"b2"),k(k1,"A1"),"C",1.5); W(k(km2,"22"),k(km1,"A1"),"C",1.5);
+    W(k(kv,"t1"),k(k1,"A2"),"N",1.5); W(k(k1,"A2"),k(km1,"A2"),"N",1.5);
+    W(k(qf4,"b1"),k(k1,"11"),"C",1.5); W(k(k1,"12"),k(km1,"21"),"C",1.5); W(k(km1,"22"),k(km2,"A1"),"C",1.5); W(k(qf2,"b2"),k(km2,"A2"),"N",1.5); },
+  demo:{ controls:ATS_CTRL, status:atsStatus(kmStatus),
+    script:[...stepsBase(4),
+      {say:"Перенапруга 270 В при працюючому генераторі: KV1 знімає KM1, K1 відпускає — вмикається KM2.", do(){ say("in2",true,230); say("in",true,270); }, wait:3},
+      {say:"Напруга в нормі: KV1 через 3 с повертає мережу.", do(){ say("in",true,230); }, wait:5},
+      {say:"Кінець демонстрації.", do(){ say("in2",false); }, wait:1}]}};
+/* ===== Шаблон: СЕС з гібридним інвертором ===== */
+const XT_PV = [["pa+","PV+","DC+"],["pa-","PV−","DC-"],["ip+","IP+","DC+"],["ip-","IP−","DC-"],["ba+","B+","DC+"],["ba-","B−","DC-"],["ib+","IB+","DC+"],["ib-","IB−","DC-"],
+  ["gL","G-L","L"],["gN","G-N","N"],["oL","O-L","L"],["oN","O-N","N"],["pe","PE","PE"]].map(([k,l,r])=>({k,l,r}));
+const inv = () => S.field.find(f=>f.type==="inv");
+const setLoads = (des,names,on) => { const g=byDes(des); if(g) g.group.loads.forEach(l=>{ if(names.includes(l.n)) l.on=on; }); };
+TPL.pv = { name:"СЕС: гібридний інвертор, АКБ, резервні групи", cat:"Сонячна станція",
+  info:"Мережа → вступний автомат → реле напруги. Звідти живляться нерезервні групи (бойлер) і вхід GRID інвертора. Вихід LOAD через перемикач 1-0-2 живить резервні групи на диф-автоматах. DC-сторона: автомат PV, УЗІП DC і автомат АКБ. Клеми XT1: PV± — панелі, IP± — PV-вхід інвертора, B± — АКБ, IB± — АКБ-вхід інвертора, G — GRID, O — LOAD.",
+  build(){ tplStart({rails:3, inputs:[{id:"in",label:"Мережа",terms:["L","N","PE"]}], xn:4, xpe:4, xt:XT_PV});
+    S.env={sun:60, soc:70};
+    const qf1=D("qf2p",0,0,"C40",{cap:"Ввід мережа"}), kv=D("kv",0,2,"63"), qd=D("rcd",0,4,"63",{cap:"Без резерву"}),
+      gb=G1(0,6,"C16",5,"Бойлер (без резерву)",2.5,[["Бойлер",2.0,1]]), qf3=D("qf2p",0,7,"C32",{cap:"GRID інвертора"}), qf4=D("qf2p",0,9,"C32",{cap:"LOAD інвертора"});
+    const qs=D("qs",1,0), r1=D("rcbo",1,3,"C16",{group:mkGroup(0,"Розетки (резерв)",2.5,[["Холодильник",0.15,1],["Чайник",2.0,0],["Праска",2.2,0]])}),
+      r2=D("rcbo",1,5,"B10",{group:mkGroup(1,"Освітлення (резерв)",1.5,[["Освітлення",0.1,1],["Роутер",0.01,1]])}),
+      r3=D("rcbo",1,7,"B16",{group:mkGroup(2,"Котел, насос (резерв)",2.5,[["Газовий котел",0.15,1],["Насос",0.75,1]])});
+    const q5=D("qfdc",2,0,"C16",{cap:"PV стрінг"}), fv=D("spdc",2,2), q6=D("qfdc",2,4,"C125",{cap:"АКБ"});
+    F("pv",{p:"xt:pa+",m:"xt:pa-"}); F("bat",{p:"xt:ba+",m:"xt:ba-"});
+    F("inv",{pp:"xt:ip+",pm:"xt:ip-",bp:"xt:ib+",bm:"xt:ib-",gL:"xt:gL",gN:"xt:gN",oL:"xt:oL",oN:"xt:oN",pe:"xt:pe"});
+    W("in:L",k(qf1,"t1"),"L",10); W("in:N",k(qf1,"t2"),"N",10); W("in:PE","xpe:0","PE",10);
+    W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(qd,"t1"),"L",10); W(k(kv,"t1"),k(qd,"t2"),"N",10);
+    W(k(kv,"b2"),k(qf3,"t1"),"L",10); W(k(qd,"t2"),k(qf3,"t2"),"N",10); W(k(qd,"b1"),k(gb,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10);
+    W(k(qf3,"t1"),k(qs,"1L"),"L",10); W(k(qf3,"t2"),k(qs,"1N"),"N",10); W(k(qf3,"b1"),"xt:gL","L",6); W(k(qf3,"b2"),"xt:gN","N",6);
+    W("xt:oL",k(qf4,"t1"),"L",6); W("xt:oN",k(qf4,"t2"),"N",6); W(k(qf4,"b1"),k(qs,"2L"),"L",6); W(k(qf4,"b2"),k(qs,"2N"),"N",6);
+    W(k(qs,"L"),k(r1,"t1"),"L",6); W(k(r1,"t1"),k(r2,"t1"),"L",6); W(k(r2,"t1"),k(r3,"t1"),"L",6);
+    W(k(qs,"N"),k(r1,"t2"),"N",6); W(k(r1,"t2"),k(r2,"t2"),"N",6); W(k(r2,"t2"),k(r3,"t2"),"N",6); W("xpe:1","xt:pe","PE",6);
+    W("xt:pa+",k(q5,"p1"),"DC+",6); W("xt:pa-",k(q5,"m1"),"DC-",6); W(k(q5,"p2"),k(fv,"p"),"DC+",6); W(k(q5,"m2"),k(fv,"m"),"DC-",6); W(k(fv,"pe"),"xpe:2","PE",6);
+    W(k(q5,"p2"),"xt:ip+","DC+",6); W(k(q5,"m2"),"xt:ip-","DC-",6);
+    W("xt:ba+",k(q6,"p1"),"DC+",50); W("xt:ba-",k(q6,"m1"),"DC-",50); W(k(q6,"p2"),"xt:ib+","DC+",50); W(k(q6,"m2"),"xt:ib-","DC-",50); },
+  demo:{ controls:[{type:"src",id:"in",label:"Мережа"},
+      {type:"range",label:"Сонце, %",min:0,max:100,step:5,get:()=>S.env.sun,set:v=>{ S.env.sun=v; }},
+      {type:"toggle",label:"Інвертор увімкнено",get:()=>!!(inv()||{}).en,set:v=>{ inv().en=v; }},
+      {type:"choice",label:"Перемикач QS1",opts:[["1","1 · мережа"],["0","0"],["2","2 · інвертор"]],get:()=>String(byDes("QS1").pos),set:v=>{ const q=byDes("QS1"); q.pos=+v; q.seqI=undefined; }}],
+    status:()=>{ const i=inv()||{}, f=S.env.flow||{}, back=["QFD1","QFD2","QFD3"].every(s=>{ const g=byDes(s); return S.sim&&S.sim.g[g.id]&&S.sim.g[g.id].phase; });
+      return [["Режим інвертора",({grid:"мережевий",backup:"резервний",off:"вимкнено",fault:"захист"})[i.mode]||"—",i.mode==="grid"?"ok":i.mode==="fault"?"e":"w"],
+        ["Заряд АКБ",fmt(S.env.soc||0,0)+" %",(S.env.soc||0)>30?"ok":"w"],["PV",fmt(5.5*(S.env.sun||0)/100,2)+" кВт",""],
+        ["Мережа",f.grid>0?"споживання "+fmt(f.grid,2)+" кВт":f.grid<0?"експорт "+fmt(-f.grid,2)+" кВт":"0",""],["Резервні групи",back?"живляться":"без живлення",back?"ok":"e"]]; },
+    script:[
+      {say:"Ранок, сонце 30 %. Мережа є: інвертор у мережевому режимі, PV частково покриває резервні групи.", do(){ S.env.sun=30; say("in",true,230); }, wait:6},
+      {say:"Полудень, сонце 100 %: надлишок заряджає АКБ, решта йде в мережу.", do(){ S.env.sun=100; }, wait:5},
+      {say:"Відключення світла! Інвертор миттєво переходить у резервний режим. Резервні групи працюють, бойлер — ні.", do(){ say("in",false); }, wait:5},
+      {say:"Вечір, сонця немає: будинок живиться від АКБ.", do(){ S.env.sun=0; }, wait:5},
+      {say:"Вмикаємо чайник і праску: разом понад 5 кВт, а АКБ віддає до 5 кВт. Інвертор перевантажено, він вимикається.", do(){ setLoads("QFD1",["Чайник","Праска"],true); }, wait:4},
+      {say:"Вимикаємо зайве. Через 10 с інвертор перезапускається сам.", do(){ setLoads("QFD1",["Чайник","Праска"],false); }, wait:11},
+      {say:"Мережа повернулась: інвертор синхронізується і переходить у мережевий режим.", do(){ say("in",true,230); }, wait:5},
+      {say:"Сервіс: QS1 у положення 1 — резервні групи живляться напряму від мережі, інвертор можна вимкнути.", do(){ const q=byDes("QS1"); q.pos=1; q.seqI=undefined; inv().en=false; }, wait:5},
+      {say:"Повертаємо QS1 у положення 2 і вмикаємо інвертор. Кінець демонстрації.", do(){ const q=byDes("QS1"); q.pos=2; q.seqI=undefined; inv().en=true; S.env.sun=60; }, wait:2}]},
+  checks(add){ add("ok","DC-сторона: автомат PV, УЗІП DC, автомат АКБ","PV-стрінг можна знеструмити для обслуговування, імпульсні перенапруги йдуть на PE.");
+    add("ok","Перемикач 1-0-2 виключає зустрічне живлення","Мережа і вихід інвертора ніколи не з’єднуються напряму."); }};
+/* ===== Шаблони: пуск двигунів 1~ і 3~ ===== */
+const motor = () => S.field.find(f=>/^motor/.test(f.type));
+function ctrlChain(qf2,qm,sb1,sb2,km,hl,nIdx,hlFrom){
+  W(k(qf2,"b1"),k(qm,"13"),"C",1.5); W(k(qm,"14"),k(sb1,"11"),"C",1.5); W(k(sb1,"12"),k(sb2,"13"),"C",1.5); W(k(sb2,"14"),k(km,"A1"),"C",1.5);
+  W(k(sb1,"12"),k(km,"13"),"C",1.5); W(k(km,"14"),k(km,"A1"),"C",1.5); W(k(km,"A2"),"xn:"+nIdx,"N",1.5);
+  W(hlFrom[0],k(hl,"X1"),hlFrom[1],1.5); W(k(hl,"X2"),"xn:"+(nIdx+1),"N",1.5); }
+const motorCtrls = extra => [{type:"src",id:"in",label:"Мережа"},{type:"btn",label:"Пуск",cls:"go",act:()=>livePress("SB2")},{type:"btn",label:"Стоп",cls:"stop",act:()=>livePress("SB1")},...extra];
+const mStatus = () => { const m=motor()||{}, qm=byDes("QM1"), km=byDes("KM1"), per=(S.sim&&S.sim.per[qm.id])||[];
+  return [["Двигун", m.run?(m.type==="motor3"?(m.dir>0?"обертається вправо":"обертається вліво"):"обертається"):m.hum?"гуде, не обертається":"стоїть", m.run&&!m.hum?"ok":m.hum?"e":""],
+    ["Контактор KM1", km.pulled?"увімкнено (самоутримання)":"вимкнено", km.pulled?"ok":""],
+    ["QM1, струм полюсів", (qm.trip?"вимкнено захистом · ":"")+per.map(x=>fmt(x,1)).join(" / ")+" А", qm.trip?"e":""]]; };
+const resetQM = () => { const q=byDes("QM1"); q.on=true; q.trip=null; S.heat[q.id]=0; };
+
+TPL.motor1 = { name:"Пуск однофазного двигуна (кнопки, самоутримання)", cat:"Двигуни",
+  info:"Двигун 1,1 кВт з робочим конденсатором. Автомат захисту двигуна QM1: фаза проходить послідовно через усі три полюси, щоб тепловий розчіплювач працював коректно. Коло керування: QF2 → допоміжний контакт QM1 (13–14) → «Стоп» (НЗ) → «Пуск» (НВ) → котушка KM1. Контакт KM1 13–14 підхоплює кнопку «Пуск».",
+  build(){ tplStart({inputs:[{id:"in",label:"Ввід 230 В",terms:["L","N","PE"]}], xn:4, xpe:4, xt:[{k:"L",l:"L",r:"L"},{k:"N",l:"N",r:"N"},{k:"PE",l:"PE",r:"PE"}]});
+    const qm=D("qm",0,0,"6–10 А",{Ir:8}), qf2=D("qf1p",0,3,"B6",{noGroup:true,cap:"Керування"}), sb1=D("sbs",0,4), sb2=D("sbp",0,5), km=D("km2a",0,6,"",{cap:"Пускач M1"}), hl=D("hl",0,9);
+    F("motor1",{L:"xt:L",N:"xt:N",PE:"xt:PE"});
+    W("in:L",k(qm,"1"),"L",2.5); W(k(qm,"2"),k(qm,"3"),"L",2.5); W(k(qm,"4"),k(qm,"5"),"L",2.5); W(k(qm,"6"),k(km,"1"),"L",2.5); W(k(km,"2"),"xt:L","L",2.5);
+    W("in:N","xn:0","N",2.5); W("xn:1",k(km,"3"),"N",2.5); W(k(km,"4"),"xt:N","N",2.5); W("in:PE","xpe:0","PE",2.5); W("xpe:1","xt:PE","PE",2.5);
+    W("in:L",k(qf2,"t1"),"L",1.5); ctrlChain(qf2,qm,sb1,sb2,km,hl,2,[k(km,"2"),"L"]); },
+  demo:{ controls:motorCtrls([{type:"toggle",label:"Конденсатор справний",get:()=>motor().cap,set:v=>{ motor().cap=v; }},
+      {type:"toggle",label:"Вал заклинило",get:()=>motor().jam,set:v=>{ motor().jam=v; }},{type:"btn",label:"Увімкнути QM1",act:resetQM}]), status:mStatus,
+    script:[
+      {say:"Подаємо живлення. Двигун стоїть: контактор KM1 вимкнений.", do(){ say("in",true,230); }, wait:2},
+      {say:"Натискаємо «Пуск»: котушка KM1 отримує живлення, і контакт 13–14 підхоплює кнопку.", do(){ livePress("SB2"); }, wait:3},
+      {say:"Кнопку відпустили, а двигун працює далі. Це самоутримання.", do(){}, wait:2},
+      {say:"Натискаємо «Стоп»: коло котушки розривається, двигун зупиняється.", do(){ livePress("SB1"); }, wait:3},
+      {say:"Пробито конденсатор. Пуск: двигун гуде, струм утричі більший, тож QM1 вимикає. Через його контакт 13–14 відпадає і KM1.", do(){ motor().cap=false; livePress("SB2"); }, wait:6},
+      {say:"Конденсатор замінено, QM1 увімкнено. Двигун сам не стартує, бо після аварії потрібен новий пуск.", do(){ motor().cap=true; resetQM(); }, wait:3},
+      {say:"Пуск. Двигун працює. Кінець демонстрації.", do(){ livePress("SB2"); }, wait:2}]},
+  checks(add){ sandbox(()=>{ powerUp(); runFor(2); const m=motor(); const r0=m.run; pressBtn(byDes("SB2")); const r1=m.run; pressBtn(byDes("SB1")); const r2=m.run;
+    if(!r0&&r1&&!r2) add("ok","Пуск, самоутримання і стоп працюють","Перевірено натисканням кнопок «Пуск» і «Стоп».");
+    else add("e","Коло керування працює неправильно",`Після «Пуск» двигун ${r1?"обертається":"стоїть"}, після «Стоп» — ${r2?"обертається":"стоїть"}.`); }); }};
+
+TPL.motor3 = { name:"Пуск трифазного двигуна (прямий пуск)", cat:"Двигуни",
+  info:"Двигун 4 кВт, 400 В. QM1 захищає від КЗ, перевантаження і обриву фази. Коло керування 230 В від L1 через QF2. Поміняйте дві фази місцями — двигун обертатиметься у зворотний бік.",
+  build(){ tplStart({inputs:[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}], xn:4, xpe:4, xt:[{k:"U",l:"U",r:"P"},{k:"V",l:"V",r:"P"},{k:"W",l:"W",r:"P"},{k:"PE",l:"PE",r:"PE"}]});
+    const qm=D("qm",0,0,"6–10 А",{Ir:8.5}), qf2=D("qf1p",0,3,"C6",{noGroup:true,cap:"Керування"}), sb1=D("sbs",0,4), sb2=D("sbp",0,5), km=D("km3a",0,6,"",{cap:"Пускач M1"}), hl=D("hl",0,10);
+    F("motor3",{U:"xt:U",V:"xt:V",W:"xt:W",PE:"xt:PE"});
+    ["1","3","5"].forEach((t,i)=>{ const L="L"+(i+1); W("in:"+L,k(qm,t),L,2.5); W(k(qm,String(+t+1)),k(km,t),L,2.5); W(k(km,String(+t+1)),"xt:"+"UVW"[i],L,2.5); });
+    W("in:N","xn:0","N",1.5); W("in:PE","xpe:0","PE",2.5); W("xpe:1","xt:PE","PE",2.5);
+    W("in:L1",k(qf2,"t1"),"L1",1.5); ctrlChain(qf2,qm,sb1,sb2,km,hl,1,[k(km,"14"),"C"]); },
+  demo:{ controls:motorCtrls([{type:"toggle",label:"Обрив фази L3",get:()=>!!S.src.in.lost.L3,set:v=>{ S.src.in.lost.L3=v; }},
+      {type:"toggle",label:"Вал заклинило",get:()=>motor().jam,set:v=>{ motor().jam=v; }},
+      {type:"btn",label:"Поміняти фази V↔W",act:swapVW},{type:"btn",label:"Увімкнути QM1",act:resetQM}]), status:mStatus,
+    script:[
+      {say:"Подаємо три фази 400 В.", do(){ say("in",true,230); }, wait:2},
+      {say:"Пуск: KM1 вмикається і самоутримується, двигун обертається вправо.", do(){ livePress("SB2"); }, wait:3},
+      {say:"Стоп.", do(){ livePress("SB1"); }, wait:2},
+      {say:"Міняємо місцями дві фази на двигуні (V↔W) і запускаємо: напрям обертання змінився.", do(){ swapVW(); livePress("SB2"); }, wait:4},
+      {say:"Обрив фази L3 під час роботи. Двигун у двофазному режимі, струм зростає, тож QM1 вимикає за кілька секунд, і KM1 відпадає.", do(){ S.src.in.lost.L3=true; }, wait:7},
+      {say:"Фазу відновлено, фази повернуто як було, QM1 увімкнено.", do(){ S.src.in.lost.L3=false; swapVW(); resetQM(); }, wait:2},
+      {say:"Знову пуск.", do(){ livePress("SB2"); }, wait:2},
+      {say:"Вал заклинило: струм до 6 × Iн, QM1 вимикає.", do(){ motor().jam=true; }, wait:4},
+      {say:"Кінець демонстрації.", do(){ motor().jam=false; resetQM(); }, wait:1}]},
+  checks(add){ sandbox(()=>{ powerUp(); runFor(2); const m=motor(); pressBtn(byDes("SB2")); const r1=m.run, dir=m.dir; pressBtn(byDes("SB1"));
+    if(r1&&!m.run) add("ok",`Пуск і стоп працюють, обертання ${dir>0?"вправо (L1-L2-L3)":"вліво"}`); else add("e","Двигун не запускається або не зупиняється","Перевірте коло керування і силові дроти.");
+    S.src.in.lost.L3=true; pressBtn(byDes("SB2")); runFor(4); if(byDes("QM1").trip) add("ok","Обрив фази: QM1 вимикає двигун"); }); }};
+function swapVW(){ const a=S.wires.find(w=>w.b==="xt:V"||w.a==="xt:V"), b=S.wires.find(w=>w.b==="xt:W"||w.a==="xt:W"); if(!a||!b) return;
+  const ea=a.b==="xt:V"?"b":"a", eb=b.b==="xt:W"?"b":"a"; a[ea]="xt:W"; b[eb]="xt:V"; logp("w","Фази на двигуні V і W поміняно місцями"); save(); }
+/* ===== Шаблон: розумний будинок ===== */
+const XT_SM = [["lL","Св L","L"],["lN","Св N","N"],["bL","Бойл L","L"],["bN","Бойл N","N"],["fL","Підл L","L"],["fN","Підл N","N"],["vO","Кран ↑","L"],["vC","Кран ↓","L"],["vN","Кран N","N"],["pe","PE","PE"]].map(([k,l,r])=>({k,l,r}));
+const scene = name => { const sr1=byDes("SR1"), sr2=byDes("SR2"), tr=byDes("TR1");
+  if(name==="away"){ sr1.cmd=false; sr2.cmd=false; tr.set=18; } else { sr1.cmd=true; sr2.cmd=true; tr.set=25; tr.en=true; }
+  logp("ok",`Сценарій «${name==="away"?"Нікого вдома":"Я вдома"}»: ${name==="away"?"світло і бойлер вимкнено, підлога 18 °C":"світло, бойлер, підлога 25 °C"}`); };
+TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, лічильник, кран", cat:"Квартира і дім",
+  info:"Розумні реле керують світлом і котушкою контактора бойлера (саме реле 16 А бойлер напряму не тягне). Терморегулятор веде теплу підлогу. Хаб Zigbee отримує сигнал датчика протікання і через реле KR1 закриває кран. Лічильник PM1 рахує споживання.",
+  build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід",terms:["L","N","PE"]}], xn:6, xpe:2, xt:XT_SM}); S.env={leak:false};
+    const qf1=D("qf2p",0,0,"C40"), kv=D("kv",0,2,"63"), pm=D("pm",0,4), qd=D("rcd",0,6,"63"),
+      q2=D("qf1p",0,8,"B6",{noGroup:true,cap:"Автоматика"}), q3=D("qf1p",0,9,"B10",{noGroup:true,cap:"Освітлення"}), q4=D("qf1p",0,10,"B16",{noGroup:true,cap:"Бойлер"}), q5=D("qf1p",0,11,"B16",{noGroup:true,cap:"Тепла підлога"});
+    S.comb={rail:0,from:8,to:11};
+    const hub=D("hub",1,0), sr1=D("ssw",1,2,"",{cap:"Світло",cmd:true}), sr2=D("ssw",1,3,"",{cap:"Котушка KM1",cmd:false}), km=D("km2a",1,4,"",{cap:"Бойлер 2 кВт"}), tr=D("tr",1,7), kr=D("kr2",1,9);
+    F("lamp",{L:"xt:lL",N:"xt:lN"}); F("boiler",{L:"xt:bL",N:"xt:bN"}); F("floor",{L:"xt:fL",N:"xt:fN"}); F("valve",{N:"xt:vN",O:"xt:vO",Cl:"xt:vC"});
+    W("in:L",k(qf1,"t1"),"L",10); W("in:N",k(qf1,"t2"),"N",10); W("in:PE","xpe:0","PE",10);
+    W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(pm,"L"),"L",10); W(k(kv,"t1"),k(pm,"N"),"N",10);
+    W(k(pm,"Lo"),k(qd,"t1"),"L",10); W(k(pm,"No"),k(qd,"t2"),"N",10); W(k(qd,"b1"),k(q2,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10);
+    W(k(q2,"b1"),k(hub,"L"),"L",1.5); W(k(hub,"L"),k(kr,"L"),"L",1.5); W(k(kr,"L"),k(sr2,"L"),"L",1.5);
+    W("xn:1",k(hub,"N"),"N",1.5); W(k(hub,"N"),k(kr,"N"),"N",1.5); W(k(kr,"N"),k(sr2,"N"),"N",1.5);
+    W(k(q3,"b1"),k(sr1,"L"),"L",1.5); W("xn:2",k(sr1,"N"),"N",1.5); W(k(sr1,"Lo"),"xt:lL","L",1.5); W(k(sr1,"No"),"xt:lN","N",1.5);
+    W(k(q4,"b1"),k(km,"1"),"L",2.5); W("xn:3",k(km,"3"),"N",2.5); W(k(km,"2"),"xt:bL","L",2.5); W(k(km,"4"),"xt:bN","N",2.5);
+    W(k(sr2,"Lo"),k(km,"A1"),"L",1.5); W(k(sr2,"No"),k(km,"A2"),"N",1.5);
+    W(k(q5,"b1"),k(tr,"L"),"L",2.5); W("xn:4",k(tr,"N"),"N",2.5); W(k(tr,"Lo"),"xt:fL","L",2.5); W(k(tr,"No"),"xt:fN","N",2.5);
+    W(k(kr,"O1"),"xt:vO","L",1.5); W(k(kr,"O2"),"xt:vC","L",1.5); W("xn:5","xt:vN","N",1.5); W("xpe:1","xt:pe","PE",2.5); },
+  tick(X,dt){ const hub=byDes("A1"), kr=byDes("KR1"); if(!hub) return;
+    if(S.env.leak){ if(hub.online&&kr.cmd!=="close"){ kr.cmd="close"; logp("e","Хаб: протікання у ванній! Закриваю кран, надсилаю сповіщення на телефон"); if(typeof toast==="function") toast("Протікання! Кран закривається","e"); S.env.leakMiss=false; }
+      else if(!hub.online&&!S.env.leakMiss){ S.env.leakMiss=true; logp("e","Протікання, але хаб без живлення — кран не закрито!"); } } },
+  demo:{ controls:[{type:"src",id:"in",label:"Мережа"},
+      {type:"toggle",label:"Світло (SR1)",get:()=>byDes("SR1").cmd,set:v=>{ byDes("SR1").cmd=v; }},
+      {type:"toggle",label:"Бойлер (SR2 → KM1)",get:()=>byDes("SR2").cmd,set:v=>{ byDes("SR2").cmd=v; }},
+      {type:"toggle",label:"Тепла підлога",get:()=>byDes("TR1").en,set:v=>{ byDes("TR1").en=v; }},
+      {type:"range",label:"Підлога, °C",min:15,max:30,step:1,get:()=>byDes("TR1").set,set:v=>{ byDes("TR1").set=v; }},
+      {type:"choice",label:"Кран води",opts:[["open","Відкрити"],["close","Закрити"]],get:()=>byDes("KR1").cmd,set:v=>{ byDes("KR1").cmd=v; }},
+      {type:"toggle",label:"Датчик протікання",get:()=>!!S.env.leak,set:v=>{ S.env.leak=v; if(!v) S.env.leakMiss=false; }},
+      {type:"btn",label:"Сценарій «Я вдома»",act:()=>scene("home")},{type:"btn",label:"Сценарій «Нікого вдома»",act:()=>scene("away")}],
+    status:()=>{ const pm=byDes("PM1"), hub=byDes("A1"), v=S.field.find(f=>f.type==="valve"), tr=byDes("TR1");
+      return [["Споживання зараз",fmt(pm.p||0,2)+" кВт",""],["Лічильник",fmt(pm.kwh||0,2)+" кВт·год",""],["Хаб",hub.online?"онлайн":"офлайн",hub.online?"ok":"e"],
+        ["Кран",v.pos>=100?"відкрито":v.pos<=0?"закрито":"рух",v.pos<=0?"w":"ok"],["Підлога",fmt(tr.temp,1)+" °C → "+fmt(tr.set,0)+" °C",""]]; },
+    script:[
+      {say:"Подаємо мережу. Через 3 с KV1 вмикає щит, хаб і розумні реле виходять онлайн.", do(){ say("in",true,230); }, wait:5},
+      {say:"Вмикаємо в застосунку світло і бойлер. Бойлер 2 кВт комутує контактор KM1, а розумне реле керує лише його котушкою.", do(){ byDes("SR1").cmd=true; byDes("SR2").cmd=true; }, wait:4},
+      {say:"Тепла підлога: задаємо 26 °C. Терморегулятор гріє, лічильник показує споживання.", do(){ const t=byDes("TR1"); t.set=26; t.en=true; }, wait:5},
+      {say:"Протікання у ванній! Хаб закриває кран і надсилає сповіщення.", do(){ S.env.leak=true; }, wait:5},
+      {say:"Сценарій «Нікого вдома»: світло й бойлер вимкнено, підлога на 18 °C.", do(){ scene("away"); }, wait:4},
+      {say:"Скидаємо тривогу і відкриваємо кран.", do(){ S.env.leak=false; S.env.leakMiss=false; byDes("KR1").cmd="open"; }, wait:4},
+      {say:"Перенапруга 275 В: KV1 знеструмлює все разом із хабом. Нове протікання тепер ніхто не обробить. Висновок: хаб і кран варто живити через ДБЖ.", do(){ say("in",true,275); S.env.leak=true; }, wait:5},
+      {say:"Напруга в нормі: щит увімкнувся, хаб онлайн і одразу закриває кран.", do(){ say("in",true,230); }, wait:7},
+      {say:"Кінець демонстрації.", do(){ S.env.leak=false; S.env.leakMiss=false; byDes("KR1").cmd="open"; }, wait:1}]},
+  checks(add){ sandbox(()=>{ powerUp(); runFor(5); const hub=byDes("A1"); S.env.leak=true; runFor(4); const v=S.field.find(f=>f.type==="valve");
+    if(hub.online&&v.pos<100) add("ok","Автоматизація протікання працює","Хаб закриває кран через реле KR1.");
+    else add("e","Кран не закривається при протіканні","Перевірте живлення хаба і реле крана KR1.");
+    add("w","Хаб і кран живляться після реле напруги","При спрацюванні KV1 автоматика вимикається. Для надійності живіть їх через ДБЖ."); }); }};
 /* ===== Інтерфейс ===== */
 const $ = id => document.getElementById(id);
 let toastT=null;
-function toast(msg,cls=""){ const t=$("toast"); t.textContent=msg; t.className="toast "+cls; t.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,2600); }
-const KIND = {L:["Фаза L","var(--wL)"],N:["Нуль N","var(--wN)"],PE:["PE","linear-gradient(90deg,var(--wPEy) 50%,var(--wPEg) 50%)"]};
+function toast(msg,cls=""){ if(S.quiet) return; const t=$("toast"); t.textContent=msg; t.className="toast "+cls; t.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,2600); }
+const CATS = ["Захист","Керування","Комутація","Розумний дім","СЕС"];
 let clearArm=0;
+function applyTemplate(name){ const t=TPL[name]||TPL.flat; t.build(); S.tpl=TPL[name]?name:"flat"; S.tplObj=t; S.env0=JSON.parse(JSON.stringify(S.env||{}));
+  Object.assign(S,{pend:null,selWire:null,selDev:null,pick:null,heat:{},log:[],demo:null}); S.leak.clear(); S.short.clear(); S.leakWarned.clear(); save(); }
+function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=230; s.lost={}; }
+  for(const d of S.devices){ const t=T[d.type]; if(t.prot||t.rcd){ d.on=true; d.trip=null; } d.pulled=false; d.pressed=false; if(d.type==="logo"||d.type==="kv") { delete d.ks; if(t.init) t.init(d); } if(d.type==="ats") d.manual=false; }
+  for(const f of S.field){ Object.assign(f,{jam:false,cap:true,fault:false,faultT:0,en:true,run:false}); if(f.type==="valve") f.pos=100; }
+  S.env=JSON.parse(JSON.stringify(S.env0||{})); S.heat={}; S.log=[]; S.leak.clear(); S.short.clear(); S.leakWarned.clear(); }
+function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
+  setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
-function hint(){
-  let h="";
-  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}</b> (${T[S.pick].w} мод.): торкніться вільного місця на рейці.`:"Оберіть апарат нижче і поставте на рейку. Торкніться апарата, щоб змінити номінал або групу.";
+function hint(){ let h="";
+  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}</b> (${T[S.pick].w} мод.): торкніться вільного місця на рейці.`:"Оберіть апарат нижче і поставте на рейку. Торкніться апарата, щоб змінити його налаштування.";
   if(S.mode==="wire") h=S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
-  if(S.mode==="test") h=S.mains?`Щит під напругою <b>${Math.round(S.U)} В</b>. Перемикайте важелі, тисніть «T» на ПЗВ, імітуйте витік і КЗ у групах.`:"Подайте мережу перемикачем нижче.";
-  $("hint").innerHTML=h;
-}
-
-function renderTools(){
-  const el=$("tools"); let s="";
+  if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
+  $("hint").innerHTML=h; }
+function ctlHTML(c,i){
+  if(c.type==="src"){ const s=S.src[c.id]||{}, inp=S.board.inputs.find(x=>x.id===c.id)||{}, three=(inp.terms||[]).includes("L1");
+    return `<div class="mains"><button class="switch" data-srcon="${c.id}" aria-pressed="${!!s.on}"><span class="knob"></span>${esc(c.label||inp.label)}</button>`+
+      (c.noU?"":`<div class="volt"><input type="range" id="u-${c.id}" data-srcu="${c.id}" min="150" max="290" step="1" value="${Math.round(s.U||230)}" aria-label="Напруга"><output class="mono" id="uo-${c.id}">${three?Math.round((s.U||230)*1.732)+" В лін.":Math.round(s.U||230)+" В"}</output></div>`)+`</div>`; }
+  if(c.type==="toggle") return `<button class="switch sm" data-ctl="${i}" aria-pressed="${!!c.get()}"><span class="knob"></span>${esc(c.label)}</button>`;
+  if(c.type==="range") return `<div class="volt"><span class="lbl" style="min-width:auto">${esc(c.label)}</span><input type="range" id="c-${i}" data-ctl="${i}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.get()}"><output class="mono" id="co-${i}">${c.get()}</output></div>`;
+  if(c.type==="choice") return `<div class="row"><span class="lbl">${esc(c.label)}</span>`+c.opts.map(([v,l])=>`<button class="chip" data-ctl="${i}" data-v="${v}" aria-pressed="${c.get()===v}">${esc(l)}</button>`).join("")+`</div>`;
+  if(c.type==="btn") return `<button class="btn ${c.cls||""}" data-ctl="${i}">${esc(c.label)}</button>`;
+  return ""; }
+function renderTools(){ const el=$("tools"); let s="";
   if(S.mode==="mount"){
-    s+=`<div class="row"><span class="lbl">Додати</span>`+ORDER.map(k=>`<button class="chip" data-pick="${k}" aria-pressed="${S.pick===k}">${T[k].short} <small>${T[k].w} мод.</small></button>`).join("")+`</div>`;
-    s+=`<div class="row"><span class="lbl">Шини</span><button class="chip" id="combBtn">${S.comb?"Зняти гребінку":"Поставити гребінку 1P"}</button><span class="hint">Гребінка з’єднує верхні клеми однополюсних автоматів, що стоять поруч.</span></div>`;
-  }
-  if(S.mode==="wire"){
-    const sw=S.selWire&&S.wires.find(w=>w.id===S.selWire), kind=sw?sw.kind:S.wireKind, sec=sw?sw.sec:S.wireSec;
-    s+=`<div class="row"><span class="lbl">Провід</span>`+Object.keys(KIND).map(k=>`<button class="chip" data-kind="${k}" aria-pressed="${kind===k}"><span class="sw" style="background:${KIND[k][1]}"></span>${KIND[k][0]}</button>`).join("")+`</div>`;
-    s+=`<div class="row"><span class="lbl">Переріз</span>`+SECS.map(x=>`<button class="chip mono" data-sec="${x}" aria-pressed="${sec===x}">${fmt(x)} мм²</button>`).join("")+`</div>`;
-    if(sw) s+=`<div class="row"><span class="lbl">Вибрано</span><span class="mono" style="font-size:12.5px;min-width:0;flex:1 1 200px">${sw.kind} ${fmt(sw.sec)} мм²: ${esc(termName(sw.a))} → ${esc(termName(sw.b))}</span><button class="btn danger" id="delWire">Видалити дріт</button></div>`;
-    s+=`<div class="row"><button class="btn" id="undoWire" ${S.wires.length?"":"disabled"}>Скасувати останній</button><button class="btn danger" id="clearWires" ${S.wires.length?"":"disabled"}>${clearArm>Date.now()?"Натисніть ще раз для очищення":"Прибрати всі дроти"}</button></div>`;
-  }
-  if(S.mode==="test"){
-    s+=`<div class="mains"><button class="switch" id="mainsBtn" aria-pressed="${S.mains}"><span class="knob"></span>Мережа</button>
-      <div class="volt"><span class="lbl" style="min-width:auto">U</span><input type="range" id="volt" min="150" max="290" step="1" value="${Math.round(S.U)}"><output class="mono" id="voltOut">${Math.round(S.U)} В</output></div></div>`;
-    s+=`<div class="row"><button class="chip" data-u="230">230 В</button><button class="chip" data-u="275">Перенапруга 275 В</button><button class="chip" data-u="160">Просідання 160 В</button></div>`;
-    s+=`<div class="row"><button class="btn" id="allOn">Увімкнути всі апарати</button><button class="btn" id="clrFaults" ${S.leak.size||S.short.size?"":"disabled"}>Прибрати аварії</button></div>`;
-    s+=`<div class="log" id="log" aria-live="polite">${S.log.length?S.log.map(l=>`<div class="${l.cls}">${esc(l.msg)}</div>`).join(""):`<div>Журнал подій порожній.</div>`}</div>`;
-  }
-  el.innerHTML=s;
-}
-
-function gStatus(d){
-  const R=S.sim&&S.sim.g[d.id]; if(!S.mains||!R) return `<span class="pill off">Знеструмлено</span>`;
-  if(R.phase&&R.neutral){ const bad=S.U>U_MAX||S.U<U_MIN; return bad?`<span class="pill bad">${Math.round(S.U)} В!</span>`:`<span class="pill ok">Під напругою</span>`; }
-  return `<span class="pill bad">${R.phase?"Немає N":"Немає фази"}</span>`;
-}
-function gLoad(d){
-  const kw=kwOf(d), I=kw*1000/230, In=inA(d.rating), p=Math.min(100,I/In*100), c=I>In?"var(--red)":I>0.8*In?"var(--orange)":"var(--green)";
-  return {txt:`${fmt(kw,2)} кВт · <b class="mono">${fmt(I)} А</b> / ${In} А`, bar:`<i style="width:${p}%;background:${c}"></i>`};
-}
-function renderGroups(){
-  const G=groupsOf(); const el=$("groups");
-  if(!G.length){ el.innerHTML=`<p class="hint" style="margin:0">Груп ще немає. Додайте автомат 1P або диф-автомат: кожен з них живить окрему групу.</p>`; return; }
-  el.innerHTML=G.map(d=>{ const g=d.group, L=gLoad(d), live=S.mains&&S.sim&&S.sim.g[d.id]&&S.sim.g[d.id].phase&&S.sim.g[d.id].neutral;
-    return `<article class="gcard${live?" live":""}" style="--gc:${g.color}" data-card="${d.id}">
-      <div class="gh"><div style="min-width:0;flex:1"><div class="des">${desig(d)} ${esc(d.rating)}</div>
-        <input class="gname" id="gn-${d.id}" data-gname="${d.id}" value="${esc(g.name)}" aria-label="Назва групи">
-        <div class="sub">${d.type==="rcbo"?"N від диф-автомата":"N від XN1"} · PE від XPE1</div></div><span data-gstat="${d.id}">${gStatus(d)}</span></div>
+    for(const cat of CATS){ const ks=Object.keys(T).filter(x=>T[x].cat===cat); if(!ks.length) continue;
+      s+=`<div class="row"><span class="lbl">${cat}</span>`+ks.map(x=>`<button class="chip" data-pick="${x}" aria-pressed="${S.pick===x}">${T[x].short} <small>${T[x].w} мод.</small></button>`).join("")+`</div>`; }
+    s+=`<div class="row"><span class="lbl">Шини</span><button class="chip" id="combBtn">${S.comb?"Зняти гребінку":"Поставити гребінку 1P"}</button><span class="hint">Гребінка з’єднує верхні клеми автоматів 1P, що стоять поруч.</span></div>`; }
+  if(S.mode==="wire"){ const sw=S.selWire&&S.wires.find(w=>w.id===S.selWire), kind=sw?sw.kind:S.wireKind, sec=sw?sw.sec:S.wireSec;
+    s+=`<div class="row"><span class="lbl">Провід</span>`+Object.keys(WK).map(x=>`<button class="chip" data-kind="${x}" aria-pressed="${kind===x}"><span class="sw" style="background:${x==="PE"?"linear-gradient(90deg,var(--wPEy) 50%,var(--wPEg) 50%)":WK[x][1]}"></span>${WK[x][0]}</button>`).join("")+`</div>`;
+    s+=`<div class="row"><span class="lbl">Переріз</span>`+SECS.map(x=>`<button class="chip mono" data-sec="${x}" aria-pressed="${sec===x}">${fmt(x,x%1?1:0)}</button>`).join("")+`<span class="hint" style="flex:0 0 auto">мм²</span></div>`;
+    if(sw) s+=`<div class="row"><span class="lbl">Вибрано</span><span class="mono" style="font-size:12.5px;min-width:0;flex:1 1 200px">${WK[sw.kind][0]} ${fmt(sw.sec,sw.sec%1?1:0)} мм²: ${esc(termName(sw.a))} → ${esc(termName(sw.b))}</span><button class="btn danger" id="delWire">Видалити дріт</button></div>`;
+    s+=`<div class="row"><button class="btn" id="undoWire" ${S.wires.length?"":"disabled"}>Скасувати останній</button><button class="btn danger" id="clearWires" ${S.wires.length?"":"disabled"}>${clearArm>Date.now()?"Натисніть ще раз для очищення":"Прибрати всі дроти"}</button></div>`; }
+  if(S.mode==="test"){ const dm=S.tplObj&&S.tplObj.demo||{controls:[{type:"src",id:S.board.inputs[0].id}],script:[]};
+    s+=`<p class="tplinfo">${esc(S.tplObj?S.tplObj.info:"")}</p>`;
+    if(dm.script.length) s+=`<div class="demo"><div class="row"><button class="btn primary" id="demoBtn">${S.demo?"■ Зупинити":"▶ Демонстрація"}</button><span class="hint" style="flex:1 1 160px">${S.demo?"Крок "+(S.demo.i+1)+" з "+dm.script.length:"Автоматичний сценарій з поясненнями. Стан щита скидається на початковий."}</span></div>`+
+      `<div class="demo-say" id="demoSay"${S.demo?"":" hidden"}>${S.demo?esc(dm.script[S.demo.i].say):""}</div></div>`;
+    s+=`<div class="ctl">`+dm.controls.map(ctlHTML).join("")+`</div>`;
+    s+=`<div class="stl" id="stl"></div><div class="row"><button class="btn" id="allOn">Увімкнути всі апарати</button>${groupsOf().length?`<button class="btn" id="clrFaults" ${S.leak.size||S.short.size?"":"disabled"}>Прибрати аварії</button>`:""}</div>`;
+    s+=`<div class="log" id="log" aria-live="polite"></div>`; }
+  el.innerHTML=s; if(S.mode==="test") updateLive(); }
+function gStatus(d){ const R=S.sim&&S.sim.g[d.id]; if(!R||!anySource()) return `<span class="pill off">Знеструмлено</span>`;
+  if(R.phase&&R.neutral) return (R.U>U_MAX||R.U<U_MIN)?`<span class="pill bad">${Math.round(R.U)} В!</span>`:`<span class="pill ok">Під напругою</span>`;
+  return `<span class="pill bad">${R.phase?"Немає N":"Немає фази"}</span>`; }
+function gLoad(d){ const kw=kwOf(d), I=kw*1000/230, In=inA(d.rating), p=Math.min(100,I/In*100), c=I>In?"var(--red)":I>0.8*In?"var(--orange)":"var(--green)";
+  return {txt:`${fmt(kw,2)} кВт · <b class="mono">${fmt(I)} А</b> / ${In} А`, bar:`<i style="width:${p}%;background:${c}"></i>`}; }
+function renderGroups(){ const G=groupsOf(), el=$("groups"); $("groupsWrap").hidden=!G.length; if(!G.length){ el.innerHTML=""; return; }
+  el.innerHTML=G.map(d=>{ const g=d.group, L=gLoad(d);
+    return `<article class="gcard" style="--gc:${g.color}" data-card="${d.id}"><div class="gh"><div style="min-width:0;flex:1"><div class="des">${desig(d)} ${esc(d.rating)}</div>
+      <input class="gname" id="gn-${d.id}" data-gname="${d.id}" value="${esc(g.name)}" aria-label="Назва групи"><div class="sub">${d.type==="rcbo"?"N від диф-автомата":"N від XN1"} · PE від XPE1</div></div><span data-gstat="${d.id}">${gStatus(d)}</span></div>
       <ul class="loads">${g.loads.map((l,i)=>`<li><label><input type="checkbox" id="ld-${d.id}-${i}" data-load="${d.id}:${i}" ${l.on?"checked":""}>${esc(l.n)}</label><span class="kw">${fmt(l.kw,2)} кВт</span><button class="x" data-del="${d.id}:${i}" aria-label="Прибрати ${esc(l.n)}">×</button></li>`).join("")||`<li class="hint">Додайте прилади</li>`}</ul>
       <div class="gadd"><select id="ga-${d.id}" data-add="${d.id}" aria-label="Додати прилад"><option value="">+ Додати прилад…</option>${LOADS.map((l,i)=>`<option value="${i}">${l[0]} · ${fmt(l[1],2)} кВт</option>`).join("")}</select></div>
-      <div class="gf"><div class="line"><span>Кабель <select id="gs-${d.id}" data-gsec="${d.id}">${SECS.map(x=>`<option value="${x}" ${g.sec===x?"selected":""}>${fmt(x)} мм²</option>`).join("")}</select></span><span class="mono" style="color:${inA(d.rating)>CAB[g.sec]?"var(--red)":"var(--muted)"}">до ${CAB[g.sec]} А · ${fmt(CAB[g.sec]*0.23,1)} кВт</span></div>
-        <div class="line"><span>Увімкнено</span><span data-gload="${d.id}">${L.txt}</span></div><div class="bar" data-gbar="${d.id}">${L.bar}</div>
-        ${S.mode==="test"?`<div class="gtest"><button class="btn" data-leak="${d.id}" aria-pressed="${S.leak.has(d.id)}" style="${S.leak.has(d.id)?"border-color:var(--orange);color:var(--orange)":""}">Витік на корпус</button><button class="btn" data-short="${d.id}" style="${S.short.has(d.id)?"border-color:var(--red);color:var(--red)":""}">Коротке замикання</button></div>`:""}
-      </div></article>`; }).join("");
-}
-function renderSummary(){
-  const G=groupsOf(), mods=S.devices.reduce((a,d)=>a+T[d.type].w,0), kw=G.reduce((a,d)=>a+kwOf(d),0);
-  const I=S.mains&&S.sim?S.sim.totalI:kw*1000/230, main=S.devices.find(d=>d.type==="qf2p");
-  $("summary").innerHTML=[["Модулі",`${mods}<small> / ${SLOTS}</small>`],["Групи",G.length],["Увімкнено",`${fmt(kw,2)}<small> кВт</small>`],
-    [S.mains?"Струм на вводі":"Розрахунковий струм",`${fmt(I)}<small> А</small>`],["Вступний",main?main.rating:"—"]].map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
-}
-function renderSheet(){
-  const d=S.selDev&&devById(S.selDev), sh=$("sheet"); if(!d){ sh.hidden=true; return; } sh.hidden=false; const t=T[d.type];
+      <div class="gf"><div class="line"><span>Кабель <select id="gs-${d.id}" data-gsec="${d.id}">${SECS.slice(0,6).map(x=>`<option value="${x}" ${g.sec===x?"selected":""}>${fmt(x,x%1?1:0)} мм²</option>`).join("")}</select></span><span class="mono" style="color:${inA(d.rating)>CAB[g.sec]?"var(--red)":"var(--muted)"}">до ${CAB[g.sec]} А</span></div>
+      <div class="line"><span>Увімкнено</span><span data-gload="${d.id}">${L.txt}</span></div><div class="bar" data-gbar="${d.id}">${L.bar}</div>
+      ${S.mode==="test"?`<div class="gtest"><button class="btn" data-leak="${d.id}" style="${S.leak.has(d.id)?"border-color:var(--orange);color:var(--orange)":""}">Витік на корпус</button><button class="btn" data-short="${d.id}" style="${S.short.has(d.id)?"border-color:var(--red);color:var(--red)":""}">Коротке замикання</button></div>`:""}</div></article>`; }).join(""); }
+function totalKW(){ const R=S.sim; if(!R) return 0; let p=0; for(const l of R.loads){ if(l.abc) p+=Math.max(...l.Is)*400*1.732*0.85/1000; else if(l.I) p+=l.I*(l.U||230)/1000; } return p; }
+function renderSummary(){ const mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
+  $("summary").innerHTML=[["Модулі",`${mods}<small> / ${SLOTS*S.board.rails}</small>`],["Апарати",S.devices.length],["Дроти",S.wires.length],["Навантаження",`${fmt(totalKW(),2)}<small> кВт</small>`]]
+    .map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join(""); }
+function renderSheet(){ const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), sh=$("sheet"); if(!d){ sh.hidden=true; return; } sh.hidden=false; const t=T[d.type];
   let s=`<div class="sheet-h"><b>${desig(d)} · ${t.name}</b><button class="btn" id="sheetClose">Готово</button></div>`;
-  s+=`<div class="row"><span class="lbl">Номінал</span>`+t.ratings.map(r=>`<button class="chip mono" data-rate="${r}" aria-pressed="${d.rating===r}">${t.breaker?r:r+" А"}</button>`).join("")+`</div>`;
-  s+=`<div class="row"><span class="lbl">Місце</span><button class="btn" data-move="-1">← Ліворуч</button><button class="btn" data-move="1">Праворуч →</button>
-    <button class="btn" id="devToggle">${d.on&&!d.trip?"Вимкнути":"Увімкнути"}</button><button class="btn danger" id="devDel">Зняти з рейки</button></div>`;
-  $("sheetIn").innerHTML=s;
-}
-function renderAll(full=true){
-  render(); hint(); renderSummary(); renderSheet();
-  if(full){ renderTools(); renderGroups(); } else updateLive();
-  document.querySelectorAll(".modes button").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
-  $("svg").style.width=(S.zoom*100)+"%"; $("zFit").textContent=Math.round(S.zoom*100)+"%";
-}
+  if(t.ratings) s+=`<div class="row"><span class="lbl">${d.type==="qm"?"Діапазон":"Номінал"}</span>`+t.ratings.map(r=>`<button class="chip mono" data-rate="${r}" aria-pressed="${d.rating===r}">${r}${t.unit||""}</button>`).join("")+`</div>`;
+  if(d.type==="qm") s+=`<div class="volt"><span class="lbl">Уставка Ir</span><input type="range" id="irset" min="${mprLo(d.rating)}" max="${mprHi(d.rating)}" step="0.1" value="${d.Ir}"><output class="mono" id="irout">${fmt(d.Ir,1)} А</output></div>`;
+  if(d.type==="ats") s+=`<div class="row"><span class="lbl">Режим</span><button class="chip" data-atsm="0" aria-pressed="${!d.manual}">Автоматичний</button><button class="chip" data-atsm="1" aria-pressed="${!!d.manual}">Ручний</button><button class="chip" data-atsv="tomzn" aria-pressed="${d.variant==="tomzn"}">TOMZN</button><button class="chip" data-atsv="geya" aria-pressed="${d.variant==="geya"}">GEYA</button></div>`;
+  if(d.type==="ssw") s+=`<div class="row"><span class="lbl">Застосунок</span><button class="chip" data-cmd="1" aria-pressed="${!!d.cmd}">Увімкнути</button><button class="chip" data-cmd="0" aria-pressed="${!d.cmd}">Вимкнути</button></div>`;
+  if(d.type==="hl") s+=`<div class="row"><span class="lbl">Колір</span>${[["#3fbf4a","Зелений"],["#e23b3b","Червоний"],["#ffb21f","Жовтий"]].map(([c,l])=>`<button class="chip" data-hlc="${c}" aria-pressed="${d.col===c}">${l}</button>`).join("")}</div>`;
+  s+=`<div class="row"><span class="lbl">Місце</span><button class="btn" data-move="-1">←</button><button class="btn" data-move="1">→</button>${S.board.rails>1?`<button class="btn" data-mrail="-1">↑ Рейка</button><button class="btn" data-mrail="1">↓ Рейка</button>`:""}
+    ${t.prot||t.rcd?`<button class="btn" id="devToggle">${d.on&&!d.trip?"Вимкнути":"Увімкнути"}</button>`:""}<button class="btn danger" id="devDel">Зняти з рейки</button></div>`;
+  $("sheetIn").innerHTML=s; }
 function updateLive(){
   for(const d of groupsOf()){ const st=document.querySelector(`[data-gstat="${d.id}"]`); if(st) st.innerHTML=gStatus(d);
-    const c=document.querySelector(`[data-card="${d.id}"]`); if(c) c.classList.toggle("live",!!(S.mains&&S.sim.g[d.id]&&S.sim.g[d.id].phase&&S.sim.g[d.id].neutral)); }
+    const c=document.querySelector(`[data-card="${d.id}"]`); const R=S.sim&&S.sim.g[d.id]; if(c) c.classList.toggle("live",!!(R&&R.phase&&R.neutral)); }
   const lg=$("log"); if(lg) lg.innerHTML=S.log.length?S.log.map(l=>`<div class="${l.cls}">${esc(l.msg)}</div>`).join(""):`<div>Журнал подій порожній.</div>`;
-  const mb=$("mainsBtn"); if(mb) mb.setAttribute("aria-pressed",S.mains);
+  const st=$("stl"); if(st&&S.tplObj&&S.tplObj.demo&&S.tplObj.demo.status){ try{ st.innerHTML=S.tplObj.demo.status().map(([a,b,c])=>`<div class="sl"><span>${esc(a)}</span><b class="${c||""}">${esc(b)}</b></div>`).join(""); }catch(e){ st.innerHTML=""; } }
+  document.querySelectorAll("[data-srcon]").forEach(b=>b.setAttribute("aria-pressed",!!(S.src[b.dataset.srcon]||{}).on));
+  const dm=S.tplObj&&S.tplObj.demo; if(dm) document.querySelectorAll("[data-ctl]").forEach(el=>{ const c=dm.controls[+el.dataset.ctl]; if(!c) return;
+    if(c.type==="toggle") el.setAttribute("aria-pressed",!!c.get()); if(c.type==="choice") el.setAttribute("aria-pressed",c.get()===el.dataset.v); });
 }
+function renderAll(full=true){ render(); hint(); renderSummary(); renderSheet(); if(full){ renderTools(); renderGroups(); } else updateLive();
+  document.querySelectorAll(".modes button").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
+  $("svg").style.width=(S.zoom*100)+"%"; $("zFit").textContent=Math.round(S.zoom*100)+"%"; }
 function commit(full=true){ save(); solve(0); renderAll(full); }
-
-function placeDev(type,slot){
-  if(!freeAt(slot,T[type].w)){ const alt=[...Array(SLOTS).keys()].find(i=>freeAt(i,T[type].w)); if(alt===undefined){ toast("На рейці немає місця для "+T[type].w+" мод.","w"); return; } slot=alt; }
-  const n=groupsOf().length; const d=mkDev(type,slot,null,T[type].group?mkGroup(n,"Група "+(n+1),2.5,[]):null); S.devices.push(d);
-  S.pick=null; toast(`${desig(d)} встановлено`,"ok"); commit();
-}
+/* ===== Події, демонстрація, таймери, старт ===== */
+function placeDev(type,r,slot){ const w=T[type].w;
+  if(!freeAt(r,slot,w)){ let alt=null; for(let rr=0;rr<S.board.rails&&alt===null;rr++) for(let i=0;i<SLOTS;i++) if(freeAt(rr,i,w)){ alt=[rr,i]; break; }
+    if(!alt){ toast("На рейках немає місця для "+w+" мод.","w"); return; } [r,slot]=alt; }
+  const n=groupsOf().length; const d=mkDev(type,r,slot,null,T[type].group?{group:mkGroup(n,"Група "+(n+1),2.5,[])}:null); S.devices.push(d);
+  S.pick=null; toast(`${desig(d)} встановлено`,"ok"); commit(); }
 function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>!w.a.startsWith(d.id+":")&&!w.b.startsWith(d.id+":")); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
-function termTap(k){
-  if(!S.pend){ S.pend=k; S.selWire=null; renderAll(); return; }
-  if(S.pend===k){ S.pend=null; renderAll(); return; }
-  const a=S.pend, b=k; S.pend=null;
+function termTap(key){
+  if(!S.pend){ S.pend=key; S.selWire=null; renderAll(); return; }
+  if(S.pend===key){ S.pend=null; renderAll(); return; }
+  const a=S.pend, b=key; S.pend=null;
   if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){ toast("Такий дріт уже є","w"); renderAll(); return; }
-  if(a.split(":")[0]===b.split(":")[0]&&a.split(":")[0]!=="in"&&!/^x/.test(a)){ /* перемичка на одному апараті */ }
-  const n=S.wires.filter(w=>w.a===b||w.b===b).length; if(n>=2&&!/^x/.test(b)) toast("Під одну клему — не більше двох дротів","w");
-  S.wires.push({id:uid("w"),a,b,kind:S.wireKind,sec:S.wireSec}); commit();
-}
+  if(S.wires.filter(w=>w.a===b||w.b===b).length>=2&&!/^x(n|pe):/.test(b)) toast("Під одну клему — не більше двох дротів","w");
+  S.wires.push({id:uid("w"),a,b,kind:S.wireKind,sec:S.wireSec}); commit(); }
+function demoStop(){ S.demo=null; renderTools(); hint(); }
+function demoStart(){ resetRuntime(); S.demo={i:-1,left:0}; demoNext(); }
+function demoNext(){ const sc=S.tplObj.demo.script; S.demo.i++; if(S.demo.i>=sc.length){ demoStop(); toast("Демонстрацію завершено","ok"); return; }
+  const st=sc[S.demo.i]; try{ st.do(); }catch(e){ console.error(e); } S.demo.left=st.wait; logp("ok","▶ "+st.say); commit(false); renderTools(); }
+function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length;
+  $("checks").innerHTML=C.map(c=>`<div class="ck"><span class="sev ${c.sev}">${c.sev==="e"?"Помилка":c.sev==="w"?"Увага":"OK"}</span><div><div class="t">${esc(c.t)}</div>${c.d?`<div class="d">${esc(c.d)}</div>`:""}</div></div>`).join("");
+  $("score").innerHTML=ne?`<span style="color:var(--red)">${ne} помил.</span> · <span style="color:var(--orange)">${nw} попер.</span>`:nw?`<span style="color:var(--orange)">${nw} попередж.</span>`:`<span style="color:var(--green)">Схема правильна</span>`;
+  $("checkOut").hidden=false; solve(0); renderAll(false); $("checkOut").scrollIntoView({behavior:"smooth",block:"start"}); }
 
 document.addEventListener("click",e=>{
-  const q=s=>e.target.closest(s);
-  let el;
+  const q=s=>e.target.closest(s); let el;
   if(el=q(".modes button")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; renderAll(); return; }
   if(el=q("[data-term]")){ termTap(el.dataset.term); return; }
   if(el=q("[data-wire]")){ S.selWire=S.selWire===el.dataset.wire?null:el.dataset.wire; renderAll(); return; }
-  if(el=q("[data-lever]")){ const d=devById(el.dataset.lever); if(S.mode==="wire") return; if(d.on&&!d.trip){ d.on=false; } else { d.on=true; d.trip=null; S.heat[d.id]=0; } commit(false); renderTools(); return; }
-  if(el=q("[data-test]")){ const d=devById(el.dataset.test); const f=topo({extra:shortsExtra()});
-    if(S.mains&&d.on&&!d.trip&&f(d.id+":t1")===f("in:L")&&f(d.id+":t2")===f("in:N")){ trip(d,"натиснуто кнопку «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює лише коли ПЗВ під напругою і ввімкнений","w"); return; }
-  if(el=q("[data-slot]")){ if(S.pick) placeDev(S.pick,+el.dataset.slot); else toast("Спершу оберіть апарат нижче"); return; }
+  if(el=q("[data-press]")){ if(S.mode==="wire") return; livePress(devById(el.dataset.press)); return; }
+  if(el=q("[data-lever]")){ if(S.mode==="wire") return; const d=devById(el.dataset.lever), t=T[d.type];
+    if(t.tap){ if(t.tap(d)) commit(false); return; }
+    if(t.prot||t.rcd){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; S.heat[d.id]=0; } commit(false); } return; }
+  if(el=q("[data-test]")){ const d=devById(el.dataset.test), X=evaluate({extra:shortsExtra()});
+    if(d.on&&!d.trip&&X.volt(k(d,"t1"),k(d,"t2"))>=150){ trip(d,"кнопка «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює, лише коли ПЗВ під напругою і ввімкнений","w"); return; }
+  if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть апарат нижче"); return; }
   if(el=q("[data-dev]")){ if(S.mode==="wire") return; S.selDev=el.dataset.dev; renderAll(false); return; }
   if(el=q("[data-pick]")){ S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.selDev=null; renderAll(); return; }
-  if(el=q("#combBtn")){ if(S.comb) S.comb=null; else { const p=S.devices.filter(d=>d.type==="qf1p").map(d=>d.slot); if(p.length<2){ toast("Потрібно щонайменше два автомати 1P","w"); return; } S.comb={from:Math.min(...p),to:Math.max(...p)}; } commit(); return; }
+  if(q("#combBtn")){ if(S.comb) S.comb=null; else { const p=S.devices.filter(d=>d.type==="qf1p"); if(p.length<2){ toast("Потрібно щонайменше два автомати 1P","w"); return; }
+      const r=p[0].rail||0, sl=p.filter(d=>(d.rail||0)===r).map(d=>d.slot); S.comb={rail:r,from:Math.min(...sl),to:Math.max(...sl)}; } commit(); return; }
   if(el=q("[data-kind]")){ const sw=S.selWire&&S.wires.find(w=>w.id===S.selWire); if(sw){ sw.kind=el.dataset.kind; commit(); } else { S.wireKind=el.dataset.kind; renderAll(); } return; }
   if(el=q("[data-sec]")){ const v=+el.dataset.sec, sw=S.selWire&&S.wires.find(w=>w.id===S.selWire); if(sw){ sw.sec=v; commit(); } else { S.wireSec=v; renderAll(); } return; }
   if(q("#delWire")){ S.wires=S.wires.filter(w=>w.id!==S.selWire); S.selWire=null; commit(); return; }
   if(q("#undoWire")){ S.wires.pop(); S.selWire=null; commit(); return; }
   if(q("#clearWires")){ if(clearArm>Date.now()){ S.wires=[]; clearArm=0; S.selWire=null; commit(); } else { clearArm=Date.now()+3000; renderTools(); setTimeout(()=>{ if(S.mode==="wire") renderTools(); },3100); } return; }
-  if(q("#mainsBtn")){ S.mains=!S.mains; logp(S.mains?"ok":"w",S.mains?`Подано мережу ${Math.round(S.U)} В`:"Мережу відключено"); commit(false); renderTools(); return; }
-  if(el=q("[data-u]")){ S.U=+el.dataset.u; commit(false); renderTools(); return; }
-  if(q("#allOn")){ S.devices.forEach(d=>{ d.on=true; d.trip=null; }); S.heat={}; commit(false); renderTools(); return; }
+  if(el=q("[data-srcon]")){ const s=S.src[el.dataset.srcon]; s.on=!s.on; if(s.on) s.blown=false; logp(s.on?"ok":"w",`${(S.board.inputs.find(i=>i.id===el.dataset.srcon)||{}).label}: ${s.on?"напругу подано":"напругу знято"}`); commit(false); return; }
+  if(el=q("[data-ctl]")){ const c=S.tplObj.demo.controls[+el.dataset.ctl]; if(!c||c.type==="range") return;
+    if(c.type==="toggle") c.set(!c.get()); else if(c.type==="choice") c.set(el.dataset.v); else if(c.type==="btn") c.act(); commit(false); return; }
+  if(q("#demoBtn")){ if(S.demo) demoStop(); else demoStart(); return; }
+  if(q("#allOn")){ S.devices.forEach(d=>{ if(T[d.type].prot||T[d.type].rcd){ d.on=true; d.trip=null; } }); S.heat={}; commit(false); return; }
   if(q("#clrFaults")){ S.leak.clear(); S.short.clear(); S.leakWarned.clear(); commit(); return; }
-  if(el=q("[data-leak]")){ const id=el.dataset.leak; S.leak.has(id)?S.leak.delete(id):S.leak.add(id); S.leakWarned&&S.leakWarned.delete(id); commit(); return; }
+  if(el=q("[data-leak]")){ const id=el.dataset.leak; S.leak.has(id)?S.leak.delete(id):S.leak.add(id); S.leakWarned.delete(id); commit(); return; }
   if(el=q("[data-short]")){ const id=el.dataset.short; S.short.has(id)?S.short.delete(id):S.short.add(id); commit(); return; }
   if(el=q("[data-del]")){ const [id,i]=el.dataset.del.split(":"); devById(id).group.loads.splice(+i,1); commit(); return; }
-  if(el=q("[data-rate]")){ devById(S.selDev).rating=el.dataset.rate; commit(); return; }
-  if(el=q("[data-move]")){ const d=devById(S.selDev), ns=d.slot+(+el.dataset.move); if(freeAt(ns,T[d.type].w,d)){ d.slot=ns; commit(); } else toast("Там зайнято","w"); return; }
-  if(q("#devToggle")){ const d=devById(S.selDev); if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; } commit(false); return; }
-  if(q("#devDel")){ removeDev(devById(S.selDev)); return; }
+  const d=S.selDev&&devById(S.selDev);
+  if(d){
+    if(el=q("[data-rate]")){ d.rating=el.dataset.rate; if(d.type==="qm") d.Ir=mprHi(d.rating); commit(); return; }
+    if(el=q("[data-move]")){ const ns=d.slot+(+el.dataset.move); if(freeAt(d.rail||0,ns,T[d.type].w,d)){ d.slot=ns; commit(); } else toast("Там зайнято","w"); return; }
+    if(el=q("[data-mrail]")){ const nr=(d.rail||0)+(+el.dataset.mrail); if(freeAt(nr,d.slot,T[d.type].w,d)){ d.rail=nr; commit(); } else toast("На іншій рейці це місце зайняте","w"); return; }
+    if(el=q("[data-atsm]")){ d.manual=el.dataset.atsm==="1"; commit(false); return; }
+    if(el=q("[data-atsv]")){ d.variant=el.dataset.atsv; commit(false); return; }
+    if(el=q("[data-cmd]")){ d.cmd=el.dataset.cmd==="1"; commit(false); return; }
+    if(el=q("[data-hlc]")){ d.col=el.dataset.hlc; commit(false); return; }
+    if(q("#devToggle")){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; } commit(false); return; }
+    if(q("#devDel")){ removeDev(d); return; } }
   if(q("#sheetClose")){ S.selDev=null; renderAll(false); return; }
-  if(q("#btnCheck")){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length;
-    $("checks").innerHTML=C.map(c=>`<div class="ck"><span class="sev ${c.sev}">${c.sev==="e"?"Помилка":c.sev==="w"?"Увага":"OK"}</span><div><div class="t">${esc(c.t)}</div>${c.d?`<div class="d">${esc(c.d)}</div>`:""}</div></div>`).join("");
-    $("score").innerHTML=ne?`<span style="color:var(--red)">${ne} помил.</span> · <span style="color:var(--orange)">${nw} попер.</span>`:nw?`<span style="color:var(--orange)">${nw} попередж.</span>`:`<span style="color:var(--green)">Схема правильна</span>`;
-    $("checkOut").hidden=false; $("checkOut").scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  if(q("#btnCheck")){ checkNow(); return; }
   if(q("#zIn")){ S.zoom=Math.min(2.5,S.zoom+0.5); renderAll(false); return; }
   if(q("#zOut")){ S.zoom=Math.max(1,S.zoom-0.5); renderAll(false); return; }
   if(q("#zFit")){ S.zoom=1; renderAll(false); return; }
 });
-document.addEventListener("change",e=>{
-  const t=e.target;
+document.addEventListener("change",e=>{ const t=e.target;
   if(t.dataset.load){ const [id,i]=t.dataset.load.split(":"); devById(id).group.loads[+i].on=t.checked; save(); solve(0); render(); renderSummary();
     const d=devById(id), L=gLoad(d); document.querySelector(`[data-gload="${id}"]`).innerHTML=L.txt; document.querySelector(`[data-gbar="${id}"]`).innerHTML=L.bar; return; }
   if(t.dataset.add){ if(t.value==="") return; const l=LOADS[+t.value]; devById(t.dataset.add).group.loads.push({n:l[0],kw:l[1],on:true}); commit(); return; }
   if(t.dataset.gsec){ devById(t.dataset.gsec).group.sec=+t.value; commit(); return; }
   if(t.dataset.gname){ devById(t.dataset.gname).group.name=t.value.trim()||"Група"; save(); render(); return; }
-  if(t.id==="tpl"&&t.value){ applyTemplate(t.value); t.value=""; $("checkOut").hidden=true; toast("Шаблон завантажено","ok"); commit(); return; }
+  if(t.id==="tpl"&&t.value){ applyTemplate(t.value); t.value=""; $("checkOut").hidden=true; S.mode=S.tplObj.demo&&S.tplObj.demo.script.length&&S.tpl!=="empty"?"test":"mount"; toast("Шаблон завантажено","ok"); commit(); return; }
 });
-document.addEventListener("input",e=>{ if(e.target.id==="volt"){ S.U=+e.target.value; $("voltOut").textContent=S.U+" В"; solve(0); render(); hint(); updateLive(); } });
-
-setInterval(()=>{ if(!S.mains) return; solve(0.5); render(); renderSummary(); hint(); updateLive();
-  const tb=$("clrFaults"); if(tb) tb.disabled=!(S.leak.size||S.short.size); },500);
-
-if(!load()) applyTemplate("flat");
-if(window.innerWidth<600) S.zoom=1;
-commit();
+document.addEventListener("input",e=>{ const t=e.target;
+  if(t.dataset.srcu){ const s=S.src[t.dataset.srcu]; s.U=+t.value; const three=S.board.inputs.find(i=>i.id===t.dataset.srcu).terms.includes("L1");
+    $("uo-"+t.dataset.srcu).textContent=three?Math.round(s.U*1.732)+" В лін.":s.U+" В"; solve(0); render(); updateLive(); return; }
+  if(t.dataset.ctl){ const c=S.tplObj.demo.controls[+t.dataset.ctl]; if(c&&c.type==="range"){ c.set(+t.value); $("co-"+t.dataset.ctl).textContent=t.value; solve(0); render(); updateLive(); } return; }
+  if(t.id==="irset"){ const d=devById(S.selDev); d.Ir=+t.value; $("irout").textContent=fmt(d.Ir,1)+" А"; save(); render(); }
+});
+setInterval(()=>{ if(!anySource()&&!S.demo) return; solve(0.5); render(); renderSummary(); hint(); updateLive(); },500);
+setInterval(()=>{ if(!S.demo) return; S.demo.left-=0.25; if(S.demo.left<=0) demoNext(); },250);
+(function init(){
+  const sel=$("tpl"), cats=[...new Set(Object.values(TPL).map(t=>t.cat))];
+  sel.innerHTML=`<option value="">Шаблон…</option>`+cats.map(c=>`<optgroup label="${esc(c)}">`+Object.entries(TPL).filter(([,t])=>t.cat===c).map(([key,t])=>`<option value="${key}">${esc(t.name)}</option>`).join("")+`</optgroup>`).join("");
+  if(load()&&TPL[S.tpl]){ S.tplObj=TPL[S.tpl]; S.env0=S.env0||JSON.parse(JSON.stringify(S.env)); } else applyTemplate("flat");
+  commit();
+})();
 </script></body></html>
