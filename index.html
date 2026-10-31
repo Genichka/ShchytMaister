@@ -159,6 +159,18 @@ select.btn{padding-right:28px}
 .hum{animation:hum .09s linear infinite;transform-box:fill-box;transform-origin:center}
 @keyframes spin{to{transform:rotate(360deg)}} @keyframes hum{50%{transform:rotate(6deg)}}
 #tpl{max-width:min(320px,100%)}
+.ver{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 8px;cursor:pointer;white-space:nowrap}
+.ver:hover{color:var(--fg);border-color:var(--muted)}
+.btn.upd{position:relative}.btn.upd .dot{display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 2px var(--bg)}
+.btn.upd.has{border-color:var(--orange);color:var(--orange)}.btn.upd.has .dot{display:block}
+.modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal-card{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:var(--r);padding:16px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.modal-card h2{margin:0;font-size:17px;color:var(--strong)}
+.modal-card ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.upd-v{margin:0;color:var(--muted);font-size:13px}.upd-v b{color:var(--blue)}
+.brand{flex-wrap:wrap}
+
 @media (prefers-reduced-motion: reduce){.spin,.hum{animation:none}}
 
 @media (max-width:520px){h1{font-size:19px}.actions .btn{padding:6px 9px}.groups{padding:10px;gap:10px}}
@@ -169,9 +181,11 @@ select.btn{padding-right:28px}
     <div class="brand">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4 13.5h6.5L9.5 22 20 9.5h-6.6z" fill="#ffb21f" stroke="#e8741a" stroke-width="1.2" stroke-linejoin="round"/></svg>
       <h1><span class="t1">Щит</span><span class="t2">Майстер</span></h1>
+      <span class="ver mono" id="ver" role="button" tabindex="0" title="Що нового"></span>
     </div>
     <div class="actions">
       <select class="btn" id="tpl" aria-label="Шаблон щита"><option value="">Шаблон…</option></select>
+      <button class="btn upd" id="updBtn" title="Перевірити оновлення"><span aria-hidden="true">↻</span> Оновити<i class="dot" aria-hidden="true"></i></button>
       <button class="btn primary" id="btnCheck">Перевірити схему</button>
     </div>
   </header>
@@ -206,7 +220,15 @@ select.btn{padding-right:28px}
 
 <div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheetIn"></div></div>
 <div class="toast" id="toast" style="opacity:0"></div>
+<div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
+/* ===== Версія застосунку (з неї build.sh генерує version.json) ===== */
+const APP = { v:"2.4", date:"2026-10-31", notes:[
+  "Кнопка «Оновити»: нова версія встановлюється лише після вашого підтвердження",
+  "Номер версії й дата в шапці; натисніть на них, щоб побачити, що нового",
+  "Шаблон «PV комбайнер-бокс 2 входи / 2 виходи (600 В)» з двома MPPT і тінню на стрінгу",
+  "Шаблон «PV DC-бокс»: запобіжники gPV, УЗІП DC, DC-автомат, дуга DC",
+  "Масштаб щита двома пальцями до 400 %" ] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1506,5 +1528,39 @@ setInterval(()=>{ if(!S.demo) return; S.demo.left-=0.25; if(S.demo.left<=0) demo
   sc.addEventListener("touchend",end,{passive:true}); sc.addEventListener("touchcancel",end,{passive:true});
   sc.addEventListener("click",e=>{ if(Date.now()<blockClickUntil){ e.stopPropagation(); e.preventDefault(); } },true);
   sc.addEventListener("wheel",e=>{ if(!e.ctrlKey) return; e.preventDefault(); zoomAt(S.zoom*Math.exp(-e.deltaY*0.01), e.clientX, e.clientY); },{passive:false});
+})();
+/* ===== Версія, перевірка й встановлення оновлень ===== */
+(function(){
+  const fmtD = s => String(s).split("-").reverse().join(".");
+  const cmp = (a,b) => { const x=String(a).split(".").map(Number), y=String(b).split(".").map(Number);
+    for(let i=0;i<Math.max(x.length,y.length);i++){ const d=(x[i]||0)-(y[i]||0); if(d) return d; } return 0; };
+  const btn=$("updBtn"), modal=$("upd"); let remote=null;
+  $("ver").textContent=`v${APP.v} · ${fmtD(APP.date)}`;
+  async function fetchRemote(){ const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) throw new Error(r.status); return r.json(); }
+  function show(mode,info){
+    const isNew=mode==="new";
+    $("updCard").innerHTML=`<h2 id="updTitle">${isNew?"Доступна нова версія":"Що нового"}</h2>
+      <p class="mono upd-v">${isNew?`v${esc(APP.v)} → <b>v${esc(info.v)}</b> від ${fmtD(info.date)}`:`v${esc(info.v)} від ${fmtD(info.date)}`}</p>
+      <ul>${(info.notes||[]).map(n=>`<li>${esc(n)}</li>`).join("")}</ul>
+      ${isNew?`<p class="hint">Зібраний щит збережеться: він лежить у пам’яті браузера.</p>`:""}
+      <div class="row" style="justify-content:flex-end">${isNew?`<button class="btn" data-upd="later">Пізніше</button><button class="btn primary" data-upd="go">Оновити зараз</button>`:`<button class="btn primary" data-upd="later">Закрити</button>`}</div>`;
+    modal.hidden=false; const f=modal.querySelector(".btn.primary"); if(f) f.focus(); }
+  async function check(silent){
+    try{ remote=await fetchRemote();
+      if(cmp(remote.v,APP.v)>0){ btn.classList.add("has"); btn.title=`Доступна версія v${remote.v}`; if(!silent) show("new",remote); }
+      else { btn.classList.remove("has"); btn.title="Перевірити оновлення"; if(!silent) toast(`У вас остання версія v${APP.v} від ${fmtD(APP.date)}`,"ok"); } }
+    catch(e){ if(!silent) toast("Не вдалося перевірити оновлення. Перевірте підключення до інтернету.","w"); } }
+  function apply(){ save(); const u=new URL(location.href); u.searchParams.set("v",remote.v); location.replace(u.toString()); }
+  document.addEventListener("click",e=>{
+    if(e.target.closest("#updBtn")){ check(false); return; }
+    if(e.target.closest("#ver")){ show("cur",APP); return; }
+    const b=e.target.closest("[data-upd]"); if(b){ modal.hidden=true; if(b.dataset.upd==="go"&&remote) apply(); return; }
+    if(e.target===modal) modal.hidden=true; });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!modal.hidden) modal.hidden=true; if((e.key==="Enter"||e.key===" ")&&e.target.id==="ver"){ e.preventDefault(); show("cur",APP); } });
+  try{ const last=localStorage.getItem("shchyt-ver");
+    if(last&&last!==APP.v) setTimeout(()=>toast(`Оновлено до v${APP.v} від ${fmtD(APP.date)}`,"ok"),600);
+    localStorage.setItem("shchyt-ver",APP.v); }catch(e){}
+  try{ const u=new URL(location.href); if(u.searchParams.has("v")){ u.searchParams.delete("v"); history.replaceState(null,"",u.toString()); } }catch(e){}
+  setTimeout(()=>check(true),1500); setInterval(()=>check(true),30*60*1000);
 })();
 </script></body></html>

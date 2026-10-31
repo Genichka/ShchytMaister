@@ -157,6 +157,18 @@ select.btn{padding-right:28px}
 .hum{animation:hum .09s linear infinite;transform-box:fill-box;transform-origin:center}
 @keyframes spin{to{transform:rotate(360deg)}} @keyframes hum{50%{transform:rotate(6deg)}}
 #tpl{max-width:min(320px,100%)}
+.ver{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 8px;cursor:pointer;white-space:nowrap}
+.ver:hover{color:var(--fg);border-color:var(--muted)}
+.btn.upd{position:relative}.btn.upd .dot{display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 2px var(--bg)}
+.btn.upd.has{border-color:var(--orange);color:var(--orange)}.btn.upd.has .dot{display:block}
+.modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal-card{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:var(--r);padding:16px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.modal-card h2{margin:0;font-size:17px;color:var(--strong)}
+.modal-card ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.upd-v{margin:0;color:var(--muted);font-size:13px}.upd-v b{color:var(--blue)}
+.brand{flex-wrap:wrap}
+
 @media (prefers-reduced-motion: reduce){.spin,.hum{animation:none}}
 
 @media (max-width:520px){h1{font-size:19px}.actions .btn{padding:6px 9px}.groups{padding:10px;gap:10px}}
@@ -167,9 +179,11 @@ select.btn{padding-right:28px}
     <div class="brand">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4 13.5h6.5L9.5 22 20 9.5h-6.6z" fill="#ffb21f" stroke="#e8741a" stroke-width="1.2" stroke-linejoin="round"/></svg>
       <h1><span class="t1">Щит</span><span class="t2">Майстер</span></h1>
+      <span class="ver mono" id="ver" role="button" tabindex="0" title="Що нового"></span>
     </div>
     <div class="actions">
       <select class="btn" id="tpl" aria-label="Шаблон щита"><option value="">Шаблон…</option></select>
+      <button class="btn upd" id="updBtn" title="Перевірити оновлення"><span aria-hidden="true">↻</span> Оновити<i class="dot" aria-hidden="true"></i></button>
       <button class="btn primary" id="btnCheck">Перевірити схему</button>
     </div>
   </header>
@@ -204,3 +218,4 @@ select.btn{padding-right:28px}
 
 <div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheetIn"></div></div>
 <div class="toast" id="toast" style="opacity:0"></div>
+<div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
