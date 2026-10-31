@@ -42,14 +42,14 @@ defField("bat",{name:"Акумулятор LiFePO4", fw:120, fh:150, terms:["p",
       +`<rect x="${x+43}" y="${y+107-h}" width="34" height="${h}" fill="${soc>30?"var(--green)":"var(--orange)"}"/>`+fst(x+10,y+132,`${fmt(soc,0)} %`,"var(--fg)")+fst(x+10,y+145,(S.env.flow&&S.env.flow.bat)?(S.env.flow.bat>0?"розряд ":"заряд ")+fmt(Math.abs(S.env.flow.bat),1)+" кВт":"очікування","var(--muted)"); }});
 defField("inv",{name:"Гібридний інвертор 6 кВт", fw:230, fh:150, terms:["pp","pm","bp","bm","gL","gN","oL","oN","pe"],
   init:d=>{ d.en=d.en??true; d.mode="off"; d.faultT=0; },
-  logic(d,X){ const pv=X.P(K(d,"pp")).has("pv+")&&X.P(K(d,"pm")).has("pv-"), bat=X.P(K(d,"bp")).has("bat+")&&X.P(K(d,"bm")).has("bat-")&&S.env.soc>5;
+  logic(d,X){ d.pvS=[...X.P(K(d,"pp"))].map(p=>/^(pv\d*)\+$/.exec(p)).filter(Boolean).map(m=>m[1]).filter(s=>X.P(K(d,"pm")).has(s+"-")); const pv=d.pvS.length>0, bat=X.P(K(d,"bp")).has("bat+")&&X.P(K(d,"bm")).has("bat-")&&S.env.soc>5;
     const gU=X.volt(K(d,"gL"),K(d,"gN")), grid=gU>=185&&gU<=253; d.pvOK=pv; d.batOK=bat; d.gridU=gU;
     const m=!d.en?"off":d.faultT>0?"fault":grid?"grid":(pv||bat)?"backup":"off";
     if(m!==d.mode){ const prev=d.mode; d.mode=m; if(prev) logp(m==="backup"?"w":m==="grid"?"ok":"w",`Інвертор: ${({grid:"мережевий режим (мережа є, синхронізовано)",backup:"резервний режим — живить навантаження від PV/АКБ",off:"вимкнено",fault:"аварійне вимкнення"})[m]}`); return true; }
     return false; },
   aux:d=>d.mode==="grid"?[["gL","oL"],["gN","oN"]]:[], source:d=>d.mode==="backup"?[["oL","inv.L"],["oN","N"]]:[],
   onFault(d,c){ if(c.pots.includes("inv.L")){ d.faultT=10; d.mode="fault"; logp("e","Інвертор: коротке замикання або зворотне живлення на виході — захист вимкнув інвертор на 10 с"); return true; } return false; },
-  tick(d,X,dt){ d.faultT=Math.max(0,d.faultT-dt); const ppv=(d.pvOK?pvKW("pv"):0);
+  tick(d,X,dt){ d.faultT=Math.max(0,d.faultT-dt); const ppv=(d.pvOK?(d.pvS||["pv"]).reduce((a,s)=>a+pvKW(s),0):0);
     const Y=makeX(build({open:new Set([d.id]),extra:shortsExtra()})); let pl=0;
     for(const l of computeLoads(X)) if(l.a&&l.I>0&&X.ph(l.a)&&X.P(l.a).has(d.mode==="backup"?"inv.L":"__")||(d.mode==="grid"&&l.a&&l.I>0&&X.ph(l.a)&&!Y.ph(l.a))) pl+=l.I*(l.U||230)/1000;
     let bat=0, grid=0, pvUse=0;

@@ -2,7 +2,9 @@
 const G = { W:840, X0:96, MW:54, INY:36 };
 const devTop = r => 208 + r*380, devBot = r => devTop(r)+240;
 const busY = () => devBot(S.board.rails-1)+118, enclB = () => busY()+36, panelH = () => enclB()+10;
-const fieldY = () => panelH()+34, totalH = () => S.field.length ? fieldY()+170 : panelH();
+const fieldY = () => panelH()+34;
+function fieldLayout(){ const out=[]; let x=24, row=0; for(const f of S.field){ const w=FT[f.type].fw; if(x+w>824&&x>24){ x=24; row++; } out.push({f,x,y:fieldY()+row*170}); x+=w+14; } return {items:out, rows:out.length?row+1:0}; }
+const totalH = () => S.field.length ? fieldY()+fieldLayout().rows*170 : panelH();
 let LSP={}, SSP={L:7,R:7};
 const laneY = (c,s,i) => { const sp=LSP[c+s]||7; return s==="l" ? devTop(c)-20-sp*i : devBot(c-1)+20+sp*i; };
 const sideX = (side,i) => side==="L" ? 86-(SSP.L||7)*i : 754+(SSP.R||7)*i;
@@ -103,11 +105,10 @@ function render(){
   if(S.comb){ const cr=S.comb.rail||0, cov=S.devices.filter(d=>d.type==="qf1p"&&(d.rail||0)===cr&&d.slot>=S.comb.from&&d.slot<=S.comb.to).map(d=>G.X0+d.slot*G.MW+G.MW/2), y=devTop(cr);
     if(cov.length){ const a=Math.min(...cov)-10, z=Math.max(...cov)+10; for(const x of cov) s+=`<rect x="${x-3}" y="${y-10}" width="6" height="24" fill="var(--brass)"/>`;
       s+=`<rect x="${a}" y="${y-14}" width="${z-a}" height="9" rx="2" fill="var(--brass)" stroke="#9b7d22"/>`+tx(a,y-18,`Гребінка 1P · ${cov.length} мод.`,{c:"lab",fs:8.5,a:"start"}); } }
-  if(S.field.length){ const fy=fieldY(); let x=24;
-    for(const f of S.field){ const ft=FT[f.type], cx=x+ft.fw/2; let k=0;
+  if(S.field.length){ for(const {f,x,y:fy} of fieldLayout().items){ const ft=FT[f.type], cx=x+ft.fw/2; let k=0;
       for(const tk of ft.terms){ const key=f.map[tk], X=bp[key]; if(X===undefined) continue;
         s+=`<path d="M${X} ${B+12} V${enclB()+6+k*3} H${cx-12+k*5} V${fy}" fill="none" stroke="#6b7380" stroke-width="2.4" stroke-linejoin="round"/>`; k++; }
-      s+=`<g data-field="${f.id}">${ft.draw(f,x,fy)}</g>`; x+=ft.fw+14; } }
+      s+=`<g data-field="${f.id}" style="cursor:pointer">${ft.draw(f,x,fy)}</g>`+(S.selDev===f.id?`<rect x="${x-3}" y="${fy-3}" width="${ft.fw+6}" height="156" rx="10" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`:""); } }
   const P=route();
   for(const w of S.wires){ const pts=P[w.id]; if(!pts) continue; const d=rpath(pts), sw=SW[w.sec]||4, col=WK[w.kind]?WK[w.kind][1]:"#888";
     if(S.selWire===w.id) s+=`<path class="wsel" d="${d}" stroke-width="${sw+9}"/>`;

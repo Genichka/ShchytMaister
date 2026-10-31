@@ -10,7 +10,9 @@ function srcU(p){ const s=srcOf(p); if(S.src[s]) return S.src[s].U; if(s==="inv"
 const tdef = d => T[d.type] || FT[d.type];
 const K = (d,k) => T[d.type] ? d.id+":"+k : (d.map[k]||"");
 const groupsOf = () => S.devices.filter(d=>T[d.type].group&&d.group).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
-const gL = d => d.id+":b1", gN = d => d.type==="rcbo" ? d.id+":b2" : "xn:0";
+const g3 = d => !!T[d.type].gph;
+const gL = d => d.id+":b1", gN = d => d.type==="rcbo" ? d.id+":b2" : d.type==="qf3p" ? d.id+":b2" : d.type==="qf4p" ? d.id+":b4" : "xn:0";
+const gPh = (d,X) => g3(d) ? ["b1","b2","b3"].every(t=>X.ph(d.id+":"+t)) : !!X.ph(gL(d));
 const kwOf = (d,all) => d.group.loads.reduce((a,l)=>a+(all||l.on?l.kw:0),0);
 const poleClosed = (d,pi) => { const t=tdef(d); return t.closed ? t.closed(d,pi) : (d.on&&!d.trip); };
 const protIn = d => d.Ir || inA(d.rating);
@@ -19,7 +21,7 @@ function sources(){
   const out=[];
   for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={on:false,U:230,lost:{}});
     for(const t of inp.terms){ const key=inp.id+":"+t;
-      if(t==="N"||t==="PE") out.push([key,t]); else if(s.on&&!(s.lost&&s.lost[t])) out.push([key,inp.id+"."+t]); } }
+      if(t==="N"||t==="PE") out.push([key,t]); else if(s.on&&!(s.lost&&s.lost[t])) out.push([key,inp.id+"."+(s.swap&&t==="L2"?"L3":s.swap&&t==="L3"?"L2":t)]); } }
   for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.source) for(const [k,p] of t.source(d)) out.push([K(d,k),p]); }
   return out;
 }
@@ -75,13 +77,16 @@ const FAULT = {LN:"коротке замикання L–N", LPE:"замикан
 
 function computeLoads(X){
   const L=[];
-  for(const d of groupsOf()){ const U=X.volt(gL(d),gN(d)), kw=kwOf(d); L.push({own:d.id, a:gL(d), b:gN(d), I:U>100?kw*1000/U:0, U, grp:true}); }
+  for(const d of groupsOf()){ const kw=kwOf(d);
+    if(g3(d)){ const ok=gPh(d,X), U=ok?srcU(X.ph(gL(d))):0, I=ok?kw*1000/(3*U):0; L.push({own:d.id, abc:["b1","b2","b3"].map(t=>d.id+":"+t), Is:[I,I,I], I, U, grp:true, g3:true}); continue; }
+    const U=X.volt(gL(d),gN(d)); L.push({own:d.id, a:gL(d), b:gN(d), I:U>100?kw*1000/U:0, U, grp:true}); }
   for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.load) for(const l of t.load(d,X)){ l.own=d.id; if(l.a) l.a=K(d,l.a); if(l.b) l.b=K(d,l.b); if(l.abc) l.abc=l.abc.map(k=>K(d,k)); L.push(l); } }
   return L;
 }
 function trip(d,why){ d.on=false; d.trip=why; S.heat[d.id]=0; logp("e",`${desig(d)} спрацював: ${why}`); if(typeof toast==="function") toast(`${desig(d)}: ${why}`,"e"); }
 const rcdDevs = () => S.devices.filter(d=>T[d.type].rcd&&d.on&&!d.trip);
 const lPole = d => tdef(d).poles.findIndex(p=>p.r!=="N"), nPole = d => tdef(d).poles.findIndex(p=>p.r==="N");
+const lPoles = d => tdef(d).poles.map((p,i)=>p.r!=="N"?d.id+":"+i:null).filter(Boolean);
 function affected(d,X,loads){ const Y=makeX(build({open:new Set([d.id])})); return loads.filter(l=>l.a&&X.ph(l.a)&&!Y.ph(l.a)).length; }
 
 function resolveFaults(){
@@ -106,13 +111,13 @@ function resolveFaults(){
     }
     let tripped=false; const loads=computeLoads(X).filter(l=>l.a&&l.b&&l.I>0.015);
     for(const R of rcdDevs()){ const lp=lPole(R), np=nPole(R); if(lp<0||np<0) continue;
-      const YL=makeX(build({openPole:new Set([R.id+":"+lp]),extra:shortsExtra()})), YN=makeX(build({openPole:new Set([R.id+":"+np]),extra:shortsExtra()}));
+      const YL=makeX(build({openPole:new Set(lPoles(R)),extra:shortsExtra()})), YN=makeX(build({openPole:new Set([R.id+":"+np]),extra:shortsExtra()}));
       for(const l of loads){ const pt=!YL.ph(l.a), nt=!YN.hasN(l.b);
         if(pt!==nt){ trip(R,`дисбаланс струмів: ${l.grp?"група «"+devById(l.own).group.name+"»":desig(devById(l.own))} (N ${nt?"через ПЗВ, а фаза — ні":"в обхід ПЗВ"})`); tripped=true; break; } }
       if(tripped) break; }
     if(tripped) continue;
     for(const id of S.leak){ const g=devById(id); if(!g||!X.ph(gL(g))) continue;
-      const rs=rcdDevs().filter(R=>{ const lp=lPole(R); return !makeX(build({openPole:new Set([R.id+":"+lp])})).ph(gL(g)); });
+      const rs=rcdDevs().filter(R=>!makeX(build({openPole:new Set(lPoles(R))})).ph(gL(g)));
       if(rs.length){ rs.sort((a,b)=>affected(a,X,computeLoads(X))-affected(b,X,computeLoads(X))); trip(rs[0],`витік струму в групі «${g.group.name}»`); tripped=true; break; }
       if(!S.leakWarned.has(id)){ S.leakWarned.add(id); logp("e",`Група «${g.group.name}»: витік на корпус, ПЗВ немає — небезпека ураження!`); if(typeof toast==="function") toast("Небезпека ураження: група без ПЗВ","e"); } }
     if(tripped) continue;
@@ -146,7 +151,7 @@ function solve(dt=0){
         if(S.heat[d.id]>=1){ trip(d,t.prot==="fuse"?`вставка згоріла: ${fmt(I)} А при номіналі ${fmt(In,0)} А`:`перевантаження ${fmt(I)} А при ${t.prot==="mpcb"?"уставці":"номіналі"} ${fmt(In,In%1?1:0)} А`); return solve(0); } }
       else S.heat[d.id]=Math.max(0,(S.heat[d.id]||0)-dt*0.3); } }
   for(const d of groupsOf()){ const l=loads.find(x=>x.own===d.id&&x.grp);
-    R.g[d.id]={phase:!!X.ph(gL(d)), neutral:X.hasN(gN(d)), U:l.U, I:l.I, kw:kwOf(d)}; R.totalI+=l.I; }
+    R.g[d.id]={phase:gPh(d,X), neutral:g3(d)?true:X.hasN(gN(d)), U:l.U, I:l.I, kw:kwOf(d)}; R.totalI+=l.I; }
   const anyI=loads.some(l=>(l.I||0)>0||(l.Is&&l.Is.some(x=>x>0)));
   for(const w of S.wires){ const ps=X.P(w.a); if([...ps].some(p=>isPh(p)||isDC(p))||(ps.has("N")&&anyI&&w.kind==="N")) R.liveW.add(w.id); }
   const bad=Object.values(S.src).some(s=>s.on&&(s.U>U_MAX||s.U<U_MIN)), exposed=groupsOf().some(d=>R.g[d.id].phase&&R.g[d.id].neutral&&(R.g[d.id].U>U_MAX||R.g[d.id].U<U_MIN));

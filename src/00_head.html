@@ -189,6 +189,49 @@ select.btn{padding-right:28px}
 .modal-card ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
 .upd-v{margin:0;color:var(--muted);font-size:13px}.upd-v b{color:var(--blue)}
 .brand{flex-wrap:wrap}
+.proj-btn{max-width:42vw;font-size:13px}.proj-btn #projName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inp{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:7px 9px;font-size:14px;color:var(--fg)}
+.inp:focus{border-color:var(--blue);outline:none}
+.row.nowrap{flex-wrap:nowrap}
+.lbl2{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.dlg-b{display:flex;flex-direction:column;gap:8px;max-height:min(62vh,560px);overflow:auto;padding-right:2px}
+.dlg-b p{margin:0;font-size:13.5px}.dlg-f{justify-content:flex-end}
+.plist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r)}
+.pi{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line)}.pi:last-child{border-bottom:0}
+.pi.cur{background:color-mix(in srgb,var(--blue) 8%,transparent)}
+.pi-n{flex:1;min-width:0;display:flex;flex-direction:column}.pi-n b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pi-n small{font-size:11.5px;color:var(--muted)}
+.pi .btn{min-height:32px;padding:4px 10px;font-size:12.5px}
+.wz-steps{display:flex;gap:4px;list-style:none;margin:0;padding:0;counter-reset:wz}
+.wz-steps li{flex:1;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-top:3px solid var(--line);padding-top:5px;text-align:center}
+.wz-steps li.done{border-color:var(--green);color:var(--fg)}.wz-steps li.cur{border-color:var(--blue);color:var(--strong);font-weight:600}
+.wz-opt{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;color:var(--fg)}
+.wz-opt b{font-size:14px;color:var(--strong)}.wz-opt span{font-size:12.5px;color:var(--muted)}
+.wz-opt[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 3px 0 0 var(--blue);background:color-mix(in srgb,var(--blue) 10%,var(--panel2))}
+.wz-sum{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--r)}
+.wz-sum li{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);font-size:13.5px}.wz-sum li:last-child{border-bottom:0}.wz-sum span{color:var(--muted)}
+.chk{display:flex;gap:8px;align-items:center;font-size:13.5px}.chk input{width:18px;height:18px;accent-color:var(--blue)}
+.tm-new{color:var(--blue)!important;font-weight:600}
+.guide{border:1px solid color-mix(in srgb,var(--blue) 45%,var(--line));border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:color-mix(in srgb,var(--blue) 7%,var(--panel))}
+.guide.fin{border-color:color-mix(in srgb,var(--green) 55%,var(--line));background:color-mix(in srgb,var(--green) 7%,var(--panel))}
+.g-top{display:flex;align-items:center;gap:10px}.g-k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.g-bar{flex:1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}.g-bar i{display:block;height:100%;background:var(--green)}
+.g-x{background:none;border:0;color:var(--muted);font-size:16px;padding:2px 6px}
+.g-t{font-size:15px;font-weight:600;color:var(--strong);text-wrap:balance}.g-h{font-size:13px;color:var(--muted);max-width:75ch}
+.g-list{margin:4px 0 0;padding-left:22px;font-size:12.5px;display:flex;flex-direction:column;gap:3px;color:var(--muted)}
+.g-list li.ok{color:var(--green)}.g-list li.ok::marker{content:"✓  "}.g-list li.sk{text-decoration:line-through}.g-list li.cur{color:var(--strong);font-weight:600}
+.demobar{position:fixed;left:0;right:0;bottom:0;z-index:22;background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -6px 22px rgba(0,0,0,.35);max-height:38vh;overflow:auto;
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:6px}
+.db-prog{position:absolute;left:0;right:0;top:0;height:3px;background:var(--line)}.db-prog i{display:block;height:100%;background:var(--blue);transition:width .3s}
+.db-top{display:flex;align-items:center;justify-content:space-between;gap:8px;max-width:1100px;margin:0 auto;width:100%}
+.db-step{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.db-btns{display:flex;gap:6px}.db-btns .btn{min-height:34px;padding:3px 12px}
+.db-say{font-size:14.5px;line-height:1.45;color:var(--strong);max-width:1100px;margin:0 auto;width:100%}
+.db-stat{display:flex;flex-wrap:wrap;gap:4px 8px;max-width:1100px;margin:0 auto;width:100%}
+.dbs{font-size:11.5px;border:1px solid var(--line);border-radius:10px;padding:1px 8px;background:var(--panel2)}.dbs i{font-style:normal;color:var(--muted)}
+.dbs.ok{border-color:color-mix(in srgb,var(--green) 50%,var(--line))}.dbs.e{border-color:var(--red);color:var(--red)}.dbs.w{border-color:color-mix(in srgb,var(--orange) 60%,var(--line))}
+body.demo-on{padding-bottom:42vh}body.demo-on .demo-say{display:none}
+body.demo-on .toast{bottom:calc(min(38vh,100%) + 12px)}
+.dlg-b .volt{flex:0 0 auto}
 
 @media (prefers-reduced-motion: reduce){.spin,.hum{animation:none}}
 
@@ -203,6 +246,7 @@ select.btn{padding-right:28px}
       <span class="verrow"><span class="ver mono" id="ver" role="button" tabindex="0" title="Що нового"></span><button class="btn upd" id="updBtn" title="Перевірити оновлення"><span aria-hidden="true">↻</span> Оновити<i class="dot" aria-hidden="true"></i></button></span>
     </div>
     <div class="actions">
+      <button class="btn proj-btn" id="projBtn" aria-label="Проєкти"><span aria-hidden="true">☰</span><span id="projName">Проєкти</span></button>
       <div class="tpl-dd"><button class="btn tpl-btn" id="tplBtn" aria-haspopup="true" aria-expanded="false"><span class="tpl-k">Шаблон</span><span id="tplName">…</span><span aria-hidden="true">▾</span></button><div class="tpl-menu" id="tplMenu" hidden></div></div>
       <button class="btn primary" id="btnCheck">Перевірити схему</button>
     </div>
@@ -238,4 +282,8 @@ select.btn{padding-right:28px}
 
 <div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheetIn"></div></div>
 <div class="toast" id="toast" style="opacity:0"></div>
+<div class="modal" id="dlg" hidden role="dialog" aria-modal="true" aria-labelledby="dlgTitle"><div class="modal-card" id="dlgCard"></div></div>
+<div class="demobar" id="demobar" hidden role="region" aria-label="Демонстрація"><div class="db-prog"><i id="dbProg"></i></div>
+  <div class="db-top"><span class="db-step" id="dbStep"></span><div class="db-btns"><button class="btn" id="dbPause" aria-label="Пауза">⏸</button><button class="btn" id="dbNext" aria-label="Наступний крок">⏭</button><button class="btn" id="dbStop" aria-label="Зупинити">■</button></div></div>
+  <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>

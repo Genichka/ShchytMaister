@@ -27,7 +27,7 @@ function runChecks(){
   // 2. Прогін під напругою
   const multi=b.inputs.length>1, res=sandbox(()=>{
     const out={}; powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
-    out.g=G.map(g=>({id:g.id, ok:S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral}));
+    out.g=G.map(g=>({id:g.id, ok:!!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)}));
     out.trips=S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip);
     if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; powerUp([inp.id]); runFor(10);
         return {inp, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
@@ -53,12 +53,12 @@ function runChecks(){
   if(!main.length&&G.length) add("e","Немає вступного автомата одразу після вводу","Ввід має заходити на верхні клеми вступного автомата.");
   else if(main.length) add("ok",`Вступн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);
   for(const R of S.devices.filter(d=>d.type==="rcd")) if(mainIn&&inA(R.rating)<mainIn) add("e",`${desig(R)} ${R.rating} А слабший за вступний ${mainIn} А`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за вступний автомат.");
-  for(const g of G){ const In=inA(g.rating), max=CAB[g.group.sec], I=kwOf(g,true)*1000/230;
+  for(const g of G){ const In=inA(g.rating), max=CAB[g.group.sec], I=kwOf(g,true)*1000/(g3(g)?690:230);
     if(In>max) add("e",`${desig(g)} ${g.rating} на кабель ${fmt(g.group.sec)} мм²`,`Для ${fmt(g.group.sec)} мм² автомат не більше ${max} А, або кабель від ${fmt(secFor(In))} мм².`);
     if(I>1.45*In) add("e",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Понад 1,45 × ${In} А, автомат вибиватиме. Розділіть групу.`);
     else if(I>In) add("w",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Більше за номінал ${In} А. При одночасній роботі можливе вимкнення.`);
     if(mainIn&&In>=mainIn) add("w",`${desig(g)} ${g.rating} не менший за вступний`,"Немає селективності: при перевантаженні може вимкнутись увесь щит.");
-    const rc=sandbox(()=>{ powerUp(); runFor(4); const X=S.sim.X; return S.devices.filter(R=>T[R.type].rcd&&!makeX(build({openPole:new Set([R.id+":"+lPole(R)])})).ph(gL(g))).length; });
+    const rc=sandbox(()=>{ powerUp(); runFor(4); const X=S.sim.X; return S.devices.filter(R=>T[R.type].rcd&&!makeX(build({openPole:new Set(lPoles(R))})).ph(gL(g))).length; });
     if(!rc) add(/освітл|світл/i.test(g.group.name)?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА."); }
   if(mainIn&&b.inputs.length===1){ let low=0;
     for(const w of S.wires){ if(!["L","N"].includes(w.kind)) continue; const g2=build({ideal:true,skip:w.id}), g1=build({ideal:true});
