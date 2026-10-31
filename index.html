@@ -187,9 +187,9 @@ select.btn{padding-right:28px}
 .btn.upd.has{border-color:var(--orange);color:var(--orange)}.btn.upd.has .dot{display:block}
 .modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;
   padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.modal-card{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:var(--r);padding:16px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.modal-card{max-height:calc(100dvh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:var(--r);padding:16px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
 .modal-card h2{margin:0;font-size:17px;color:var(--strong)}
-.modal-card ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.modal-card ul{margin:0;padding-left:20px;max-height:40vh;overflow:auto;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
 .upd-v{margin:0;color:var(--muted);font-size:13px}.upd-v b{color:var(--blue)}
 .brand{flex-wrap:wrap}
 .proj-btn{max-width:42vw;font-size:13px}.proj-btn #projName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -292,27 +292,12 @@ body.demo-on .toast{bottom:calc(min(38vh,100%) + 12px)}
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
 /* ===== Версія застосунку (з неї build.sh генерує version.json) ===== */
-const APP = { v:"3.0", date:"2026-10-31", notes:[
-  "Проєкти: збереження кількох щитів, перейменування, копія, експорт і імпорт файлу",
-  "Перед заміною незбереженого щита застосунок питає, чи зберегти його",
-  "Майстер «Новий щит»: назва, ввід (1 фаза, 3 фази, 2 вводи), корпус, шини — і покроковий помічник складання",
-  "Демонстрація на телефоні: пояснення в панелі внизу, щит видно над нею; пауза, наступний крок, стоп",
-  "Корпус і ввід можна змінити для будь-якого щита",
-  "Обладнання поза щитом через XT1: двигуни, світло, бойлер, тепла підлога, кран, PV, інвертори, АКБ",
-  "Нові апарати: ПЗВ 4P, автомат 4P, реле контролю фаз, УЗІП AC, лічильники 1ф і 3ф, реле часу, імпульсне реле, фотореле, розетка і клемник на рейку",
-  "Трифазні групи на автоматах 3P/4P, підпис (наклейка) для будь-якого апарата",
-  "«Скасувати» для будь-якої дії зі щитом",
-  "Кнопка «Оновити» тепер завжди в рядку з номером версії й датою",
-  "Шаблони — у власному меню з дрібнішим шрифтом, розкладені по групах",
-  "Апарати для конструктора сховано у список «Додати апарат» із групами",
-  "Нові порожні щити в «Конструкторі»: 3 фази з двигуном і 2 вводи",
-  "Іконка застосунку: щит встановлюється на телефон як окрема програма",
-  "Працює без інтернету; нова версія ставиться лише після «Оновити зараз»",
-  "Кнопка «Оновити»: нова версія встановлюється лише після вашого підтвердження",
-  "Номер версії й дата в шапці; натисніть на них, щоб побачити, що нового",
-  "Шаблон «PV комбайнер-бокс 2 входи / 2 виходи (600 В)» з двома MPPT і тінню на стрінгу",
-  "Шаблон «PV DC-бокс»: запобіжники gPV, УЗІП DC, DC-автомат, дуга DC",
-  "Масштаб щита двома пальцями до 400 %" ] };
+const APP = { v:"3.0.1", date:"2026-10-31", notes:[
+  "Проєкти: кілька щитів, експорт і імпорт файлу",
+  "Майстер «Новий щит» з покроковим помічником",
+  "Демонстрація на телефоні: пояснення в панелі внизу",
+  "Обладнання поза щитом, нові апарати, «Скасувати»",
+  "Вікно оновлення завжди вміщується на екрані" ] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1726,9 +1711,10 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("tplMenu")&&!$("
     const isNew=mode==="new";
     $("updCard").innerHTML=`<h2 id="updTitle">${isNew?"Доступна нова версія":"Що нового"}</h2>
       <p class="mono upd-v">${isNew?`v${esc(APP.v)} → <b>v${esc(info.v)}</b> від ${fmtD(info.date)}`:`v${esc(info.v)} від ${fmtD(info.date)}`}</p>
-      <ul>${(info.notes||[]).map(n=>`<li>${esc(n)}</li>`).join("")}</ul>
-      ${isNew?`<p class="hint">Зібраний щит збережеться: він лежить у пам’яті браузера.</p>`:""}
-      <div class="row" style="justify-content:flex-end">${isNew?`<button class="btn" data-upd="later">Пізніше</button><button class="btn primary" data-upd="go">Оновити зараз</button>`:`<button class="btn primary" data-upd="later">Закрити</button>`}</div>`;
+      <div class="row" style="justify-content:flex-end">${isNew?`<button class="btn" data-upd="later">Пізніше</button><button class="btn primary" data-upd="go">Оновити зараз</button>`:""}</div>
+      <ul>${(info.notes||[]).slice(0,8).map(n=>`<li>${esc(n)}</li>`).join("")}</ul>
+      ${isNew?`<p class="hint">Зібрані щити й проєкти збережуться.</p>`:""}
+      <div class="row" style="justify-content:flex-end">${isNew?"":`<button class="btn primary" data-upd="later">Закрити</button>`}</div>`;
     modal.hidden=false; const f=modal.querySelector(".btn.primary"); if(f) f.focus(); }
   async function check(silent){
     try{ remote=await fetchRemote();
