@@ -3,7 +3,7 @@ const XT_SM = [["lL","Св L","L"],["lN","Св N","N"],["bL","Бойл L","L"],[
 const scene = name => { const sr1=byDes("SR1"), sr2=byDes("SR2"), tr=byDes("TR1");
   if(name==="away"){ sr1.cmd=false; sr2.cmd=false; tr.set=18; } else { sr1.cmd=true; sr2.cmd=true; tr.set=25; tr.en=true; }
   logp("ok",`Сценарій «${name==="away"?"Нікого вдома":"Я вдома"}»: ${name==="away"?"світло і бойлер вимкнено, підлога 18 °C":"світло, бойлер, підлога 25 °C"}`); };
-TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, лічильник, кран", cat:"Квартира і дім",
+TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, лічильник, кран", cat:"Квартира і будинок",
   info:"Розумні реле керують світлом і котушкою контактора бойлера (саме реле 16 А бойлер напряму не тягне). Терморегулятор веде теплу підлогу. Хаб Zigbee отримує сигнал датчика протікання і через реле KR1 закриває кран. Лічильник PM1 рахує споживання.",
   build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід",terms:["L","N","PE"]}], xn:6, xpe:2, xt:XT_SM}); S.env={leak:false};
     const qf1=D("qf2p",0,0,"C40"), kv=D("kv",0,2,"63"), pm=D("pm",0,4), qd=D("rcd",0,6,"63"),

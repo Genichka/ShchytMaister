@@ -143,7 +143,8 @@ select.btn{padding-right:28px}
 .heat{animation:heat 1s ease-in-out infinite}
 @keyframes heat{50%{opacity:.35}}
 @media (prefers-reduced-motion: reduce){.flow,.heat{animation:none}}
-.tplinfo{margin:0;font-size:13px;color:var(--muted);max-width:75ch}
+.tplinfo{margin:0;font-size:12px;line-height:1.5;color:var(--muted);max-width:80ch}
+.tplinfo b{color:var(--fg);font-weight:600}
 .demo{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:var(--r);padding:10px;background:color-mix(in srgb,var(--blue) 6%,var(--panel))}
 .demo-say{font-size:14px;color:var(--strong);border-left:3px solid var(--blue);padding:4px 10px;line-height:1.5}
 .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -159,7 +160,26 @@ select.btn{padding-right:28px}
 .spin{animation:spin .45s linear infinite;transform-box:fill-box;transform-origin:center}.spin.rev{animation-direction:reverse}
 .hum{animation:hum .09s linear infinite;transform-box:fill-box;transform-origin:center}
 @keyframes spin{to{transform:rotate(360deg)}} @keyframes hum{50%{transform:rotate(6deg)}}
-#tpl{max-width:min(320px,100%)}
+.tpl-dd{position:relative;min-width:0;flex:1 1 220px;max-width:420px}
+.tpl-btn{width:100%;justify-content:flex-start;font-size:13px;overflow:hidden}
+.tpl-btn #tplName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left;min-width:0}
+.tpl-k{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tpl-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:25;width:min(380px,calc(100vw - 32px));max-height:70vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.35);padding:4px 0}
+.tm-g{padding:4px 0;border-bottom:1px solid var(--line)}.tm-g:last-child{border-bottom:0}
+.tm-h{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:6px 12px 2px}
+.tm-i{display:block;width:100%;text-align:left;background:none;border:0;padding:7px 12px;font-size:12.5px;line-height:1.35;color:var(--fg)}
+.tm-i:hover,.tm-i:focus-visible{background:var(--panel2)}.tm-i[aria-current="true"]{color:var(--blue);font-weight:600;box-shadow:inset 3px 0 0 var(--blue)}
+.dd2{border:1px solid var(--line);border-radius:var(--r);background:var(--panel2)}
+.dd2>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;font-size:13px;font-weight:500}
+.dd2>summary::-webkit-details-marker{display:none}
+.dd2>summary::after{content:"▾";color:var(--muted);margin-left:4px}.dd2[open]>summary::after{content:"▴"}
+.dd2 .cnt{margin-left:auto;font-size:11px;color:var(--muted)}
+.cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:2px 14px;padding:4px 10px 10px;border-top:1px solid var(--line)}
+.cat-g{display:flex;flex-direction:column;min-width:0}
+.cat-h{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 2px 3px}
+.cat-i{display:flex;justify-content:space-between;gap:8px;align-items:baseline;background:none;border:0;border-radius:3px;padding:6px 6px;font-size:12.5px;text-align:left;color:var(--fg)}
+.cat-i small{color:var(--muted);font-family:var(--mono);font-size:10.5px;white-space:nowrap}
+.cat-i:hover{background:var(--panel)}.cat-i[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 16%,var(--panel));color:var(--strong)}
 .ver{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 8px;cursor:pointer;white-space:nowrap}
 .ver:hover{color:var(--fg);border-color:var(--muted)}
 .btn.upd{position:relative}.btn.upd .dot{display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 2px var(--bg)}
@@ -185,7 +205,7 @@ select.btn{padding-right:28px}
       <span class="ver mono" id="ver" role="button" tabindex="0" title="Що нового"></span>
     </div>
     <div class="actions">
-      <select class="btn" id="tpl" aria-label="Шаблон щита"><option value="">Шаблон…</option></select>
+      <div class="tpl-dd"><button class="btn tpl-btn" id="tplBtn" aria-haspopup="true" aria-expanded="false"><span class="tpl-k">Шаблон</span><span id="tplName">…</span><span aria-hidden="true">▾</span></button><div class="tpl-menu" id="tplMenu" hidden></div></div>
       <button class="btn upd" id="updBtn" title="Перевірити оновлення"><span aria-hidden="true">↻</span> Оновити<i class="dot" aria-hidden="true"></i></button>
       <button class="btn primary" id="btnCheck">Перевірити схему</button>
     </div>
@@ -224,7 +244,10 @@ select.btn{padding-right:28px}
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
 /* ===== Версія застосунку (з неї build.sh генерує version.json) ===== */
-const APP = { v:"2.5", date:"2026-10-31", notes:[
+const APP = { v:"2.6", date:"2026-10-31", notes:[
+  "Шаблони — у власному меню з дрібнішим шрифтом, розкладені по групах",
+  "Апарати для конструктора сховано у список «Додати апарат» із групами",
+  "Нові порожні щити в «Конструкторі»: 3 фази з двигуном і 2 вводи",
   "Іконка застосунку: щит встановлюється на телефон як окрема програма",
   "Працює без інтернету; нова версія ставиться лише після «Оновити зараз»",
   "Кнопка «Оновити»: нова версія встановлюється лише після вашого підтвердження",
@@ -962,7 +985,7 @@ const G1 = (rail,slot,rating,i,name,sec,loads) => D("qf1p",rail,slot,rating,{gro
 const byDes = s => S.devices.find(d=>desig(d)===s);
 const say = (src,on,U) => { const s=S.src[src]; if(on!==undefined) s.on=on; if(U!==undefined) s.U=U; };
 
-TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 5 груп", cat:"Квартира і дім",
+TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 5 груп", cat:"Квартира і будинок",
   info:"Типовий щит квартири: вступний автомат, реле напруги, ПЗВ 30 мА і групові автомати на гребінці.",
   build(){ tplStart();
     const qf1=D("qf2p",0,0,"C32"), kv=D("kv",0,2,"40"), qd=D("rcd",0,4,"40");
@@ -984,8 +1007,15 @@ TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 
       {say:"Прибираємо аварію і знову вмикаємо QD1.", do(){ S.leak.clear(); S.leakWarned.clear(); const q=byDes("QD1"); q.on=true; q.trip=null; }, wait:3},
       {say:"Коротке замикання на кухні: спрацьовує лише QF3, решта квартири працює.", do(){ S.short.add(byDes("QF3").id); }, wait:3},
       {say:"Готово. Прибираємо КЗ і вмикаємо QF3.", do(){ S.short.clear(); const q=byDes("QF3"); q.on=true; q.trip=null; }, wait:1}]}};
-TPL.empty = { name:"Порожній щит (2 рейки)", cat:"Квартира і дім", info:"Збирайте власну схему: ставте апарати на рейки й прокладайте дроти.",
+TPL.empty = { name:"Порожній щит · 1 фаза · 2 рейки", cat:"Конструктор", info:"Збирайте власну схему: оберіть апарат у списку «Додати апарат», торкніться вільного місця на рейці й прокладіть дроти в режимі «Проводка».",
   build(){ tplStart({rails:2}); }, demo:{controls:[{type:"src",id:"in"}], script:[]}};
+TPL.empty3 = { name:"Порожній щит · 3 фази + двигун", cat:"Конструктор", info:"Трифазний ввід і двигун 4 кВт, уже підключений до клемника XT1 (U, V, W, PE). Зберіть схему пуску: автомат захисту двигуна, контактор, кнопки «Пуск» і «Стоп».",
+  build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}], xt:[{k:"U",l:"U",r:"P"},{k:"V",l:"V",r:"P"},{k:"W",l:"W",r:"P"},{k:"PE",l:"PE",r:"PE"}]});
+    F("motor3",{U:"xt:U",V:"xt:V",W:"xt:W",PE:"xt:PE"}); },
+  demo:{controls:[{type:"src",id:"in",label:"Мережа 3~"},{type:"toggle",label:"Обрив фази L3",get:()=>!!S.src.in.lost.L3,set:v=>{ S.src.in.lost.L3=v; }}], script:[]}};
+TPL.empty2 = { name:"Порожній щит · 2 вводи (мережа + генератор)", cat:"Конструктор", info:"Два вводи: мережа і генератор. Зберіть власний АВР на модулі, контакторах або LOGO! і перевірте, чи немає зустрічного ввімкнення.",
+  build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}], xn:8, xpe:8}); },
+  demo:{controls:[{type:"src",id:"in",label:"Мережа"},{type:"src",id:"in2",label:"Генератор",noU:true}], script:[]}};
 /* ===== Шаблони АВР на 2 вводи (1 фаза) ===== */
 const ATS_BOARD = () => ({rails:2, inputs:[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}], xn:6, xpe:6});
 function atsGroups(r,s0){ const a=G1(r,s0,"B16",0,"Розетки",2.5,[["Холодильник",0.15,1],["Чайник",2.0,0],["Телевізор",0.15,1]]);
@@ -1287,7 +1317,7 @@ const XT_SM = [["lL","Св L","L"],["lN","Св N","N"],["bL","Бойл L","L"],[
 const scene = name => { const sr1=byDes("SR1"), sr2=byDes("SR2"), tr=byDes("TR1");
   if(name==="away"){ sr1.cmd=false; sr2.cmd=false; tr.set=18; } else { sr1.cmd=true; sr2.cmd=true; tr.set=25; tr.en=true; }
   logp("ok",`Сценарій «${name==="away"?"Нікого вдома":"Я вдома"}»: ${name==="away"?"світло і бойлер вимкнено, підлога 18 °C":"світло, бойлер, підлога 25 °C"}`); };
-TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, лічильник, кран", cat:"Квартира і дім",
+TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, лічильник, кран", cat:"Квартира і будинок",
   info:"Розумні реле керують світлом і котушкою контактора бойлера (саме реле 16 А бойлер напряму не тягне). Терморегулятор веде теплу підлогу. Хаб Zigbee отримує сигнал датчика протікання і через реле KR1 закриває кран. Лічильник PM1 рахує споживання.",
   build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід",terms:["L","N","PE"]}], xn:6, xpe:2, xt:XT_SM}); S.env={leak:false};
     const qf1=D("qf2p",0,0,"C40"), kv=D("kv",0,2,"63"), pm=D("pm",0,4), qd=D("rcd",0,6,"63"),
@@ -1337,7 +1367,9 @@ TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, л�
 const $ = id => document.getElementById(id);
 let toastT=null;
 function toast(msg,cls=""){ if(S.quiet) return; const t=$("toast"); t.textContent=msg; t.className="toast "+cls; t.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,2600); }
-const CATS = ["Захист","Керування","Комутація","Розумний дім","СЕС"];
+const DEV_GROUPS = [["Захист ліній",["qf1p","qf2p","qf3p","rcbo","rcd"]],["Контроль напруги",["kv"]],["Комутація і АВР",["ats","qs","km2a","km3a"]],
+  ["Керування",["sbp","sbs","hl","rel","logo"]],["Двигуни",["qm"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
+const TPL_ORDER = ["Конструктор","Квартира і будинок","АВР на 2 вводи","Сонячна станція","Двигуни"];
 let clearArm=0;
 function applyTemplate(name){ const t=TPL[name]||TPL.flat; t.build(); S.tpl=TPL[name]?name:"flat"; S.tplObj=t; S.env0=JSON.parse(JSON.stringify(S.env||{}));
   Object.assign(S,{pend:null,selWire:null,selDev:null,pick:null,heat:{},log:[],demo:null}); S.leak.clear(); S.short.clear(); S.leakWarned.clear(); save(); }
@@ -1364,8 +1396,9 @@ function ctlHTML(c,i){
   return ""; }
 function renderTools(){ const el=$("tools"); let s="";
   if(S.mode==="mount"){
-    for(const cat of CATS){ const ks=Object.keys(T).filter(x=>T[x].cat===cat); if(!ks.length) continue;
-      s+=`<div class="row"><span class="lbl">${cat}</span>`+ks.map(x=>`<button class="chip" data-pick="${x}" aria-pressed="${S.pick===x}">${T[x].short} <small>${T[x].w} мод.</small></button>`).join("")+`</div>`; }
+    const listed=new Set(DEV_GROUPS.flatMap(g=>g[1])), rest=Object.keys(T).filter(x=>!listed.has(x));
+    s+=`<details class="dd2" id="devDD"${S.devOpen?" open":""}><summary><span>${S.pick?"Ставимо: <b>"+esc(T[S.pick].short)+"</b>":"Додати апарат"}</span><span class="cnt">${Object.keys(T).length} апаратів</span></summary><div class="cat">`
+      +[...DEV_GROUPS,...(rest.length?[["Інше",rest]]:[])].map(([g,ks])=>`<div class="cat-g"><div class="cat-h">${esc(g)}</div>`+ks.filter(x=>T[x]).map(x=>`<button class="cat-i" data-pick="${x}" aria-pressed="${S.pick===x}"><span>${esc(T[x].name)}</span><small>${T[x].w} мод.</small></button>`).join("")+`</div>`).join("")+`</div></details>`;
     s+=`<div class="row"><span class="lbl">Шини</span><button class="chip" id="combBtn">${S.comb?"Зняти гребінку":"Поставити гребінку 1P"}</button><span class="hint">Гребінка з’єднує верхні клеми автоматів 1P, що стоять поруч.</span></div>`; }
   if(S.mode==="wire"){ const sw=S.selWire&&S.wires.find(w=>w.id===S.selWire), kind=sw?sw.kind:S.wireKind, sec=sw?sw.sec:S.wireSec;
     s+=`<div class="row"><span class="lbl">Провід</span>`+Object.keys(WK).map(x=>`<button class="chip" data-kind="${x}" aria-pressed="${kind===x}"><span class="sw" style="background:${x==="PE"?"linear-gradient(90deg,var(--wPEy) 50%,var(--wPEg) 50%)":WK[x][1]}"></span>${WK[x][0]}</button>`).join("")+`</div>`;
@@ -1373,7 +1406,7 @@ function renderTools(){ const el=$("tools"); let s="";
     if(sw) s+=`<div class="row"><span class="lbl">Вибрано</span><span class="mono" style="font-size:12.5px;min-width:0;flex:1 1 200px">${WK[sw.kind][0]} ${fmt(sw.sec,sw.sec%1?1:0)} мм²: ${esc(termName(sw.a))} → ${esc(termName(sw.b))}</span><button class="btn danger" id="delWire">Видалити дріт</button></div>`;
     s+=`<div class="row"><button class="btn" id="undoWire" ${S.wires.length?"":"disabled"}>Скасувати останній</button><button class="btn danger" id="clearWires" ${S.wires.length?"":"disabled"}>${clearArm>Date.now()?"Натисніть ще раз для очищення":"Прибрати всі дроти"}</button></div>`; }
   if(S.mode==="test"){ const dm=S.tplObj&&S.tplObj.demo||{controls:[{type:"src",id:S.board.inputs[0].id}],script:[]};
-    s+=`<p class="tplinfo">${esc(S.tplObj?S.tplObj.info:"")}</p>`;
+    s+=`<p class="tplinfo"><b>${esc(S.tplObj?S.tplObj.name:"")}.</b> ${esc(S.tplObj?S.tplObj.info:"")}</p>`;
     if(dm.script.length) s+=`<div class="demo"><div class="row"><button class="btn primary" id="demoBtn">${S.demo?"■ Зупинити":"▶ Демонстрація"}</button><span class="hint" style="flex:1 1 160px">${S.demo?"Крок "+(S.demo.i+1)+" з "+dm.script.length:"Автоматичний сценарій з поясненнями. Стан щита скидається на початковий."}</span></div>`+
       `<div class="demo-say" id="demoSay"${S.demo?"":" hidden"}>${S.demo?esc(dm.script[S.demo.i].say):""}</div></div>`;
     s+=`<div class="ctl">`+dm.controls.map(ctlHTML).join("")+`</div>`;
@@ -1446,6 +1479,7 @@ function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw
 
 document.addEventListener("click",e=>{
   const q=s=>e.target.closest(s); let el;
+  if(!q(".tpl-dd")&&!$("tplMenu").hidden){ $("tplMenu").hidden=true; $("tplBtn").setAttribute("aria-expanded","false"); }
   if(el=q(".modes button")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; renderAll(); return; }
   if(el=q("[data-term]")){ termTap(el.dataset.term); return; }
   if(el=q("[data-wire]")){ S.selWire=S.selWire===el.dataset.wire?null:el.dataset.wire; renderAll(); return; }
@@ -1457,7 +1491,11 @@ document.addEventListener("click",e=>{
     if(d.on&&!d.trip&&X.volt(k(d,"t1"),k(d,"t2"))>=150){ trip(d,"кнопка «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює, лише коли ПЗВ під напругою і ввімкнений","w"); return; }
   if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть апарат нижче"); return; }
   if(el=q("[data-dev]")){ if(S.mode==="wire") return; S.selDev=el.dataset.dev; renderAll(false); return; }
-  if(el=q("[data-pick]")){ S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.selDev=null; renderAll(); return; }
+  if(el=q("[data-pick]")){ S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.selDev=null; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); } renderAll(); return; }
+  if(q("#tplBtn")){ const m=$("tplMenu"); if(m.hidden) renderTplMenu(); m.hidden=!m.hidden; $("tplBtn").setAttribute("aria-expanded",!m.hidden); return; }
+  if(el=q("[data-tpl]")){ $("tplMenu").hidden=true; $("tplBtn").setAttribute("aria-expanded","false"); applyTemplate(el.dataset.tpl); $("checkOut").hidden=true;
+    S.mode=S.tplObj.demo&&S.tplObj.demo.script.length?"test":"mount"; S.devOpen=S.mode==="mount"; toast("Шаблон завантажено","ok"); commit(); tplLabel(); return; }
+
   if(q("#combBtn")){ if(S.comb) S.comb=null; else { const p=S.devices.filter(d=>d.type==="qf1p"); if(p.length<2){ toast("Потрібно щонайменше два автомати 1P","w"); return; }
       const r=p[0].rail||0, sl=p.filter(d=>(d.rail||0)===r).map(d=>d.slot); S.comb={rail:r,from:Math.min(...sl),to:Math.max(...sl)}; } commit(); return; }
   if(el=q("[data-kind]")){ const sw=S.selWire&&S.wires.find(w=>w.id===S.selWire); if(sw){ sw.kind=el.dataset.kind; commit(); } else { S.wireKind=el.dataset.kind; renderAll(); } return; }
@@ -1507,11 +1545,15 @@ document.addEventListener("input",e=>{ const t=e.target;
 });
 setInterval(()=>{ if(!anySource()&&!S.demo) return; solve(0.5); render(); renderSummary(); hint(); updateLive(); },500);
 setInterval(()=>{ if(!S.demo) return; S.demo.left-=0.25; if(S.demo.left<=0) demoNext(); },250);
+function renderTplMenu(){ const cats=[...TPL_ORDER,...new Set(Object.values(TPL).map(t=>t.cat))].filter((c,i,a)=>a.indexOf(c)===i);
+  $("tplMenu").innerHTML=cats.map(c=>{ const it=Object.entries(TPL).filter(([,t])=>t.cat===c); if(!it.length) return "";
+    return `<div class="tm-g"><div class="tm-h">${esc(c)}</div>`+it.map(([key,t])=>`<button class="tm-i" data-tpl="${key}" aria-current="${S.tpl===key}">${esc(t.name)}</button>`).join("")+`</div>`; }).join(""); }
+function tplLabel(){ const t=TPL[S.tpl]; $("tplName").textContent=t?t.name:"Шаблон"; }
+document.addEventListener("toggle",e=>{ if(e.target.id==="devDD") S.devOpen=e.target.open; },true);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("tplMenu")&&!$("tplMenu").hidden){ $("tplMenu").hidden=true; $("tplBtn").focus(); } });
 (function init(){
-  const sel=$("tpl"), cats=[...new Set(Object.values(TPL).map(t=>t.cat))];
-  sel.innerHTML=`<option value="">Шаблон…</option>`+cats.map(c=>`<optgroup label="${esc(c)}">`+Object.entries(TPL).filter(([,t])=>t.cat===c).map(([key,t])=>`<option value="${key}">${esc(t.name)}</option>`).join("")+`</optgroup>`).join("");
   if(load()&&TPL[S.tpl]){ S.tplObj=TPL[S.tpl]; S.env0=S.env0||JSON.parse(JSON.stringify(S.env)); } else applyTemplate("flat");
-  commit();
+  commit(); tplLabel();
 })();
 /* ===== Масштаб щита двома пальцями (і щипком на тачпаді) ===== */
 (function(){

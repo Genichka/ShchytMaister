@@ -140,7 +140,8 @@ select.btn{padding-right:28px}
 .heat{animation:heat 1s ease-in-out infinite}
 @keyframes heat{50%{opacity:.35}}
 @media (prefers-reduced-motion: reduce){.flow,.heat{animation:none}}
-.tplinfo{margin:0;font-size:13px;color:var(--muted);max-width:75ch}
+.tplinfo{margin:0;font-size:12px;line-height:1.5;color:var(--muted);max-width:80ch}
+.tplinfo b{color:var(--fg);font-weight:600}
 .demo{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:var(--r);padding:10px;background:color-mix(in srgb,var(--blue) 6%,var(--panel))}
 .demo-say{font-size:14px;color:var(--strong);border-left:3px solid var(--blue);padding:4px 10px;line-height:1.5}
 .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -156,7 +157,26 @@ select.btn{padding-right:28px}
 .spin{animation:spin .45s linear infinite;transform-box:fill-box;transform-origin:center}.spin.rev{animation-direction:reverse}
 .hum{animation:hum .09s linear infinite;transform-box:fill-box;transform-origin:center}
 @keyframes spin{to{transform:rotate(360deg)}} @keyframes hum{50%{transform:rotate(6deg)}}
-#tpl{max-width:min(320px,100%)}
+.tpl-dd{position:relative;min-width:0;flex:1 1 220px;max-width:420px}
+.tpl-btn{width:100%;justify-content:flex-start;font-size:13px;overflow:hidden}
+.tpl-btn #tplName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left;min-width:0}
+.tpl-k{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tpl-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:25;width:min(380px,calc(100vw - 32px));max-height:70vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.35);padding:4px 0}
+.tm-g{padding:4px 0;border-bottom:1px solid var(--line)}.tm-g:last-child{border-bottom:0}
+.tm-h{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:6px 12px 2px}
+.tm-i{display:block;width:100%;text-align:left;background:none;border:0;padding:7px 12px;font-size:12.5px;line-height:1.35;color:var(--fg)}
+.tm-i:hover,.tm-i:focus-visible{background:var(--panel2)}.tm-i[aria-current="true"]{color:var(--blue);font-weight:600;box-shadow:inset 3px 0 0 var(--blue)}
+.dd2{border:1px solid var(--line);border-radius:var(--r);background:var(--panel2)}
+.dd2>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;font-size:13px;font-weight:500}
+.dd2>summary::-webkit-details-marker{display:none}
+.dd2>summary::after{content:"▾";color:var(--muted);margin-left:4px}.dd2[open]>summary::after{content:"▴"}
+.dd2 .cnt{margin-left:auto;font-size:11px;color:var(--muted)}
+.cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:2px 14px;padding:4px 10px 10px;border-top:1px solid var(--line)}
+.cat-g{display:flex;flex-direction:column;min-width:0}
+.cat-h{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 2px 3px}
+.cat-i{display:flex;justify-content:space-between;gap:8px;align-items:baseline;background:none;border:0;border-radius:3px;padding:6px 6px;font-size:12.5px;text-align:left;color:var(--fg)}
+.cat-i small{color:var(--muted);font-family:var(--mono);font-size:10.5px;white-space:nowrap}
+.cat-i:hover{background:var(--panel)}.cat-i[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 16%,var(--panel));color:var(--strong)}
 .ver{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 8px;cursor:pointer;white-space:nowrap}
 .ver:hover{color:var(--fg);border-color:var(--muted)}
 .btn.upd{position:relative}.btn.upd .dot{display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 2px var(--bg)}
@@ -182,7 +202,7 @@ select.btn{padding-right:28px}
       <span class="ver mono" id="ver" role="button" tabindex="0" title="Що нового"></span>
     </div>
     <div class="actions">
-      <select class="btn" id="tpl" aria-label="Шаблон щита"><option value="">Шаблон…</option></select>
+      <div class="tpl-dd"><button class="btn tpl-btn" id="tplBtn" aria-haspopup="true" aria-expanded="false"><span class="tpl-k">Шаблон</span><span id="tplName">…</span><span aria-hidden="true">▾</span></button><div class="tpl-menu" id="tplMenu" hidden></div></div>
       <button class="btn upd" id="updBtn" title="Перевірити оновлення"><span aria-hidden="true">↻</span> Оновити<i class="dot" aria-hidden="true"></i></button>
       <button class="btn primary" id="btnCheck">Перевірити схему</button>
     </div>

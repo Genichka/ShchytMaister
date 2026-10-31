@@ -10,7 +10,7 @@ const G1 = (rail,slot,rating,i,name,sec,loads) => D("qf1p",rail,slot,rating,{gro
 const byDes = s => S.devices.find(d=>desig(d)===s);
 const say = (src,on,U) => { const s=S.src[src]; if(on!==undefined) s.on=on; if(U!==undefined) s.U=U; };
 
-TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 5 груп", cat:"Квартира і дім",
+TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 5 груп", cat:"Квартира і будинок",
   info:"Типовий щит квартири: вступний автомат, реле напруги, ПЗВ 30 мА і групові автомати на гребінці.",
   build(){ tplStart();
     const qf1=D("qf2p",0,0,"C32"), kv=D("kv",0,2,"40"), qd=D("rcd",0,4,"40");
@@ -32,5 +32,12 @@ TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 
       {say:"Прибираємо аварію і знову вмикаємо QD1.", do(){ S.leak.clear(); S.leakWarned.clear(); const q=byDes("QD1"); q.on=true; q.trip=null; }, wait:3},
       {say:"Коротке замикання на кухні: спрацьовує лише QF3, решта квартири працює.", do(){ S.short.add(byDes("QF3").id); }, wait:3},
       {say:"Готово. Прибираємо КЗ і вмикаємо QF3.", do(){ S.short.clear(); const q=byDes("QF3"); q.on=true; q.trip=null; }, wait:1}]}};
-TPL.empty = { name:"Порожній щит (2 рейки)", cat:"Квартира і дім", info:"Збирайте власну схему: ставте апарати на рейки й прокладайте дроти.",
+TPL.empty = { name:"Порожній щит · 1 фаза · 2 рейки", cat:"Конструктор", info:"Збирайте власну схему: оберіть апарат у списку «Додати апарат», торкніться вільного місця на рейці й прокладіть дроти в режимі «Проводка».",
   build(){ tplStart({rails:2}); }, demo:{controls:[{type:"src",id:"in"}], script:[]}};
+TPL.empty3 = { name:"Порожній щит · 3 фази + двигун", cat:"Конструктор", info:"Трифазний ввід і двигун 4 кВт, уже підключений до клемника XT1 (U, V, W, PE). Зберіть схему пуску: автомат захисту двигуна, контактор, кнопки «Пуск» і «Стоп».",
+  build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}], xt:[{k:"U",l:"U",r:"P"},{k:"V",l:"V",r:"P"},{k:"W",l:"W",r:"P"},{k:"PE",l:"PE",r:"PE"}]});
+    F("motor3",{U:"xt:U",V:"xt:V",W:"xt:W",PE:"xt:PE"}); },
+  demo:{controls:[{type:"src",id:"in",label:"Мережа 3~"},{type:"toggle",label:"Обрив фази L3",get:()=>!!S.src.in.lost.L3,set:v=>{ S.src.in.lost.L3=v; }}], script:[]}};
+TPL.empty2 = { name:"Порожній щит · 2 вводи (мережа + генератор)", cat:"Конструктор", info:"Два вводи: мережа і генератор. Зберіть власний АВР на модулі, контакторах або LOGO! і перевірте, чи немає зустрічного ввімкнення.",
+  build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}], xn:8, xpe:8}); },
+  demo:{controls:[{type:"src",id:"in",label:"Мережа"},{type:"src",id:"in2",label:"Генератор",noU:true}], script:[]}};
