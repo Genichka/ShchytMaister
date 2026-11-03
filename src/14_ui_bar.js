@@ -8,6 +8,7 @@ const segRow = (list,cur) => `<div class="br seg">${list.map(([k,l])=>`<button c
 const chip = (attr,on,label,cls) => `<button class="chip${cls?" "+cls:""}" ${attr} aria-pressed="${!!on}">${label}</button>`;
 function bseg(id,list,def){ if(S.bsegFor!==id){ S.bsegFor=id; S.bseg=def; } if(!list.some(x=>x[0]===S.bseg)) S.bseg=list[0][0]; return S.bseg; }
 
+let guideOn=false;   // помічник показує незавершений крок (ставить guideBar)
 function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), f=S.selDev&&S.field.find(x=>x.id===S.selDev), w=S.mode==="wire"&&S.selWire&&wireById(S.selWire);
   if(S.noDoc) h=noDocBar();
@@ -16,7 +17,7 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   else if(w) h=wireBar(w);
   else if(d) h=devBar(d);
   else if(f) h=fieldBar(f);
-  else h=(typeof guideBar==="function"?guideBar():"")+(S.mode==="mount"?mountBar():S.mode==="wire"?wireToolsBar():testBar());
+  else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter?"":mountBar()):S.mode==="wire"?wireToolsBar():testBar()); }
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
 // ---- Порожня робоча зона: стартові дії й останні проєкти

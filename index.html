@@ -77,8 +77,8 @@ h1{margin:0;font-size:18px;font-weight:500;letter-spacing:0;white-space:nowrap}
 
 /* ---- Робоча зона */
 .work{position:relative;min-height:0;display:grid;grid-template-rows:auto 1fr;background:var(--bg)}
-.work .hint{font-size:12px;line-height:1.35;padding:5px 12px;background:var(--panel);border-bottom:1px solid var(--line);
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.work .hint{font-size:12px;line-height:1.35;padding:5px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.work .hint>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .scroller{min-height:0;height:100%;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
 #svg{display:block;width:100%;height:auto;margin:0 auto;user-select:none;-webkit-user-select:none}
 .fab{position:absolute;right:8px;top:44px;z-index:5;display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--panel2)}
@@ -362,7 +362,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.5.3", date:"2026-11-03", notes:["Прибрано кнопку «Готово» при встановленні апарата: один дотик по вільному місцю ставить апарат і закриває вибір; кілька штук — через «Скільки ×N»; ✕ — скасувати","Термін «ввідний автомат» замість «вступний»","На телефоні низ інтерфейсу більше не з’їжджає під системну панель"] };
+const APP = { v:"4.5.3", date:"2026-11-03", notes:["Прибрано кнопку «Готово» при встановленні апарата: один дотик по вільному місцю ставить апарат і закриває вибір; кілька штук — через «Скільки ×N»; ✕ — скасувати","Під час кроку помічника каталог із категоріями не вискакує: потрібні апарати відкриває кнопка «Обрати …»","Підказка вгорі обрізається рівно по двох рядках","Термін «ввідний автомат» замість «вступний»; низ інтерфейсу більше не з’їжджає під системну панель"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1861,12 +1861,12 @@ function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=2
 function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
-function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="Робоча зона порожня. Створіть новий щит, відкрийте збережений проєкт або приклад."; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&S.mode!=="plan"&&typeof guideHint==="function")?guideHint():"";
+function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щит, відкрийте збережений проєкт або приклад.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&S.mode!=="plan"&&typeof guideHint==="function")?guideHint():"";
   if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця на рейці${S.pickQty>1?` — поставиться ${S.pickQty} шт. підряд`:""}. ✕ унизу — скасувати.`:"Оберіть апарат нижче й поставте на рейку. Торкніться апарата — налаштування; затисніть і тягніть — пересунути.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
   if(S.mode==="plan") h=planHint();
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
-  if(gh0) h=gh0; $("hint").innerHTML=h; }
+  if(gh0) h=gh0; $("hint").innerHTML=`<span>${h}</span>`; }
 function ctlHTML(c,i){
   if(c.type==="src"){ const s=S.src[c.id]||{}, inp=S.board.inputs.find(x=>x.id===c.id)||{}, three=(inp.terms||[]).includes("L1");
     return `<div class="mains"><button class="switch" data-srcon="${c.id}" aria-pressed="${!!s.on}"><span class="knob"></span>${esc(c.label||inp.label)}</button>`+
@@ -1907,6 +1907,7 @@ const segRow = (list,cur) => `<div class="br seg">${list.map(([k,l])=>`<button c
 const chip = (attr,on,label,cls) => `<button class="chip${cls?" "+cls:""}" ${attr} aria-pressed="${!!on}">${label}</button>`;
 function bseg(id,list,def){ if(S.bsegFor!==id){ S.bsegFor=id; S.bseg=def; } if(!list.some(x=>x[0]===S.bseg)) S.bseg=list[0][0]; return S.bseg; }
 
+let guideOn=false;   // помічник показує незавершений крок (ставить guideBar)
 function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), f=S.selDev&&S.field.find(x=>x.id===S.selDev), w=S.mode==="wire"&&S.selWire&&wireById(S.selWire);
   if(S.noDoc) h=noDocBar();
@@ -1915,7 +1916,7 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   else if(w) h=wireBar(w);
   else if(d) h=devBar(d);
   else if(f) h=fieldBar(f);
-  else h=(typeof guideBar==="function"?guideBar():"")+(S.mode==="mount"?mountBar():S.mode==="wire"?wireToolsBar():testBar());
+  else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter?"":mountBar()):S.mode==="wire"?wireToolsBar():testBar()); }
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
 // ---- Порожня робоча зона: стартові дії й останні проєкти
@@ -2480,7 +2481,7 @@ function guideCur(){ if(!S.guide||!S.guide.on) return null; const st=guideSteps(
 function guideHint(){ const g=guideCur(); if(!g) return ""; if(g.cur<0) return "<b>Помічник:</b> щит зібрано і випробувано. Збережіть проєкт або зробіть документи.";
   const td=g.s.todo?g.s.todo():[]; if(td.length) return `<b>Крок ${g.cur+1} · ${esc(g.s.short||g.s.t)}:</b> `+td.map(x=>x.bad?`<span style="color:var(--red)">✕ ${esc(x.t)}</span>`:`<span style="color:${x.ok?"var(--green)":"var(--fg)"}">${x.ok?"✓":"○"} ${esc(kName(x.a))} → ${esc(kName(x.b))}</span>`).join(" · ");
   return `<b>Крок ${g.cur+1}:</b> ${esc(g.s.h)}`; }
-function guideBar(){ const g=guideCur(); if(!g) return "";
+function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return "";
   if(g.cur<0){ S.devFilter=null; return `<div class="br gd"><span class="gk">✓</span><b class="gt">Щит зібрано і випробувано</b><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`; }
   const s=g.s; if(S.devFilter&&S.devFilter.step!==s.id) S.devFilter=null; const it=s.todo?(s.todo().find(x=>!x.ok)||null):null;
   if(it) return `<div class="br gd"><span class="gk">${g.cur+1}/${g.st.length}</span><b class="gt">${it.bad?esc(it.t):`З’єднайте <span class="gn">1</span> ${esc(kName(it.a))} → <span class="gn">2</span> ${esc(kName(it.b))}`}</b><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`

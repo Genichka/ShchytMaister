@@ -81,7 +81,7 @@ function guideCur(){ if(!S.guide||!S.guide.on) return null; const st=guideSteps(
 function guideHint(){ const g=guideCur(); if(!g) return ""; if(g.cur<0) return "<b>Помічник:</b> щит зібрано і випробувано. Збережіть проєкт або зробіть документи.";
   const td=g.s.todo?g.s.todo():[]; if(td.length) return `<b>Крок ${g.cur+1} · ${esc(g.s.short||g.s.t)}:</b> `+td.map(x=>x.bad?`<span style="color:var(--red)">✕ ${esc(x.t)}</span>`:`<span style="color:${x.ok?"var(--green)":"var(--fg)"}">${x.ok?"✓":"○"} ${esc(kName(x.a))} → ${esc(kName(x.b))}</span>`).join(" · ");
   return `<b>Крок ${g.cur+1}:</b> ${esc(g.s.h)}`; }
-function guideBar(){ const g=guideCur(); if(!g) return "";
+function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return "";
   if(g.cur<0){ S.devFilter=null; return `<div class="br gd"><span class="gk">✓</span><b class="gt">Щит зібрано і випробувано</b><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`; }
   const s=g.s; if(S.devFilter&&S.devFilter.step!==s.id) S.devFilter=null; const it=s.todo?(s.todo().find(x=>!x.ok)||null):null;
   if(it) return `<div class="br gd"><span class="gk">${g.cur+1}/${g.st.length}</span><b class="gt">${it.bad?esc(it.t):`З’єднайте <span class="gn">1</span> ${esc(kName(it.a))} → <span class="gn">2</span> ${esc(kName(it.b))}`}</b><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`
