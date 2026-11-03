@@ -21,7 +21,11 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
 // ---- Апарати: категорії + картки
-function mountBar(){ const F=S.devFilter, mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
+function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def||"";
+  return bhead(`Ставимо: ${esc(t.short)}${rate?" "+esc(rate)+(t.unit||""):""} <span class="bm">${t.w} мод.</span>`,`<button class="btn sm primary" data-pickx>Готово</button>`)
+    +(t.ratings?brow(`<span class="bl">Номінал</span>`+t.ratings.map(r=>chip(`data-prate="${r}"`,rate===r,r+(t.unit||""),"mono")).join("")):"")
+    +brow(`<span class="bl">Скільки</span>`+[1,2,3,4,5,6,8].map(n=>chip(`data-pqty="${n}"`,q===n,"×"+n,"mono")).join("")+`<button class="btn sm" data-pauto>Поставити ×${q} у вільні місця</button>`); }
+function mountBar(){ if(S.pick&&T[S.pick]) return pickBar(); const F=S.devFilter, mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
   if(F) return brow(`<span class="bl">${esc(F.title)}:</span>`+F.opts.map((o,i)=>`<button class="dc" data-fpick="${i}" aria-pressed="${S.pick===o[0]&&(S.pickRating||null)===(o[1]||null)&&JSON.stringify(S.pickExtra||null)===JSON.stringify(o[3]||null)}"><b>${esc(o[2])}</b><small>${T[o[0]].w} мод.</small></button>`).join("")+`<button class="chip" data-fall>Усі апарати</button>`,"cards");
   const ci=S.cat??0, c=CATS[ci], ks=c[1]<0?null:DEV_GROUPS[c[1]][1].filter(x=>T[x]);
   let s=brow(CATS.map(([l],i)=>chip(`data-cat="${i}"`,i===ci,l)).join("")+`<span class="bl mono">${mods}/${SLOTS*S.board.rails} мод.</span>`);

@@ -42,7 +42,7 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
       done:()=>has("rcd","rcd4","rcbo"), short:"Захист людей", act:["Обрати ПЗВ",null]}]),
     {id:"groups", t:"Групи й обладнання",
       h:"Кожен автомат 1P — окрема лінія: розетки, світло, кухня. Двигун, бойлер чи сонячні панелі додайте в «Обладнання поза щитом».",
-      done:()=>G.length>0||S.field.length>0, short:"Групові автомати", act:["Обрати автомат",null]},
+      done:()=>(G.length>0||S.field.length>0)&&!!S.guide.gDone, short:"Групові автомати", act:["Обрати автомат",null], next:G.length||S.field.length?`Усі групи поставлено (${G.length}) →`:null},
     {id:"labels", short:"Підпишіть групи", opt:!G.length, t:"Наклейки: підпишіть групи",
       h:"Торкніться автомата і дайте назву в полі «Підпис»: «Кухня, розетки», «Освітлення»…",
       done:()=>G.every(g=>!/^(Група \d+|Нова група)$/.test(g.group.name))},
@@ -98,6 +98,8 @@ function guideBar(){ const g=guideCur(); if(!g) return "";
   const s=g.s; if(S.devFilter&&S.devFilter.step!==s.id) S.devFilter=null; const it=s.todo?(s.todo().find(x=>!x.ok)||null):null;
   if(it) return `<div class="br gd"><span class="gk">${g.cur+1}/${g.st.length}</span><b class="gt">${it.bad?esc(it.t):`З’єднайте <span class="gn">1</span> ${esc(kName(it.a))} → <span class="gn">2</span> ${esc(kName(it.b))}`}</b><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`
     +`<div class="br">${it.bad?(it.fixKind?`<button class="btn sm primary" data-gfixkind>Зробити «${esc(WK[it.fixKind][0])}»</button><button class="btn sm" data-gshow>Показати дріт</button>`:it.wire?`<button class="btn sm danger" data-gfixdel>Прибрати цей дріт</button><button class="btn sm" data-gshow>Показати дріт</button>`:`<button class="btn sm primary" data-gwire>До проводки</button>`):`<button class="btn sm primary" data-gwire>${S.mode==="wire"&&S.wireKind===it.kind?"✓ Дріт «"+esc(WK[it.kind][0])+"» обрано — торкніться 1, потім 2":"Прокласти дріт «"+esc(WK[it.kind][0])+"»"}</button>`}<button class="btn sm" data-gskip="${s.id}">Пропустити крок</button></div>`;
+  if(s.next) return `<div class="br gd"><span class="gk">${g.cur+1}/${g.st.length}</span><b class="gt">${esc(s.short||s.t)}</b><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`
+    +`<div class="br">${s.act?`<button class="btn sm" data-gact="${g.cur}">＋ ${esc(s.act[0])}</button>`:""}<button class="btn sm primary" data-gnext="${s.id}">${esc(s.next)}</button></div>`;
   return `<div class="br gd"><span class="gk">${g.cur+1}/${g.st.length}</span><b class="gt">${esc(s.short||s.t)}</b>${s.act?`<button class="btn sm primary" data-gact="${g.cur}">${esc(s.act[0])}</button>`:""}<button class="btn sm" data-gskip="${s.id}">Пропустити</button><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`; }
 
 // ---- Конкретні дії для кроків проводки: що з чим з’єднати, з перевіркою кожного пункту
@@ -151,3 +153,5 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el; c
   if(q("[data-gfixdel]")){ S.wires=S.wires.filter(x=>x!==w); toast("Дріт прибрано. «Назад» поверне його","ok"); commit(); return; }
   if(q("[data-gfixkind]")){ w.kind=it.fixKind; delete w.col; toast(`Вид дроту: ${WK[w.kind][0]}`,"ok"); commit(); return; }
   if(q("[data-gshow]")){ S.mode="wire"; selectWire(w.id); return; } });
+
+document.addEventListener("click",e=>{ const el=e.target.closest("[data-gnext]"); if(!el||!S.guide) return; if(el.dataset.gnext==="groups") S.guide.gDone=true; S.pick=null; S.devFilter=null; save(); renderAll(true); });

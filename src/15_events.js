@@ -1,12 +1,15 @@
 /* ===== Події, демонстрація, таймери, старт ===== */
-function placeDev(type,r,slot){ const w=T[type].w;
-  if(!freeAt(r,slot,w)){ let alt=null; for(let rr=0;rr<S.board.rails&&alt===null;rr++) for(let i=0;i<SLOTS;i++) if(freeAt(rr,i,w)){ alt=[rr,i]; break; }
-    if(!alt){ toast("На рейках немає місця для "+w+" мод.","w"); return; } [r,slot]=alt; }
-  const n=groupsOf().length, ex=Object.assign({},S.pickExtra||{}), asG=ex.asGroup; delete ex.asGroup;
-  if(T[type].group&&(!T[type].groupOpt||asG)) ex.group=mkGroup(n,"Група "+(n+1),2.5,[]);
-  if(S.brand&&S.brand!=="eua"&&MODELS[type]&&MODELS[type][S.brand]&&!ex.brand) ex.brand=S.brand;
-  const d=mkDev(type,r,slot,S.pickRating||null,ex); S.devices.push(d);
-  S.pick=null; S.pickRating=null; S.pickExtra=null; toast(`${desig(d)} ${d.rating?d.rating+(T[type].unit||"")+" ":""}встановлено`,"ok"); commit(); }
+// Ставить qty однакових апаратів підряд, починаючи з вибраного місця (або з першого вільного); вибір лишається активним
+function nextFree(w,r,slot){ for(let rr=r;rr<S.board.rails;rr++) for(let i=(rr===r?slot:0);i<SLOTS;i++) if(freeAt(rr,i,w)) return [rr,i];
+  for(let rr=0;rr<S.board.rails;rr++) for(let i=0;i<SLOTS;i++) if(freeAt(rr,i,w)) return [rr,i]; return null; }
+function placeDev(type,r,slot,qty){ const w=T[type].w, n0=qty||S.pickQty||1, put=[];
+  for(let j=0;j<n0;j++){ const at=j===0&&freeAt(r,slot,w)?[r,slot]:nextFree(w,r,j?slot:slot); if(!at){ toast(put.length?`Вмістилось лише ${put.length} — більше немає місця`:"На рейках немає місця для "+w+" мод.","w"); break; }
+    [r,slot]=at; const n=groupsOf().length, ex=Object.assign({},S.pickExtra||{}), asG=ex.asGroup; delete ex.asGroup;
+    if(T[type].group&&(!T[type].groupOpt||asG)) ex.group=mkGroup(n,"Група "+(n+1),S.pickRating&&/C(25|32)/.test(S.pickRating)?(/32/.test(S.pickRating)?6:4):/B10|C10|B6/.test(S.pickRating||"")?1.5:2.5,[]);
+    if(S.brand&&S.brand!=="eua"&&MODELS[type]&&MODELS[type][S.brand]&&!ex.brand) ex.brand=S.brand;
+    const d=mkDev(type,r,slot,S.pickRating||null,ex); S.devices.push(d); put.push(d); slot+=w; }
+  if(!put.length) return; S.pickQty=1;
+  toast(put.length>1?`Поставлено ${put.length} × ${T[type].short} ${put[0].rating||""}: ${put.map(desig).join(", ")}. Можна ставити ще або «Готово»`:`${desig(put[0])} ${put[0].rating?put[0].rating+(T[type].unit||"")+" ":""}встановлено. Торкніться ще місця або «Готово»`,"ok"); commit(); }
 function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>![w.a,w.b].some(k=>k.startsWith(d.id+":")||k.startsWith("tb:"+d.id+":"))); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
 function termTap(key){
   if(!S.pend){ const r=termRole(key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,key); toast(`Вид дроту: ${WK[S.wireKind][0]} — за клемою`); }
@@ -61,6 +64,10 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(el=q("[data-test]")){ const d=devById(el.dataset.test), X=evaluate({extra:shortsExtra()});
     if(d.on&&!d.trip&&X.volt(k(d,"t1"),k(d,"t2"))>=150){ trip(d,"кнопка «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює, лише коли ПЗВ під напругою і ввімкнений","w"); return; }
   if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть апарат нижче"); return; }
+  if(el=q("[data-pqty]")){ S.pickQty=+el.dataset.pqty; renderAll(false); return; }
+  if(el=q("[data-prate]")){ S.pickRating=el.dataset.prate; renderAll(false); return; }
+  if(q("[data-pauto]")){ if(S.pick){ const f=nextFree(T[S.pick].w,0,0); if(f) placeDev(S.pick,f[0],f[1]); else toast("Немає вільного місця","w"); } return; }
+  if(q("[data-pickx]")){ S.pick=null; S.pickRating=null; S.pickExtra=null; S.pickQty=1; renderAll(); return; }
   if(el=q("[data-dev]")){ if(S.mode==="wire") return; S.selDev=el.dataset.dev; renderAll(false); return; }
   if(el=q("[data-pick]")){ S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.pickRating=null; S.pickExtra=null; S.selDev=null; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); } renderAll(); return; }
   if(el=q("[data-fpick]")){ const o=S.devFilter.opts[+el.dataset.fpick]; S.pick=o[0]; S.pickRating=o[1]||null; S.pickExtra=o[3]||null; S.selDev=null;
