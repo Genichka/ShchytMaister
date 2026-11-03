@@ -11,7 +11,7 @@ TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, л�
     S.comb={rail:0,from:8,to:11};
     const hub=D("hub",1,0), sr1=D("ssw",1,2,"",{cap:"Світло",cmd:true}), sr2=D("ssw",1,3,"",{cap:"Котушка KM1",cmd:false}), km=D("km2a",1,4,"",{cap:"Бойлер 2 кВт"}), tr=D("tr",1,7), kr=D("kr2",1,9);
     F("lamp",{L:"xt:lL",N:"xt:lN"}); F("boiler",{L:"xt:bL",N:"xt:bN"}); F("floor",{L:"xt:fL",N:"xt:fN"}); F("valve",{N:"xt:vN",O:"xt:vO",Cl:"xt:vC"});
-    W("in:L",k(qf1,"t1"),"L",10); W("in:N",k(qf1,"t2"),"N",10); W("in:PE","xpe:0","PE",10);
+    wireIn(qf1);
     W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(pm,"L"),"L",10); W(k(kv,"t1"),k(pm,"N"),"N",10);
     W(k(pm,"Lo"),k(qd,"t1"),"L",10); W(k(pm,"No"),k(qd,"t2"),"N",10); W(k(qd,"b1"),k(q2,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10);
     W(k(q2,"b1"),k(hub,"L"),"L",1.5); W(k(hub,"L"),k(kr,"L"),"L",1.5); W(k(kr,"L"),k(sr2,"L"),"L",1.5);

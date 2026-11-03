@@ -63,31 +63,10 @@ function renderPlan(){ const P=planObj(), svg=$("svg"); planLengths();
   svg.innerHTML=s; }
 
 // ---- Інструменти плану (у панелі внизу)
-function planToolsHTML(){ const P=planObj(), G=groupsOf(), t=S.ptool||"sel", det=S.planDet||{};
-  let s=`<div class="row"><span class="lbl">Інструмент</span>${PTOOLS.map(([k,l])=>`<button class="chip" data-ptool="${k}" aria-pressed="${t===k}">${l}</button>`).join("")}</div>`;
-  if(["s","s2","sw","lt","ap"].includes(t)) s+=`<div class="row"><span class="lbl">Група</span>${G.length?G.map(g=>`<button class="chip" data-pgrp="${g.id}" aria-pressed="${S.pgrp===g.id}"><span class="sw" style="background:${g.group.color}"></span>${esc(desig(g))} ${esc(g.group.name)}</button>`).join(""):`<span class="hint">Спершу поставте групові автомати на щит</span>`}</div>`;
-  s+=`<div class="row"><span class="lbl">Стеля</span>${[2.5,2.7,3,3.2].map(v=>`<button class="chip mono" data-pceil="${v}" aria-pressed="${P.ceil===v}">${fmt(v,1)} м</button>`).join("")}</div>`;
-  s+=`<div class="row"><span class="lbl">Траса</span><button class="chip" data-proute="ceil" aria-pressed="${P.route==="ceil"}">По стелі</button><button class="chip" data-proute="floor" aria-pressed="${P.route==="floor"}">По підлозі</button><span class="lbl">Запас</span>${[0,10,15].map(v=>`<button class="chip mono" data-pres="${v}" aria-pressed="${P.res===v}">${v} %</button>`).join("")}</div>`;
-  const rows=G.filter(g=>det[g.id]).map(g=>{ const dd=det[g.id], u=groupDU(g); return `<tr><td><span class="sw" style="background:${g.group.color}"></span> ${esc(desig(g))} ${esc(g.group.name)}</td><td class="n">${dd.order.length}</td><td class="n">${fmt(dd.hz,1)}</td><td class="n">${fmt(dd.vt,1)}</td><td class="n"><b>${fmt(dd.tot,1)}</b></td><td class="n"${u>4?' style="color:var(--red)"':""}>${u===null?"—":fmt(u,1)}</td></tr>`; }).join("");
-  s+=rows?`<div class="ptab"><table><thead><tr><th>Група</th><th>Точок</th><th>Гориз., м</th><th>Верт., м</th><th>Разом, м</th><th>ΔU, %</th></tr></thead><tbody>${rows}</tbody></table></div>`
-    +`<p class="hint">Траса: від щита до найближчої точки, далі до наступної, по осях; спуски від стелі (або підйоми від підлоги) до кожної точки й назад; +0,3 м на кожне підключення і 0,5 м у щиті; запас ${P.res} %.</p>`
-    :`<p class="hint">Намалюйте кімнати, поставте щит і точки (розетки, вимикачі, світло) та прив’яжіть їх до груп — довжини кабелів порахуються самі.</p>`;
-  s+=`<div class="row"><button class="btn" data-pdemo>${P.rooms.length?"Замінити прикладом квартири":"Приклад: квартира 2 кімнати"}</button><button class="btn" data-pdocs>Документи</button>${P.rooms.length||P.items.length?`<button class="btn danger" data-pclear>Очистити план</button>`:""}</div>`;
-  return s; }
 function planHint(){ const t=S.ptool||"sel";
   return t==="room"?(S.proomA?"Торкніться протилежного кута кімнати.":"Кімната: торкніться одного кута, потім протилежного."):t==="board"?"Торкніться місця, де висить щит."
     :t==="del"?"Торкніться точки або кімнати, щоб видалити.":t==="sel"?"Торкніться кімнати чи точки, щоб змінити. Перетягуйте точки й щит; кімнату — за синій кружок, розмір — за квадрат."
     :`${PIT[t][0]}: торкніться плану, щоб поставити. ${S.pgrp&&gById(S.pgrp)?"Група "+desig(gById(S.pgrp)):"Оберіть групу внизу."}`; }
-function renderPlanSheet(){ const P=planObj(), sh=$("sheet"), r=P.rooms.find(x=>x.id===S.psel), it=P.items.find(x=>x.id===S.psel); if(!r&&!it){ sh.hidden=true; return; } sh.hidden=false; let s="";
-  if(r) s=`<div class="sheet-h"><b>Кімната · ${esc(r.name)}</b><button class="btn" data-psx>Готово</button></div><div class="row nowrap"><span class="lbl">Назва</span><input class="inp" data-prname value="${esc(r.name)}" maxlength="30"></div>`
-    +`<div class="row"><span class="lbl">Розмір, м</span><input class="inp num" type="number" step="0.1" min="0.5" data-prw value="${r.w}"> × <input class="inp num" type="number" step="0.1" min="0.5" data-prh value="${r.h}"><span class="hint">${fmt(r.w*r.h,1)} м²</span></div>`
-    +`<div class="row"><button class="btn danger" data-pdel="${r.id}">Видалити кімнату</button></div>`;
-  if(it){ const G=groupsOf(); s=`<div class="sheet-h"><b>${PIT[it.type][0]}${it.label?" · "+esc(it.label):""}</b><button class="btn" data-psx>Готово</button></div>`
-    +`<div class="row"><span class="lbl">Група</span>${G.map(g=>`<button class="chip" data-pig="${g.id}" aria-pressed="${it.g===g.id}"><span class="sw" style="background:${g.group.color}"></span>${esc(desig(g))} ${esc(g.group.name)}</button>`).join("")||`<span class="hint">Немає груп</span>`}</div>`
-    +`<div class="row"><span class="lbl">Висота, м</span>${[0.3,0.9,1.1,1.8].map(v=>`<button class="chip mono" data-pih="${v}" aria-pressed="${itemH(it)===v}">${fmt(v,1)}</button>`).join("")}<button class="chip" data-pih="ceil" aria-pressed="${it.h===undefined&&PIT[it.type][1]===null}">стеля</button></div>`
-    +(it.type==="ap"?`<div class="row nowrap"><span class="lbl">Прилад</span><input class="inp" data-pilab value="${esc(it.label||"")}" maxlength="20" placeholder="Бойлер, плита…"></div>`:"")
-    +`<div class="row"><button class="btn danger" data-pdel="${it.id}">Видалити точку</button></div>`; }
-  $("sheetIn").innerHTML=s; }
 
 // ---- Приклад: квартира з двох кімнат; точки прив’язуються до груп за назвою
 function planDemo(){ const P=planObj(); P.rooms=[{id:uid("r"),name:"Передпокій",x:0,y:0,w:2.6,h:3.2},{id:uid("r"),name:"Кухня",x:2.6,y:0,w:3.4,h:3.2},{id:uid("r"),name:"Зал",x:0,y:3.2,w:4.4,h:4.2},
@@ -109,7 +88,7 @@ $("svg").addEventListener("pointerdown",e=>{ if(S.mode!=="plan"||(S.ptool||"sel"
   PDRAG={kind,id,how,obj,p0:p,o0:{x:obj.x,y:obj.y,w:obj.w,h:obj.h},moved:false}; try{ el.setPointerCapture(e.pointerId); }catch(_){} e.preventDefault(); });
 $("svg").addEventListener("pointermove",e=>{ if(!PDRAG) return; const p=svgPt(e), dx=p.x-PDRAG.p0.x, dy=p.y-PDRAG.p0.y; if(Math.abs(dx)+Math.abs(dy)<0.05&&!PDRAG.moved) return; PDRAG.moved=true; const o=PDRAG.obj, o0=PDRAG.o0;
   if(PDRAG.how==="size"){ o.w=Math.max(0.5,snapM(o0.w+dx)); o.h=Math.max(0.5,snapM(o0.h+dy)); } else { o.x=Math.max(0,snapM(o0.x+dx)); o.y=Math.max(0,snapM(o0.y+dy)); } renderPlan(); e.preventDefault(); });
-$("svg").addEventListener("pointerup",e=>{ if(!PDRAG) return; const d=PDRAG; PDRAG=null; if(d.moved){ S.pnoClick=Date.now()+300; commit(false); renderTools(); } });
+$("svg").addEventListener("pointerup",e=>{ if(!PDRAG) return; const d=PDRAG; PDRAG=null; if(d.moved){ S.pnoClick=Date.now()+300; commit(false); } });
 $("svg").addEventListener("click",e=>{ if(S.mode!=="plan") return; if(S.pnoClick&&Date.now()<S.pnoClick) return; const P=planObj(), t=S.ptool||"sel", p=svgPt(e), x=Math.max(0,snapM(p.x)), y=Math.max(0,snapM(p.y));
   const itEl=e.target.closest("[data-pitem]"), rmEl=e.target.closest("[data-proom]"), bd=e.target.closest("[data-pdrag='board']");
   if(t==="sel"){ S.psel=itEl?itEl.dataset.pitem:bd?"board":rmEl?rmEl.dataset.proom:null; renderAll(false); return; }
@@ -129,10 +108,10 @@ document.addEventListener("click",e=>{ if(S.mode!=="plan") return; const q=s=>e.
   if(q("[data-pclear]")){ dialog("Очистити план?","<p>Кімнати й точки буде видалено. «Назад» поверне їх.</p>",[{label:"Скасувати"},{label:"Очистити",cls:"primary",act:()=>{ P.rooms=[]; P.items=[]; S.psel=null; commit(); }}]); return; }
   if(q("[data-psx]")){ S.psel=null; renderAll(false); return; }
   if(el=q("[data-pdel]")){ const id=el.dataset.pdel; P.items=P.items.filter(i=>i.id!==id); P.rooms=P.rooms.filter(r=>r.id!==id); S.psel=null; commit(); return; }
-  if(cur&&(el=q("[data-pig]"))){ cur.g=el.dataset.pig; commit(false); renderSheet(); return; }
-  if(cur&&(el=q("[data-pih]"))){ if(el.dataset.pih==="ceil") cur.h=P.ceil; else cur.h=+el.dataset.pih; commit(false); renderSheet(); return; } });
+  if(cur&&(el=q("[data-pig]"))){ cur.g=el.dataset.pig; commit(false); return; }
+  if(cur&&(el=q("[data-pih]"))){ if(el.dataset.pih==="ceil") cur.h=P.ceil; else cur.h=+el.dataset.pih; commit(false); return; } });
 document.addEventListener("change",e=>{ if(S.mode!=="plan") return; const t=e.target, P=planObj(), r=P.rooms.find(x=>x.id===S.psel), it=P.items.find(x=>x.id===S.psel);
   if(r&&t.dataset.prname!==undefined){ r.name=t.value.trim()||r.name; commit(false); return; }
-  if(r&&t.dataset.prw!==undefined){ r.w=Math.max(0.5,snapM(+t.value||r.w)); commit(false); renderSheet(); return; }
-  if(r&&t.dataset.prh!==undefined){ r.h=Math.max(0.5,snapM(+t.value||r.h)); commit(false); renderSheet(); return; }
+  if(r&&t.dataset.prw!==undefined){ r.w=Math.max(0.5,snapM(+t.value||r.w)); commit(false); return; }
+  if(r&&t.dataset.prh!==undefined){ r.h=Math.max(0.5,snapM(+t.value||r.h)); commit(false); return; }
   if(it&&t.dataset.pilab!==undefined){ it.label=t.value.trim(); commit(false); return; } });

@@ -37,12 +37,8 @@ function gStatus(d){ const R=S.sim&&S.sim.g[d.id]; if(!R||!anySource()) return `
 function gLoad(d){ const kw=kwOf(d), I=kw*1000/(g3(d)?690:230), In=inA(d.rating), p=Math.min(100,I/In*100), c=I>In?"var(--red)":I>0.8*In?"var(--orange)":"var(--green)";
   return {txt:`${fmt(kw,2)} кВт · <b class="mono">${fmt(I)} А</b> / ${In} А`, bar:`<i style="width:${p}%;background:${c}"></i>`}; }
 function totalKW(){ const R=S.sim; if(!R) return 0; let p=0; for(const l of R.loads){ if(l.abc) p+=l.g3?l.I*3*(l.U||230)/1000:Math.max(...l.Is)*400*1.732*0.85/1000; else if(l.I) p+=l.I*(l.U||230)/1000; } return p; }
-function renderSummary(){ const mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
-  $("summary").innerHTML=[["Модулі",`${mods}<small> / ${SLOTS*S.board.rails}</small>`],["Апарати",S.devices.length],["Дроти",S.wires.length],["Навантаження",`${fmt(totalKW(),2)}<small> кВт</small>`]]
-    .map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join(""); }
 function updateLive(){
-  for(const d of groupsOf()){ const st=document.querySelector(`[data-gstat="${d.id}"]`); if(st) st.innerHTML=gStatus(d);
-    const c=document.querySelector(`[data-card="${d.id}"]`); const R=S.sim&&S.sim.g[d.id]; if(c) c.classList.toggle("live",!!(R&&R.phase&&R.neutral)); }
+  for(const d of groupsOf()){ const st=document.querySelector(`[data-gstat="${d.id}"]`); if(st) st.innerHTML=gStatus(d); }
   const ll=$("logline"); if(ll) ll.innerHTML=S.log.length?`<span class="${S.log[0].cls}">${esc(S.log[0].msg)}</span><i>журнал ›</i>`:`<span>Журнал подій порожній</span>`;
   const st=$("stl"); if(st&&S.tplObj&&S.tplObj.demo&&S.tplObj.demo.status){ try{ st.innerHTML=S.tplObj.demo.status().map(([a,b,c])=>`<span class="pill2"><span>${esc(a)}</span> <b class="${c||""}">${esc(b)}</b></span>`).join(""); }catch(e){ st.innerHTML=""; } }
   document.querySelectorAll("[data-srcon]").forEach(b=>b.setAttribute("aria-pressed",!!(S.src[b.dataset.srcon]||{}).on));
@@ -50,9 +46,9 @@ function updateLive(){
     if(c.type==="toggle") el.setAttribute("aria-pressed",!!c.get()); if(c.type==="choice") el.setAttribute("aria-pressed",c.get()===el.dataset.v); });
   if(typeof updateDemoStat==="function") updateDemoStat();
 }
-function renderAll(full=true){ render(); hint(); renderSummary(); renderSheet(); if(full){ renderTools(); renderGroups(); } else updateLive();
+function renderAll(full=true){ render(); hint(); renderBar(); if(!full) updateLive();
   document.querySelectorAll(".tb[data-mode]").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
   $("undoTop").disabled=S.noDoc||!(S.hist&&S.hist.length); $("redoTop").disabled=S.noDoc||!(S.fut&&S.fut.length);
-  document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc; $("gCount").textContent=groupsOf().length||"";
+  document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc;
   $("svg").style.width=(S.zoom*100)+"%"; $("zFit").textContent=Math.round(S.zoom*100)+"%"; }
 function commit(full=true){ if(typeof trackHistory==="function") trackHistory(); save(); solve(0); renderAll(full); }

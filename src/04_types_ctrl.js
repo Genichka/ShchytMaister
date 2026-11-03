@@ -2,6 +2,7 @@
 const coilOn = (d,X,a,b) => X.volt(K(d,a),K(d,b))>=150;
 function coilLogic(d,X){ const p=coilOn(d,X,"A1","A2"); if(p!==!!d.pulled){ d.pulled=p; return true; } return false; }
 const C = (k,s,l,r="C") => ({k,s,l,r});
+const TCOIL = [C("A1","top","A1"),{k:"1",s:"top",r:"L",l:"1"},C("A2","bot","A2"),{k:"2",s:"bot",r:"L",l:"2"}];
 function kmFace(d,g,label){ const p=!!d.pulled;
   return tx(g.cx,g.y+68,label,{fs:7,fw:700})+tx(g.cx,g.y+79,"AC-3 · котушка 230 В",{fs:6.3})
     +`<rect x="${g.cx-22}" y="${g.y+88}" width="44" height="30" rx="3" fill="#2a2d33"/><rect x="${g.cx-16}" y="${g.y+(p?100:93)}" width="32" height="12" rx="2" fill="${p?"#e0352b":"#8e9196"}"/>`

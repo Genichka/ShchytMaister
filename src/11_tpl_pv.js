@@ -15,7 +15,7 @@ TPL.pv = { name:"СЕС: гібридний інвертор, АКБ, резер
     const q5=D("qfdc",2,0,"C16",{cap:"PV стрінг"}), fv=D("spdc",2,2), q6=D("qfdc",2,4,"C125",{cap:"АКБ"});
     F("pv",{p:"xt:pa+",m:"xt:pa-"}); F("bat",{p:"xt:ba+",m:"xt:ba-"});
     F("inv",{pp:"xt:ip+",pm:"xt:ip-",bp:"xt:ib+",bm:"xt:ib-",gL:"xt:gL",gN:"xt:gN",oL:"xt:oL",oN:"xt:oN",pe:"xt:pe"});
-    W("in:L",k(qf1,"t1"),"L",10); W("in:N",k(qf1,"t2"),"N",10); W("in:PE","xpe:0","PE",10);
+    wireIn(qf1);
     W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(qd,"t1"),"L",10); W(k(kv,"t1"),k(qd,"t2"),"N",10);
     W(k(kv,"b2"),k(qf3,"t1"),"L",10); W(k(qd,"t2"),k(qf3,"t2"),"N",10); W(k(qd,"b1"),k(gb,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10);
     W(k(qf3,"t1"),k(qs,"1L"),"L",10); W(k(qf3,"t2"),k(qs,"1N"),"N",10); W(k(qf3,"b1"),"xt:gL","L",6); W(k(qf3,"b2"),"xt:gN","N",6);

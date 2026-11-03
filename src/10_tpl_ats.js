@@ -4,8 +4,9 @@ function atsGroups(r,s0){ const a=G1(r,s0,"B16",0,"Розетки",2.5,[["Хол
   G1(r,s0+1,"B10",1,"Освітлення",1.5,[["Освітлення",0.1,1],["Роутер",0.01,1]]);
   G1(r,s0+2,"C16",2,"Котел, насос",2.5,[["Газовий котел",0.15,1],["Насос",0.75,1]]);
   S.comb={rail:r,from:s0,to:s0+2}; return a; }
-function atsInputs(qf1,qf2){ W("in:L",k(qf1,"t1"),"L",10); W("in:N",k(qf1,"t2"),"N",10); W("in:PE","xpe:0","PE",10);
-  W("in2:L",k(qf2,"t1"),"L",10); W("in2:N",k(qf2,"t2"),"N",10); }
+function atsInputs(qf1,qf2){ wireIn(qf1); wireIn(qf2,10,null,"in2"); }
+// Ввід 1 → реле напруги KV → вхід I модуля АВР
+function atsKvToQa(qf1,kv,qa){ W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(qa,"IL"),"L",10); W(k(kv,"t1"),k(qa,"IN"),"N",10); }
 function feedFrom(){ const qd=byDes("QD1"); if(!qd||!S.sim) return "—"; const p=S.sim.X.ph(k(qd,"t1"));
   return !p?"немає живлення":p.startsWith("in2")?(invInp("in2")?"інвертор (ввід 2)":"генератор (ввід 2)"):"мережа (ввід 1)"; }
 const atsStatus = extra => () => [["Навантаження живиться від", feedFrom(), /генер|інверт/.test(feedFrom())?"w":/немає/.test(feedFrom())?"e":"ok"], ...(extra?extra():[])];
@@ -29,7 +30,7 @@ TPL.ats_tomzn = { name:"АВР на модулі TOMZN (тип TOQ5) + реле 
   build(){ tplStart(ATS_BOARD());
     const qf1=D("qf2p",0,0,"C40",{cap:"Ввід 1 мережа"}), qf2=D("qf2p",0,2,"C40",{cap:"Ввід 2 генератор"}), kv=D("kv",0,4,"63"),
       qa=D("ats",0,6,"",{variant:"tomzn"}), qd=D("rcd",0,10,"63"); const g=atsGroups(1,0); atsInputs(qf1,qf2);
-    W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(qa,"IL"),"L",10); W(k(kv,"t1"),k(qa,"IN"),"N",10);
+    atsKvToQa(qf1,kv,qa);
     W(k(qf2,"b1"),k(qa,"IIL"),"L",10); W(k(qf2,"b2"),k(qa,"IIN"),"N",10); W(k(qa,"L"),k(qd,"t1"),"L",10); W(k(qa,"N"),k(qd,"t2"),"N",10);
     W(k(qd,"b1"),k(g,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10); },
   demo:{ controls:[...ATS_CTRL, atsModeCtrl], status:atsStatus(()=>[["Реле KV1", (byDes("KV1").ks||{}).closed?"пропускає мережу":"мережу відкинуто", (byDes("KV1").ks||{}).closed?"ok":"w"]]),
@@ -107,7 +108,7 @@ TPL.ats_inv = { name:"АВР: мережа + інвертор з АКБ (TOMZN)"
     G1(1,3,"B16",3,"Кухня",2.5,[["Чайник",2.0,0],["Мікрохвильовка",1.2,0]]);
     G1(1,4,"C16",4,"Бойлер",2.5,[["Бойлер",2.0,0]]); S.comb={rail:1,from:0,to:4};
     atsInputs(qf1,qf2);
-    W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(qa,"IL"),"L",10); W(k(kv,"t1"),k(qa,"IN"),"N",10);
+    atsKvToQa(qf1,kv,qa);
     W(k(qf2,"b1"),k(qa,"IIL"),"L",6); W(k(qf2,"b2"),k(qa,"IIN"),"N",6); W(k(qa,"L"),k(qd,"t1"),"L",10); W(k(qa,"N"),k(qd,"t2"),"N",10);
     W(k(qd,"b1"),k(g,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10); },
   demo:{ controls:[{type:"src",id:"in",label:"Мережа"},{type:"src",id:"in2",label:"Інвертор (ввід 2)",noU:true},invSocCtl("in2"),atsModeCtrl,
@@ -164,7 +165,7 @@ TPL.flat_norcd = { name:"Квартира без ПЗВ: ввід, реле на
   build(){ tplStart({rails:1, noRcd:true}); const q1=D("qf2p",0,0,"C32"), kv=D("kv",0,2,"40");
     G1(0,4,"B16",0,"Розетки кухня",2.5,[["Чайник",2,1],["Холодильник",0.15,1]]); G1(0,5,"B16",1,"Розетки кімнати",2.5,[["Телевізор",0.15,1],["Пилосос",1.6,0]]);
     G1(0,6,"C25",2,"Бойлер",4,[["Бойлер",2,1]]); G1(0,7,"B10",3,"Освітлення",1.5,[["Освітлення",0.1,1]]); S.comb={rail:0,from:4,to:7};
-    W("in:L",k(q1,"t1"),"L",6); W("in:N",k(q1,"t2"),"N",6); W("in:PE","xpe:0","PE",6);
+    wireIn(q1,6);
     W(k(q1,"b1"),k(kv,"t2"),"L",6); W(k(q1,"b2"),k(kv,"t1"),"N",6); W(k(kv,"b2"),k(S.devices[2],"t1"),"L",6); W(k(q1,"b2"),"xn:0","N",6); },
   demo:{ get controls(){ return autoControls(); }, status:autoStatus, script:[
       {say:"Подаємо мережу: через 3 с реле напруги KV1 вмикає щит.", do(){ say("in",true,230); }, wait:5},

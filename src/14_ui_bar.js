@@ -8,9 +8,6 @@ const segRow = (list,cur) => `<div class="br seg">${list.map(([k,l])=>`<button c
 const chip = (attr,on,label,cls) => `<button class="chip${cls?" "+cls:""}" ${attr} aria-pressed="${!!on}">${label}</button>`;
 function bseg(id,list,def){ if(S.bsegFor!==id){ S.bsegFor=id; S.bseg=def; } if(!list.some(x=>x[0]===S.bseg)) S.bseg=list[0][0]; return S.bseg; }
 
-function renderTools(){ renderBar(); }
-function renderSheet(){ renderBar(); }
-function renderGroups(){ }
 function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), f=S.selDev&&S.field.find(x=>x.id===S.selDev), w=S.mode==="wire"&&S.selWire&&wireById(S.selWire);
   if(S.noDoc) h=noDocBar();
@@ -138,5 +135,5 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(el=q("[data-cat]")){ S.cat=+el.dataset.cat; renderBar(); return; }
   if(el=q("[data-cnav]")){ const L=S.chk.list.filter(c=>c.sev!=="ok"), n=(L.length||S.chk.list.length); S.chk.i=((S.chk.i||0)+(+el.dataset.cnav)+n)%n; renderBar(); return; }
   if(q("[data-capok]")){ const c=$("capIn"); if(c) c.dispatchEvent(new Event("change",{bubbles:true})); S.bseg="pos"; return; }
-  if(el=q("[data-ltog]")){ const [id,i]=el.dataset.ltog.split(":"), l=devById(id).group.loads[+i]; l.on=!l.on; save(); solve(0); render(); renderSummary(); renderBar(); return; }
+  if(el=q("[data-ltog]")){ const [id,i]=el.dataset.ltog.split(":"), l=devById(id).group.loads[+i]; l.on=!l.on; save(); solve(0); render(); renderBar(); return; }
   if(q("#logline")){ dialog("Журнал подій",`<div class="log">${S.log.length?S.log.map(l=>`<div class="${l.cls}">${esc(l.msg)}</div>`).join(""):"<div>Журнал порожній.</div>"}</div>`,[{label:"Закрити",cls:"primary"}]); return; } },true);

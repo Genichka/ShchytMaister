@@ -15,7 +15,6 @@ function stepOpts(id,kind){
 function showOpts(step){ const kind=boardKind(S.board), opts=stepOpts(step.id,kind); if(!opts) return;
   S.mode="mount"; S.devFilter={step:step.id,title:step.short||step.t,opts}; S.devOpen=true; S.pick=null; S.pickRating=null; S.pickExtra=null; renderAll(true);
   }
-function pickDev(type){ S.mode="mount"; S.pick=type; S.devOpen=false; renderAll(true); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); toast(`${T[type].short}: торкніться вільного місця на рейці`); }
 function goWire(kind){ S.mode="wire"; S.wireKind=kind; renderAll(true); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); }
 let JCACHE={sig:null,val:false};
 function jumpOK(){ const sig=structSnap(); if(JCACHE.sig===sig) return JCACHE.val;
@@ -69,24 +68,13 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
       h:"У режимі «Випробування» ввімкніть мережу. Групи мають показати «Під напругою», обладнання — запрацювати.",
       done:()=>!!(S.guide&&S.guide.testOK), act:["До випробування",()=>{ S.mode="test"; renderAll(true); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); }]}]; }
 let GSTEPS=[];
-function guideHTML(){ if(!S.guide||!S.guide.on) return "";
-  const st=guideSteps(), skip=new Set(S.guide.skip||[]), done=st.map(s=>{ try{ return !!s.done(); }catch(e){ return false; } }); GSTEPS=st;
-  const cur=st.findIndex((s,i)=>!done[i]&&!skip.has(s.id)), fin=st.filter((s,i)=>done[i]||skip.has(s.id)).length, pct=Math.round(fin/st.length*100);
-  const list=S.gList?`<ol class="g-list">${st.map((x,i)=>`<li class="${done[i]?"ok":skip.has(x.id)?"sk":i===cur?"cur":""}">${esc(x.t)}</li>`).join("")}</ol>`:"";
-  if(cur<0){ S.devFilter=null; return `<div class="guide fin"><div class="g-top"><span class="g-k">Помічник складання</span><div class="g-bar"><i style="width:100%"></i></div><button class="g-x" data-gx aria-label="Сховати помічника">✕</button></div>
-    <div class="g-t">Щит зібрано і випробувано</div><div class="g-h">Усі кроки виконано. Збережіть копію або експортуйте файл у «Проєктах».</div><div class="row"><button class="btn" data-glist>${S.gList?"Сховати список":"Усі кроки"}</button><button class="btn" data-gx>Закрити помічника</button></div>${list}</div>`; }
-  const s=st[cur]; if(S.devFilter&&S.devFilter.step!==s.id) S.devFilter=null;
-  return `<div class="guide"><div class="g-top"><span class="g-k">Крок ${cur+1} з ${st.length}${s.opt?" · необов’язковий":""}</span><div class="g-bar"><i style="width:${pct}%"></i></div><button class="g-x" data-gx aria-label="Сховати помічника">✕</button></div>
-    <div class="g-t">${esc(s.t)}</div><div class="g-h">${esc(s.h)}</div>
-    <div class="row">${s.act?`<button class="btn primary" data-gact="${cur}">${esc(s.act[0])}</button>`:""}<button class="btn" data-gskip="${s.id}">Пропустити</button><button class="btn" data-glist>${S.gList?"Сховати список":"Усі кроки"}</button></div>${list}</div>`; }
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(el=q("[data-gact]")){ const s=GSTEPS[+el.dataset.gact]; if(s&&s.act){ if(s.act[1]) s.act[1](); else showOpts(s); } return; }
-  if(el=q("[data-gskip]")){ (S.guide.skip||(S.guide.skip=[])).push(el.dataset.gskip); save(); renderTools(); return; }
-  if(q("[data-glist]")){ S.gList=!S.gList; renderTools(); return; }
-  if(q("[data-gx]")){ S.guide.on=false; save(); renderTools(); toast("Помічника можна знову ввімкнути в «Проєктах»"); return; } });
+  if(el=q("[data-gskip]")){ (S.guide.skip||(S.guide.skip=[])).push(el.dataset.gskip); save(); renderBar(); return; }
+  if(q("[data-gx]")){ S.guide.on=false; save(); renderBar(); toast("Помічника можна знову ввімкнути в «Проєктах»"); return; } });
 setInterval(()=>{ if(!S.guide||!S.guide.on||S.guide.testOK||S.mode!=="test"||!S.sim||!anySource()) return; const G=groupsOf();
   const ok=G.length?G.every(g=>S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral):S.field.some(f=>f.run||f.on||f.mode==="grid"||f.mode==="backup");
-  if(ok){ S.guide.testOK=true; save(); renderTools(); toast("Випробування пройдено: щит працює","ok"); } },1000);
+  if(ok){ S.guide.testOK=true; save(); renderBar(); toast("Випробування пройдено: щит працює","ok"); } },1000);
 // ---- Компактний помічник: рядок у нижній панелі + пояснення в рядку підказки вгорі
 function guideCur(){ if(!S.guide||!S.guide.on) return null; const st=guideSteps(), skip=new Set(S.guide.skip||[]), done=st.map(s=>{ try{ return !!s.done(); }catch(e){ return false; } }); GSTEPS=st;
   const cur=st.findIndex((s,i)=>!done[i]&&!skip.has(s.id)); return {st,cur,s:st[cur]}; }
@@ -106,7 +94,6 @@ function guideBar(){ const g=guideCur(); if(!g) return "";
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
 function kName(k){ if(k==="xn:*") return "шина N (XN1)"; if(k==="xpe:*") return "шина PE (XPE1)"; const n=termName(k), t=termDef(k), d=S.devices.find(x=>x.id===k.split(":")[0]);
   return t&&d&&T[d.type].terms.filter(x=>x.l===t.l).length>1 ? n+(t.s==="top"?" зверху":" знизу") : n; }
-const kNameS = k => kName(k);
 function gTodo(id){ const b=S.board, f0=build({allOpen:true}), kind=boardKind(b), out=[], G=groupsOf();
   if(["inwire","bus","jump"].includes(id)) for(const w of S.wires){ const bad=[w.a,w.b].find(k=>{ const r=termRole(k); return r&&!kindFits(w.kind,r); });
     if(bad){ const nk=autoKind(termRole(bad),bad); out.push({ok:false,bad:true,wire:w.id,fixKind:nk,t:`Дріт ${kName(w.a)} → ${kName(w.b)} має вид «${WK[w.kind][0]}», а клема ${kName(bad)} — для «${WK[nk][0]}»`}); } }

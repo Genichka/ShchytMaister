@@ -44,15 +44,15 @@ function confirmLeave(next){
   dialog("Зберегти поточний щит?",`<p>Цей щит змінено, але не збережено як проєкт. Після переходу зміни зникнуть.</p><label class="lbl2" for="dlgName">Назва проєкту</label><input class="inp" id="dlgName" value="${esc((S.proj&&S.proj.name)||"Мій щит")}">`,
     [{label:"Скасувати"},{label:"Не зберігати",cls:"danger",act:next},{label:"Зберегти",cls:"primary",act:()=>{ newProjectFromCurrent(($("dlgName").value||"").trim()||"Мій щит"); next(); }}]); }
 function exportProject(){ const name=(S.proj&&S.proj.name)||(S.tplObj&&S.tplObj.name)||"Щит";
-  const blob=new Blob([JSON.stringify({app:"ShchytMaister",v:APP.v,name,data:curData()},null,1)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name.replace(/[\\/:*?"<>|]+/g,"_")+".shchyt.json"; document.body.appendChild(a); a.click();
+  const blob=new Blob([JSON.stringify({app:"PanelCraft",v:APP.v,name,data:curData()},null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name.replace(/[\\/:*?"<>|]+/g,"_")+".panelcraft.json"; document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500); toast("Файл проєкту збережено в «Завантаження»","ok"); }
 function importProject(file){ const r=new FileReader();
   r.onload=()=>{ try{ const j=JSON.parse(r.result), d=j.data||j; if(!d.board||!Array.isArray(d.devices)) throw new Error("format");
       if(d.devices.some(x=>!T[x.type])||(d.field||[]).some(x=>!FT[x.type])) throw new Error("types");
-      const db=projDB(), id="p"+Date.now().toString(36), name=(j.name||file.name.replace(/\.shchyt\.json$|\.json$/,""))+"";
+      const db=projDB(), id="p"+Date.now().toString(36), name=(j.name||file.name.replace(/\.(panelcraft|shchyt)\.json$|\.json$/,""))+"";
       db.list.push({id,name,updated:Date.now(),data:d}); projSave(db); closeDlg(); confirmLeave(()=>openProject(id)); }
-    catch(e){ toast(e.message==="types"?"Файл з новішої версії ЩитМайстра: оновіть застосунок":"Це не файл проєкту ЩитМайстра","e"); } };
+    catch(e){ toast(e.message==="types"?"Файл з новішої версії PanelCraft: оновіть застосунок":"Це не файл проєкту PanelCraft","e"); } };
   r.readAsText(file); }
 const PIC = {new:"M12 5v14M5 12h14", open:"M3 7h6l2 2h10v10H3z", save:"M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7", copy:"M8 8h12v12H8zM4 16V4h12",
   exp:"M12 3v12M7 10l5 5 5-5M4 19h16", imp:"M12 21V9M7 14l5-5 5 5M4 5h16", close:"M6 6l12 12M18 6 6 18"};
@@ -150,12 +150,6 @@ function addField(type){ const L=FIELD_LIB.find(x=>x.type===type);
   S.field.push(mkField(type,map,extra)); GEO=null; S.fldOpen=false; commit(); toast(`${name} додано: його клеми — на клемнику XT1 унизу щита`,"ok"); }
 function removeField(f){ const keys=Object.values(f.map); S.field=S.field.filter(x=>x!==f); S.board.xt=S.board.xt.filter(x=>!keys.includes("xt:"+x.k));
   S.wires=S.wires.filter(w=>!keys.includes(w.a)&&!keys.includes(w.b)); S.selDev=null; GEO=null; commit(); }
-function renderFieldSheet(f){ const L=FIELD_LIB.find(x=>x.type===f.type)||{name:FT[f.type].name};
-  let s=`<div class="sheet-h"><b>${esc(f.name||desig(f))} · ${esc(L.name)}</b><button class="btn" id="sheetClose">Готово</button></div>`;
-  s+=`<p class="hint" style="margin:0">Клеми на XT1: ${Object.values(f.map).map(k=>esc(termName(k).replace(/^Клема XT1 /,""))).join(", ")}</p>`;
-  if(f.type==="pv") s+=`<div class="row"><span class="lbl">Панелей</span>${[6,8,10,12].map(n=>`<button class="chip mono" data-pvn="${n}" aria-pressed="${f.n===n}">${n}</button>`).join("")}<span class="hint">Voc ≈ ${Math.round((f.n||10)*49.6)} В</span></div>`;
-  s+=`<div class="row"><button class="btn danger" data-fdel="${f.id}">Прибрати обладнання</button></div>`;
-  $("sheet").hidden=false; $("sheetIn").innerHTML=s; }
 
 // ---- Керування для власних щитів (будуються з того, що є на щиті)
 function surgeAll(){ const f=build({ideal:true}), pe=S.board.inputs.find(i=>i.terms.includes("PE"));
@@ -211,7 +205,6 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(e.target.id==="dlg"){ closeDlg(); return; }
   if(q("#projBtn")){ openProjects(); return; }
   if(q("[data-nodoc='tpl']")){ renderTplMenu(); tplLabel(); $("drawer").hidden=false; return; }
-  if(q("#undoBtn")){ undo(); return; }
   if(el=q("[data-pa]")){ const a=el.dataset.pa, id=el.dataset.pid;
     if(a==="save"){ saveProject(); openProjects(); }
     if(a==="openlistdlg"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); }
@@ -223,7 +216,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
     if(a==="copy"){ dialog("Зберегти як…",`<label class="lbl2" for="dlgName">Назва нового проєкту</label><input class="inp" id="dlgName" value="${esc(((S.proj&&S.proj.name)||"Мій щит")+(S.proj&&S.proj.id?" (копія)":""))}" maxlength="60">`,
       [{label:"Скасувати",act:openProjects},{label:"Зберегти",cls:"primary",act:()=>{ newProjectFromCurrent(($("dlgName").value||"").trim()||"Мій щит"); openProjects(); }}]); }
     if(a==="export") exportProject();
-    if(a==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; closeDlg(); save(); renderTools(); }
+    if(a==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; closeDlg(); save(); renderBar(); }
     if(a==="open"){ closeDlg(); confirmLeave(()=>openProject(id)); }
     if(a==="del"){ if(el.dataset.armed){ const db=projDB(); db.list=db.list.filter(p=>p.id!==id); projSave(db); if(S.proj&&S.proj.id===id){ enterNoDoc(); toast("Проєкт видалено, робочу зону очищено","ok"); } else toast("Проєкт видалено","ok"); openProjects(); }
       else { el.dataset.armed="1"; el.textContent="Видалити?"; setTimeout(()=>{ if(el.isConnected){ delete el.dataset.armed; el.textContent="✕"; } },3000); } }

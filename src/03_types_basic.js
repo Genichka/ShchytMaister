@@ -10,24 +10,30 @@ const led = (x,y,c) => `<circle cx="${x}" cy="${y}" r="4.5" fill="${c}" stroke="
 const lcd = (x,y,w,h,txt,on,col) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="#16181c"/>`+(Array.isArray(txt)?txt:[txt]).map((t,i,a)=>`<text x="${x+w/2}" y="${y+(h/(a.length))*(i+0.5)+ (a.length>1?3:5)}" font-size="${a.length>1?8:15}" text-anchor="middle" font-family="var(--mono)" font-weight="600" fill="${on?(col||"#5fe36b"):"#3a3f47"}">${esc(t)}</text>`).join("");
 function breakerFace(d,g){ const m=typeof modelOf==="function"?modelOf(d):""; let s=(m?tx(g.cx,g.y+66,m,{fs:g.w>60?6.6:5.2}):"")+tx(g.cx,g.y+84,d.rating,{c:"svt",fs:g.w>60?17:15}); s+=lever(d,g.cx,g.y+102,g.w>60?44:20,g.on); return s+flag(g.cx,g.y+150,g.on); }
 const brk = {prot:"breaker", sheetRatings:true};
+// Змінні картриджі УЗІП: n штук, колір індикатора c
+const cartridges = (g,n,c) => { const cw=g.w/n, p=n>2?8:14; return [...Array(n).keys()].map(i=>`<rect x="${g.x+p+i*cw}" y="${g.y+92}" width="${cw-2*p}" height="36" rx="2" fill="#2a2d33"/><rect x="${g.x+p+4+i*cw}" y="${g.y+100}" width="${cw-2*p-8}" height="14" fill="${c}"/>`).join(""); };
+// Спільні набори клем і полюсів (однакові в кількох апаратах)
+const T1P = [{k:"t1",s:"top",r:"L",l:"1"},{k:"b1",s:"bot",r:"L",l:"2"}], P1P = [{a:"t1",b:"b1",r:"L"}];
+const T2P = [{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"3"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"4"}];
+const T1N = [{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"N"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"N"}];
+const PLN = [{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}];
+const TLN = [{k:"L",s:"top",r:"L",l:"L"},{k:"N",s:"top",r:"N",l:"N"}];
+const TIO = [...TLN,{k:"Lo",s:"bot",r:"L",l:"L"},{k:"No",s:"bot",r:"N",l:"N"}], PIO = [{a:"L",b:"Lo",r:"L"}], LNK = () => [["N","No"]];
 
 defType("qf1p",{...brk, name:"Автомат 1P", short:"Автомат 1P", cat:"Захист", w:1, pre:"QF", group:true,
-  terms:[{k:"t1",s:"top",r:"L",l:"1"},{k:"b1",s:"bot",r:"L",l:"2"}], poles:[{a:"t1",b:"b1",r:"L"}],
+  terms:T1P, poles:P1P,
   ratings:["B6","B10","B16","B20","B25","C6","C10","C16","C20","C25","C32","C40"], def:"B16", face:breakerFace});
 defType("qf2p",{...brk, name:"Автомат 2P", short:"Автомат 2P", cat:"Захист", w:2, pre:"QF",
-  terms:[{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"3"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"4"}],
-  poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}], ratings:["C16","C20","C25","C32","C40","C50","C63"], def:"C32", face:breakerFace, cap:"Ввід 230 В"});
+  terms:T2P, poles:PLN, ratings:["C16","C20","C25","C32","C40","C50","C63"], def:"C32", face:breakerFace, cap:"Ввід 230 В"});
 defType("qf3p",{...brk, name:"Автомат 3P", short:"Автомат 3P", cat:"Захист", w:3, pre:"QF",
   terms:[{k:"t1",s:"top",r:"P",l:"1"},{k:"t2",s:"top",r:"P",l:"3"},{k:"t3",s:"top",r:"P",l:"5"},{k:"b1",s:"bot",r:"P",l:"2"},{k:"b2",s:"bot",r:"P",l:"4"},{k:"b3",s:"bot",r:"P",l:"6"}],
   poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"L"},{a:"t3",b:"b3",r:"L"}], ratings:["C10","C16","C25","C32","C40","C63"], def:"C25", face:breakerFace, cap:"Ввід 400 В"});
 defType("rcd",{name:"ПЗВ 30 мА", short:"ПЗВ (УЗО)", cat:"Захист", w:2, pre:"QD", rcd:true, sheetRatings:true,
-  terms:[{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"N"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"N"}],
-  poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}], ratings:["25","40","63"], def:"40", unit:" А", cap:"Захист від ураження",
+  terms:T1N, poles:PLN, ratings:["25","40","63"], def:"40", unit:" А", cap:"Захист від ураження",
   face(d,g){ return tx(g.cx,g.y+72,mdl(d,"ПЗВ · ΔI 30 мА"),{fs:modelOf(d)?6:7})+tx(g.cx,g.y+90,d.rating+" А",{c:"svt",fs:15})+lever(d,g.cx,g.y+102,44,g.on,"#2f6fdf")+flag(g.cx,g.y+150,g.on)+testBtn(d,g); }});
 const testBtn = (d,g) => `<g data-test="${d.id}" style="cursor:pointer"><circle cx="${g.x+g.w-11}" cy="${g.y+72}" r="8" fill="#f2c400" stroke="#8a6d00"/><text x="${g.x+g.w-11}" y="${g.y+75}" font-size="9" font-weight="700" text-anchor="middle" fill="#222">T</text></g>`;
 defType("rcbo",{...brk, name:"Диф-автомат", short:"Диф-автомат", cat:"Захист", w:2, pre:"QFD", rcd:true, group:true,
-  terms:[{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"N"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"N"}],
-  poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"N"}], ratings:["B10","B16","C16","C20","C25","C32"], def:"C16",
+  terms:T1N, poles:PLN, ratings:["B10","B16","C16","C20","C25","C32"], def:"C16",
   face(d,g){ return breakerFace(d,g)+tx(g.cx,g.y+98,"30 мА",{fs:7})+testBtn(d,g); }});
 defType("kv",{name:"Реле напруги", short:"Реле напруги", cat:"Захист", w:2, pre:"KV", sheetRatings:true, unit:" А",
   terms:[{k:"t1",s:"top",r:"N",l:"N"},{k:"t2",s:"top",r:"L",l:"L вх"},{k:"b2",s:"bot",r:"L",l:"L вих",m:1}],

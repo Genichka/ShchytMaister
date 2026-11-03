@@ -5,6 +5,8 @@ function tplStart(board){ S.noDoc=false; S.board=Object.assign(DEFAULT_BOARD(), 
 const D = (type,rail,slot,rating,extra) => { const d=mkDev(type,rail,slot,rating,extra); S.devices.push(d); return d; };
 const F = (type,map,extra) => { const f=mkField(type,map,extra); S.field.push(f); return f; };
 const W = (a,b,kind,sec) => { S.wires.push({id:uid("w"),a,b,kind,sec}); };
+// Ввід «in» на вступний апарат (клеми t1/t2) і PE на шину
+const wireIn = (qf,sec=10,pe="xpe:0",inp="in") => { W(inp+":L",k(qf,"t1"),"L",sec); W(inp+":N",k(qf,"t2"),"N",sec); if(pe) W(inp+":PE",pe,"PE",sec); };
 const k = (d,t) => d.id+":"+t;
 const G1 = (rail,slot,rating,i,name,sec,loads) => D("qf1p",rail,slot,rating,{group:mkGroup(i,name,sec,loads)});
 const byDes = s => S.devices.find(d=>desig(d)===s);
@@ -20,7 +22,7 @@ TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 
     G1(0,9,"B16",3,"Ванна кімната",2.5,[["Фен",1.8,0],["Зарядки",0.02,1],["Сушильна машина",2.5,0]]);
     G1(0,10,"B10",4,"Освітлення, домофон",1.5,[["Освітлення",0.1,1],["Роутер",0.01,1],["Домофон",0.02,1]]);
     S.comb={rail:0,from:6,to:10};
-    W("in:L",k(qf1,"t1"),"L",6); W("in:N",k(qf1,"t2"),"N",6); W("in:PE","xpe:7","PE",6);
+    wireIn(qf1,6,"xpe:7");
     W(k(qf1,"b1"),k(kv,"t2"),"L",6); W(k(qf1,"b2"),k(qd,"t2"),"N",6); W(k(qd,"t2"),k(kv,"t1"),"N",1.5);
     W(k(kv,"b2"),k(qd,"t1"),"L",6); W(k(qd,"b1"),k(g1,"t1"),"L",6); W(k(qd,"b2"),"xn:0","N",6); },
   demo:{ controls:[{type:"src",id:"in"}],
