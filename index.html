@@ -325,7 +325,7 @@ body.demo-on .dock{display:none} body.demo-on .app{height:62dvh}
 .pbtn svg{grid-row:1 / 3;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--blue)}
 .pbtn b{font-size:14px;color:var(--strong)}.pbtn small{font-size:11.5px;color:var(--muted)}.pbtn.wide{grid-column:1 / 3}.pbtn[data-pa="close"] svg{color:var(--red)}
 .pbtn.hot{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 14%,var(--panel2))}
-.proj-btn{gap:6px}.proj-btn .pdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}.proj-btn.unsaved .pdot{background:var(--orange)}
+.proj-btn{gap:6px}.proj-btn .pdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}.proj-btn.unsaved .pdot{background:var(--orange)}.proj-btn.nodoc .pdot{display:none}
 .inp.num{width:72px;min-height:30px;padding:3px 6px;font-family:var(--mono)}
 .ptab{overflow:auto;border:1px solid var(--line);border-radius:3px}.ptab table{border-collapse:collapse;width:100%;font-size:12.5px}
 .ptab th,.ptab td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.ptab th{color:var(--muted);font-weight:500;font-size:11.5px}
@@ -455,7 +455,7 @@ body.demo-on .bbar{display:none}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.3.1", date:"2026-11-03", notes:["Кілька однакових апаратів за раз: оберіть апарат, номінал і кількість ×1…×8 — і торкніться місця або «Поставити у вільні місця»","Вибраний апарат лишається активним: можна ставити ще й ще, «Готово» — коли досить","Номінал можна змінити просто перед встановленням","Помічник не перескакує крок «Групові автомати» після першого: натисніть «Усі групи поставлено →», коли закінчите"] };
+const APP = { v:"4.3.2", date:"2026-11-03", notes:["Як в AutoCAD: після видалення відкритого проєкту чи «Закрити щит» робоча зона порожня","На порожній зоні — «Створити новий щит», «Відкрити збережений…», «Приклади щитів», «Імпорт» і останні проєкти","Поки щит не відкрито, кнопки режимів, перевірки й документів неактивні; стан зберігається після перезавантаження"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -507,13 +507,13 @@ const S = { tpl:"flat", board:DEFAULT_BOARD(), devices:[], field:[], wires:[], c
 const KEY = "shchyt-majster-v2";
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify({tpl:S.tpl, board:S.board, devices:S.devices, field:S.field, wires:S.wires, comb:S.comb,
-    src:S.src, env:S.env, env0:S.env0, proj:S.proj, guide:S.guide, baseSig:S.baseSig, plan:S.plan||null, UID})); }catch(e){}
+    src:S.src, env:S.env, env0:S.env0, proj:S.proj, guide:S.guide, baseSig:S.baseSig, plan:S.plan||null, noDoc:!!S.noDoc, UID})); }catch(e){}
   if(typeof storeProject==="function") storeProject();
 }
 function load(){
   try{ const j=JSON.parse(localStorage.getItem(KEY)||"null");
     if(j && Array.isArray(j.devices) && j.board){ Object.assign(S,{tpl:j.tpl, board:j.board, devices:j.devices, field:j.field||[], wires:j.wires||[],
-      comb:j.comb||null, src:j.src||{}, env:j.env||{}, env0:j.env0, proj:j.proj||null, guide:j.guide||null, baseSig:j.baseSig||null, plan:j.plan||null}); UID=Math.max(UID,j.UID||1);
+      comb:j.comb||null, src:j.src||{}, env:j.env||{}, env0:j.env0, proj:j.proj||null, guide:j.guide||null, baseSig:j.baseSig||null, plan:j.plan||null, noDoc:!!j.noDoc}); UID=Math.max(UID,j.UID||1);
       for(const k of Object.keys(S.src)) S.src[k].on=false;   // після перезавантаження джерела вимкнені
       return true; } }catch(e){}
   return false;
@@ -1282,7 +1282,12 @@ function devSVG(d){
   if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
   return s+"</g>";
 }
-function render(){ if(S.mode==="plan"){ renderPlan(); return; }
+function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 840 520"); let s=`<rect x="0" y="0" width="840" height="520" fill="var(--bg)"/>`;
+  for(let x=0;x<=840;x+=40) s+=`<line x1="${x}" y1="0" x2="${x}" y2="520" stroke="var(--line)" stroke-width="${x%200?0.5:1}"/>`;
+  for(let y=0;y<=520;y+=40) s+=`<line x1="0" y1="${y}" x2="840" y2="${y}" stroke="var(--line)" stroke-width="${y%200?0.5:1}"/>`;
+  s+=`<text x="420" y="230" text-anchor="middle" font-size="26" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="420" y="268" text-anchor="middle" font-size="16" fill="var(--muted)">Створіть новий або відкрийте збережений — кнопки внизу</text>`;
+  svg.innerHTML=s; }
+function render(){ if(S.noDoc){ renderEmpty(); return; } if(S.mode==="plan"){ renderPlan(); return; }
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
   svg.setAttribute("viewBox",`0 0 840 ${H}`);
   s+=`<rect class="encl" x="14" y="70" width="812" height="${enclB()-70}" rx="10"/><rect class="encl-in" x="26" y="82" width="788" height="${enclB()-94}" rx="6"/>`;
@@ -1454,7 +1459,7 @@ function runChecks(){
 }
 /* ===== Шаблони: каркас + квартира + порожній щит ===== */
 const TPL = {};
-function tplStart(board){ S.board=Object.assign(DEFAULT_BOARD(), board||{}); S.devices=[]; S.field=[]; S.wires=[]; S.comb=null; S.env={}; S.src={}; S.plan=null; S.planLen={}; S.psel=null;
+function tplStart(board){ S.noDoc=false; S.board=Object.assign(DEFAULT_BOARD(), board||{}); S.devices=[]; S.field=[]; S.wires=[]; S.comb=null; S.env={}; S.src={}; S.plan=null; S.planLen={}; S.psel=null;
   for(const i of S.board.inputs) S.src[i.id]={on:false,U:230,lost:{}}; GEO=null; }
 const D = (type,rail,slot,rating,extra) => { const d=mkDev(type,rail,slot,rating,extra); S.devices.push(d); return d; };
 const F = (type,map,extra) => { const f=mkField(type,map,extra); S.field.push(f); return f; };
@@ -1943,7 +1948,7 @@ function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=2
 function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
-function hint(){ let h=""; const gh0=(!S.pick&&!S.selDev&&!S.selWire&&S.mode!=="plan"&&typeof guideHint==="function")?guideHint():"";
+function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="Робоча зона порожня. Створіть новий щит, відкрийте збережений проєкт або приклад."; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&S.mode!=="plan"&&typeof guideHint==="function")?guideHint():"";
   if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця — поставиться ${S.pickQty>1?S.pickQty+" шт. підряд":"1 шт."}. Можна торкатися кілька разів; «Готово» — коли досить.`:"Оберіть апарат нижче і поставте на рейку. Торкніться апарата, щоб змінити його налаштування.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
   if(S.mode==="plan") h=planHint();
@@ -1979,7 +1984,8 @@ function updateLive(){
 }
 function renderAll(full=true){ render(); hint(); renderSummary(); renderSheet(); if(full){ renderTools(); renderGroups(); } else updateLive();
   document.querySelectorAll(".tb[data-mode]").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
-  $("undoTop").disabled=!(S.hist&&S.hist.length); $("redoTop").disabled=!(S.fut&&S.fut.length); $("gCount").textContent=groupsOf().length||"";
+  $("undoTop").disabled=S.noDoc||!(S.hist&&S.hist.length); $("redoTop").disabled=S.noDoc||!(S.fut&&S.fut.length);
+  document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc; $("gCount").textContent=groupsOf().length||"";
   $("svg").style.width=(S.zoom*100)+"%"; $("zFit").textContent=Math.round(S.zoom*100)+"%"; }
 function commit(full=true){ if(typeof trackHistory==="function") trackHistory(); save(); solve(0); renderAll(full); }
 /* ===== Нижня панель на один екран: усе в кількох рядках, без вертикальної прокрутки й спливних вікон ===== */
@@ -1996,7 +2002,8 @@ function renderSheet(){ renderBar(); }
 function renderGroups(){ }
 function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), f=S.selDev&&S.field.find(x=>x.id===S.selDev), w=S.mode==="wire"&&S.selWire&&wireById(S.selWire);
-  if(S.chkOpen&&S.chk) h=chkBar();
+  if(S.noDoc) h=noDocBar();
+  else if(S.chkOpen&&S.chk) h=chkBar();
   else if(S.mode==="plan") h=planBar();
   else if(w) h=wireBar(w);
   else if(d) h=devBar(d);
@@ -2004,6 +2011,10 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   else h=(typeof guideBar==="function"?guideBar():"")+(S.mode==="mount"?mountBar():S.mode==="wire"?wireToolsBar():testBar());
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
+// ---- Порожня робоча зона: стартові дії й останні проєкти
+function noDocBar(){ const list=projDB().list.slice().sort((a,b)=>b.updated-a.updated).slice(0,8);
+  return bhead("Немає відкритого щита")+brow(`<button class="btn sm primary" data-pa="new">＋ Створити новий щит</button><button class="btn sm" data-pa="openlistdlg">Відкрити збережений…</button><button class="btn sm" data-nodoc="tpl">Приклади щитів</button><button class="btn sm" data-pa="import">Імпорт з файлу</button>`)
+    +brow(list.length?`<span class="bl">Останні:</span>`+list.map(p=>`<button class="chip" data-pa="open" data-pid="${p.id}">${esc(p.name)}</button>`).join(""):`<span class="bl">Збережених проєктів ще немає</span>`); }
 // ---- Апарати: категорії + картки
 function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def||"";
   return bhead(`Ставимо: ${esc(t.short)}${rate?" "+esc(rate)+(t.unit||""):""} <span class="bm">${t.w} мод.</span>`,`<button class="btn sm primary" data-pickx>Готово</button>`)
@@ -2775,14 +2786,14 @@ function storeProject(){ if(!S.proj||!S.proj.id) return; const db=projDB(), p=db
 function newProjectFromCurrent(name){ const db=projDB(), id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   db.list.push({id,name,updated:Date.now(),data:curData()}); db.cur=id; if(!projSave(db)) return;
   S.proj={id,name}; S.baseSig=structSnap(); save(); renderProjBtn(); toast(`Проєкт «${name}» збережено`,"ok"); }
-function loadData(d){ Object.assign(S,{tpl:d.tpl||"custom", board:d.board, devices:d.devices||[], field:d.field||[], wires:d.wires||[], comb:d.comb||null,
+function loadData(d){ S.noDoc=false; Object.assign(S,{tpl:d.tpl||"custom", board:d.board, devices:d.devices||[], field:d.field||[], wires:d.wires||[], comb:d.comb||null,
   src:d.src||{}, env:d.env||{}, env0:d.env0||d.env||{}, guide:d.guide||null, plan:d.plan||null}); UID=Math.max(UID,d.UID||1);
   for(const i of S.board.inputs){ S.src[i.id]=S.src[i.id]||{U:230,lost:{}}; S.src[i.id].on=false; } S.tplObj=TPL[S.tpl]||TPL.custom; }
 function openProject(id){ const db=projDB(), p=db.list.find(x=>x.id===id); if(!p) return; loadData(p.data); S.proj={id:p.id,name:p.name}; db.cur=id; projSave(db); afterSwitch(); toast(`Відкрито: «${p.name}»`,"ok"); }
 function afterSwitch(){ GEO=null; Object.assign(S,{pend:null,selWire:null,selDev:null,pick:null,heat:{},log:[]}); if(S.demo) demoStop(); S.leak.clear(); S.short.clear(); S.leakWarned.clear(); S.arc.clear(); S.arcWarned.clear();
   resetHistory(); S.baseSig=structSnap(); clearCheck(); save(); solve(0); renderAll(true); tplLabel(); renderProjBtn(); }
-function renderProjBtn(){ const el=$("projName"); if(!el) return; const ok=!!(S.proj&&S.proj.id); el.textContent=(S.proj&&S.proj.name)||"Новий щит"; const b=$("projBtn"); if(b){ b.classList.toggle("unsaved",!ok); b.title=ok?"Збережено · відкрити меню проєкту":"Не збережено · відкрити меню проєкту"; } }
-const isDirty = () => !(S.proj&&S.proj.id) && S.baseSig && structSnap()!==S.baseSig;
+function renderProjBtn(){ const el=$("projName"); if(!el) return; if(S.noDoc){ el.textContent="Немає щита"; const b0=$("projBtn"); if(b0){ b0.classList.remove("unsaved"); b0.classList.add("nodoc"); b0.title="Немає відкритого щита"; } return; } $("projBtn").classList.remove("nodoc"); const ok=!!(S.proj&&S.proj.id); el.textContent=(S.proj&&S.proj.name)||"Новий щит"; const b=$("projBtn"); if(b){ b.classList.toggle("unsaved",!ok); b.title=ok?"Збережено · відкрити меню проєкту":"Не збережено · відкрити меню проєкту"; } }
+const isDirty = () => !S.noDoc && !(S.proj&&S.proj.id) && S.baseSig && structSnap()!==S.baseSig;
 function confirmLeave(next){
   if(!isDirty()){ next(); return; }
   dialog("Зберегти поточний щит?",`<p>Цей щит змінено, але не збережено як проєкт. Після переходу зміни зникнуть.</p><label class="lbl2" for="dlgName">Назва проєкту</label><input class="inp" id="dlgName" value="${esc((S.proj&&S.proj.name)||"Мій щит")}">`,
@@ -2804,7 +2815,9 @@ const pic = k => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${PIC[k]}
 const fWhen = t => new Date(t).toLocaleString("uk-UA",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 function projStatus(){ const cur=S.proj||{}, p=cur.id&&projDB().list.find(x=>x.id===cur.id);
   return p?{ok:true,txt:`Збережено · зміни зберігаються автоматично · ${fWhen(p.updated)}`}:{ok:false,txt:isDirty()?"Не збережено — є зміни, натисніть «Зберегти»":"Не збережено як проєкт"}; }
-function openProjects(){ const db=projDB(), list=db.list.slice().sort((a,b)=>b.updated-a.updated), cur=S.proj||{}, st=projStatus();
+function openProjects(){ const db=projDB(), list=db.list.slice().sort((a,b)=>b.updated-a.updated), cur=S.proj||{}, st=S.noDoc?{ok:true,txt:"Немає відкритого щита"}:projStatus();
+  if(S.noDoc){ dialog("Проєкт",`<div class="pgrid"><button class="pbtn" data-pa="new">${pic("new")}<b>Створити</b><small>новий щит</small></button><button class="pbtn" data-pa="import">${pic("imp")}<b>Імпорт</b><small>з файлу</small></button></div>
+    <div class="lbl2" id="plistH">Збережені проєкти · ${list.length}</div><div class="plist">${list.length?list.map(p=>`<div class="pi"><div class="pi-n"><b>${esc(p.name)}</b><small>${fWhen(p.updated)} · ${(p.data.devices||[]).length} апаратів · ${(p.data.wires||[]).length} дротів</small></div><button class="btn" data-pa="open" data-pid="${p.id}">Відкрити</button><button class="btn danger" data-pa="del" data-pid="${p.id}" aria-label="Видалити ${esc(p.name)}">✕</button></div>`).join(""):`<p class="hint" style="padding:10px">Збережених проєктів ще немає.</p>`}</div>`,[{label:"Готово",cls:"primary"}]); return; }
   const body=`<div class="pcur"><label class="lbl2" for="pName">Відкритий щит</label><input id="pName" class="inp" value="${esc(cur.name||"Мій щит")}" maxlength="60" aria-label="Назва щита">
       <p class="pst ${st.ok?"ok":"no"}"><i></i>${esc(st.txt)}</p></div>
     <div class="pgrid">
@@ -2820,7 +2833,9 @@ function openProjects(){ const db=projDB(), list=db.list.slice().sort((a,b)=>b.u
   dialog("Проєкт",body,[{label:"Готово",cls:"primary"}]); }
 function saveProject(){ const n=(($("pName")&&$("pName").value)||(S.proj&&S.proj.name)||"Мій щит").trim()||"Мій щит";
   if(S.proj&&S.proj.id){ S.proj.name=n; storeProject(); renderProjBtn(); toast(`Збережено: «${n}»`,"ok"); } else newProjectFromCurrent(n); }
-function closeBoard(){ confirmLeave(()=>{ applyTemplate("empty"); S.proj={id:null,name:"Новий щит"}; S.baseSig=structSnap(); S.mode="mount"; save(); clearCheck(); afterSwitch(); toast("Щит закрито","ok"); openProjects(); }); }
+function enterNoDoc(){ tplStart({rails:1}); S.tpl="custom"; S.tplObj=TPL.custom; S.noDoc=true; S.proj=null; S.guide=null; S.mode="mount"; S.devFilter=null; S.pick=null;
+  if(S.demo) demoStop(); GEO=null; resetHistory(); S.baseSig=structSnap(); clearCheck(); save(); renderAll(true); renderProjBtn(); }
+function closeBoard(){ confirmLeave(()=>{ enterNoDoc(); toast("Щит закрито","ok"); }); }
 
 // ---- Майстер нового щита і налаштування корпусу
 let WZ=null;
@@ -2950,9 +2965,11 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(el=q("[data-dlg]")){ const x=DLG[+el.dataset.dlg]; closeDlg(); if(x&&x.act) x.act(); return; }
   if(e.target.id==="dlg"){ closeDlg(); return; }
   if(q("#projBtn")){ openProjects(); return; }
+  if(q("[data-nodoc='tpl']")){ renderTplMenu(); tplLabel(); $("drawer").hidden=false; return; }
   if(q("#undoBtn")){ undo(); return; }
   if(el=q("[data-pa]")){ const a=el.dataset.pa, id=el.dataset.pid;
     if(a==="save"){ saveProject(); openProjects(); }
+    if(a==="openlistdlg"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); }
     if(a==="openlist"){ const h=$("plistH"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); }
     if(a==="import") $("pImport").click();
     if(a==="close"){ closeDlg(); closeBoard(); }
@@ -2963,7 +2980,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
     if(a==="export") exportProject();
     if(a==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; closeDlg(); save(); renderTools(); }
     if(a==="open"){ closeDlg(); confirmLeave(()=>openProject(id)); }
-    if(a==="del"){ if(el.dataset.armed){ const db=projDB(); db.list=db.list.filter(p=>p.id!==id); projSave(db); if(S.proj&&S.proj.id===id){ S.proj={id:null,name:S.proj.name}; S.baseSig=""; renderProjBtn(); } openProjects(); }
+    if(a==="del"){ if(el.dataset.armed){ const db=projDB(); db.list=db.list.filter(p=>p.id!==id); projSave(db); if(S.proj&&S.proj.id===id){ enterNoDoc(); toast("Проєкт видалено, робочу зону очищено","ok"); } else toast("Проєкт видалено","ok"); openProjects(); }
       else { el.dataset.armed="1"; el.textContent="Видалити?"; setTimeout(()=>{ if(el.isConnected){ delete el.dataset.armed; el.textContent="✕"; } },3000); } }
     return; }
   if(el=q("[data-wz]")){ const a=el.dataset.wz, w=WZ;
