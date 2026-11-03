@@ -17,7 +17,7 @@ function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) re
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
 function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="Робоча зона порожня. Створіть новий щит, відкрийте збережений проєкт або приклад."; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&S.mode!=="plan"&&typeof guideHint==="function")?guideHint():"";
-  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця — поставиться ${S.pickQty>1?S.pickQty+" шт. підряд":"1 шт."}. Можна торкатися кілька разів; «Готово» — коли досить.`:"Оберіть апарат нижче і поставте на рейку. Торкніться апарата, щоб змінити його налаштування.";
+  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця — поставиться ${S.pickQty>1?S.pickQty+" шт. підряд":"1 шт."}. Можна торкатися кілька разів; «Готово» — коли досить.`:"Оберіть апарат нижче й поставте на рейку. Торкніться апарата — налаштування; затисніть і тягніть — пересунути.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
   if(S.mode==="plan") h=planHint();
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";

@@ -356,6 +356,7 @@ body.demo-on .dock{display:none} body.demo-on .app{height:62dvh}
 .bh{min-height:30px}.bh b{flex:1 1 auto!important;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;color:var(--strong)}
 .bm{font-weight:400;color:var(--muted);font-size:12.5px}
 .bx{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);min-width:34px;min-height:32px;font-size:14px;color:var(--fg)}
+.dropg{fill:rgba(47,111,223,.12);stroke:var(--blue);stroke-width:2.5;stroke-dasharray:8 6;pointer-events:none}.dropg.bad{fill:rgba(226,59,59,.1);stroke:var(--red)}[data-dev].dragging{opacity:.9;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));pointer-events:none}
 .bx.bdel{color:var(--red);margin-right:6px}.bx svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
 .bl{font-size:12.5px;color:var(--muted);white-space:nowrap}.bl b{color:var(--fg)}.warnt{color:var(--orange)}
 .seg{gap:2px;border-bottom:1px solid var(--line);min-height:32px}
@@ -456,7 +457,7 @@ body.demo-on .bbar{display:none}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.3.3", date:"2026-11-03", notes:["Кнопка видалення (кошик) — у заголовку картки апарата, обладнання й дроту: торкнулися об’єкта — одразу можна видалити, як у меню ПКМ","На ПК вибраний апарат видаляє також клавіша Delete; «Назад» повертає видалене"] };
+const APP = { v:"4.4.0", date:"2026-11-03", notes:["Апарати можна перетягувати пальцем чи мишею — по рейці й між рейками","Палець: затисніть апарат ~0,3 с і тягніть (вибраний апарат тягнеться одразу); рамка показує, куди стане, червона — місце зайняте","Біля краю екрана щит сам підкручується"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1950,7 +1951,7 @@ function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) re
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
 function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="Робоча зона порожня. Створіть новий щит, відкрийте збережений проєкт або приклад."; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&S.mode!=="plan"&&typeof guideHint==="function")?guideHint():"";
-  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця — поставиться ${S.pickQty>1?S.pickQty+" шт. підряд":"1 шт."}. Можна торкатися кілька разів; «Готово» — коли досить.`:"Оберіть апарат нижче і поставте на рейку. Торкніться апарата, щоб змінити його налаштування.";
+  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця — поставиться ${S.pickQty>1?S.pickQty+" шт. підряд":"1 шт."}. Можна торкатися кілька разів; «Готово» — коли досить.`:"Оберіть апарат нижче й поставте на рейку. Торкніться апарата — налаштування; затисніть і тягніть — пересунути.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
   if(S.mode==="plan") h=planHint();
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
@@ -2049,7 +2050,7 @@ function devBar(d){ const t=T[d.type], g=d.group, m=modelOf(d), bl=brandsFor(d.t
   if(cur==="set") s+=brow(set);
   if(cur==="pos") s+=brow(`<button class="btn sm" data-move="-1" aria-label="Ліворуч">←</button><button class="btn sm" data-move="1" aria-label="Праворуч">→</button>${S.board.rails>1?`<button class="btn sm" data-mrail="-1">↑ Рейка</button><button class="btn sm" data-mrail="1">↓ Рейка</button>`:""}`
     +(d.type==="qf1p"?`<button class="btn sm" id="combBtn">${S.comb?"Зняти гребінку":"Гребінка 1P"}</button>`:"")
-    +(t.prot||t.rcd?`<button class="btn sm" id="devToggle">${d.on&&!d.trip?"Вимкнути":"Увімкнути"}</button>`:"")+`<button class="btn sm danger" data-devdel>Зняти з рейки</button>`);
+    +(t.prot||t.rcd?`<button class="btn sm" id="devToggle">${d.on&&!d.trip?"Вимкнути":"Увімкнути"}</button>`:"")+`<button class="btn sm danger" data-devdel>Зняти з рейки</button>`)+brow(`<span class="bl">Або перетягніть апарат пальцем на потрібне місце</span>`);
   return s; }
 function devSet(d){ const t=T[d.type]; let s="";
   if(t.group&&t.groupOpt) s+=chip("data-gtoggle",!!d.group,d.group?"Група споживачів (3 фази)":"Зробити групою");
@@ -2269,6 +2270,46 @@ document.addEventListener("toggle",e=>{ if(e.target.id==="devDD") S.devOpen=e.ta
 document.addEventListener("keydown",e=>{ if((e.key==="Delete"||e.key==="Backspace")&&S.selDev&&S.mode!=="wire"&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)&&$("dlg").hidden){ const b=document.querySelector("[data-devdel],[data-fdel]"); if(b){ e.preventDefault(); b.click(); } return; } })
 document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("drawer").hidden) closeDrawer(); else if(!$("docs").hidden) $("docs").hidden=true; });
 
+/* ===== Перетягування апаратів по рейках (палець і миша) =====
+   Палець: затиснути апарат ~0,3 с і тягти; вибраний апарат тягнеться одразу.
+   Миша: просто тягти. Пунктирна рамка показує, куди він стане (червона — місце зайняте). */
+(function(){
+  const sc=$("scroller"), svg=$("svg"), HOLD=300, NS="http://www.w3.org/2000/svg"; let D=null, noClickUntil=0;
+  const pt=e=>{ const m=svg.getScreenCTM(); if(!m) return {x:0,y:0}; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()); return {x:p.x,y:p.y}; };
+  function target(d,dx,dy){ const w=T[d.type].w, cy=devTop(d.rail||0)+120+dy; let r=0, best=1e9;
+    for(let i=0;i<S.board.rails;i++){ const dd=Math.abs(devTop(i)+120-cy); if(dd<best){ best=dd; r=i; } }
+    const slot=Math.max(0,Math.min(SLOTS-w,Math.round(d.slot+dx/G.MW))); return {r,slot,w,ok:freeAt(r,slot,w,d)}; }
+  function lift(){ if(D.lifted) return; D.lifted=true; D.g.classList.add("dragging"); svg.appendChild(D.g);
+    if(D.touch&&navigator.vibrate) try{ navigator.vibrate(12); }catch(_){} }
+  function ghost(t){ let gh=D.ghost; if(!gh){ gh=D.ghost=document.createElementNS(NS,"rect"); gh.setAttribute("rx","5"); svg.insertBefore(gh,D.g); }
+    gh.setAttribute("x",G.X0+t.slot*G.MW+1); gh.setAttribute("y",devTop(t.r)); gh.setAttribute("width",t.w*G.MW-2); gh.setAttribute("height",240);
+    gh.setAttribute("class","dropg"+(t.ok?"":" bad")); }
+  function stop(cancel){ if(!D) return; const d=D; D=null; clearTimeout(d.tm); if(d.ghost) d.ghost.remove();
+    if(!d.armed) return;
+    if(d.moved){ noClickUntil=Date.now()+350; const t=d.t, dev=d.dev;
+      if(!cancel&&t&&t.ok&&(t.r!==(dev.rail||0)||t.slot!==dev.slot)){ dev.rail=t.r; dev.slot=t.slot; S.selDev=dev.id; commit(); return; }
+      if(!cancel&&t&&!t.ok) toast("Там зайнято","w"); renderAll(false); return; }
+    if(d.lifted){ noClickUntil=Date.now()+350; if(!cancel) S.selDev=d.dev.id; renderAll(false); } }   // затиснули й відпустили — просто вибір
+
+  svg.addEventListener("pointerdown",e=>{ if(D||S.noDoc||S.mode!=="mount"||S.pick||e.button>0) return;
+    const g=e.target.closest("[data-dev]"), dev=g&&S.devices.find(x=>x.id===g.dataset.dev); if(!dev) return;
+    const touch=e.pointerType!=="mouse";
+    D={dev,g,pid:e.pointerId,touch,p0:pt(e),cx:e.clientX,cy:e.clientY,armed:false,lifted:false,moved:false,t:null};
+    if(touch){ if(S.selDev===dev.id) D.armed=true; else D.tm=setTimeout(()=>{ if(D&&!D.armed){ D.armed=true; lift(); } },HOLD); } });
+  addEventListener("pointermove",e=>{ if(!D||e.pointerId!==D.pid) return; const dist=Math.hypot(e.clientX-D.cx,e.clientY-D.cy);
+    if(!D.armed){ if(D.touch){ if(dist>10){ clearTimeout(D.tm); D=null; } return; }   // палець поїхав до затискання — це прокрутка
+      if(dist<=4) return; D.armed=true; try{ svg.setPointerCapture(e.pointerId); }catch(_){} }
+    if(!D.moved){ if(dist<6) return; D.moved=true; lift(); }
+    const p=pt(e), dx=p.x-D.p0.x, dy=p.y-D.p0.y; D.g.setAttribute("transform",`translate(${dx.toFixed(1)} ${dy.toFixed(1)})`); ghost(D.t=target(D.dev,dx,dy));
+    const r=sc.getBoundingClientRect(), E=40, vy=e.clientY<r.top+E?-14:e.clientY>r.bottom-E?14:0, vx=e.clientX<r.left+E?-14:e.clientX>r.right-E?14:0;
+    if(vx||vy){ sc.scrollTop+=vy; sc.scrollLeft+=vx; } });   // біля краю — підкручуємо щит
+  addEventListener("pointerup",e=>{ if(D&&e.pointerId===D.pid) stop(false); });
+  addEventListener("pointercancel",e=>{ if(D&&e.pointerId===D.pid) stop(true); });
+  sc.addEventListener("touchmove",e=>{ if(D&&D.armed&&e.cancelable) e.preventDefault(); },{passive:false});   // поки тягнемо — щит не прокручується
+  sc.addEventListener("touchstart",e=>{ if(D&&e.touches.length>1) stop(true); },{passive:true});           // другий палець — це масштаб
+  svg.addEventListener("contextmenu",e=>{ if(D&&D.armed) e.preventDefault(); });
+  sc.addEventListener("click",e=>{ if(Date.now()<noClickUntil){ e.stopPropagation(); e.preventDefault(); } },true);
+})();
 /* ===== Масштаб щита двома пальцями (і щипком на тачпаді) ===== */
 (function(){
   const sc=$("scroller"), Z_MIN=0.3, Z_MAX=4; let pin=null, blockClickUntil=0;

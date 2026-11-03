@@ -58,7 +58,7 @@ function devBar(d){ const t=T[d.type], g=d.group, m=modelOf(d), bl=brandsFor(d.t
   if(cur==="set") s+=brow(set);
   if(cur==="pos") s+=brow(`<button class="btn sm" data-move="-1" aria-label="Ліворуч">←</button><button class="btn sm" data-move="1" aria-label="Праворуч">→</button>${S.board.rails>1?`<button class="btn sm" data-mrail="-1">↑ Рейка</button><button class="btn sm" data-mrail="1">↓ Рейка</button>`:""}`
     +(d.type==="qf1p"?`<button class="btn sm" id="combBtn">${S.comb?"Зняти гребінку":"Гребінка 1P"}</button>`:"")
-    +(t.prot||t.rcd?`<button class="btn sm" id="devToggle">${d.on&&!d.trip?"Вимкнути":"Увімкнути"}</button>`:"")+`<button class="btn sm danger" data-devdel>Зняти з рейки</button>`);
+    +(t.prot||t.rcd?`<button class="btn sm" id="devToggle">${d.on&&!d.trip?"Вимкнути":"Увімкнути"}</button>`:"")+`<button class="btn sm danger" data-devdel>Зняти з рейки</button>`)+brow(`<span class="bl">Або перетягніть апарат пальцем на потрібне місце</span>`);
   return s; }
 function devSet(d){ const t=T[d.type]; let s="";
   if(t.group&&t.groupOpt) s+=chip("data-gtoggle",!!d.group,d.group?"Група споживачів (3 фази)":"Зробити групою");
