@@ -5,7 +5,7 @@ function tplStart(board){ S.noDoc=false; S.board=Object.assign(DEFAULT_BOARD(), 
 const D = (type,rail,slot,rating,extra) => { const d=mkDev(type,rail,slot,rating,extra); S.devices.push(d); return d; };
 const F = (type,map,extra) => { const f=mkField(type,map,extra); S.field.push(f); return f; };
 const W = (a,b,kind,sec) => { S.wires.push({id:uid("w"),a,b,kind,sec}); };
-// Ввід «in» на вступний апарат (клеми t1/t2) і PE на шину
+// Ввід «in» на ввідний апарат (клеми t1/t2) і PE на шину
 const wireIn = (qf,sec=10,pe="xpe:0",inp="in") => { W(inp+":L",k(qf,"t1"),"L",sec); W(inp+":N",k(qf,"t2"),"N",sec); if(pe) W(inp+":PE",pe,"PE",sec); };
 const k = (d,t) => d.id+":"+t;
 const G1 = (rail,slot,rating,i,name,sec,loads) => D("qf1p",rail,slot,rating,{group:mkGroup(i,name,sec,loads)});
@@ -13,7 +13,7 @@ const byDes = s => S.devices.find(d=>desig(d)===s);
 const say = (src,on,U) => { const s=S.src[src]; if(on!==undefined) s.on=on; if(U!==undefined) s.U=U; };
 
 TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 5 груп", cat:"Квартира і будинок",
-  info:"Типовий щит квартири: вступний автомат, реле напруги, ПЗВ 30 мА і групові автомати на гребінці.",
+  info:"Типовий щит квартири: ввідний автомат, реле напруги, ПЗВ 30 мА і групові автомати на гребінці.",
   build(){ tplStart();
     const qf1=D("qf2p",0,0,"C32"), kv=D("kv",0,2,"40"), qd=D("rcd",0,4,"40");
     const g1=G1(0,6,"C32",0,"Плита, духовка",6,[["Плита",4.0,1],["Духова шафа",3.5,0]]);

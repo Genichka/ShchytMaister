@@ -73,18 +73,18 @@ function runChecks(){
   // 3. Групи, кабелі, номінали
   const main=S.devices.filter(d=>(d.type==="qf2p"||d.type==="qf3p")&&b.inputs.some(i=>f0(d.id+":t1")===f0(i.id+":"+i.terms[0])));
   const mainIn=main.length?Math.min(...main.map(protIn)):0;
-  if(!main.length&&G.length) add("e","Немає вступного автомата одразу після вводу","Ввід має заходити на верхні клеми вступного автомата.");
-  else if(main.length) add("ok",`Вступн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);
-  for(const R of S.devices.filter(d=>d.type==="rcd")) if(mainIn&&inA(R.rating)<mainIn) add("e",`${desig(R)} ${R.rating} А слабший за вступний ${mainIn} А`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за вступний автомат.");
-  for(const K of S.devices.filter(d=>d.type==="kv")) if(mainIn&&inA(K.rating)<mainIn) add("e",`${desig(K)} ${K.rating} А слабше за вступний ${mainIn} А`,"Через контакт реле напруги йде струм усього щита. Номінал реле — не менший за вступний автомат: до C40 — реле 40 А, C50–C63 — реле 63 А.");
+  if(!main.length&&G.length) add("e","Немає ввідного автомата одразу після вводу","Ввід має заходити на верхні клеми ввідного автомата.");
+  else if(main.length) add("ok",`Ввідн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);
+  for(const R of S.devices.filter(d=>d.type==="rcd")) if(mainIn&&inA(R.rating)<mainIn) add("e",`${desig(R)} ${R.rating} А слабший за ввідний ${mainIn} А`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за ввідний автомат.");
+  for(const K of S.devices.filter(d=>d.type==="kv")) if(mainIn&&inA(K.rating)<mainIn) add("e",`${desig(K)} ${K.rating} А слабше за ввідний ${mainIn} А`,"Через контакт реле напруги йде струм усього щита. Номінал реле — не менший за ввідний автомат: до C40 — реле 40 А, C50–C63 — реле 63 А.");
   const byp=rcdNBypass(f0);
-  for(const R of byp) add("e",`${desig(R)}: нуль іде в обхід ПЗВ`,`Верхня і нижня клеми N ${desig(R)} з’єднані напряму (через шину N або перемичку). ПЗВ вимикатиметься від будь-якого приладу. Нуль від вступного — лише на верхню N ПЗВ, а на шину XN1 — лише з нижньої N.`);
+  for(const R of byp) add("e",`${desig(R)}: нуль іде в обхід ПЗВ`,`Верхня і нижня клеми N ${desig(R)} з’єднані напряму (через шину N або перемичку). ПЗВ вимикатиметься від будь-якого приладу. Нуль від ввідного — лише на верхню N ПЗВ, а на шину XN1 — лише з нижньої N.`);
   for(const g of G){ const In=inA(g.rating), max=CAB[g.group.sec], I=kwOf(g,true)*1000/(g3(g)?690:230);
     if(In>max) add("e",`${desig(g)} ${g.rating} на кабель ${fmt(g.group.sec)} мм²`,`Для ${fmt(g.group.sec)} мм² автомат не більше ${max} А, або кабель від ${fmt(secFor(In))} мм².`);
     const du=groupDU(g); if(du!==null){ if(du>4) add("w",`${desig(g)} «${g.group.name}»: втрата напруги ${fmt(du,1)} %`,`Лінія ${fmt(groupLen(g),1)} м, ${fmt(g.group.sec,g.group.sec%1?1:0)} мм². Понад 4 % — візьміть кабель від ${fmt(SECS.find(s2=>s2>g.group.sec&&du*g.group.sec/s2<=4)||50,1)} мм² або розділіть групу.`); }
     if(I>1.45*In) add("e",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Понад 1,45 × ${In} А, автомат вибиватиме. Розділіть групу.`);
     else if(I>In) add("w",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Більше за номінал ${In} А. При одночасній роботі можливе вимкнення.`);
-    if(mainIn&&In>=mainIn) add("w",`${desig(g)} ${g.rating} не менший за вступний`,"Немає селективності: при перевантаженні може вимкнутись увесь щит.");
+    if(mainIn&&In>=mainIn) add("w",`${desig(g)} ${g.rating} не менший за ввідний`,"Немає селективності: при перевантаженні може вимкнутись увесь щит.");
     const rr=sandbox(()=>{ powerUp(); runFor(4); const X=makeX(build()), o={rc:0,byp:null};
       for(const R of S.devices.filter(R=>T[R.type].rcd)){ const pt=!makeX(build({openPole:new Set(lPoles(R))})).ph(gL(g)); if(pt) o.rc++;
         const np=nPole(R); if(o.byp||np<0||byp.some(x=>x.id===R.id)||!X.ph(gL(g))||!X.hasN(gN(g))) continue;
@@ -99,7 +99,7 @@ function runChecks(){
       const aff=G.filter(g=>(g1(gL(g))===g1("in:L")&&g2(gL(g))!==g2("in:L"))||(g1(gN(g))===g1("in:N")&&g2(gN(g))!==g2("in:N")));
       if(!aff.length) continue; const own=g=>[gL(g),gN(g),gL0(g)], req=aff.length>1||!aff.some(g=>own(g).includes(w.a)||own(g).includes(w.b))?mainIn:inA(aff[0].rating);
       if(CAB[w.sec]<req){ low++; add("e",`Замалий переріз ${fmt(w.sec)} мм²`,`${termName(w.a)} → ${termName(w.b)}: потрібно від ${fmt(secFor(req))} мм² (струм до ${req} А).`); } }
-    if(!low&&S.wires.length) add("ok","Перерізи силових перемичок відповідають вступному автомату"); }
+    if(!low&&S.wires.length) add("ok","Перерізи силових перемичок відповідають ввідному автомату"); }
   if(G.length&&b.inputs.length===1&&!S.devices.some(d=>d.type==="kv")&&!S.field.some(f=>f.type==="inv")) add("w","Немає реле напруги","Без нього техніка не захищена від перенапруги.");
   for(const x of (res.tpl||[])) add(x.sev,x.t,x.d);
   for(const d of S.devices){ const used=S.wires.some(w=>w.a.startsWith(d.id+":")||w.b.startsWith(d.id+":"))||(S.comb&&d.type==="qf1p"&&d.slot>=S.comb.from&&d.slot<=S.comb.to);

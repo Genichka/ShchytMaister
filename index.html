@@ -362,7 +362,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.5.1", date:"2026-11-03", notes:["Виправлено: на телефоні низ інтерфейсу з’їжджав під системну панель — тепер екран застосунку точно по висоті дисплея","Меню й документи також враховують статус-бар і вирізи екрана"] };
+const APP = { v:"4.5.2", date:"2026-11-03", notes:["Термін «ввідний автомат» замість «вступний» — у помічнику, перевірці, шаблонах і документах","На телефоні низ інтерфейсу більше не з’їжджає під системну панель: екран застосунку точно по висоті дисплея","Меню й документи також враховують статус-бар і вирізи екрана"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1333,18 +1333,18 @@ function runChecks(){
   // 3. Групи, кабелі, номінали
   const main=S.devices.filter(d=>(d.type==="qf2p"||d.type==="qf3p")&&b.inputs.some(i=>f0(d.id+":t1")===f0(i.id+":"+i.terms[0])));
   const mainIn=main.length?Math.min(...main.map(protIn)):0;
-  if(!main.length&&G.length) add("e","Немає вступного автомата одразу після вводу","Ввід має заходити на верхні клеми вступного автомата.");
-  else if(main.length) add("ok",`Вступн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);
-  for(const R of S.devices.filter(d=>d.type==="rcd")) if(mainIn&&inA(R.rating)<mainIn) add("e",`${desig(R)} ${R.rating} А слабший за вступний ${mainIn} А`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за вступний автомат.");
-  for(const K of S.devices.filter(d=>d.type==="kv")) if(mainIn&&inA(K.rating)<mainIn) add("e",`${desig(K)} ${K.rating} А слабше за вступний ${mainIn} А`,"Через контакт реле напруги йде струм усього щита. Номінал реле — не менший за вступний автомат: до C40 — реле 40 А, C50–C63 — реле 63 А.");
+  if(!main.length&&G.length) add("e","Немає ввідного автомата одразу після вводу","Ввід має заходити на верхні клеми ввідного автомата.");
+  else if(main.length) add("ok",`Ввідн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);
+  for(const R of S.devices.filter(d=>d.type==="rcd")) if(mainIn&&inA(R.rating)<mainIn) add("e",`${desig(R)} ${R.rating} А слабший за ввідний ${mainIn} А`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за ввідний автомат.");
+  for(const K of S.devices.filter(d=>d.type==="kv")) if(mainIn&&inA(K.rating)<mainIn) add("e",`${desig(K)} ${K.rating} А слабше за ввідний ${mainIn} А`,"Через контакт реле напруги йде струм усього щита. Номінал реле — не менший за ввідний автомат: до C40 — реле 40 А, C50–C63 — реле 63 А.");
   const byp=rcdNBypass(f0);
-  for(const R of byp) add("e",`${desig(R)}: нуль іде в обхід ПЗВ`,`Верхня і нижня клеми N ${desig(R)} з’єднані напряму (через шину N або перемичку). ПЗВ вимикатиметься від будь-якого приладу. Нуль від вступного — лише на верхню N ПЗВ, а на шину XN1 — лише з нижньої N.`);
+  for(const R of byp) add("e",`${desig(R)}: нуль іде в обхід ПЗВ`,`Верхня і нижня клеми N ${desig(R)} з’єднані напряму (через шину N або перемичку). ПЗВ вимикатиметься від будь-якого приладу. Нуль від ввідного — лише на верхню N ПЗВ, а на шину XN1 — лише з нижньої N.`);
   for(const g of G){ const In=inA(g.rating), max=CAB[g.group.sec], I=kwOf(g,true)*1000/(g3(g)?690:230);
     if(In>max) add("e",`${desig(g)} ${g.rating} на кабель ${fmt(g.group.sec)} мм²`,`Для ${fmt(g.group.sec)} мм² автомат не більше ${max} А, або кабель від ${fmt(secFor(In))} мм².`);
     const du=groupDU(g); if(du!==null){ if(du>4) add("w",`${desig(g)} «${g.group.name}»: втрата напруги ${fmt(du,1)} %`,`Лінія ${fmt(groupLen(g),1)} м, ${fmt(g.group.sec,g.group.sec%1?1:0)} мм². Понад 4 % — візьміть кабель від ${fmt(SECS.find(s2=>s2>g.group.sec&&du*g.group.sec/s2<=4)||50,1)} мм² або розділіть групу.`); }
     if(I>1.45*In) add("e",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Понад 1,45 × ${In} А, автомат вибиватиме. Розділіть групу.`);
     else if(I>In) add("w",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Більше за номінал ${In} А. При одночасній роботі можливе вимкнення.`);
-    if(mainIn&&In>=mainIn) add("w",`${desig(g)} ${g.rating} не менший за вступний`,"Немає селективності: при перевантаженні може вимкнутись увесь щит.");
+    if(mainIn&&In>=mainIn) add("w",`${desig(g)} ${g.rating} не менший за ввідний`,"Немає селективності: при перевантаженні може вимкнутись увесь щит.");
     const rr=sandbox(()=>{ powerUp(); runFor(4); const X=makeX(build()), o={rc:0,byp:null};
       for(const R of S.devices.filter(R=>T[R.type].rcd)){ const pt=!makeX(build({openPole:new Set(lPoles(R))})).ph(gL(g)); if(pt) o.rc++;
         const np=nPole(R); if(o.byp||np<0||byp.some(x=>x.id===R.id)||!X.ph(gL(g))||!X.hasN(gN(g))) continue;
@@ -1359,7 +1359,7 @@ function runChecks(){
       const aff=G.filter(g=>(g1(gL(g))===g1("in:L")&&g2(gL(g))!==g2("in:L"))||(g1(gN(g))===g1("in:N")&&g2(gN(g))!==g2("in:N")));
       if(!aff.length) continue; const own=g=>[gL(g),gN(g),gL0(g)], req=aff.length>1||!aff.some(g=>own(g).includes(w.a)||own(g).includes(w.b))?mainIn:inA(aff[0].rating);
       if(CAB[w.sec]<req){ low++; add("e",`Замалий переріз ${fmt(w.sec)} мм²`,`${termName(w.a)} → ${termName(w.b)}: потрібно від ${fmt(secFor(req))} мм² (струм до ${req} А).`); } }
-    if(!low&&S.wires.length) add("ok","Перерізи силових перемичок відповідають вступному автомату"); }
+    if(!low&&S.wires.length) add("ok","Перерізи силових перемичок відповідають ввідному автомату"); }
   if(G.length&&b.inputs.length===1&&!S.devices.some(d=>d.type==="kv")&&!S.field.some(f=>f.type==="inv")) add("w","Немає реле напруги","Без нього техніка не захищена від перенапруги.");
   for(const x of (res.tpl||[])) add(x.sev,x.t,x.d);
   for(const d of S.devices){ const used=S.wires.some(w=>w.a.startsWith(d.id+":")||w.b.startsWith(d.id+":"))||(S.comb&&d.type==="qf1p"&&d.slot>=S.comb.from&&d.slot<=S.comb.to);
@@ -1374,7 +1374,7 @@ function tplStart(board){ S.noDoc=false; S.board=Object.assign(DEFAULT_BOARD(), 
 const D = (type,rail,slot,rating,extra) => { const d=mkDev(type,rail,slot,rating,extra); S.devices.push(d); return d; };
 const F = (type,map,extra) => { const f=mkField(type,map,extra); S.field.push(f); return f; };
 const W = (a,b,kind,sec) => { S.wires.push({id:uid("w"),a,b,kind,sec}); };
-// Ввід «in» на вступний апарат (клеми t1/t2) і PE на шину
+// Ввід «in» на ввідний апарат (клеми t1/t2) і PE на шину
 const wireIn = (qf,sec=10,pe="xpe:0",inp="in") => { W(inp+":L",k(qf,"t1"),"L",sec); W(inp+":N",k(qf,"t2"),"N",sec); if(pe) W(inp+":PE",pe,"PE",sec); };
 const k = (d,t) => d.id+":"+t;
 const G1 = (rail,slot,rating,i,name,sec,loads) => D("qf1p",rail,slot,rating,{group:mkGroup(i,name,sec,loads)});
@@ -1382,7 +1382,7 @@ const byDes = s => S.devices.find(d=>desig(d)===s);
 const say = (src,on,U) => { const s=S.src[src]; if(on!==undefined) s.on=on; if(U!==undefined) s.U=U; };
 
 TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 5 груп", cat:"Квартира і будинок",
-  info:"Типовий щит квартири: вступний автомат, реле напруги, ПЗВ 30 мА і групові автомати на гребінці.",
+  info:"Типовий щит квартири: ввідний автомат, реле напруги, ПЗВ 30 мА і групові автомати на гребінці.",
   build(){ tplStart();
     const qf1=D("qf2p",0,0,"C32"), kv=D("kv",0,2,"40"), qd=D("rcd",0,4,"40");
     const g1=G1(0,6,"C32",0,"Плита, духовка",6,[["Плита",4.0,1],["Духова шафа",3.5,0]]);
@@ -1575,7 +1575,7 @@ TPL.ats3_km = { name:"АВР 3~ 380 В на контакторах і реле �
 
 // Квартира без ПЗВ: ввід, реле напруги, групи
 TPL.flat_norcd = { name:"Квартира без ПЗВ: ввід, реле напруги, 4 групи", cat:"Квартира і будинок",
-  info:"Найпростіший щит: вступний автомат 2P, реле напруги і групові автомати. Нуль від вступного автомата — на шину N, звідти до груп. Без ПЗВ щит захищає проводку, але не людей від ураження — перевірка це покаже.",
+  info:"Найпростіший щит: ввідний автомат 2P, реле напруги і групові автомати. Нуль від ввідного автомата — на шину N, звідти до груп. Без ПЗВ щит захищає проводку, але не людей від ураження — перевірка це покаже.",
   build(){ tplStart({rails:1, noRcd:true}); const q1=D("qf2p",0,0,"C32"), kv=D("kv",0,2,"40");
     G1(0,4,"B16",0,"Розетки кухня",2.5,[["Чайник",2,1],["Холодильник",0.15,1]]); G1(0,5,"B16",1,"Розетки кімнати",2.5,[["Телевізор",0.15,1],["Пилосос",1.6,0]]);
     G1(0,6,"C25",2,"Бойлер",4,[["Бойлер",2,1]]); G1(0,7,"B10",3,"Освітлення",1.5,[["Освітлення",0.1,1]]); S.comb={rail:0,from:4,to:7};
@@ -1592,7 +1592,7 @@ const XT_PV = [["pa+","PV+","DC+"],["pa-","PV−","DC-"],["ip+","IP+","DC+"],["i
 const inv = () => S.field.find(f=>f.type==="inv");
 const setLoads = (des,names,on) => { const g=byDes(des); if(g) g.group.loads.forEach(l=>{ if(names.includes(l.n)) l.on=on; }); };
 TPL.pv = { name:"СЕС: гібридний інвертор, АКБ, резервні групи", cat:"Сонячна станція",
-  info:"Мережа → вступний автомат → реле напруги. Звідти живляться нерезервні групи (бойлер) і вхід GRID інвертора. Вихід LOAD через перемикач 1-0-2 живить резервні групи на диф-автоматах. DC-сторона: автомат PV, УЗІП DC і автомат АКБ. Клеми XT1: PV± — панелі, IP± — PV-вхід інвертора, B± — АКБ, IB± — АКБ-вхід інвертора, G — GRID, O — LOAD.",
+  info:"Мережа → ввідний автомат → реле напруги. Звідти живляться нерезервні групи (бойлер) і вхід GRID інвертора. Вихід LOAD через перемикач 1-0-2 живить резервні групи на диф-автоматах. DC-сторона: автомат PV, УЗІП DC і автомат АКБ. Клеми XT1: PV± — панелі, IP± — PV-вхід інвертора, B± — АКБ, IB± — АКБ-вхід інвертора, G — GRID, O — LOAD.",
   build(){ tplStart({rails:3, inputs:[{id:"in",label:"Мережа",terms:["L","N","PE"]}], xn:4, xpe:4, xt:XT_PV});
     S.env={sun:60, soc:70};
     const qf1=D("qf2p",0,0,"C40",{cap:"Ввід мережа"}), kv=D("kv",0,2,"63"), qd=D("rcd",0,4,"63",{cap:"Без резерву"}),
@@ -2425,9 +2425,9 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
   const feeds=b.inputs.filter(i=>i.terms.some(t=>/^L/.test(t)));
   const mainsOk=feeds.length>0&&feeds.every(i=>S.devices.some(d=>T[d.type].prot&&T[d.type].terms.some(t=>t.s==="top"&&f0(d.id+":"+t.k)===f0(i.id+":"+i.terms[0]))));
   return [
-    {id:"main", t:kind==="2inv"?"Поставте два автомати 2P: вступний від мережі й на виході інвертора":kind==="2in"?"Поставте два вступні автомати 2P — по одному на кожен ввід":kind==="3ph"?"Поставте вступний автомат 3P або 4P":"Поставте вступний автомат 2P",
-      h:"Вступний автомат стоїть першим і захищає весь щит. Номінал — за дозволеною потужністю вводу (для квартири зазвичай C25–C40).",
-      done:()=>S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)).length>=(kind==="2in"||kind==="2inv"?2:1), short:"Вступний автомат", act:["Обрати автомат",null]},
+    {id:"main", t:kind==="2inv"?"Поставте два автомати 2P: ввідний від мережі й на виході інвертора":kind==="2in"?"Поставте два ввідні автомати 2P — по одному на кожен ввід":kind==="3ph"?"Поставте ввідний автомат 3P або 4P":"Поставте ввідний автомат 2P",
+      h:"Ввідний автомат стоїть першим і захищає весь щит. Номінал — за дозволеною потужністю вводу (для квартири зазвичай C25–C40).",
+      done:()=>S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)).length>=(kind==="2in"||kind==="2inv"?2:1), short:"Ввідний автомат", act:["Обрати автомат",null]},
     {id:"prot", opt:true, t:kind==="3ph"?"Захист від аварій мережі: реле контролю фаз, УЗІП":"Захист від перенапруги: реле напруги, УЗІП",
       h:kind==="3ph"?"Реле контролю фаз розімкне коло керування при обриві фази або неправильному чергуванні.":"Реле напруги відключить щит при стрибку напруги, УЗІП відведе імпульс блискавки на PE.",
       done:()=>has("kv","kvf","spdac"), short:"Захист від перенапруги", act:["Обрати реле",null]},
@@ -2436,7 +2436,7 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
         :"Модуль АВР — найпростіше. Контактори з блокуванням через НЗ-контакти 21–22 — класика. Головне, щоб вводи ніколи не з’єднались між собою.",
       done:()=>has("ats")||S.devices.filter(d=>d.type==="km2a").length>=2, short:"Перемикання вводів", act:["Обрати АВР",null]}]:[]),
     ...(b.noRcd?[]:[{id:"rcd", opt:kind==="3ph", t:"Захист людей: ПЗВ або диф-автомати",
-      h:"ПЗВ 30 мА вимикає лінію при витоку струму на корпус. Номінал ПЗВ — не менший за вступний автомат.",
+      h:"ПЗВ 30 мА вимикає лінію при витоку струму на корпус. Номінал ПЗВ — не менший за ввідний автомат.",
       done:()=>has("rcd","rcd4","rcbo"), short:"Захист людей", act:["Обрати ПЗВ",null]}]),
     {id:"groups", t:"Групи й обладнання",
       h:"Кожен автомат 1P — окрема лінія: розетки, світло, кухня. Двигун, бойлер чи сонячні панелі додайте в «Обладнання поза щитом».",
@@ -2447,18 +2447,18 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
     {id:"loads", short:"Прилади в групах", opt:!G.length, t:"Прилади в групах",
       h:"У картці групи внизу додайте прилади. Симулятор порахує струм і перевірить номінали.",
       done:()=>G.every(g=>g.group.loads.length>0), act:["До карток груп",()=>showTab("groups",true)]},
-    {id:"inwire", short:"Проводка: ввід → вступний", t:"Апарати стоять — тепер проводка. Заведіть ввід на верхні клеми вступного автомата",
+    {id:"inwire", short:"Проводка: ввід → ввідний", t:"Апарати стоять — тепер проводка. Заведіть ввід на верхні клеми ввідного автомата",
       h:kind==="3ph"?"У режимі «Проводка» оберіть вид дроту L1, L2, L3 і з’єднайте клеми вводу з клемами 1, 3, 5 автомата. Нуль N — на клему N автомата 4P або на шину N.":"У режимі «Проводка» оберіть «Фаза L» і з’єднайте клему вводу L з клемою 1 автомата, потім «Нуль N» — з клемою 3.",
       todo:()=>gTodo("inwire"), done:()=>{ const t=gTodo("inwire"); return t.length?t.every(x=>x.ok):mainsOk; }, act:["До проводки",()=>goWire(kind==="3ph"?"L1":"L")]},
     {id:"bus", short:"Шини N і PE", t:"Шини N і PE",
-      h:has("rcd")?"PE вводу — одразу на шину PE (XPE1), без апаратів. Шину N (XN1) живить лише нижня клема N ПЗВ — звідти беруть нуль групові автомати. Нуль від вступного автомата на XN1 не заводьте: так він піде в обхід ПЗВ."
+      h:has("rcd")?"PE вводу — одразу на шину PE (XPE1), без апаратів. Шину N (XN1) живить лише нижня клема N ПЗВ — звідти беруть нуль групові автомати. Нуль від ввідного автомата на XN1 не заводьте: так він піде в обхід ПЗВ."
         :"PE вводу — одразу на шину PE (XPE1), без апаратів. Нуль — на шину N (XN1), звідти беруть нуль групи.",
       todo:()=>gTodo("bus"), done:()=>{ const t=gTodo("bus"); if(t.length) return t.every(x=>x.ok); const pe=b.inputs.find(i=>i.terms.includes("PE")), rc=S.devices.filter(d=>d.type==="rcd");
         return (!pe||f0(pe.id+":PE")===f0("xpe:0"))&&!rcdNBypass(f0).length&&(!b.xn||!G.some(g=>g.type==="qf1p")||(rc.length?rc.some(R=>f0("xn:0")===f0(R.id+":b2")):S.wires.some(w=>/^xn:/.test(w.a)||/^xn:/.test(w.b)))); },
       act:["До проводки (PE)",()=>goWire("PE")]},
     {id:"jump", short:"Перемички до груп", t:"Перемички: живлення до кожної групи",
-      h:has("kv")&&has("rcd")?"Фаза: клема 2 вступного → «L вх» реле напруги, «L вих» реле → клема 1 ПЗВ, клема 2 ПЗВ → групові автомати. Нуль: клема 4 вступного → «N» реле і верхня «N» ПЗВ. Автомати 1P поруч зручно живити гребінкою (кнопка в режимі «Апарати»)."
-        :"З’єднайте апарати по черзі: вступний → реле → ПЗВ → групові автомати. Автомати 1P поруч зручно живити гребінкою (кнопка в режимі «Апарати»).",
+      h:has("kv")&&has("rcd")?"Фаза: клема 2 ввідного → «L вх» реле напруги, «L вих» реле → клема 1 ПЗВ, клема 2 ПЗВ → групові автомати. Нуль: клема 4 ввідного → «N» реле і верхня «N» ПЗВ. Автомати 1P поруч зручно живити гребінкою (кнопка в режимі «Апарати»)."
+        :"З’єднайте апарати по черзі: ввідний → реле → ПЗВ → групові автомати. Автомати 1P поруч зручно живити гребінкою (кнопка в режимі «Апарати»).",
       todo:()=>gTodo("jump"), done:()=>jumpOK()&&gTodo("jump").every(x=>x.ok), act:["До проводки",()=>goWire("L")]},
     {id:"check", short:"Перевірте схему", t:"Перевірте схему",
       h:"«Перевірити схему» знайде КЗ, помилки кольорів дротів, групи без ПЗВ, замалі перерізи. Крок зараховується, коли помилок нуль.",
