@@ -79,6 +79,7 @@ function termRole(key){
   const [o,k]=key.split(":");
   if(S.board.inputs.some(i=>i.id===o)) return k==="N"?"N":k==="PE"?"PE":k;
   if(o==="xn") return "N"; if(o==="xpe") return "PE";
+  if(o==="tb"){ const t=key.split(":")[2]; return t==="N"?"N":t==="PE"?"PE":t==="L"?"L":t; }
   if(o==="xt"){ const x=S.board.xt.find(x=>x.k===k); return x?x.r:null; }
   const t=termDef(key); return t?t.r:null;
 }
@@ -86,6 +87,7 @@ function termName(key){
   const [o,k]=key.split(":");
   const inp=S.board.inputs.find(i=>i.id===o); if(inp) return inp.label+" "+k;
   if(o==="xn") return "Шина N (XN1)"; if(o==="xpe") return "Шина PE (XPE1)";
+  if(o==="tb"){ const g=S.devices.find(x=>x.id===k); return `XT2 ${g?desig(g):"?"} «${key.split(":")[2]}»`; }
   if(o==="xt"){ const x=S.board.xt.find(x=>x.k===k); return "Клема XT1 «"+(x?x.l:k)+"»"; }
   const d=S.devices.find(x=>x.id===o); if(!d) return key; const t=termDef(key);
   return desig(d)+" клема «"+(t?t.l:k)+"»";
@@ -94,6 +96,7 @@ function allTermKeys(){
   const keys=[]; for(const inp of S.board.inputs) for(const t of inp.terms) keys.push(inp.id+":"+t);
   for(let i=0;i<S.board.xn;i++) keys.push("xn:"+i); for(let i=0;i<S.board.xpe;i++) keys.push("xpe:"+i);
   for(const x of S.board.xt) keys.push("xt:"+x.k);
+  if(S.board.tb) for(const g of groupsOf()) for(const t of tbTerms(g)) keys.push(tbK(g,t));
   for(const d of S.devices) for(const t of T[d.type].terms) keys.push(d.id+":"+t.k);
   return keys;
 }

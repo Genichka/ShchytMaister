@@ -7,9 +7,10 @@ function placeDev(type,r,slot){ const w=T[type].w;
   if(S.brand&&S.brand!=="eua"&&MODELS[type]&&MODELS[type][S.brand]&&!ex.brand) ex.brand=S.brand;
   const d=mkDev(type,r,slot,S.pickRating||null,ex); S.devices.push(d);
   S.pick=null; S.pickRating=null; S.pickExtra=null; toast(`${desig(d)} ${d.rating?d.rating+(T[type].unit||"")+" ":""}встановлено`,"ok"); commit(); }
-function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>!w.a.startsWith(d.id+":")&&!w.b.startsWith(d.id+":")); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
+function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>![w.a,w.b].some(k=>k.startsWith(d.id+":")||k.startsWith("tb:"+d.id+":"))); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
 function termTap(key){
-  if(!S.pend){ S.pend=key; S.selWire=null; S.moveEnd=null; renderAll(); return; }
+  if(!S.pend){ const r=termRole(key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,key); toast(`Вид дроту: ${WK[S.wireKind][0]} — за клемою`); }
+    S.pend=key; S.selWire=null; S.moveEnd=null; renderAll(); return; }
   if(S.pend===key){ S.pend=null; renderAll(); return; }
   const a=S.pend, b=key; S.pend=null;
   if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){ toast("Такий дріт уже є","w"); renderAll(); return; }
@@ -38,6 +39,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("#drawerX")||e.target.id==="drawer"){ closeDrawer(); return; }
   if(el=q("[data-menu]")){ const m=el.dataset.menu; closeDrawer();
     if(m==="new") confirmLeave(()=>openWizard(false)); if(m==="projects"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); } if(m==="board") openWizard(true);
+    if(m==="tb"){ S.board.tb=!S.board.tb; if(!S.board.tb) S.wires=S.wires.filter(w=>!/^tb:/.test(w.a)&&!/^tb:/.test(w.b)); GEO=null; commit(); toast(S.board.tb?"Колодку XT2 додано: підключіть до неї L, N і PE кожної групи":"Колодку XT2 прибрано","ok"); }
     if(m==="save"){ saveProject(); } if(m==="saveas"){ openProjects(); document.querySelector('[data-pa="copy"]').click(); } if(m==="export") exportProject(); if(m==="import") $("pImport").click(); if(m==="close") closeBoard();
     if(m==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; S.mode="mount"; save(); renderAll(true); }
     if(m.startsWith("doc:")) openDocs(m.slice(4)); if(m==="plan"){ S.mode="plan"; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; renderAll(); }

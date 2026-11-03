@@ -89,11 +89,11 @@ function boardFor(w){ const cur=S.board;
   const inputs = w.kind==="gnd"?cur.inputs : w.kind==="3ph"?[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}]
     : w.kind==="2in"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}]
     : w.kind==="2inv"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · інвертор",terms:["L","N"],inv:{kw:w.ikw,kwh:w.ikwh}}] : [{id:"in",label:"Ввід",terms:["L","N","PE"]}];
-  return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[]}; }
+  return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[], tb:!!w.tb}; }
 function openWizard(edit){ const b=S.board;
   const iv=(b.inputs.find(i=>i.inv)||{}).inv||{kw:5,kwh:5};
-  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,guide:false,ikw:iv.kw,ikwh:iv.kwh}
-    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,guide:true,ikw:5,ikwh:5};
+  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,tb:!!b.tb,guide:false,ikw:iv.kw,ikwh:iv.kwh}
+    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,tb:true,guide:true,ikw:5,ikwh:5};
   renderWizard(); $("dlg").hidden=false; }
 function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпус","Шини","Готово"], first=w.edit?1:0, last=4; let b="";
   if(w.step===0) b=`<label class="lbl2" for="wzName">Як назвати щит?</label><input class="inp" id="wzName" value="${esc(w.name)}" maxlength="60"><p class="hint">Назва з’явиться в «Проєктах», щит зберігатиметься автоматично.</p>`;
@@ -104,8 +104,9 @@ function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпу�
   if(w.step===2) b=`<p class="hint">Скільки DIN-рейок у корпусі? На кожній — 12 модулів.</p>`+[1,2,3,4].map(r=>`<button class="wz-opt" data-wr="${r}" aria-pressed="${w.rails===r}"><b>ЩРН-${r*12}</b><span>${r} рейк${r===1?"а":"и"} · ${r*12} модулів</span></button>`).join("");
   if(w.step===3) b=`<p class="hint">Скільки отворів на шинах? Кожна група займає по отвору на N і PE.</p>
     <div class="volt"><span class="lbl">Шина N</span><input type="range" id="wzXn" min="0" max="12" value="${w.xn}"><output class="mono" id="wzXnO">${w.xn}</output></div>
-    <div class="volt"><span class="lbl">Шина PE</span><input type="range" id="wzXpe" min="2" max="12" value="${w.xpe}"><output class="mono" id="wzXpeO">${w.xpe}</output></div>`;
-  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}</b></li></ul>`
+    <div class="volt"><span class="lbl">Шина PE</span><input type="range" id="wzXpe" min="2" max="12" value="${w.xpe}"><output class="mono" id="wzXpeO">${w.xpe}</output></div>
+    <label class="chk"><input type="checkbox" id="wzTb" ${w.tb?"checked":""}> Клемна колодка XT2 для відхідних ліній</label><p class="hint">Кабель кожної групи підключається до колодки внизу щита: L — від автомата, N — від шини N, PE — від шини PE.</p>`;
+  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}${w.tb?" · колодка XT2":""}</b></li></ul>`
     +(w.edit?"":`<label class="chk"><input type="checkbox" id="wzGuide" ${w.guide?"checked":""}> Увімкнути покроковий помічник складання</label>`);
   $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щит"}</h2><ol class="wz-steps">${names.slice(first).map((n,j)=>`<li class="${j+first<w.step?"done":j+first===w.step?"cur":""}">${n}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
     <div class="row dlg-f"><button class="btn" data-wz="cancel">Скасувати</button>${w.step>first?`<button class="btn" data-wz="prev">Назад</button>`:""}${w.step<last?`<button class="btn primary" data-wz="next">Далі</button>`:`<button class="btn primary" data-wz="${w.edit?"apply":"create"}">${w.edit?"Застосувати":"Створити щит"}</button>`}</div>`;
@@ -117,7 +118,7 @@ function wizardApply(){ const w=WZ, nb=boardFor(w);
   const lost=S.devices.filter(d=>(d.rail||0)>=w.rails); if(lost.length){ toast(`Спершу зніміть апарати з рейки ${w.rails+1}: ${lost.map(desig).join(", ")}`,"w"); return; }
   const keys=new Set(); for(const i of nb.inputs) for(const t of i.terms) keys.add(i.id+":"+t); for(let i=0;i<nb.xn;i++) keys.add("xn:"+i); for(let i=0;i<nb.xpe;i++) keys.add("xpe:"+i);
   const boardKey=x=>/^(in2?|gnd|xn|xpe):/.test(x), drop=S.wires.filter(x=>[x.a,x.b].some(q=>boardKey(q)&&!keys.has(q)));
-  const go=()=>{ S.wires=S.wires.filter(x=>!drop.includes(x)); Object.assign(S.board,{rails:nb.rails,inputs:nb.inputs,xn:nb.xn,xpe:nb.xpe});
+  const go=()=>{ S.wires=S.wires.filter(x=>!drop.includes(x)); if(!nb.tb) S.wires=S.wires.filter(x=>!/^tb:/.test(x.a)&&!/^tb:/.test(x.b)); Object.assign(S.board,{rails:nb.rails,inputs:nb.inputs,xn:nb.xn,xpe:nb.xpe,tb:nb.tb});
     const src={}; for(const i of nb.inputs) src[i.id]=S.src[i.id]||{on:false,U:230,lost:{}}; S.src=src; if(S.comb&&(S.comb.rail||0)>=nb.rails) S.comb=null;
     if(S.proj) S.proj.name=w.name; closeDlg(); GEO=null; commit(); renderProjBtn(); toast("Корпус і ввід змінено","ok"); };
   if(drop.length) dialog("Прибрати дроти?",`<p>${drop.length} дрот(и) підключено до клем, яких після змін не буде. Їх буде прибрано.</p>`,[{label:"Скасувати"},{label:"Прибрати і застосувати",cls:"primary",act:go}]); else go(); }
@@ -248,6 +249,6 @@ document.addEventListener("change",e=>{ const t=e.target;
   if(t.id==="capIn"){ const d=S.devices.find(x=>x.id===t.dataset.capfor); if(!d) return; const v=t.value.trim(); if(d.group) d.group.name=v||"Група"; else d.cap=v||undefined; commit(); return; }
   if(t.id==="fldName"){ const f=S.field.find(x=>x.id===S.selDev); if(f){ f.name=t.value.trim()||f.name; commit(); } return; } });
 document.addEventListener("input",e=>{ const t=e.target;
-  if(t.id==="wzXn"){ WZ.xn=+t.value; $("wzXnO").textContent=t.value; } if(t.id==="wzXpe"){ WZ.xpe=+t.value; $("wzXpeO").textContent=t.value; } });
+  if(t.id==="wzTb"){ WZ.tb=t.checked; } if(t.id==="wzXn"){ WZ.xn=+t.value; $("wzXnO").textContent=t.value; } if(t.id==="wzXpe"){ WZ.xpe=+t.value; $("wzXpeO").textContent=t.value; } });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("dlg").hidden) closeDlg(); if(e.key==="Enter"&&e.target.id==="wzName"){ e.preventDefault(); $("dlgCard").querySelector("[data-wz=next]")?.click(); } });
 document.addEventListener("toggle",e=>{ if(e.target.id==="fldDD") S.fldOpen=e.target.open; },true);

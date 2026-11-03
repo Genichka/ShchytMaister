@@ -438,7 +438,7 @@ body.demo-on .bbar{display:none}
   <div class="dr-g"><div class="dr-k">Проєкт</div>
     <button class="dr-i" data-menu="new">Створити новий щит</button><button class="dr-i" data-menu="projects">Відкрити збережений…</button><button class="dr-i" data-menu="save">Зберегти</button><button class="dr-i" data-menu="saveas">Зберегти як…</button>
     <button class="dr-i" data-menu="export">Експорт у файл</button><button class="dr-i" data-menu="import">Імпорт з файлу</button><button class="dr-i" data-menu="close">Закрити щит</button></div>
-  <div class="dr-g"><div class="dr-k">Щит</div><button class="dr-i" data-menu="board">Корпус і ввід</button><button class="dr-i" data-menu="guide">Покроковий помічник</button></div>
+  <div class="dr-g"><div class="dr-k">Щит</div><button class="dr-i" data-menu="board">Корпус і ввід</button><button class="dr-i" data-menu="tb">Клемна колодка XT2: увімкнути / вимкнути</button><button class="dr-i" data-menu="guide">Покроковий помічник</button></div>
   <div class="dr-g"><div class="dr-k">Документи</div>
     <button class="dr-i" data-menu="doc:sld">Однолінійна схема</button><button class="dr-i" data-menu="doc:cab">Кабельний журнал</button><button class="dr-i" data-menu="doc:spec">Специфікація обладнання</button><button class="dr-i" data-menu="doc:lab">Маркування автоматів (наклейки)</button><button class="dr-i" data-menu="plan">План приміщень і довжини кабелів</button></div>
   <div class="dr-g"><div class="dr-k">Приклади щитів <span class="hint" id="tplName"></span></div><div id="tplMenu" class="tpl-list"></div></div>
@@ -455,7 +455,7 @@ body.demo-on .bbar{display:none}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.1.1", date:"2026-11-03", notes:["Помічник показує конкретну дію: що з чим з’єднати, клеми 1 і 2 підсвічено на щиті","Кнопка «Прокласти дріт» сама обирає вид і переріз дроту","Угорі — список пунктів кроку: ✓ зроблено, ○ ще треба","Крок «Ввід → вступний автомат» тепер перевіряє і фазу, і нуль"] };
+const APP = { v:"4.2", date:"2026-11-03", notes:["Помічник: спершу всі апарати, проводка — наприкінці","Клемна колодка XT2 для відхідних ліній: L від автомата, N від шини N, PE від шини PE — для кожної групи (майстер, меню «Щит»)","Помічник показує, який саме дріт заважає (нуль в обхід ПЗВ), і прибирає його однією кнопкою","Дріт з невірним видом (синій на фазі тощо) виправляється кнопкою; вид дроту сам обирається за першою клемою","Щит сам прокручується до підсвічених клем"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -537,6 +537,7 @@ function termRole(key){
   const [o,k]=key.split(":");
   if(S.board.inputs.some(i=>i.id===o)) return k==="N"?"N":k==="PE"?"PE":k;
   if(o==="xn") return "N"; if(o==="xpe") return "PE";
+  if(o==="tb"){ const t=key.split(":")[2]; return t==="N"?"N":t==="PE"?"PE":t==="L"?"L":t; }
   if(o==="xt"){ const x=S.board.xt.find(x=>x.k===k); return x?x.r:null; }
   const t=termDef(key); return t?t.r:null;
 }
@@ -544,6 +545,7 @@ function termName(key){
   const [o,k]=key.split(":");
   const inp=S.board.inputs.find(i=>i.id===o); if(inp) return inp.label+" "+k;
   if(o==="xn") return "Шина N (XN1)"; if(o==="xpe") return "Шина PE (XPE1)";
+  if(o==="tb"){ const g=S.devices.find(x=>x.id===k); return `XT2 ${g?desig(g):"?"} «${key.split(":")[2]}»`; }
   if(o==="xt"){ const x=S.board.xt.find(x=>x.k===k); return "Клема XT1 «"+(x?x.l:k)+"»"; }
   const d=S.devices.find(x=>x.id===o); if(!d) return key; const t=termDef(key);
   return desig(d)+" клема «"+(t?t.l:k)+"»";
@@ -552,6 +554,7 @@ function allTermKeys(){
   const keys=[]; for(const inp of S.board.inputs) for(const t of inp.terms) keys.push(inp.id+":"+t);
   for(let i=0;i<S.board.xn;i++) keys.push("xn:"+i); for(let i=0;i<S.board.xpe;i++) keys.push("xpe:"+i);
   for(const x of S.board.xt) keys.push("xt:"+x.k);
+  if(S.board.tb) for(const g of groupsOf()) for(const t of tbTerms(g)) keys.push(tbK(g,t));
   for(const d of S.devices) for(const t of T[d.type].terms) keys.push(d.id+":"+t.k);
   return keys;
 }
@@ -570,8 +573,13 @@ const tdef = d => T[d.type] || FT[d.type];
 const K = (d,k) => T[d.type] ? d.id+":"+k : (d.map[k]||"");
 const groupsOf = () => S.devices.filter(d=>T[d.type].group&&d.group).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
 const g3 = d => !!T[d.type].gph;
-const gL = d => d.id+":b1", gN = d => (d.type==="rcbo"||d.type==="qfn"||d.type==="afdd") ? d.id+":b2" : d.type==="qf3p" ? d.id+":b2" : d.type==="qf4p" ? d.id+":b4" : "xn:0";
-const gPh = (d,X) => g3(d) ? ["b1","b2","b3"].every(t=>X.ph(d.id+":"+t)) : !!X.ph(gL(d));
+// Клемна колодка XT2: кожна група має свої клеми L (або L1–L3), N, PE — до них підключено кабель лінії
+const tbOn = () => !!S.board.tb, tbK = (d,t) => "tb:"+d.id+":"+t;
+const tbTerms = d => g3(d) ? (d.type==="qf4p"?["L1","L2","L3","N","PE"]:["L1","L2","L3","PE"]) : ["L","N","PE"];
+const gL0 = d => d.id+":b1";
+const gL = d => tbOn() ? tbK(d,g3(d)?"L1":"L") : d.id+":b1", gN = d => tbOn() ? tbK(d,"N") : (d.type==="rcbo"||d.type==="qfn"||d.type==="afdd") ? d.id+":b2" : d.type==="qf3p" ? d.id+":b2" : d.type==="qf4p" ? d.id+":b4" : "xn:0";
+const gABC = d => tbOn() ? ["L1","L2","L3"].map(t=>tbK(d,t)) : ["b1","b2","b3"].map(t=>d.id+":"+t);
+const gPh = (d,X) => g3(d) ? gABC(d).every(k=>X.ph(k)) : !!X.ph(gL(d));
 const kwOf = (d,all) => d.group.loads.reduce((a,l)=>a+(all||l.on?l.kw:0),0);
 const poleClosed = (d,pi) => { const t=tdef(d); return t.closed ? t.closed(d,pi) : (d.on&&!d.trip); };
 const protIn = d => d.Ir || inA(d.rating);
@@ -654,7 +662,7 @@ const FAULT = {LN:"коротке замикання L–N", LPE:"замикан
 function computeLoads(X){
   const L=[];
   for(const d of groupsOf()){ const kw=kwOf(d);
-    if(g3(d)){ const ok=gPh(d,X), U=ok?srcU(X.ph(gL(d))):0, I=ok?kw*1000/(3*U):0; L.push({own:d.id, abc:["b1","b2","b3"].map(t=>d.id+":"+t), Is:[I,I,I], I, U, grp:true, g3:true}); continue; }
+    if(g3(d)){ const ok=gPh(d,X), U=ok?srcU(X.ph(gL(d))):0, I=ok?kw*1000/(3*U):0; L.push({own:d.id, abc:gABC(d), Is:[I,I,I], I, U, grp:true, g3:true}); continue; }
     const U=X.volt(gL(d),gN(d)); L.push({own:d.id, a:gL(d), b:gN(d), I:U>100?kw*1000/U:0, U, grp:true}); }
   for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.load) for(const l of t.load(d,X)){ l.own=d.id; if(l.a) l.a=K(d,l.a); if(l.b) l.b=K(d,l.b); if(l.abc) l.abc=l.abc.map(k=>K(d,k)); L.push(l); } }
   return L;
@@ -1179,7 +1187,7 @@ defField("valve",{name:"Кран з електроприводом", fw:150, fh:
 /* ===== Геометрія щита, трасування дротів, малювання ===== */
 const G = { W:840, X0:96, MW:54, INY:36 };
 const devTop = r => 208 + r*380, devBot = r => devTop(r)+240;
-const busY = () => devBot(S.board.rails-1)+118, enclB = () => busY()+36, panelH = () => enclB()+10;
+const busY = () => devBot(S.board.rails-1)+118, tbY = () => busY()+70, enclB = () => (S.board.tb&&groupsOf().length?tbY()+44:busY()+36), panelH = () => enclB()+10;
 const fieldY = () => panelH()+34;
 function fieldLayout(){ const out=[]; let x=24, row=0; for(const f of S.field){ const w=FT[f.type].fw; if(x+w>824&&x>24){ x=24; row++; } out.push({f,x,y:fieldY()+row*170}); x+=w+14; } return {items:out, rows:out.length?row+1:0}; }
 const totalH = () => S.field.length ? fieldY()+fieldLayout().rows*170 : panelH();
@@ -1194,7 +1202,9 @@ function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, g
   for(let i=0;i<n;i++){ pos["xn:"+i]=x; x+=sp; } x+=20-sp+sp;
   if(m){ b.xt.forEach(t=>{ pos["xt:"+t.k]=x; x+=sp; }); x+=20; }
   const shift=Math.max(0,716-(x+(p-1)*sp)); x+=shift; for(let i=0;i<p;i++){ pos["xpe:"+i]=x; x+=sp; }
-  return {pos,sp}; }
+  let tsp=26; const tg=b.tb?groupsOf():[], tn=tg.reduce((a,g)=>a+tbTerms(g).length,0); if(tn){ if(tn*tsp+(tg.length-1)*12>660) tsp=Math.max(16,(660-(tg.length-1)*12)/tn);
+    let tx2=Math.max(110,420-(tn*tsp+(tg.length-1)*12)/2); for(const g of tg){ for(const t of tbTerms(g)){ pos[tbK(g,t)]=tx2; tx2+=tsp; } tx2+=12; } }
+  return {pos,sp,tsp}; }
 let GEO=null;
 function geoCache(){ GEO={inx:inputX(), bus:busRow()}; return GEO; }
 function termX(d,t){ const def=T[d.type]; if(t.m!==undefined) return G.X0+(d.slot+t.m)*G.MW+G.MW/2;
@@ -1203,6 +1213,7 @@ function termPos(key){
   const [o,k]=key.split(":"), R=S.board.rails, g=GEO||geoCache();
   if(S.board.inputs.some(i=>i.id===o)) return {x:g.inx[key], y:G.INY, c:0, s:"l"};
   if(o==="xn"||o==="xpe"||o==="xt"){ const x=g.bus.pos[key]; return x===undefined?null:{x, y:busY(), c:R, s:"u"}; }
+  if(o==="tb"){ const x=g.bus.pos[key]; return x===undefined?null:{x, y:tbY(), c:R, s:"u"}; }
   const d=S.devices.find(x=>x.id===o); if(!d) return null; const t=T[d.type].terms.find(t=>t.k===k); if(!t) return null; const r=d.rail||0;
   return t.s==="top" ? {x:termX(d,t), y:devTop(r)+22, c:r, s:"l"} : {x:termX(d,t), y:devBot(r)-22, c:r+1, s:"u"};
 }
@@ -1279,7 +1290,12 @@ function render(){ if(S.mode==="plan"){ renderPlan(); return; }
     for(let i=0;i<b.xpe;i++) s+=`<rect x="${xs("xpe:"+i)-7}" y="${B-12}" width="14" height="24" fill="#2e9a3e" opacity=".85"/>`; s+=tx(a,B-18,"PE · XPE1",{c:"lab",fs:10,a:"start"}); }
   if(b.xt.length){ const a=xs("xt:"+b.xt[0].k)-14, z=xs("xt:"+b.xt[b.xt.length-1].k)+14; s+=`<rect x="${a}" y="${B-14}" width="${z-a}" height="28" rx="2" fill="#7c8590"/>`+tx(a,B-18,"XT1 · до обладнання",{c:"lab",fs:10,a:"start"});
     for(const t of b.xt){ const x=xs("xt:"+t.k); s+=`<text class="lab" x="${x+3}" y="${B+20}" font-size="7.5" text-anchor="end" transform="rotate(-60 ${x+3} ${B+20})">${esc(t.l)}</text>`; } }
-  for(const k of Object.keys(bp)) s+=screw(bp[k],B,sp<26?9:11);
+  if(b.tb&&groupsOf().length){ const TY=tbY(), ts=GEO.bus.tsp, gs=groupsOf(), all=gs.flatMap(g=>tbTerms(g).map(t=>bp[tbK(g,t)]));
+    s+=`<rect class="rail" x="${Math.min(...all)-22}" y="${TY-13}" width="${Math.max(...all)-Math.min(...all)+44}" height="26" rx="2" opacity=".9"/>`+tx(Math.min(...all)-22,TY-18,"XT2 · клемна колодка відхідних ліній",{c:"lab",fs:10,a:"start"});
+    for(const g of gs){ const ts2=tbTerms(g), x0=bp[tbK(g,ts2[0])], x1=bp[tbK(g,ts2[ts2.length-1])];
+      for(const t of ts2){ const X=bp[tbK(g,t)], c=t==="N"?"#2f6fdf":t==="PE"?"#f2c400":"#9aa0a6"; s+=`<rect x="${X-ts/2+1}" y="${TY-15}" width="${ts-2}" height="30" rx="2" fill="${c}" stroke="#555" stroke-width=".8"/>`+(t==="PE"?`<rect x="${X-ts/2+1}" y="${TY+4}" width="${ts-2}" height="5" fill="#2e9a3e"/>`:"")+screw(X,TY,ts<22?7:9); }
+      s+=`<rect x="${x0-ts/2+1}" y="${TY+17}" width="${x1-x0+ts-2}" height="4" fill="${g.group.color}"/>`+tx((x0+x1)/2,TY+31,desig(g)+" · "+ts2.join(" "),{c:"lab",fs:7.5}); } }
+  for(const k of Object.keys(bp)) if(!/^tb:/.test(k)) s+=screw(bp[k],B,sp<26?9:11);
   for(const inp of b.inputs){ const src=S.src[inp.id]||{}, x0=inx[inp.id];
     if(inp.inv){ const live=srcLive(inp,src), st=!src.on?"вимкнено":src.fault>0?"захист":src.low?"АКБ розряджена":"~230 В";
       s+=tx(x0-16,12,`${inp.label} · ${st} · АКБ ${Math.round(src.soc??80)} %`,{c:"lab",fs:9.5,a:"start",fill:live?"var(--green)":src.on?"var(--red)":undefined}); }
@@ -1308,7 +1324,7 @@ function render(){ if(S.mode==="plan"){ renderPlan(); return; }
     for(const [x,y] of [pts[0],pts[pts.length-1]]) s+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--brass)"/>`;
     if(S.selWire===w.id){ const ends=[["a",pts[0]],["b",pts[pts.length-1]]]; for(const [e,[x,y]] of ends) s+=`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="var(--blue)" stroke-width="2.5"${S.moveEnd&&S.moveEnd.end===e?' stroke-dasharray="4 3"':""}/>`; }
     if(!S.moveEnd&&!S.demo) s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }
-  if(S.mode==="wire"&&typeof gHL==="function"){ const hl=gHL(); hl.forEach((k,i)=>{ const p=termPos(k); if(p) s+=`<circle class="ghl" cx="${p.x}" cy="${p.y}" r="17"/><text class="ghl-t" x="${p.x}" y="${p.y-22}" text-anchor="middle">${i?"2":"1"}</text>`; }); }
+  if(S.mode==="wire"&&typeof gHL==="function"){ const hl=gHL(); if(hl.length&&S.hlSig!==hl.join()){ S.hlSig=hl.join(); requestAnimationFrame(()=>scrollToKeys(hl)); } hl.forEach((k,i)=>{ const p=termPos(k); if(p) s+=`<circle class="ghl" cx="${p.x}" cy="${p.y}" r="17"/><text class="ghl-t" x="${p.x}" y="${p.y-22}" text-anchor="middle">${i?"2":"1"}</text>`; }); }
   if(S.mode==="wire"){ for(const k of allTermKeys()){ const p=termPos(k); if(!p) continue;
       if(S.pend===k) s+=`<circle class="term-sel" cx="${p.x}" cy="${p.y}" r="14"/>`;
       else if(S.moveEnd){ const mw=wireById(S.moveEnd.id); if(mw&&kindFits(mw.kind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`; }
@@ -1316,6 +1332,11 @@ function render(){ if(S.mode==="plan"){ renderPlan(); return; }
       s+=`<circle class="term-hit" data-term="${k}" cx="${p.x}" cy="${p.y}" r="15"/>`; } }
   svg.innerHTML=s;
 }
+
+// Прокрутити щит так, щоб підсвічені клеми було видно
+function scrollToKeys(keys){ const sc=$("scroller"), svg=$("svg"), vb=svg.viewBox.baseVal; if(!vb||!vb.width) return; const k=svg.clientWidth/vb.width, ps=keys.map(termPos).filter(Boolean); if(!ps.length) return;
+  const y0=Math.min(...ps.map(p=>p.y))*k, y1=Math.max(...ps.map(p=>p.y))*k, x0=Math.min(...ps.map(p=>p.x))*k, x1=Math.max(...ps.map(p=>p.x))*k, H=sc.clientHeight, W=sc.clientWidth;
+  const ty=y1-y0<H-60?(y0+y1)/2-H/2:y0-40, tx2=x1-x0<W-60?(x0+x1)/2-W/2:x0-30; sc.scrollTo({top:Math.max(0,ty),left:Math.max(0,tx2),behavior:"smooth"}); }
 /* ===== Перевірка схеми: статичні правила + прогін у «пісочниці» ===== */
 function sandbox(fn){
   const snap=JSON.stringify({devices:S.devices, field:S.field, src:S.src, env:S.env, heat:S.heat});
@@ -1376,7 +1397,8 @@ function runChecks(){
   for(const t of res.trips) add("e","Спрацював захист при ввімкненні",t);
   if(res.chatter) add("e","Схема «дзвенить»","Котушки вмикаються і вимикаються по колу. Перевірте блокувальні контакти.");
   if(!hasFault&&!res.chatter) add("ok",multi?"Подача напруги на обидва вводи — без аварій":"Подача напруги — без коротких замикань і дисбалансу");
-  res.g.forEach((r,i)=>{ if(!r.ok) add("e",`${desig(G[i])} «${G[i].group.name}»: немає живлення`,G[i].type==="rcbo"?"Нуль групи береться з нижньої клеми N диф-автомата.":"Фаза — з верхньої клеми або гребінки, нуль — із шини XN1."); });
+  res.g.forEach((r,i)=>{ if(!r.ok) add("e",`${desig(G[i])} «${G[i].group.name}»: немає живлення`,tbOn()?`Колодка XT2: фаза — з нижньої клеми ${desig(G[i])} на XT2 «${g3(G[i])?"L1":"L"}», нуль — ${["rcbo","qfn","afdd"].includes(G[i].type)?"з нижньої N автомата":"із шини XN1"} на XT2 «N».`:G[i].type==="rcbo"?"Нуль групи береться з нижньої клеми N диф-автомата.":"Фаза — з верхньої клеми або гребінки, нуль — із шини XN1."); });
+  if(tbOn()) for(const g of G) if(f0(tbK(g,"PE"))!==f0("xpe:0")) add("e",`${desig(g)} «${g.group.name}»: PE лінії не підключено`,"З’єднайте шину PE (XPE1) з клемою XT2 «PE» цієї групи — інакше корпуси приладів без заземлення.");
   if(multi){ for(const a of res.alt){ const bad=a.err.length||a.trips.length||a.g.length;
       if(bad){ for(const e of a.err) add("e",`Лише «${a.inp.label}»: аварія`,e); for(const t of a.trips) add("e",`Лише «${a.inp.label}»: спрацював захист`,t);
         if(a.g.length) add("e",`Лише «${a.inp.label}»: групи без живлення`,a.g.join(", ")+". АВР не перевів навантаження на резерв."); }
@@ -1414,7 +1436,7 @@ function runChecks(){
   if(mainIn&&b.inputs.length===1){ let low=0;
     for(const w of S.wires){ if(!["L","N"].includes(w.kind)) continue; const g2=build({ideal:true,skip:w.id}), g1=build({ideal:true});
       const aff=G.filter(g=>(g1(gL(g))===g1("in:L")&&g2(gL(g))!==g2("in:L"))||(g1(gN(g))===g1("in:N")&&g2(gN(g))!==g2("in:N")));
-      if(!aff.length) continue; const req=aff.length>1||!aff.some(g=>w.a===gL(g)||w.b===gL(g))?mainIn:inA(aff[0].rating);
+      if(!aff.length) continue; const own=g=>[gL(g),gN(g),gL0(g)], req=aff.length>1||!aff.some(g=>own(g).includes(w.a)||own(g).includes(w.b))?mainIn:inA(aff[0].rating);
       if(CAB[w.sec]<req){ low++; add("e",`Замалий переріз ${fmt(w.sec)} мм²`,`${termName(w.a)} → ${termName(w.b)}: потрібно від ${fmt(secFor(req))} мм² (струм до ${req} А).`); } }
     if(!low&&S.wires.length) add("ok","Перерізи силових перемичок відповідають вступному автомату"); }
   if(G.length&&b.inputs.length===1&&!S.devices.some(d=>d.type==="kv")&&!S.field.some(f=>f.type==="inv")) add("w","Немає реле напруги","Без нього техніка не захищена від перенапруги.");
@@ -2046,9 +2068,10 @@ function placeDev(type,r,slot){ const w=T[type].w;
   if(S.brand&&S.brand!=="eua"&&MODELS[type]&&MODELS[type][S.brand]&&!ex.brand) ex.brand=S.brand;
   const d=mkDev(type,r,slot,S.pickRating||null,ex); S.devices.push(d);
   S.pick=null; S.pickRating=null; S.pickExtra=null; toast(`${desig(d)} ${d.rating?d.rating+(T[type].unit||"")+" ":""}встановлено`,"ok"); commit(); }
-function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>!w.a.startsWith(d.id+":")&&!w.b.startsWith(d.id+":")); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
+function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>![w.a,w.b].some(k=>k.startsWith(d.id+":")||k.startsWith("tb:"+d.id+":"))); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
 function termTap(key){
-  if(!S.pend){ S.pend=key; S.selWire=null; S.moveEnd=null; renderAll(); return; }
+  if(!S.pend){ const r=termRole(key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,key); toast(`Вид дроту: ${WK[S.wireKind][0]} — за клемою`); }
+    S.pend=key; S.selWire=null; S.moveEnd=null; renderAll(); return; }
   if(S.pend===key){ S.pend=null; renderAll(); return; }
   const a=S.pend, b=key; S.pend=null;
   if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){ toast("Такий дріт уже є","w"); renderAll(); return; }
@@ -2077,6 +2100,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("#drawerX")||e.target.id==="drawer"){ closeDrawer(); return; }
   if(el=q("[data-menu]")){ const m=el.dataset.menu; closeDrawer();
     if(m==="new") confirmLeave(()=>openWizard(false)); if(m==="projects"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); } if(m==="board") openWizard(true);
+    if(m==="tb"){ S.board.tb=!S.board.tb; if(!S.board.tb) S.wires=S.wires.filter(w=>!/^tb:/.test(w.a)&&!/^tb:/.test(w.b)); GEO=null; commit(); toast(S.board.tb?"Колодку XT2 додано: підключіть до неї L, N і PE кожної групи":"Колодку XT2 прибрано","ok"); }
     if(m==="save"){ saveProject(); } if(m==="saveas"){ openProjects(); document.querySelector('[data-pa="copy"]').click(); } if(m==="export") exportProject(); if(m==="import") $("pImport").click(); if(m==="close") closeBoard();
     if(m==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; S.mode="mount"; save(); renderAll(true); }
     if(m.startsWith("doc:")) openDocs(m.slice(4)); if(m==="plan"){ S.mode="plan"; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; renderAll(); }
@@ -2315,6 +2339,9 @@ function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.pu
   addR(`Корпус ЩРН-${S.board.rails*12} (${S.board.rails} рейк${S.board.rails>1?"и":"а"} DIN)`,"","1","шт.");
   if(S.board.xn) addR("Шина нульова N на ізоляторах",S.board.xn+" отв.","1","шт."); if(S.board.xpe) addR("Шина заземлення PE",S.board.xpe+" отв.","1","шт.");
   if(S.comb) addR("Гребінка 1P",`${S.comb.to-S.comb.from+1} мод.`,"1","шт.");
+  if(S.board.tb&&groupsOf().length){ const all=groupsOf().flatMap(tbTerms), n=t=>all.filter(x=>x===t).length, l=all.filter(x=>/^L/.test(x)).length;
+    addR("Клема прохідна пружинна, сіра (L)","до 4 мм²",String(l),"шт."); if(n("N")) addR("Клема прохідна пружинна, синя (N)","до 4 мм²",String(n("N")),"шт."); addR("Клема заземлення жовто-зелена (PE)","до 4 мм²",String(n("PE")),"шт.");
+    addR("Заглушка і кінцевий фіксатор для колодки XT2","","2","шт."); }
   const wl={}; for(const w of S.wires){ const c=w.col||(w.kind==="PE"?"pe":w.kind==="N"?"blue":PHK.includes(w.kind)?"red":w.kind==="C"?"orange":"black"); const key=`${fmt(w.sec,w.sec%1?1:0)} мм² · ${(WCOL[c]||["чорний"])[0].toLowerCase()}`; wl[key]=(wl[key]||0)+wireLenCm(w); }
   for(const [k,cm] of Object.entries(wl)) addR("Провід монтажний ПВ-3 (гнучкий)",k,fmt(Math.ceil(cm*1.2/10)/10,1),"м");
   const fr={}; for(const w of S.wires){ const f2=ferrule(w.sec); fr[f2]=(fr[f2]||0)+2; } for(const [k,n] of Object.entries(fr)) addR("Наконечник втулковий ізольований",k,String(n),"шт.");
@@ -2386,9 +2413,6 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
     {id:"main", t:kind==="2inv"?"Поставте два автомати 2P: вступний від мережі й на виході інвертора":kind==="2in"?"Поставте два вступні автомати 2P — по одному на кожен ввід":kind==="3ph"?"Поставте вступний автомат 3P або 4P":"Поставте вступний автомат 2P",
       h:"Вступний автомат стоїть першим і захищає весь щит. Номінал — за дозволеною потужністю вводу (для квартири зазвичай C25–C40).",
       done:()=>S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)).length>=(kind==="2in"||kind==="2inv"?2:1), short:"Вступний автомат", act:["Обрати автомат",null]},
-    {id:"inwire", short:"Ввід → вступний автомат", t:"Заведіть ввід на верхні клеми вступного автомата",
-      h:kind==="3ph"?"У режимі «Проводка» оберіть вид дроту L1, L2, L3 і з’єднайте клеми вводу з клемами 1, 3, 5 автомата. Нуль N — на клему N автомата 4P або на шину N.":"У режимі «Проводка» оберіть «Фаза L» і з’єднайте клему вводу L з клемою 1 автомата, потім «Нуль N» — з клемою 3.",
-      todo:()=>gTodo("inwire"), done:()=>{ const t=gTodo("inwire"); return t.length?t.every(x=>x.ok):mainsOk; }, act:["До проводки",()=>goWire(kind==="3ph"?"L1":"L")]},
     {id:"prot", opt:true, t:kind==="3ph"?"Захист від аварій мережі: реле контролю фаз, УЗІП":"Захист від перенапруги: реле напруги, УЗІП",
       h:kind==="3ph"?"Реле контролю фаз розімкне коло керування при обриві фази або неправильному чергуванні.":"Реле напруги відключить щит при стрибку напруги, УЗІП відведе імпульс блискавки на PE.",
       done:()=>has("kv","kvf","spdac"), short:"Захист від перенапруги", act:["Обрати реле",null]},
@@ -2402,6 +2426,15 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
     {id:"groups", t:"Групи й обладнання",
       h:"Кожен автомат 1P — окрема лінія: розетки, світло, кухня. Двигун, бойлер чи сонячні панелі додайте в «Обладнання поза щитом».",
       done:()=>G.length>0||S.field.length>0, short:"Групові автомати", act:["Обрати автомат",null]},
+    {id:"labels", short:"Підпишіть групи", opt:!G.length, t:"Наклейки: підпишіть групи",
+      h:"Торкніться автомата і дайте назву в полі «Підпис»: «Кухня, розетки», «Освітлення»…",
+      done:()=>G.every(g=>!/^(Група \d+|Нова група)$/.test(g.group.name))},
+    {id:"loads", short:"Прилади в групах", opt:!G.length, t:"Прилади в групах",
+      h:"У картці групи внизу додайте прилади. Симулятор порахує струм і перевірить номінали.",
+      done:()=>G.every(g=>g.group.loads.length>0), act:["До карток груп",()=>showTab("groups",true)]},
+    {id:"inwire", short:"Проводка: ввід → вступний", t:"Апарати стоять — тепер проводка. Заведіть ввід на верхні клеми вступного автомата",
+      h:kind==="3ph"?"У режимі «Проводка» оберіть вид дроту L1, L2, L3 і з’єднайте клеми вводу з клемами 1, 3, 5 автомата. Нуль N — на клему N автомата 4P або на шину N.":"У режимі «Проводка» оберіть «Фаза L» і з’єднайте клему вводу L з клемою 1 автомата, потім «Нуль N» — з клемою 3.",
+      todo:()=>gTodo("inwire"), done:()=>{ const t=gTodo("inwire"); return t.length?t.every(x=>x.ok):mainsOk; }, act:["До проводки",()=>goWire(kind==="3ph"?"L1":"L")]},
     {id:"bus", short:"Шини N і PE", t:"Шини N і PE",
       h:has("rcd")?"PE вводу — одразу на шину PE (XPE1), без апаратів. Шину N (XN1) живить лише нижня клема N ПЗВ — звідти беруть нуль групові автомати. Нуль від вступного автомата на XN1 не заводьте: так він піде в обхід ПЗВ."
         :"PE вводу — одразу на шину PE (XPE1), без апаратів. Нуль — на шину N (XN1), звідти беруть нуль групи.",
@@ -2411,13 +2444,7 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
     {id:"jump", short:"Перемички до груп", t:"Перемички: живлення до кожної групи",
       h:has("kv")&&has("rcd")?"Фаза: клема 2 вступного → «L вх» реле напруги, «L вих» реле → клема 1 ПЗВ, клема 2 ПЗВ → групові автомати. Нуль: клема 4 вступного → «N» реле і верхня «N» ПЗВ. Автомати 1P поруч зручно живити гребінкою (кнопка в режимі «Апарати»)."
         :"З’єднайте апарати по черзі: вступний → реле → ПЗВ → групові автомати. Автомати 1P поруч зручно живити гребінкою (кнопка в режимі «Апарати»).",
-      todo:()=>gTodo("jump"), done:jumpOK, act:["До проводки",()=>goWire("L")]},
-    {id:"labels", short:"Підпишіть групи", opt:!G.length, t:"Наклейки: підпишіть групи",
-      h:"Торкніться автомата і дайте назву в полі «Підпис»: «Кухня, розетки», «Освітлення»…",
-      done:()=>G.every(g=>!/^(Група \d+|Нова група)$/.test(g.group.name))},
-    {id:"loads", short:"Прилади в групах", opt:!G.length, t:"Прилади в групах",
-      h:"У картці групи внизу додайте прилади. Симулятор порахує струм і перевірить номінали.",
-      done:()=>G.every(g=>g.group.loads.length>0), act:["До карток груп",()=>showTab("groups",true)]},
+      todo:()=>gTodo("jump"), done:()=>jumpOK()&&gTodo("jump").every(x=>x.ok), act:["До проводки",()=>goWire("L")]},
     {id:"check", short:"Перевірте схему", t:"Перевірте схему",
       h:"«Перевірити схему» знайде КЗ, помилки кольорів дротів, групи без ПЗВ, замалі перерізи. Крок зараховується, коли помилок нуль.",
       done:()=>S.lastCheck&&S.lastCheck.sig===structSnap()&&S.lastCheck.errors===0, act:["Перевірити",()=>checkNow()]},
@@ -2453,16 +2480,19 @@ function guideBar(){ const g=guideCur(); if(!g) return "";
   if(g.cur<0){ S.devFilter=null; return `<div class="br gd"><span class="gk">✓</span><b class="gt">Щит зібрано і випробувано</b><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`; }
   const s=g.s; if(S.devFilter&&S.devFilter.step!==s.id) S.devFilter=null; const it=s.todo?(s.todo().find(x=>!x.ok)||null):null;
   if(it) return `<div class="br gd"><span class="gk">${g.cur+1}/${g.st.length}</span><b class="gt">${it.bad?esc(it.t):`З’єднайте <span class="gn">1</span> ${esc(kName(it.a))} → <span class="gn">2</span> ${esc(kName(it.b))}`}</b><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`
-    +`<div class="br">${it.bad?`<button class="btn sm primary" data-gwire>До проводки</button>`:`<button class="btn sm primary" data-gwire>${S.mode==="wire"&&S.wireKind===it.kind?"✓ Дріт «"+esc(WK[it.kind][0])+"» обрано — торкніться 1, потім 2":"Прокласти дріт «"+esc(WK[it.kind][0])+"»"}</button>`}<button class="btn sm" data-gskip="${s.id}">Пропустити крок</button></div>`;
+    +`<div class="br">${it.bad?(it.fixKind?`<button class="btn sm primary" data-gfixkind>Зробити «${esc(WK[it.fixKind][0])}»</button><button class="btn sm" data-gshow>Показати дріт</button>`:it.wire?`<button class="btn sm danger" data-gfixdel>Прибрати цей дріт</button><button class="btn sm" data-gshow>Показати дріт</button>`:`<button class="btn sm primary" data-gwire>До проводки</button>`):`<button class="btn sm primary" data-gwire>${S.mode==="wire"&&S.wireKind===it.kind?"✓ Дріт «"+esc(WK[it.kind][0])+"» обрано — торкніться 1, потім 2":"Прокласти дріт «"+esc(WK[it.kind][0])+"»"}</button>`}<button class="btn sm" data-gskip="${s.id}">Пропустити крок</button></div>`;
   return `<div class="br gd"><span class="gk">${g.cur+1}/${g.st.length}</span><b class="gt">${esc(s.short||s.t)}</b>${s.act?`<button class="btn sm primary" data-gact="${g.cur}">${esc(s.act[0])}</button>`:""}<button class="btn sm" data-gskip="${s.id}">Пропустити</button><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`; }
 
 // ---- Конкретні дії для кроків проводки: що з чим з’єднати, з перевіркою кожного пункту
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
 function kName(k){ if(k==="xn:*") return "шина N (XN1)"; if(k==="xpe:*") return "шина PE (XPE1)"; const n=termName(k), t=termDef(k), d=S.devices.find(x=>x.id===k.split(":")[0]);
   return t&&d&&T[d.type].terms.filter(x=>x.l===t.l).length>1 ? n+(t.s==="top"?" зверху":" знизу") : n; }
+const kNameS = k => kName(k);
 function gTodo(id){ const b=S.board, f0=build({allOpen:true}), kind=boardKind(b), out=[], G=groupsOf();
+  if(["inwire","bus","jump"].includes(id)) for(const w of S.wires){ const bad=[w.a,w.b].find(k=>{ const r=termRole(k); return r&&!kindFits(w.kind,r); });
+    if(bad){ const nk=autoKind(termRole(bad),bad); out.push({ok:false,bad:true,wire:w.id,fixKind:nk,t:`Дріт ${kName(w.a)} → ${kName(w.b)} має вид «${WK[w.kind][0]}», а клема ${kName(bad)} — для «${WK[nk][0]}»`}); } }
   const mains=S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)).sort(byPosD), K2=(d,k)=>d.id+":"+k;
-  const okOf=(a,c,alt)=>{ const fc=c==="xn:*"?"xn:0":c==="xpe:*"?"xpe:0":c; return f0(a)===f0(fc)||(alt||[]).some(x=>f0(a)===f0(x)); };
+  const okOf=(a,c,alt)=>{ const m=x=>x==="xn:*"?"xn:0":x==="xpe:*"?"xpe:0":x, fa=m(a), fc=m(c); return f0(fa)===f0(fc)||(alt||[]).some(x=>f0(fc)===f0(x)); };
   const add=(a,c,k,sec,alt)=>out.push({a,b:c,kind:k,sec,ok:okOf(a,c,alt)});
   if(id==="inwire"){ b.inputs.filter(i=>i.terms.some(t=>/^L/.test(t))).forEach((inp,ix)=>{ const m=mains[ix]||mains[0]; if(!m) return;
       const tops=T[m.type].terms.filter(t=>t.s==="top"), ph=tops.filter(x=>x.r!=="N"), tn=tops.find(x=>x.r==="N"), sec=secFor(inA(m.rating));
@@ -2470,20 +2500,40 @@ function gTodo(id){ const b=S.board, f0=build({allOpen:true}), kind=boardKind(b)
   if(id==="bus"){ const pe=b.inputs.find(i=>i.terms.includes("PE")), m=mains[0], rc=S.devices.filter(d=>d.type==="rcd").sort(byPosD);
     if(pe&&b.xpe) add(pe.id+":PE","xpe:*","PE",m?secFor(inA(m.rating)):6);
     if(b.xn&&G.some(g=>g.type==="qf1p")){ if(rc.length) add(K2(rc[0],"b2"),"xn:*","N",m?secFor(inA(m.rating)):6); else if(m&&m.type!=="qf3p") add(K2(m,m.type==="qf4p"?"b4":"b2"),"xn:*","N",secFor(inA(m.rating))); }
-    for(const R of rcdNBypass(f0)) out.push({ok:false,bad:true,t:`Нуль іде в обхід ${desig(R)}: верхня і нижня N ${desig(R)} з’єднані через шину. Перенесіть дріт з верхньої N на вихід N вступного автомата.`}); }
+    for(const R of rcdNBypass(f0)){ const w=bypassWire(R); out.push({ok:false,bad:true,wire:w&&w.id,t:w?`Приберіть дріт ${kName(w.a)} → ${kName(w.b)}: через нього нуль іде в обхід ${desig(R)}. На шину N має приходити лише нижня N ПЗВ.`:`Нуль іде в обхід ${desig(R)}: верхня і нижня N з’єднані.`}); } }
   if(id==="jump"&&kind==="1ph"){ const m=mains[0]; if(!m||m.type!=="qf2p") return out; const kv=S.devices.find(d=>d.type==="kv"), rc=S.devices.find(d=>d.type==="rcd"), sec=secFor(inA(m.rating));
     let L=K2(m,"b1"); const N=K2(m,"b2");
     if(kv){ add(L,K2(kv,"t2"),"L",sec); add(N,K2(kv,"t1"),"N",1.5,["xn:0"]); L=K2(kv,"b2"); }
     if(rc){ add(L,K2(rc,"t1"),"L",sec); add(N,K2(rc,"t2"),"N",sec); L=K2(rc,"b1"); }
     for(const g of G.filter(g=>["qf1p","qfn","afdd","rcbo"].includes(g.type))){ add(L,K2(g,"t1"),"L",sec); if(g.type!=="qf1p") add(K2(g,"t2"),"xn:*","N",2.5); } }
+  if(id==="jump"&&S.board.tb) for(const g of G){ const sec=g.group.sec||2.5, ph=g3(g)?["L1","L2","L3"]:["L"];
+    ph.forEach((t,i)=>add(K2(g,"b"+(i+1)),tbK(g,t),g3(g)?t:"L",sec));
+    if(tbTerms(g).includes("N")) add(["rcbo","qfn","afdd"].includes(g.type)?K2(g,"b2"):g.type==="qf4p"?K2(g,"b4"):"xn:*",tbK(g,"N"),"N",sec,["xn:0"]);
+    add("xpe:*",tbK(g,"PE"),"PE",sec); }
   return out; }
 function gItem(){ const g=guideCur(); if(!g||g.cur<0||!g.s.todo) return null; const t=g.s.todo(); return t.find(x=>!x.ok)||null; }
-function gHL(){ if(!S.guide||!S.guide.on||S.mode!=="wire"||S.selWire||S.moveEnd) return []; const it=gItem(); if(!it||it.bad) return [];
+function gHL(){ if(!S.guide||!S.guide.on||S.mode!=="wire"||S.selWire||S.moveEnd) return []; const it=gItem(); if(!it) return []; if(it.bad){ const w=it.wire&&wireById(it.wire); return w?[w.a,w.b]:[]; }
   const free=p=>{ for(let i=0;i<(p==="xn"?S.board.xn:S.board.xpe);i++){ const k=p+":"+i; if(!S.wires.some(w=>w.a===k||w.b===k)) return k; } return p+":0"; };
-  return [it.a,it.b==="xn:*"?free("xn"):it.b==="xpe:*"?free("xpe"):it.b]; }
+  const R2=x=>x==="xn:*"?free("xn"):x==="xpe:*"?free("xpe"):x; return [R2(it.a),R2(it.b)]; }
 document.addEventListener("click",e=>{ const el=e.target.closest("[data-gwire]"); if(!el) return; const it=gItem(); if(!it) return;
   if(it.bad){ S.mode="wire"; renderAll(true); return; }
   S.mode="wire"; S.wireKind=it.kind; if(it.sec) S.wireSec=it.sec; S.selWire=null; S.selDev=null; S.pend=null; renderAll(true); toast(`Торкніться клеми ${kName(it.a)}, потім ${kName(it.b)}`); });
+
+// Вид дроту за призначенням клеми
+function autoKind(role,key){ if(role==="N") return "N"; if(role==="PE") return "PE"; if(role==="DC") return "DC+"; if(role==="C") return PHK.includes(S.wireKind)||S.wireKind==="C"||S.wireKind==="N"?S.wireKind:"C";
+  if(PHK.includes(role)) return role; const t=(key||"").split(":")[1]; if(/^in/.test(key||"")&&PHK.includes(t)) return t;
+  return PHK.includes(S.wireKind)?S.wireKind:(boardKind(S.board)==="3ph"?"L1":"L"); }
+// Який дріт з’єднує верхню і нижню N ПЗВ (шлях через дроти й шини) — його й треба прибрати
+function bypassWire(R){ const p=T[R.type].poles[nPole(R)], A=R.id+":"+p.a, B=R.id+":"+p.b, adj=new Map(), add=(a,c,w)=>{ for(const [x,y] of [[a,c],[c,a]]){ if(!adj.has(x)) adj.set(x,[]); adj.get(x).push([y,w]); } };
+  for(const w of S.wires) add(w.a,w.b,w); for(let i=1;i<S.board.xn;i++) add("xn:"+i,"xn:0",null);
+  for(const d of S.devices){ const t=T[d.type]; if(t.links) for(const [a,c] of t.links(d)) add(K(d,a),K(d,c),null); }
+  const prev=new Map([[A,null]]), q=[A]; for(let i=0;i<q.length&&!prev.has(B);i++) for(const [n,w] of adj.get(q[i])||[]) if(!prev.has(n)){ prev.set(n,[q[i],w]); q.push(n); }
+  if(!prev.has(B)) return null; const path=[]; for(let c=B;prev.get(c);c=prev.get(c)[0]) if(prev.get(c)[1]) path.push(prev.get(c)[1]);
+  const cand=path.filter(w=>w.a!==B&&w.b!==B); return cand.find(w=>/^xn:/.test(w.a)||/^xn:/.test(w.b))||cand[0]||path[0]; }
+document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el; const it=gItem(); if(!it||!it.wire) return; const w=wireById(it.wire); if(!w) return;
+  if(q("[data-gfixdel]")){ S.wires=S.wires.filter(x=>x!==w); toast("Дріт прибрано. «Назад» поверне його","ok"); commit(); return; }
+  if(q("[data-gfixkind]")){ w.kind=it.fixKind; delete w.col; toast(`Вид дроту: ${WK[w.kind][0]}`,"ok"); commit(); return; }
+  if(q("[data-gshow]")){ S.mode="wire"; selectWire(w.id); return; } });
 /* ===== План приміщень: кімнати, щит, розетки, вимикачі, світло, виводи; траси й довжини кабелів по групах ===== */
 const PX = 60;   // 1 м = 60 одиниць SVG
 const PIT = { s:["Розетка",0.3], s2:["Розетка подвійна",0.3], sw:["Вимикач",0.9], lt:["Світильник",null], ap:["Вивід під прилад",0.6] };
@@ -2713,11 +2763,11 @@ function boardFor(w){ const cur=S.board;
   const inputs = w.kind==="gnd"?cur.inputs : w.kind==="3ph"?[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}]
     : w.kind==="2in"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}]
     : w.kind==="2inv"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · інвертор",terms:["L","N"],inv:{kw:w.ikw,kwh:w.ikwh}}] : [{id:"in",label:"Ввід",terms:["L","N","PE"]}];
-  return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[]}; }
+  return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[], tb:!!w.tb}; }
 function openWizard(edit){ const b=S.board;
   const iv=(b.inputs.find(i=>i.inv)||{}).inv||{kw:5,kwh:5};
-  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,guide:false,ikw:iv.kw,ikwh:iv.kwh}
-    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,guide:true,ikw:5,ikwh:5};
+  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,tb:!!b.tb,guide:false,ikw:iv.kw,ikwh:iv.kwh}
+    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,tb:true,guide:true,ikw:5,ikwh:5};
   renderWizard(); $("dlg").hidden=false; }
 function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпус","Шини","Готово"], first=w.edit?1:0, last=4; let b="";
   if(w.step===0) b=`<label class="lbl2" for="wzName">Як назвати щит?</label><input class="inp" id="wzName" value="${esc(w.name)}" maxlength="60"><p class="hint">Назва з’явиться в «Проєктах», щит зберігатиметься автоматично.</p>`;
@@ -2728,8 +2778,9 @@ function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпу�
   if(w.step===2) b=`<p class="hint">Скільки DIN-рейок у корпусі? На кожній — 12 модулів.</p>`+[1,2,3,4].map(r=>`<button class="wz-opt" data-wr="${r}" aria-pressed="${w.rails===r}"><b>ЩРН-${r*12}</b><span>${r} рейк${r===1?"а":"и"} · ${r*12} модулів</span></button>`).join("");
   if(w.step===3) b=`<p class="hint">Скільки отворів на шинах? Кожна група займає по отвору на N і PE.</p>
     <div class="volt"><span class="lbl">Шина N</span><input type="range" id="wzXn" min="0" max="12" value="${w.xn}"><output class="mono" id="wzXnO">${w.xn}</output></div>
-    <div class="volt"><span class="lbl">Шина PE</span><input type="range" id="wzXpe" min="2" max="12" value="${w.xpe}"><output class="mono" id="wzXpeO">${w.xpe}</output></div>`;
-  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}</b></li></ul>`
+    <div class="volt"><span class="lbl">Шина PE</span><input type="range" id="wzXpe" min="2" max="12" value="${w.xpe}"><output class="mono" id="wzXpeO">${w.xpe}</output></div>
+    <label class="chk"><input type="checkbox" id="wzTb" ${w.tb?"checked":""}> Клемна колодка XT2 для відхідних ліній</label><p class="hint">Кабель кожної групи підключається до колодки внизу щита: L — від автомата, N — від шини N, PE — від шини PE.</p>`;
+  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}${w.tb?" · колодка XT2":""}</b></li></ul>`
     +(w.edit?"":`<label class="chk"><input type="checkbox" id="wzGuide" ${w.guide?"checked":""}> Увімкнути покроковий помічник складання</label>`);
   $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щит"}</h2><ol class="wz-steps">${names.slice(first).map((n,j)=>`<li class="${j+first<w.step?"done":j+first===w.step?"cur":""}">${n}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
     <div class="row dlg-f"><button class="btn" data-wz="cancel">Скасувати</button>${w.step>first?`<button class="btn" data-wz="prev">Назад</button>`:""}${w.step<last?`<button class="btn primary" data-wz="next">Далі</button>`:`<button class="btn primary" data-wz="${w.edit?"apply":"create"}">${w.edit?"Застосувати":"Створити щит"}</button>`}</div>`;
@@ -2741,7 +2792,7 @@ function wizardApply(){ const w=WZ, nb=boardFor(w);
   const lost=S.devices.filter(d=>(d.rail||0)>=w.rails); if(lost.length){ toast(`Спершу зніміть апарати з рейки ${w.rails+1}: ${lost.map(desig).join(", ")}`,"w"); return; }
   const keys=new Set(); for(const i of nb.inputs) for(const t of i.terms) keys.add(i.id+":"+t); for(let i=0;i<nb.xn;i++) keys.add("xn:"+i); for(let i=0;i<nb.xpe;i++) keys.add("xpe:"+i);
   const boardKey=x=>/^(in2?|gnd|xn|xpe):/.test(x), drop=S.wires.filter(x=>[x.a,x.b].some(q=>boardKey(q)&&!keys.has(q)));
-  const go=()=>{ S.wires=S.wires.filter(x=>!drop.includes(x)); Object.assign(S.board,{rails:nb.rails,inputs:nb.inputs,xn:nb.xn,xpe:nb.xpe});
+  const go=()=>{ S.wires=S.wires.filter(x=>!drop.includes(x)); if(!nb.tb) S.wires=S.wires.filter(x=>!/^tb:/.test(x.a)&&!/^tb:/.test(x.b)); Object.assign(S.board,{rails:nb.rails,inputs:nb.inputs,xn:nb.xn,xpe:nb.xpe,tb:nb.tb});
     const src={}; for(const i of nb.inputs) src[i.id]=S.src[i.id]||{on:false,U:230,lost:{}}; S.src=src; if(S.comb&&(S.comb.rail||0)>=nb.rails) S.comb=null;
     if(S.proj) S.proj.name=w.name; closeDlg(); GEO=null; commit(); renderProjBtn(); toast("Корпус і ввід змінено","ok"); };
   if(drop.length) dialog("Прибрати дроти?",`<p>${drop.length} дрот(и) підключено до клем, яких після змін не буде. Їх буде прибрано.</p>`,[{label:"Скасувати"},{label:"Прибрати і застосувати",cls:"primary",act:go}]); else go(); }
@@ -2872,7 +2923,7 @@ document.addEventListener("change",e=>{ const t=e.target;
   if(t.id==="capIn"){ const d=S.devices.find(x=>x.id===t.dataset.capfor); if(!d) return; const v=t.value.trim(); if(d.group) d.group.name=v||"Група"; else d.cap=v||undefined; commit(); return; }
   if(t.id==="fldName"){ const f=S.field.find(x=>x.id===S.selDev); if(f){ f.name=t.value.trim()||f.name; commit(); } return; } });
 document.addEventListener("input",e=>{ const t=e.target;
-  if(t.id==="wzXn"){ WZ.xn=+t.value; $("wzXnO").textContent=t.value; } if(t.id==="wzXpe"){ WZ.xpe=+t.value; $("wzXpeO").textContent=t.value; } });
+  if(t.id==="wzTb"){ WZ.tb=t.checked; } if(t.id==="wzXn"){ WZ.xn=+t.value; $("wzXnO").textContent=t.value; } if(t.id==="wzXpe"){ WZ.xpe=+t.value; $("wzXpeO").textContent=t.value; } });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("dlg").hidden) closeDlg(); if(e.key==="Enter"&&e.target.id==="wzName"){ e.preventDefault(); $("dlgCard").querySelector("[data-wz=next]")?.click(); } });
 document.addEventListener("toggle",e=>{ if(e.target.id==="fldDD") S.fldOpen=e.target.open; },true);
 /* ===== Керування дротами: вид, колір ізоляції, переріз, перенесення кінців, видалення ===== */

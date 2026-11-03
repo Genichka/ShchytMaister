@@ -58,7 +58,8 @@ function runChecks(){
   for(const t of res.trips) add("e","Спрацював захист при ввімкненні",t);
   if(res.chatter) add("e","Схема «дзвенить»","Котушки вмикаються і вимикаються по колу. Перевірте блокувальні контакти.");
   if(!hasFault&&!res.chatter) add("ok",multi?"Подача напруги на обидва вводи — без аварій":"Подача напруги — без коротких замикань і дисбалансу");
-  res.g.forEach((r,i)=>{ if(!r.ok) add("e",`${desig(G[i])} «${G[i].group.name}»: немає живлення`,G[i].type==="rcbo"?"Нуль групи береться з нижньої клеми N диф-автомата.":"Фаза — з верхньої клеми або гребінки, нуль — із шини XN1."); });
+  res.g.forEach((r,i)=>{ if(!r.ok) add("e",`${desig(G[i])} «${G[i].group.name}»: немає живлення`,tbOn()?`Колодка XT2: фаза — з нижньої клеми ${desig(G[i])} на XT2 «${g3(G[i])?"L1":"L"}», нуль — ${["rcbo","qfn","afdd"].includes(G[i].type)?"з нижньої N автомата":"із шини XN1"} на XT2 «N».`:G[i].type==="rcbo"?"Нуль групи береться з нижньої клеми N диф-автомата.":"Фаза — з верхньої клеми або гребінки, нуль — із шини XN1."); });
+  if(tbOn()) for(const g of G) if(f0(tbK(g,"PE"))!==f0("xpe:0")) add("e",`${desig(g)} «${g.group.name}»: PE лінії не підключено`,"З’єднайте шину PE (XPE1) з клемою XT2 «PE» цієї групи — інакше корпуси приладів без заземлення.");
   if(multi){ for(const a of res.alt){ const bad=a.err.length||a.trips.length||a.g.length;
       if(bad){ for(const e of a.err) add("e",`Лише «${a.inp.label}»: аварія`,e); for(const t of a.trips) add("e",`Лише «${a.inp.label}»: спрацював захист`,t);
         if(a.g.length) add("e",`Лише «${a.inp.label}»: групи без живлення`,a.g.join(", ")+". АВР не перевів навантаження на резерв."); }
@@ -96,7 +97,7 @@ function runChecks(){
   if(mainIn&&b.inputs.length===1){ let low=0;
     for(const w of S.wires){ if(!["L","N"].includes(w.kind)) continue; const g2=build({ideal:true,skip:w.id}), g1=build({ideal:true});
       const aff=G.filter(g=>(g1(gL(g))===g1("in:L")&&g2(gL(g))!==g2("in:L"))||(g1(gN(g))===g1("in:N")&&g2(gN(g))!==g2("in:N")));
-      if(!aff.length) continue; const req=aff.length>1||!aff.some(g=>w.a===gL(g)||w.b===gL(g))?mainIn:inA(aff[0].rating);
+      if(!aff.length) continue; const own=g=>[gL(g),gN(g),gL0(g)], req=aff.length>1||!aff.some(g=>own(g).includes(w.a)||own(g).includes(w.b))?mainIn:inA(aff[0].rating);
       if(CAB[w.sec]<req){ low++; add("e",`Замалий переріз ${fmt(w.sec)} мм²`,`${termName(w.a)} → ${termName(w.b)}: потрібно від ${fmt(secFor(req))} мм² (струм до ${req} А).`); } }
     if(!low&&S.wires.length) add("ok","Перерізи силових перемичок відповідають вступному автомату"); }
   if(G.length&&b.inputs.length===1&&!S.devices.some(d=>d.type==="kv")&&!S.field.some(f=>f.type==="inv")) add("w","Немає реле напруги","Без нього техніка не захищена від перенапруги.");

@@ -11,8 +11,13 @@ const tdef = d => T[d.type] || FT[d.type];
 const K = (d,k) => T[d.type] ? d.id+":"+k : (d.map[k]||"");
 const groupsOf = () => S.devices.filter(d=>T[d.type].group&&d.group).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
 const g3 = d => !!T[d.type].gph;
-const gL = d => d.id+":b1", gN = d => (d.type==="rcbo"||d.type==="qfn"||d.type==="afdd") ? d.id+":b2" : d.type==="qf3p" ? d.id+":b2" : d.type==="qf4p" ? d.id+":b4" : "xn:0";
-const gPh = (d,X) => g3(d) ? ["b1","b2","b3"].every(t=>X.ph(d.id+":"+t)) : !!X.ph(gL(d));
+// Клемна колодка XT2: кожна група має свої клеми L (або L1–L3), N, PE — до них підключено кабель лінії
+const tbOn = () => !!S.board.tb, tbK = (d,t) => "tb:"+d.id+":"+t;
+const tbTerms = d => g3(d) ? (d.type==="qf4p"?["L1","L2","L3","N","PE"]:["L1","L2","L3","PE"]) : ["L","N","PE"];
+const gL0 = d => d.id+":b1";
+const gL = d => tbOn() ? tbK(d,g3(d)?"L1":"L") : d.id+":b1", gN = d => tbOn() ? tbK(d,"N") : (d.type==="rcbo"||d.type==="qfn"||d.type==="afdd") ? d.id+":b2" : d.type==="qf3p" ? d.id+":b2" : d.type==="qf4p" ? d.id+":b4" : "xn:0";
+const gABC = d => tbOn() ? ["L1","L2","L3"].map(t=>tbK(d,t)) : ["b1","b2","b3"].map(t=>d.id+":"+t);
+const gPh = (d,X) => g3(d) ? gABC(d).every(k=>X.ph(k)) : !!X.ph(gL(d));
 const kwOf = (d,all) => d.group.loads.reduce((a,l)=>a+(all||l.on?l.kw:0),0);
 const poleClosed = (d,pi) => { const t=tdef(d); return t.closed ? t.closed(d,pi) : (d.on&&!d.trip); };
 const protIn = d => d.Ir || inA(d.rating);
@@ -95,7 +100,7 @@ const FAULT = {LN:"коротке замикання L–N", LPE:"замикан
 function computeLoads(X){
   const L=[];
   for(const d of groupsOf()){ const kw=kwOf(d);
-    if(g3(d)){ const ok=gPh(d,X), U=ok?srcU(X.ph(gL(d))):0, I=ok?kw*1000/(3*U):0; L.push({own:d.id, abc:["b1","b2","b3"].map(t=>d.id+":"+t), Is:[I,I,I], I, U, grp:true, g3:true}); continue; }
+    if(g3(d)){ const ok=gPh(d,X), U=ok?srcU(X.ph(gL(d))):0, I=ok?kw*1000/(3*U):0; L.push({own:d.id, abc:gABC(d), Is:[I,I,I], I, U, grp:true, g3:true}); continue; }
     const U=X.volt(gL(d),gN(d)); L.push({own:d.id, a:gL(d), b:gN(d), I:U>100?kw*1000/U:0, U, grp:true}); }
   for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.load) for(const l of t.load(d,X)){ l.own=d.id; if(l.a) l.a=K(d,l.a); if(l.b) l.b=K(d,l.b); if(l.abc) l.abc=l.abc.map(k=>K(d,k)); L.push(l); } }
   return L;

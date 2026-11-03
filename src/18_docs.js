@@ -89,6 +89,9 @@ function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.pu
   addR(`Корпус ЩРН-${S.board.rails*12} (${S.board.rails} рейк${S.board.rails>1?"и":"а"} DIN)`,"","1","шт.");
   if(S.board.xn) addR("Шина нульова N на ізоляторах",S.board.xn+" отв.","1","шт."); if(S.board.xpe) addR("Шина заземлення PE",S.board.xpe+" отв.","1","шт.");
   if(S.comb) addR("Гребінка 1P",`${S.comb.to-S.comb.from+1} мод.`,"1","шт.");
+  if(S.board.tb&&groupsOf().length){ const all=groupsOf().flatMap(tbTerms), n=t=>all.filter(x=>x===t).length, l=all.filter(x=>/^L/.test(x)).length;
+    addR("Клема прохідна пружинна, сіра (L)","до 4 мм²",String(l),"шт."); if(n("N")) addR("Клема прохідна пружинна, синя (N)","до 4 мм²",String(n("N")),"шт."); addR("Клема заземлення жовто-зелена (PE)","до 4 мм²",String(n("PE")),"шт.");
+    addR("Заглушка і кінцевий фіксатор для колодки XT2","","2","шт."); }
   const wl={}; for(const w of S.wires){ const c=w.col||(w.kind==="PE"?"pe":w.kind==="N"?"blue":PHK.includes(w.kind)?"red":w.kind==="C"?"orange":"black"); const key=`${fmt(w.sec,w.sec%1?1:0)} мм² · ${(WCOL[c]||["чорний"])[0].toLowerCase()}`; wl[key]=(wl[key]||0)+wireLenCm(w); }
   for(const [k,cm] of Object.entries(wl)) addR("Провід монтажний ПВ-3 (гнучкий)",k,fmt(Math.ceil(cm*1.2/10)/10,1),"м");
   const fr={}; for(const w of S.wires){ const f2=ferrule(w.sec); fr[f2]=(fr[f2]||0)+2; } for(const [k,n] of Object.entries(fr)) addR("Наконечник втулковий ізольований",k,String(n),"шт.");
