@@ -104,7 +104,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(el=q("[data-cmd]")){ d.cmd=el.dataset.cmd==="1"; commit(false); return; }
     if(el=q("[data-hlc]")){ d.col=el.dataset.hlc; commit(false); return; }
     if(q("#devToggle")){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; } commit(false); return; }
-    if(q("#devDel")){ removeDev(d); return; } }
+    if(q("[data-devdel]")){ const n=desig(d); removeDev(d); toast(`${n} знято з рейки. «Назад» поверне`); return; } }
   if(q("#sheetClose")){ S.selDev=null; renderAll(false); return; }
   if(q("#btnCheck")){ checkNow(); return; }
   if(q("#zIn")){ S.zoom=Math.min(4,Math.round((S.zoom+(S.zoom>=1?0.5:0.1))*10)/10); renderAll(false); return; }
@@ -133,5 +133,6 @@ function renderTplMenu(){ const cats=[...TPL_ORDER,...new Set(Object.values(TPL)
     return `<div class="tm-g"><div class="tm-h">${esc(c)}</div>`+it.map(([key,t])=>`<button class="tm-i" data-tpl="${key}" aria-current="${S.tpl===key}">${esc(t.name)}</button>`).join("")+`</div>`; }).join(""); }
 function tplLabel(){ const t=TPL[S.tpl]; $("tplName").textContent=S.tpl==="custom"?"Власний щит":t?t.name:"Шаблон"; }
 document.addEventListener("toggle",e=>{ if(e.target.id==="devDD") S.devOpen=e.target.open; },true);
+document.addEventListener("keydown",e=>{ if((e.key==="Delete"||e.key==="Backspace")&&S.selDev&&S.mode!=="wire"&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)&&$("dlg").hidden){ const b=document.querySelector("[data-devdel],[data-fdel]"); if(b){ e.preventDefault(); b.click(); } return; } })
 document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("drawer").hidden) closeDrawer(); else if(!$("docs").hidden) $("docs").hidden=true; });
 

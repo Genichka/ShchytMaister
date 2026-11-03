@@ -1,6 +1,7 @@
 /* ===== Нижня панель на один екран: усе в кількох рядках, без вертикальної прокрутки й спливних вікон ===== */
 const CATS = [["Захист",0],["Напруга, УЗІП",1],["Облік",2],["Комутація, АВР",3],["Керування",4],["Двигуни",5],["Розподіл",6],["Розумний дім",7],["СЕС (DC)",8],["Поза щитом",-1]];
 const bx = `<button class="bx" data-bclose aria-label="Закрити">✕</button>`;
+const bdel = attr => `<button class="bx bdel" ${attr} aria-label="Видалити" title="Видалити"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>`;
 const bhead = (t,right) => `<div class="br bh"><b>${t}</b>${right||""}</div>`;
 const brow = (inner,cls) => inner ? `<div class="br${cls?" "+cls:""}">${inner}</div>` : "";
 const segRow = (list,cur) => `<div class="br seg">${list.map(([k,l])=>`<button class="sg" data-bseg="${k}" aria-pressed="${cur===k}">${l}</button>`).join("")}</div>`;
@@ -43,7 +44,7 @@ function devBar(d){ const t=T[d.type], g=d.group, m=modelOf(d), bl=brandsFor(d.t
   const L=[...(t.ratings?[["rate",d.type==="qm"?"Діапазон":"Номінал"]]:[]),...(g?[["load","Навантаження"]]:[]),...(g&&S.mode==="test"?[["fault","Аварії"]]:[]),...(bl.length>1?[["brand","Виробник"]]:[]),
     ...(set?[["set","Налаштування"]]:[]),["cap","Підпис"],["pos","Місце"]];
   const cur=bseg(d.id,L,g&&S.mode==="test"?"load":L[0][0]);
-  let s=bhead(`${esc(desig(d))} · ${esc(t.short)}${d.rating?" "+esc(d.rating)+(t.unit||""):""}${m?` <span class="bm">${esc(m)}</span>`:""}${g?` <span class="bm">«${esc(g.name)}»</span>`:""}`,bx)+segRow(L,cur);
+  let s=bhead(`${esc(desig(d))} · ${esc(t.short)}${d.rating?" "+esc(d.rating)+(t.unit||""):""}${m?` <span class="bm">${esc(m)}</span>`:""}${g?` <span class="bm">«${esc(g.name)}»</span>`:""}`,bdel("data-devdel")+bx)+segRow(L,cur);
   if(cur==="rate") s+=brow(t.ratings.map(r=>chip(`data-rate="${r}"`,d.rating===r,`${r}${t.unit||""}`,"mono")).join("")+(d.type==="qm"?`<span class="volt sm"><input type="range" id="irset" min="${mprLo(d.rating)}" max="${mprHi(d.rating)}" step="0.1" value="${d.Ir}" aria-label="Уставка Ir"><output class="mono" id="irout">${fmt(d.Ir,1)} А</output></span>`:""));
   if(cur==="brand") s+=brow(bl.map(b=>chip(`data-brand="${b}"`,brandOf(d)===b,esc(BR[b].s||BR[b].n))).join("")+`<button class="btn sm" data-brandall>Усім апаратам</button>`);
   if(cur==="cap") s+=brow(`<input class="inp grow" id="capIn" data-capfor="${d.id}" value="${esc(g?g.name:(d.cap||t.cap||t.short))}" maxlength="40" aria-label="Підпис (наклейка)"><button class="btn sm primary" data-capok>Готово</button>`);
@@ -57,7 +58,7 @@ function devBar(d){ const t=T[d.type], g=d.group, m=modelOf(d), bl=brandsFor(d.t
   if(cur==="set") s+=brow(set);
   if(cur==="pos") s+=brow(`<button class="btn sm" data-move="-1" aria-label="Ліворуч">←</button><button class="btn sm" data-move="1" aria-label="Праворуч">→</button>${S.board.rails>1?`<button class="btn sm" data-mrail="-1">↑ Рейка</button><button class="btn sm" data-mrail="1">↓ Рейка</button>`:""}`
     +(d.type==="qf1p"?`<button class="btn sm" id="combBtn">${S.comb?"Зняти гребінку":"Гребінка 1P"}</button>`:"")
-    +(t.prot||t.rcd?`<button class="btn sm" id="devToggle">${d.on&&!d.trip?"Вимкнути":"Увімкнути"}</button>`:"")+`<button class="btn sm danger" id="devDel">Зняти з рейки</button>`);
+    +(t.prot||t.rcd?`<button class="btn sm" id="devToggle">${d.on&&!d.trip?"Вимкнути":"Увімкнути"}</button>`:"")+`<button class="btn sm danger" data-devdel>Зняти з рейки</button>`);
   return s; }
 function devSet(d){ const t=T[d.type]; let s="";
   if(t.group&&t.groupOpt) s+=chip("data-gtoggle",!!d.group,d.group?"Група споживачів (3 фази)":"Зробити групою");
@@ -73,7 +74,7 @@ function devSet(d){ const t=T[d.type]; let s="";
 
 // ---- Обладнання поза щитом
 function fieldBar(f){ const L=FIELD_LIB.find(x=>x.type===f.type)||{name:FT[f.type].name};
-  return bhead(`${esc(f.name||desig(f))} · ${esc(L.name)}`,bx)+brow(`<span class="bl">XT1: ${Object.values(f.map).map(k=>esc(termName(k).replace(/^Клема XT1 /,""))).join(", ")}</span>`)
+  return bhead(`${esc(f.name||desig(f))} · ${esc(L.name)}`,bdel(`data-fdel="${f.id}"`)+bx)+brow(`<span class="bl">XT1: ${Object.values(f.map).map(k=>esc(termName(k).replace(/^Клема XT1 /,""))).join(", ")}</span>`)
     +brow((f.type==="pv"?[6,8,10,12].map(n=>chip(`data-pvn="${n}"`,f.n===n,n+" панелей")).join("")+`<span class="bl">Voc ≈ ${Math.round((f.n||10)*49.6)} В</span>`:"")+`<button class="btn sm danger" data-fdel="${f.id}">Прибрати обладнання</button>`); }
 
 // ---- Дроти
@@ -83,7 +84,7 @@ function wireToolsBar(){ const sw=k=>`<span class="sw" style="background:${k==="
       +(S.wires.length?`<button class="btn sm" data-wsel="${S.wires[S.wires.length-1].id}">Вибрати дріт (${S.wires.length})</button><button class="btn sm danger" id="clearWires">${clearArm>Date.now()?"Ще раз — прибрати всі":"Прибрати всі"}</button>`:"")); }
 function wireBar(w){ const me=S.moveEnd&&S.moveEnd.id===w.id?S.moveEnd.end:null, ck=wColKey(w);
   const L=[["ends","Кінці"],["kind","Вид"],["col","Колір"],["sec","Переріз"],["del","Видалити"]], cur=bseg(w.id,L,"ends");
-  let s=bhead(`Дріт ${wNo(w)} з ${S.wires.length} · ${esc(wireLabel(w))} <span class="bm">≈ ${wireLenCm(w)} см</span>`,`<button class="bx" data-wnav="-1" aria-label="Попередній">◀</button><button class="bx" data-wnav="1" aria-label="Наступний">▶</button>${bx}`);
+  let s=bhead(`Дріт ${wNo(w)} з ${S.wires.length} · ${esc(wireLabel(w))} <span class="bm">≈ ${wireLenCm(w)} см</span>`,`<button class="bx" data-wnav="-1" aria-label="Попередній">◀</button><button class="bx" data-wnav="1" aria-label="Наступний">▶</button>${bdel("data-wdel")}${bx}`);
   if(me) return s+brow(`<span class="bl warnt">Торкніться нової клеми для ${me==="a"?"початку":"кінця"} дроту</span><button class="btn sm" data-wmove="cancel">Скасувати</button>`)+brow(`<span class="bl">${me==="a"?"Початок":"Кінець"} зараз: ${esc(termName(w[me]))}</span>`);
   s+=segRow(L,cur);
   if(cur==="ends") s+=brow(["a","b"].map(e=>`<button class="btn sm wend2" data-wmove="${e}"><small>${e==="a"?"Початок":"Кінець"}</small> ${esc(termName(w[e]))} <b>⇄</b></button>`).join(""));
