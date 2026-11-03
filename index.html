@@ -1,6 +1,6 @@
 <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#111217"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>PanelCraft</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,9 +39,10 @@ button{cursor:pointer}
 .warnt{color:var(--orange)}
 
 /* ---- Каркас: шапка → режими → щит → нижня панель */
-.app{height:100dvh;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-columns:100%;
-  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-body.demo-on .app{height:62dvh} body.demo-on .bbar{display:none}
+/* каркас прибитий до видимої області: висота = екран, вирізи й статус-бар — відступами всередині, тож нічого не з'їжджає вниз */
+.app{position:fixed;inset:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-columns:100%;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px)}
+body.demo-on .app{bottom:38dvh} body.demo-on .bbar{display:none}
 
 /* ---- Шапка */
 .top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
@@ -218,7 +219,7 @@ select.btn{padding-right:26px}
 
 /* ---- Меню */
 .drawer{position:fixed;inset:0;z-index:40;background:rgba(1,4,9,.6)}
-.drawer-in{position:absolute;left:0;top:0;bottom:0;width:min(340px,88vw);overflow:auto;padding:8px 0 24px;background:var(--panel);border-right:1px solid var(--line);box-shadow:var(--shadow)}
+.drawer-in{position:absolute;left:0;top:0;bottom:0;width:min(340px,88vw);overflow:auto;padding:calc(8px + env(safe-area-inset-top,0px)) 0 calc(24px + env(safe-area-inset-bottom,0px)) env(safe-area-inset-left,0px);background:var(--panel);border-right:1px solid var(--line);box-shadow:var(--shadow)}
 .dr-h{display:flex;align-items:center;justify-content:space-between;padding:4px 16px 10px;border-bottom:1px solid var(--line)}
 .dr-h b{font-size:16px;font-weight:500}
 .dr-g{padding:8px 0;border-bottom:1px solid var(--line)}
@@ -236,7 +237,7 @@ select.btn{padding-right:26px}
 .drawer .foot{margin:4px 0;padding:0 16px}
 
 /* ---- Документи */
-.docs{position:fixed;inset:0;z-index:35;display:flex;flex-direction:column;background:var(--bg)}
+.docs{position:fixed;inset:0;z-index:35;display:flex;flex-direction:column;background:var(--bg);padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
 .docs-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:4px 8px;background:var(--panel);border-bottom:1px solid var(--line)}
 .dtabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 .dtabs button{position:relative;padding:10px;white-space:nowrap;font-size:13px;font-weight:500;color:var(--muted);background:none;border:0}
@@ -304,7 +305,7 @@ select.btn{padding-right:26px}
 @media (max-width:360px){ .ver{display:none} }
 @media (min-width:900px){ .bbar{max-height:40dvh} .br{flex-wrap:wrap;overflow:visible} }
 @media print{
-  body{overflow:visible!important;height:auto} .app,.drawer,.toast,.modal,.demobar,.docs-bar{display:none!important}
+  body{overflow:visible!important;height:auto} .app{position:static} .app,.drawer,.toast,.modal,.demobar,.docs-bar{display:none!important}
   .docs{position:static;display:block!important;background:#fff} .docs-b{overflow:visible;padding:0} .doc{max-width:none;padding:0;border-radius:0} }
 </style></head><body>
 
@@ -361,7 +362,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.5.0", date:"2026-11-03", notes:["Нова назва — PanelCraft (раніше ЩитМайстер); збережені проєкти й файли лишаються","Увесь інтерфейс у стилі Grafana: темна палітра, шрифт Inter, вкладки з фірмовим градієнтом, бейджі статусів, нові діалоги й меню","Код почищено: прибрано застарілі панелі, дублікати обробників і подвійне перемальовування"] };
+const APP = { v:"4.5.1", date:"2026-11-03", notes:["Виправлено: на телефоні низ інтерфейсу з’їжджав під системну панель — тепер екран застосунку точно по висоті дисплея","Меню й документи також враховують статус-бар і вирізи екрана"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
