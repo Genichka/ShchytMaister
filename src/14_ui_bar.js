@@ -17,7 +17,7 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   else if(w) h=wireBar(w);
   else if(d) h=devBar(d);
   else if(f) h=fieldBar(f);
-  else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter?"":mountBar()):S.mode==="wire"?wireToolsBar():testBar()); }
+  else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter?"":mountBar()):S.mode==="wire"?(guideOn?"":wireToolsBar()):testBar()); }
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
 // ---- Порожня робоча зона: стартові дії й останні проєкти
@@ -32,7 +32,7 @@ function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def|
 function mountBar(){ if(S.pick&&T[S.pick]) return pickBar(); const F=S.devFilter, mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
   if(F) return brow(`<span class="bl">${esc(F.title)}:</span>`+F.opts.map((o,i)=>`<button class="dc" data-fpick="${i}" aria-pressed="${S.pick===o[0]&&(S.pickRating||null)===(o[1]||null)&&JSON.stringify(S.pickExtra||null)===JSON.stringify(o[3]||null)}"><b>${esc(o[2])}</b><small>${T[o[0]].w} мод.</small></button>`).join("")+`<button class="chip" data-fall>Усі апарати</button>`,"cards");
   const ci=S.cat??0, c=CATS[ci], ks=c[1]<0?null:DEV_GROUPS[c[1]][1].filter(x=>T[x]);
-  let s=brow(CATS.map(([l],i)=>chip(`data-cat="${i}"`,i===ci,l)).join("")+`<span class="bl mono">${mods}/${SLOTS*S.board.rails} мод.</span>`);
+  let s=brow((S.guide&&S.guide.on?"":`<button class="btn sm" data-gon>Помічник</button>`)+CATS.map(([l],i)=>chip(`data-cat="${i}"`,i===ci,l)).join("")+`<span class="bl mono">${mods}/${SLOTS*S.board.rails} мод.</span>`);
   s+=ks?brow(ks.map(x=>`<button class="dc" data-pick="${x}" aria-pressed="${S.pick===x}" title="${esc(T[x].name)}"><b>${esc(T[x].short)}</b><small>${T[x].w} мод.${brandsFor(x).length>1?" · "+(brandsFor(x).length-1)+" вир.":""}</small></button>`).join(""),"cards")
     :brow(FIELD_LIB.map(L=>`<button class="dc" data-fadd="${L.type}"><b>${esc(L.name)}</b><small>+${Object.keys(L.t).length} клем на XT1</small></button>`).join(""),"cards");
   return s; }
@@ -106,11 +106,17 @@ function testBar(){ const dm=S.tplObj&&S.tplObj.demo||{controls:[{type:"src",id:
   return s; }
 
 // ---- Результат перевірки: одна помилка за раз
-function chkBar(){ const C=S.chk.list, ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length, bad=C.filter(c=>c.sev!=="ok"), L=bad.length?bad:C, i=Math.min(S.chk.i,L.length-1), c=L[i];
+function chkCur(){ const C=S.chk.list, bad=C.filter(c=>c.sev!=="ok"), L=bad.length?bad:C, i=Math.min(S.chk.i||0,L.length-1); return {L,i,c:L[i]}; }
+function chkBar(){ const C=S.chk.list, ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length, {L,i,c}=chkCur();
   let s=bhead(ne||nw?`Перевірка: ${ne?`<span style="color:var(--red)">● ${ne} помил.</span> `:""}${nw?`<span style="color:var(--orange)">● ${nw} попер.</span>`:""}`:`<span style="color:var(--green)">✓ Схема правильна</span>`,bx);
   if(!c) return s;
   s+=brow(`<button class="bx" data-cnav="-1" aria-label="Попередня">◀</button><span class="bl mono">${i+1}/${L.length}</span><button class="bx" data-cnav="1" aria-label="Наступна">▶</button><span class="sev ${c.sev}">${c.sev==="e"?"Помилка":c.sev==="w"?"Увага":"OK"}</span><b class="ct">${esc(c.t)}</b>`);
-  s+=`<div class="br cd">${esc(c.d||"")}</div>`; return s; }
+  s+=`<div class="br cd">${esc(c.d||"")}</div>`;
+  // що робити далі: показати апарат чи дріт на щиті, або вести далі помічником
+  const r=c.ref, gOn=!!(S.guide&&S.guide.on), gp=(ne||c.sev!=="ok")&&guidePending(), next=!ne&&gOn&&guidePending();
+  if((r&&(r.dev||r.wire))||gp||next) s+=brow((r&&(r.dev||r.wire)?`<button class="btn sm" data-cshow>Показати ${r.wire?"дріт":"на щиті"}</button>`:"")
+    +(next?`<button class="btn sm primary" data-gon>Далі →</button>`:gp?`<button class="btn sm primary" data-gon>${gOn?"До помічника":"Виправити з помічником"}</button>`:""));
+  return s; }
 
 // ---- План
 function planBar(){ const P=planObj(), G=groupsOf(), t=S.ptool||"sel", r=P.rooms.find(x=>x.id===S.psel), it=P.items.find(x=>x.id===S.psel); planLengths();
@@ -134,7 +140,11 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(q("[data-bclose]")){ if(S.chkOpen){ S.chkOpen=false; } else { S.selDev=null; S.selWire=null; S.moveEnd=null; } renderAll(false); return; }
   if(el=q("[data-bseg]")){ S.bseg=el.dataset.bseg; renderBar(); return; }
   if(el=q("[data-cat]")){ S.cat=+el.dataset.cat; renderBar(); return; }
-  if(el=q("[data-cnav]")){ const L=S.chk.list.filter(c=>c.sev!=="ok"), n=(L.length||S.chk.list.length); S.chk.i=((S.chk.i||0)+(+el.dataset.cnav)+n)%n; renderBar(); return; }
+  if(el=q("[data-cnav]")){ const n=chkCur().L.length; S.chk.i=((S.chk.i||0)+(+el.dataset.cnav)+n)%n; renderBar(); return; }
+  if(q("[data-cshow]")){ const r=chkCur().c.ref||{}; S.chkOpen=false;
+    if(r.wire&&wireById(r.wire)){ S.mode="wire"; selectWire(r.wire); }
+    else if(r.dev&&devById(r.dev)){ const d=devById(r.dev); S.mode="mount"; S.selWire=null; S.selDev=d.id; renderAll(true); if(T[d.type]) requestAnimationFrame(()=>scrollToKeys([d.id+":"+T[d.type].terms[0].k])); }
+    return; }
   if(q("[data-capok]")){ const c=$("capIn"); if(c) c.dispatchEvent(new Event("change",{bubbles:true})); S.bseg="pos"; return; }
   if(el=q("[data-ltog]")){ const [id,i]=el.dataset.ltog.split(":"), l=devById(id).group.loads[+i]; l.on=!l.on; save(); solve(0); render(); renderBar(); return; }
   if(q("#logline")){ dialog("Журнал подій",`<div class="log">${S.log.length?S.log.map(l=>`<div class="${l.cls}">${esc(l.msg)}</div>`).join(""):"<div>Журнал порожній.</div>"}</div>`,[{label:"Закрити",cls:"primary"}]); return; } },true);

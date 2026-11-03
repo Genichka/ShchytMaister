@@ -97,7 +97,7 @@ function boardFor(w){ const cur=S.board;
 function openWizard(edit){ const b=S.board;
   const iv=(b.inputs.find(i=>i.inv)||{}).inv||{kw:5,kwh:5};
   WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,tb:!!b.tb,noRcd:!!b.noRcd,guide:false,ikw:iv.kw,ikwh:iv.kwh}
-    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,tb:true,guide:true,ikw:5,ikwh:5};
+    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,tb:false,guide:true,ikw:5,ikwh:5};
   renderWizard(); $("dlg").hidden=false; }
 function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпус","Шини","Готово"], first=w.edit?1:0, last=4; let b="";
   if(w.step===0) b=`<label class="lbl2" for="wzName">Як назвати щит?</label><input class="inp" id="wzName" value="${esc(w.name)}" maxlength="60"><p class="hint">Назва з’явиться в «Проєктах», щит зберігатиметься автоматично.</p>`;

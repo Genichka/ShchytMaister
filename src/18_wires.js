@@ -12,6 +12,13 @@ function wireLabel(w){ return `${WK[w.kind][0]} · ${fmt(w.sec,w.sec%1?1:0)} м�
 function selectWire(id){ S.selWire=id; S.moveEnd=null; S.pend=null; S.selDev=null; renderAll(false); }
 function lineWires(w){ // дроти того ж виду, з’єднані без апаратів (одна «лінія»)
   const f=build({allOpen:true}), r=f(w.a); return S.wires.filter(x=>x.kind===w.kind&&f(x.a)===r); }
+// Пальцем не треба влучати в крихітний гвинт: у режимі «Дроти» дотик бере найближчу клему в радіусі ~26 px
+// Підсвічені помічником клеми «1 → 2» мають перевагу, без помічника — клеми, що підходять до дроту.
+function nearTerm(e){ const svg=$("svg"), m=svg.getScreenCTM(); if(!m) return null; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()), R=Math.max(15,26/m.a);
+  const hl=new Set(gHL()), fits=k=>S.pend&&kindFits(S.wireKind,termRole(k));
+  let best=null, bd=R; for(const k of allTermKeys()){ const q=termPos(k); if(!q) continue; let d=Math.hypot(q.x-p.x,q.y-p.y); if(d>=R) continue;
+    if(hl.has(k)) d*=0.35; else if(fits(k)) d*=0.75; if(d<bd){ bd=d; best=k; } } return best; }
+$("svg").addEventListener("click",e=>{ if(S.mode!=="wire"||S.demo) return; const k=nearTerm(e); if(!k) return; e.stopPropagation(); e.preventDefault(); if(S.moveEnd) moveEnd(k); else termTap(k); },true);
 function moveEnd(key){ const m=S.moveEnd, w=wireById(m.id); if(!w){ S.moveEnd=null; return; }
   const other=m.end==="a"?w.b:w.a;
   if(key===other){ toast("Обидва кінці не можуть бути на одній клемі","w"); return; }
