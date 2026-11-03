@@ -7,6 +7,9 @@ self.addEventListener("fetch", e => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== location.origin) return;
   if (url.pathname.endsWith("/version.json") || url.pathname.endsWith("/sw.js")) return; // завжди з мережі
+  if (url.pathname.endsWith("/manifest.webmanifest")) {   // маніфест — спершу з мережі: Chrome бачить актуальну назву й іконку для ярлика
+    e.respondWith(fetch(req).then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; }).catch(() => caches.match(req, {ignoreSearch: true})));
+    return; }
   e.respondWith(caches.match(req, {ignoreSearch: true}).then(hit => hit || fetch(req).then(res => {
     if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
     return res;
