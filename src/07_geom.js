@@ -66,7 +66,7 @@ function devSVG(d){
   let s=`<g data-dev="${d.id}">`;
   if(heat>0.15) s+=`<rect class="heat" x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--orange)" stroke-width="3"/>`;
   if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
-  s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"/><rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"/>`;
+  const fillB=devFill(d); s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"${fillB?` style="fill:${fillB}"`:""}/><rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"/>`;
   const sr=t.terms.filter(q=>q.s==="top").length>w/27?9:11;
   const bx=t.terms.filter(q=>q.s==="bot").map(q=>termX(d,q)).sort((a,c)=>a-c), side=bx.every((v,i)=>!i||v-bx[i-1]>=44);
   for(const tm of t.terms){ const X=termX(d,tm);
@@ -74,7 +74,7 @@ function devSVG(d){
     else { const lw=String(tm.l).length*3.9, fitL=X-sr-2-lw>=x+2, fitR=X+sr+2+lw<=x+w-2;   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку
       s+=screw(X,y+H-22,sr)+((side||Math.abs(X-cx)<w/5)&&(fitL||fitR)
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-36,tm.l,{fs:6.8})); } }
-  s+=tx(cx,y+56,"EnergyUA",{fs:7,fw:700});
+  s+=tx(cx,y+56,brandName(d),{fs:brandName(d).length>9?6.2:7,fw:700});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   const des=desig(d), pw=Math.max(38,des.length*7+12);
   s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});
@@ -82,6 +82,8 @@ function devSVG(d){
   const cap=d.group?d.group.name:(d.cap||t.cap||t.short), maxc=Math.max(7,Math.floor(w/7)); const lines=[]; let cur="";
   for(const wd of String(cap).split(/\s+/)){ if((cur+" "+wd).trim().length>maxc&&cur){ lines.push(cur); cur=wd; } else cur=(cur+" "+wd).trim(); } if(cur) lines.push(cur);
   lines.slice(0,2).forEach((ln,i)=>{ s+=tx(cx,y+203+i*9,ln.length>maxc+2?ln.slice(0,maxc+1)+"…":ln,{fs:7}); });
+  if(S.mode==="test"&&S.sim&&S.sim.I&&S.sim.I[d.id]!==undefined&&(t.prot||t.rcd||t.meter)){ const I=S.sim.I[d.id], tw=Math.min(w-8,46), ov=I>protIn(d)&&t.prot;
+    s+=`<rect x="${cx-tw/2}" y="${y+157}" width="${tw}" height="10.5" rx="2" fill="#16181c"/>`+tx(cx,y+165,fmt(I,I<10?1:0)+" А",{fs:7.4,ff:"var(--mono)",fw:600,fill:ov?"#ff6b5a":I>0.05?"#5fe36b":"#7c828c"}); }
   if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
   return s+"</g>";
 }
@@ -121,7 +123,10 @@ function render(){
     s+=`<path class="wire" d="${d}" stroke="${wDark(w)?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
     if(pe) s+=`<path class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
     else s+=`<path class="wire" d="${d}" stroke="${col}" stroke-width="${sw}"/>`;
-    if(R.liveW.has(w.id)) s+=`<path class="flow" d="${d}" stroke-width="${Math.max(1.5,sw-2.5)}"/>`;
+    const fl=R.flow&&R.flow[w.id];
+    if(fl){ const dur=Math.max(0.35,1.5-Math.log10(1+fl.I)*0.7).toFixed(2);   // більший струм — швидший рух
+      s+=`<path class="flow" d="${fl.dir<0?rpath(pts.slice().reverse()):d}" stroke-width="${Math.max(1.5,sw-2.5)}" style="animation-duration:${dur}s"/>`; }
+    else if(R.liveW.has(w.id)) s+=`<path class="flow idle" d="${d}" stroke-width="${Math.max(1.5,sw-2.5)}"/>`;
     for(const [x,y] of [pts[0],pts[pts.length-1]]) s+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--brass)"/>`;
     if(S.selWire===w.id){ const ends=[["a",pts[0]],["b",pts[pts.length-1]]]; for(const [e,[x,y]] of ends) s+=`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="var(--blue)" stroke-width="2.5"${S.moveEnd&&S.moveEnd.end===e?' stroke-dasharray="4 3"':""}/>`; }
     if(!S.moveEnd&&!S.demo) s+=`<path class="wire-hit" data-wire="${w.id}" d="${d}"/>`; }

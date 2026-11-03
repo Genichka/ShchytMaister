@@ -1,11 +1,11 @@
 /* ===== Перевірка схеми: статичні правила + прогін у «пісочниці» ===== */
 function sandbox(fn){
   const snap=JSON.stringify({devices:S.devices, field:S.field, src:S.src, env:S.env, heat:S.heat});
-  const keep={leak:S.leak, short:S.short, log:S.log, lw:S.leakWarned, uw:S.uWarned, sim:S.sim};
-  S.quiet=true; S.leak=new Set(); S.short=new Set(); S.leakWarned=new Set(); S.log=[];
+  const keep={leak:S.leak, short:S.short, arc:S.arc, aw:S.arcWarned, log:S.log, lw:S.leakWarned, uw:S.uWarned, sim:S.sim};
+  S.quiet=true; S.leak=new Set(); S.short=new Set(); S.arc=new Set(); S.arcWarned=new Set(); S.leakWarned=new Set(); S.log=[];
   try{ return fn(); } finally {
     const j=JSON.parse(snap); Object.assign(S,{devices:j.devices, field:j.field, src:j.src, env:j.env, heat:j.heat});
-    Object.assign(S,{leak:keep.leak, short:keep.short, log:keep.log, leakWarned:keep.lw, uWarned:keep.uw, sim:keep.sim}); S.quiet=false; }
+    Object.assign(S,{leak:keep.leak, short:keep.short, arc:keep.arc, arcWarned:keep.aw, log:keep.log, leakWarned:keep.lw, uWarned:keep.uw, sim:keep.sim}); S.quiet=false; }
 }
 const runFor = sec => { for(let t=0;t<sec;t+=0.5) solve(0.5); };
 const sbErrors = () => S.log.filter(l=>l.cls==="e").map(l=>l.msg.replace(/^\S+ /,""));

@@ -44,7 +44,7 @@ function mkField(type, map, extra){ const d={id:uid("f"), type, map}; if(FT[type
 const DEFAULT_BOARD = () => ({ rails:1, inputs:[{id:"in",label:"Ввід",terms:["L","N","PE"]}], xn:8, xpe:8, xt:[] });
 const S = { tpl:"flat", board:DEFAULT_BOARD(), devices:[], field:[], wires:[], comb:null, src:{in:{on:false,U:230,lost:{}}}, env:{},
   mode:"mount", pend:null, pick:null, selWire:null, selDev:null, wireKind:"L", wireSec:2.5, zoom:1, log:[],
-  leak:new Set(), short:new Set(), leakWarned:new Set(), heat:{}, sim:null, demo:null, uWarned:false };
+  leak:new Set(), short:new Set(), leakWarned:new Set(), arc:new Set(), arcWarned:new Set(), brand:"eua", heat:{}, sim:null, demo:null, uWarned:false };
 
 const KEY = "shchyt-majster-v2";
 function save(){

@@ -11,7 +11,7 @@ const tdef = d => T[d.type] || FT[d.type];
 const K = (d,k) => T[d.type] ? d.id+":"+k : (d.map[k]||"");
 const groupsOf = () => S.devices.filter(d=>T[d.type].group&&d.group).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
 const g3 = d => !!T[d.type].gph;
-const gL = d => d.id+":b1", gN = d => d.type==="rcbo" ? d.id+":b2" : d.type==="qf3p" ? d.id+":b2" : d.type==="qf4p" ? d.id+":b4" : "xn:0";
+const gL = d => d.id+":b1", gN = d => (d.type==="rcbo"||d.type==="qfn"||d.type==="afdd") ? d.id+":b2" : d.type==="qf3p" ? d.id+":b2" : d.type==="qf4p" ? d.id+":b4" : "xn:0";
 const gPh = (d,X) => g3(d) ? ["b1","b2","b3"].every(t=>X.ph(d.id+":"+t)) : !!X.ph(gL(d));
 const kwOf = (d,all) => d.group.loads.reduce((a,l)=>a+(all||l.on?l.kw:0),0);
 const poleClosed = (d,pi) => { const t=tdef(d); return t.closed ? t.closed(d,pi) : (d.on&&!d.trip); };
@@ -136,6 +136,11 @@ function resolveFaults(){
         if(pt!==nt){ trip(R,`дисбаланс струмів: ${l.grp?"група «"+devById(l.own).group.name+"»":desig(devById(l.own))} (N ${nt?"через ПЗВ, а фаза — ні":"в обхід ПЗВ"})`); tripped=true; break; } }
       if(tripped) break; }
     if(tripped) continue;
+    for(const id of S.arc){ const g=devById(id); if(!g||!X.ph(gL(g))) continue; const ld=loads.find(l=>l.own===id&&l.grp); if(!ld||ld.I<0.5) continue;
+      const af=S.devices.filter(R=>T[R.type].afdd&&R.on&&!R.trip&&!makeX(build({open:new Set([R.id])})).ph(gL(g)));
+      if(af.length){ trip(af[0],`іскріння (дуговий пробій) у групі «${g.group.name}»`); tripped=true; break; }
+      if(!S.arcWarned.has(id)){ S.arcWarned.add(id); logp("e",`Група «${g.group.name}»: іскріння в проводці! Автомат і ПЗВ його не бачать — пожежна небезпека. Захищає лише AFDD.`); if(typeof toast==="function") toast("Іскріння: потрібен AFDD","e"); } }
+    if(tripped) continue;
     for(const id of S.leak){ const g=devById(id); if(!g||!X.ph(gL(g))) continue;
       const rs=rcdDevs().filter(R=>!makeX(build({openPole:new Set(lPoles(R))})).ph(gL(g)));
       if(rs.length){ rs.sort((a,b)=>affected(a,X,computeLoads(X))-affected(b,X,computeLoads(X))); trip(rs[0],`витік струму в групі «${g.group.name}»`); tripped=true; break; }
@@ -157,13 +162,35 @@ function poleCurrents(d,X,loads){
     per.push(I); max=Math.max(max,I); });
   return {max, per};
 }
+// Струм у дротах: який дріт несе струм навантаження, скільки і в який бік (від джерела до навантаження; нуль і «−» — назад)
+function wireFlow(X,loads){ const ex=shortsExtra(), adj=new Map();
+  const add=(a,b)=>{ if(!a||!b) return; if(!adj.has(a)) adj.set(a,[]); if(!adj.has(b)) adj.set(b,[]); adj.get(a).push(b); adj.get(b).push(a); };
+  for(const w of S.wires) add(w.a,w.b);
+  for(let i=1;i<S.board.xn;i++) add("xn:"+i,"xn:0"); for(let i=1;i<S.board.xpe;i++) add("xpe:"+i,"xpe:0");
+  if(S.comb){ const cov=S.devices.filter(d=>d.type==="qf1p"&&(d.rail||0)===(S.comb.rail||0)&&d.slot>=S.comb.from&&d.slot<=S.comb.to); for(let i=1;i<cov.length;i++) add(cov[0].id+":t1",cov[i].id+":t1"); }
+  for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.links) for(const [a,b] of t.links(d)) add(K(d,a),K(d,b));
+    (t.poles||[]).forEach((p,pi)=>{ if(poleClosed(d,pi)) add(K(d,p.a),K(d,p.b)); }); if(t.aux) for(const [a,b] of t.aux(d)) add(K(d,a),K(d,b)); }
+  for(const [a,b] of ex) add(a,b);
+  const bfs=keys=>{ const D=new Map(), q=[...keys]; keys.forEach(k=>D.set(k,0)); for(let i=0;i<q.length;i++){ for(const n of adj.get(q[i])||[]) if(!D.has(n)){ D.set(n,D.get(q[i])+1); q.push(n); } } return D; };
+  const src=sources(), Dp=bfs(src.filter(([k,p])=>isPh(p)||/\+$/.test(p)).map(x=>x[0])), Dn=bfs(src.filter(([k,p])=>p==="N"||/-$/.test(p)).map(x=>x[0]));
+  const act=loads.filter(l=>(l.I||0)>0.01||(l.Is&&l.Is.some(x=>x>0.01))), out={};
+  if(!act.length) return out;
+  const lost=(Y,k)=>{ const A=X.P(k); if(!A.size) return false; const B=Y.P(k); for(const p of A) if(!B.has(p)&&p!=="PE") return true; return false; };
+  for(const w of S.wires){ const ps=X.P(w.a); if(!ps.size||ps.has("PE")&&ps.size===1) continue;
+    const Y=makeX(build({skip:w.id,extra:ex})); let Ia=0, Ib=0;
+    for(const l of act){ if(l.abc){ l.abc.forEach((k,i)=>{ if(lost(Y,k)) Ia+=l.Is[i]; }); continue; }
+      if(l.a&&lost(Y,l.a)) Ia+=l.I; else if(l.b&&lost(Y,l.b)) Ib+=l.I; }
+    const I=Math.max(Ia,Ib); if(I<0.01) continue; const D=Ia>=Ib?Dp:Dn, da=D.get(w.a), db=D.get(w.b);
+    let dir=da===undefined||db===undefined?1:da<=db?1:-1; if(Ib>Ia) dir=-dir;   // фаза — від джерела, нуль — до джерела
+    out[w.id]={I,dir}; }
+  return out; }
 function solve(dt=0){
   let X=evaluate({extra:shortsExtra()});
   if(dt>0){ for(const d of [...S.devices,...S.field]){ const t=tdef(d); if(t.tick) t.tick(d,X,dt); }
     if(S.tplObj&&S.tplObj.tick) S.tplObj.tick(X,dt); invTick(X,dt); X=evaluate({extra:shortsExtra()}); }
   if(anySource()){ resolveFaults(); X=evaluate({extra:shortsExtra()}); } else if(S.env.arc){ S.env.arc=false; }
   const loads=computeLoads(X), R={X, loads, I:{}, per:{}, liveW:new Set(), g:{}, totalI:0, chatter:!!X.chatter};
-  for(const d of S.devices){ const t=T[d.type]; if(!(t.prot||t.meter)||(t.prot&&(!d.on||d.trip))) continue;
+  for(const d of S.devices){ const t=T[d.type]; if(!(t.prot||t.meter||t.rcd)||((t.prot||t.rcd)&&(!d.on||d.trip))) continue;
     const pc=poleCurrents(d,X,loads); R.I[d.id]=pc.max; R.per[d.id]=pc.per;
     if(dt>0&&t.prot){ const In=protIn(d), I=pc.max; let k=I/In;
       if(t.prot==="mpcb"){ const nz=pc.per.filter(x=>x>0.3*In).length; if(nz>0&&nz<pc.per.length&&pc.per.length===3) k*=1.6; }
@@ -173,7 +200,8 @@ function solve(dt=0){
   for(const d of groupsOf()){ const l=loads.find(x=>x.own===d.id&&x.grp);
     R.g[d.id]={phase:gPh(d,X), neutral:g3(d)?true:X.hasN(gN(d)), U:l.U, I:l.I, kw:kwOf(d)}; R.totalI+=l.I; }
   const anyI=loads.some(l=>(l.I||0)>0||(l.Is&&l.Is.some(x=>x>0)));
-  for(const w of S.wires){ const ps=X.P(w.a); if([...ps].some(p=>isPh(p)||isDC(p))||(ps.has("N")&&anyI&&w.kind==="N")) R.liveW.add(w.id); }
+  for(const w of S.wires){ const ps=X.P(w.a); if([...ps].some(p=>isPh(p)||isDC(p))) R.liveW.add(w.id); }
+  R.flow=S.quiet?{}:wireFlow(X,loads);
   const bad=Object.values(S.src).some(s=>s.on&&(s.U>U_MAX||s.U<U_MIN)), exposed=groupsOf().some(d=>R.g[d.id].phase&&R.g[d.id].neutral&&(R.g[d.id].U>U_MAX||R.g[d.id].U<U_MIN));
   if(exposed&&!S.uWarned){ S.uWarned=true; logp("w","Напруга поза межами 170–250 В доходить до споживачів"); }
   if(!bad) S.uWarned=false;
