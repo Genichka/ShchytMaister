@@ -362,7 +362,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.5.2", date:"2026-11-03", notes:["Термін «ввідний автомат» замість «вступний» — у помічнику, перевірці, шаблонах і документах","На телефоні низ інтерфейсу більше не з’їжджає під системну панель: екран застосунку точно по висоті дисплея","Меню й документи також враховують статус-бар і вирізи екрана"] };
+const APP = { v:"4.5.3", date:"2026-11-03", notes:["Прибрано кнопку «Готово» при встановленні апарата: один дотик по вільному місцю ставить апарат і закриває вибір; кілька штук — через «Скільки ×N»; ✕ — скасувати","Термін «ввідний автомат» замість «вступний»","На телефоні низ інтерфейсу більше не з’їжджає під системну панель"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1862,7 +1862,7 @@ function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) re
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
 function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="Робоча зона порожня. Створіть новий щит, відкрийте збережений проєкт або приклад."; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&S.mode!=="plan"&&typeof guideHint==="function")?guideHint():"";
-  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця — поставиться ${S.pickQty>1?S.pickQty+" шт. підряд":"1 шт."}. Можна торкатися кілька разів; «Готово» — коли досить.`:"Оберіть апарат нижче й поставте на рейку. Торкніться апарата — налаштування; затисніть і тягніть — пересунути.";
+  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця на рейці${S.pickQty>1?` — поставиться ${S.pickQty} шт. підряд`:""}. ✕ унизу — скасувати.`:"Оберіть апарат нижче й поставте на рейку. Торкніться апарата — налаштування; затисніть і тягніть — пересунути.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
   if(S.mode==="plan") h=planHint();
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
@@ -1924,7 +1924,7 @@ function noDocBar(){ const list=projDB().list.slice().sort((a,b)=>b.updated-a.up
     +brow(list.length?`<span class="bl">Останні:</span>`+list.map(p=>`<button class="chip" data-pa="open" data-pid="${p.id}">${esc(p.name)}</button>`).join(""):`<span class="bl">Збережених проєктів ще немає</span>`); }
 // ---- Апарати: категорії + картки
 function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def||"";
-  return bhead(`Ставимо: ${esc(t.short)}${rate?" "+esc(rate)+(t.unit||""):""} <span class="bm">${t.w} мод.</span>`,`<button class="btn sm primary" data-pickx>Готово</button>`)
+  return bhead(`Ставимо: ${esc(t.short)}${rate?" "+esc(rate)+(t.unit||""):""} <span class="bm">${t.w} мод.</span>`,`<button class="bx" data-pickx aria-label="Скасувати">✕</button>`)
     +(t.ratings?brow(`<span class="bl">Номінал</span>`+t.ratings.map(r=>chip(`data-prate="${r}"`,rate===r,r+(t.unit||""),"mono")).join("")):"")
     +brow(`<span class="bl">Скільки</span>`+[1,2,3,4,5,6,8].map(n=>chip(`data-pqty="${n}"`,q===n,"×"+n,"mono")).join("")+`<button class="btn sm" data-pauto>Поставити ×${q} у вільні місця</button>`); }
 function mountBar(){ if(S.pick&&T[S.pick]) return pickBar(); const F=S.devFilter, mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
@@ -2046,8 +2046,8 @@ function placeDev(type,r,slot,qty){ const w=T[type].w, n0=qty||S.pickQty||1, put
     if(T[type].group&&(!T[type].groupOpt||asG)) ex.group=mkGroup(n,"Група "+(n+1),S.pickRating&&/C(25|32)/.test(S.pickRating)?(/32/.test(S.pickRating)?6:4):/B10|C10|B6/.test(S.pickRating||"")?1.5:2.5,[]);
     if(S.brand&&S.brand!=="eua"&&MODELS[type]&&MODELS[type][S.brand]&&!ex.brand) ex.brand=S.brand;
     const d=mkDev(type,r,slot,S.pickRating||null,ex); S.devices.push(d); put.push(d); slot+=w; }
-  if(!put.length) return; S.pickQty=1;
-  toast(put.length>1?`Поставлено ${put.length} × ${T[type].short} ${put[0].rating||""}: ${put.map(desig).join(", ")}. Можна ставити ще або «Готово»`:`${desig(put[0])} ${put[0].rating?put[0].rating+(T[type].unit||"")+" ":""}встановлено. Торкніться ще місця або «Готово»`,"ok"); commit(); }
+  if(!put.length) return; S.pick=null; S.pickRating=null; S.pickExtra=null; S.pickQty=1;   // поставили — режим розстановки закривається сам
+  toast(put.length>1?`Поставлено ${put.length} × ${T[type].short} ${put[0].rating||""}: ${put.map(desig).join(", ")}`:`${desig(put[0])} ${put[0].rating?put[0].rating+(T[type].unit||"")+" ":""}встановлено`,"ok"); commit(); }
 function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>![w.a,w.b].some(k=>k.startsWith(d.id+":")||k.startsWith("tb:"+d.id+":"))); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
 function termTap(key){
   if(!S.pend){ const r=termRole(key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,key); toast(`Вид дроту: ${WK[S.wireKind][0]} — за клемою`); }

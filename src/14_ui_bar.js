@@ -25,7 +25,7 @@ function noDocBar(){ const list=projDB().list.slice().sort((a,b)=>b.updated-a.up
     +brow(list.length?`<span class="bl">Останні:</span>`+list.map(p=>`<button class="chip" data-pa="open" data-pid="${p.id}">${esc(p.name)}</button>`).join(""):`<span class="bl">Збережених проєктів ще немає</span>`); }
 // ---- Апарати: категорії + картки
 function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def||"";
-  return bhead(`Ставимо: ${esc(t.short)}${rate?" "+esc(rate)+(t.unit||""):""} <span class="bm">${t.w} мод.</span>`,`<button class="btn sm primary" data-pickx>Готово</button>`)
+  return bhead(`Ставимо: ${esc(t.short)}${rate?" "+esc(rate)+(t.unit||""):""} <span class="bm">${t.w} мод.</span>`,`<button class="bx" data-pickx aria-label="Скасувати">✕</button>`)
     +(t.ratings?brow(`<span class="bl">Номінал</span>`+t.ratings.map(r=>chip(`data-prate="${r}"`,rate===r,r+(t.unit||""),"mono")).join("")):"")
     +brow(`<span class="bl">Скільки</span>`+[1,2,3,4,5,6,8].map(n=>chip(`data-pqty="${n}"`,q===n,"×"+n,"mono")).join("")+`<button class="btn sm" data-pauto>Поставити ×${q} у вільні місця</button>`); }
 function mountBar(){ if(S.pick&&T[S.pick]) return pickBar(); const F=S.devFilter, mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
