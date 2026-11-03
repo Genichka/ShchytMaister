@@ -455,7 +455,7 @@ body.demo-on .bbar{display:none}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.2", date:"2026-11-03", notes:["Помічник: спершу всі апарати, проводка — наприкінці","Клемна колодка XT2 для відхідних ліній: L від автомата, N від шини N, PE від шини PE — для кожної групи (майстер, меню «Щит»)","Помічник показує, який саме дріт заважає (нуль в обхід ПЗВ), і прибирає його однією кнопкою","Дріт з невірним видом (синій на фазі тощо) виправляється кнопкою; вид дроту сам обирається за першою клемою","Щит сам прокручується до підсвічених клем"] };
+const APP = { v:"4.3", date:"2026-11-03", notes:["Новий шаблон «АВР 3~ 380 В на контакторах і реле контролю фаз»: QF1, QF2, SF1, SF2, KV1 (25–28 / 15–16), KM1, KM2, HL1, HL2, взаємне блокування — з демонстрацією обриву фази, чергування і зникнення вводу","Новий апарат: реле контролю фаз з двома контактами (25–28 НВ, 15–16 НЗ)","Щит без ПЗВ: вибір у майстрі (крок «Шини»), помічник пропускає крок ПЗВ, перевірка дає попередження замість помилки","Новий шаблон «Квартира без ПЗВ: ввід, реле напруги, 4 групи»"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -525,7 +525,7 @@ function freeAt(r,slot,w,ignore){ if(r<0||r>=S.board.rails||slot<0||slot+w>SLOTS
   for(let i=slot;i<slot+w;i++){ const d=devAt(r,i); if(d&&d!==ignore) return false; } return true; }
 function desig(d){
   if(!T[d.type]) return d.name || FT[d.type].pre;
-  const p=T[d.type].pre; const same=S.devices.filter(x=>T[x.type].pre===p).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
+  const p=d.pre||T[d.type].pre; const same=S.devices.filter(x=>(x.pre||T[x.type].pre)===p).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
   return p+(same.findIndex(x=>x.id===d.id)+1);
 }
 // Клеми: "in:L", "in2:N", "xn:3", "xpe:0", "xt:U", "d12:A1"
@@ -1064,6 +1064,12 @@ defType("stair",{name:"Сходовий таймер (світло на час)"
   logic(d,X){ const c=coilOn(d,X,"A1","A2"); if(c&&!d.prev){ d.prev=true; const was=d.t>0; d.t=d.delay; if(!was){ logp("ok",`${desig(d)}: кнопка — світло на ${d.delay} с`); return true; } } if(!c) d.prev=false; return false; },
   tick(d,X,dt){ if(d.t>0){ d.t=Math.max(0,d.t-dt); if(!d.t) logp("w",`${desig(d)}: час минув — світло вимкнено`); } },
   face(d,g){ return tx(g.cx,g.y+66,mdl(d,"СХОДОВИЙ"),{fs:5.8,fw:700})+lcd(g.x+5,g.y+76,g.w-10,24,d.t>0?Math.ceil(d.t)+" с":"OFF",d.t>0,"#ffd23f")+tx(g.cx,g.y+118,"T = "+d.delay+" с",{fs:6})+led(g.cx,g.y+134,d.t>0?"#ffd23f":"#5a5e66"); }});
+
+defType("kvf2",{...T.kvf, name:"Реле контролю фаз, 2 контакти (25–28, 15–16)", short:"Реле контролю фаз 2К", w:3,
+  terms:[{k:"L1",s:"top",r:"P",l:"L1"},{k:"L2",s:"top",r:"P",l:"L2"},{k:"L3",s:"top",r:"P",l:"L3"},{k:"N",s:"top",r:"N",l:"N"},C("15","bot","15"),C("16","bot","16"),C("25","bot","25"),C("28","bot","28")],
+  aux:d=>d.ks&&d.ks.ok?[["25","28"]]:[["15","16"]], cap:"Контроль основного вводу",
+  logic(d,X){ const r=T.kvf.logic(d,X); return r; },
+  tick(d,X,dt){ const s=d.ks; if(!s||!s.good||s.ok) return; s.delay-=dt; if(s.delay<=0){ s.ok=true; logp("ok",`${desig(d)}: фази в нормі — 25–28 замкнено, 15–16 розімкнено`); } } });
 /* ===== Виробники й моделі апаратів (лише назви серій і моделей звичайним текстом, без логотипів) ===== */
 const BR = {
   eua:{n:"EnergyUA"},
@@ -1432,7 +1438,7 @@ function runChecks(){
     if(rr.byp){ const R=devById(rr.byp.id); add("e",`${desig(g)} «${g.group.name}»: ${rr.byp.pt?"нуль":"фаза"} в обхід ${desig(R)}`,
       rr.byp.pt?"Фаза групи йде через ПЗВ, а нуль — ні. ПЗВ вимкнеться, щойно запрацює прилад. Нуль групи — із шини N, яку живить нижня клема N цього ПЗВ."
                :"Нуль групи йде через ПЗВ, а фаза взята до нього. ПЗВ вимкнеться, щойно запрацює прилад. Фазу групи беріть із нижньої клеми ПЗВ."); }
-    if(!rc) add(/освітл|світл/i.test(g.group.name)?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА."); }
+    if(!rc) add(/освітл|світл/i.test(g.group.name)||S.board.noRcd?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,S.board.noRcd?"Щит зібрано без ПЗВ: проводку захищено, а людей від ураження — ні. Для розеток і вологих приміщень рекомендовано ПЗВ або диф-автомат 30 мА.":"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА."); }
   if(mainIn&&b.inputs.length===1){ let low=0;
     for(const w of S.wires){ if(!["L","N"].includes(w.kind)) continue; const g2=build({ideal:true,skip:w.id}), g1=build({ideal:true});
       const aff=G.filter(g=>(g1(gL(g))===g1("in:L")&&g2(gL(g))!==g2("in:L"))||(g1(gN(g))===g1("in:N")&&g2(gN(g))!==g2("in:N")));
@@ -1613,6 +1619,55 @@ TPL.ats_inv = { name:"АВР: мережа + інвертор з АКБ (TOMZN)"
       {say:"Мережа повернулась. АВР повертає щит на ввід I, інвертор заряджає АКБ. Від 20 % резерв знову готовий.", do(){ say("in",true,230); }, wait:7},
       {say:"Головне правило: вихід інвертора ніколи не з’єднують із мережею напряму. АВР-модуль механічно не замкне обидва вводи разом.", do(){}, wait:2}]},
   checks(add){ add("ok","Бойлер і чайник — не одночасно від інвертора","Разом із базовим навантаженням вони перевищують 5 кВт. У реальному щиті бойлер часто живлять лише від мережі, до АВР."); }};
+
+// АВР 3~ на двох контакторах: реле контролю фаз KV1 на основному вводі, взаємне блокування НЗ-контактами, лампи HL1/HL2
+TPL.ats3_km = { name:"АВР 3~ 380 В на контакторах і реле контролю фаз", cat:"АВР на 2 вводи",
+  info:"Класична схема: основний і резервний вводи 3~ 380 В, автомати QF1 і QF2, контактори KM1 і KM2. KV1 контролює фази основного вводу (обрив, чергування, напруга): контакт 25–28 вмикає KM1, 15–16 — KM2. Кожен контактор живиться через НЗ-контакт іншого, тому вводи ніколи не з’єднаються. HL1 — робота від основного вводу, HL2 — від резервного.",
+  build(){ tplStart({rails:3, noRcd:true, inputs:[{id:"in",label:"Ввід 1 · основний 3~",terms:["L1","L2","L3","N","PE"]},{id:"in2",label:"Ввід 2 · резервний 3~",terms:["L1","L2","L3","N"]}], xn:10, xpe:4});
+    const qf1=D("qf3p",0,0,"C40",{cap:"Основний ввід"}), qf2=D("qf3p",0,3,"C40",{cap:"Резервний ввід"}), sf1=D("qf3p",0,6,"C10",{pre:"SF",cap:"Живлення KV1"}), sf2=D("qf1p",0,9,"B6",{pre:"SF",noGroup:true,cap:"Керування KM2"}),
+      hl1=D("hl",0,10,"",{cap:"Основний",col:"#3fbf4a"}), hl2=D("hl",0,11,"",{cap:"Резерв",col:"#ffb21f"}),
+      km1=D("km3a",1,0,"",{cap:"Основний ввід"}), km2=D("km3a",1,4,"",{cap:"Резервний ввід"}), q3=D("qf4p",1,8,"C32",{group:mkGroup(0,"Споживачі 3~",6,[["Будинок 3~",6,1],["Насос 3~",1.5,1]])}),
+      kv=D("kvf2",2,0);
+    ["L1","L2","L3"].forEach((t,i)=>{ const a=["t1","t2","t3"][i], o=["b1","b2","b3"][i], pi=["1","3","5"][i], po=["2","4","6"][i];
+      W("in:"+t,k(qf1,a),t,10); W("in2:"+t,k(qf2,a),t,10); W(k(qf1,o),k(km1,pi),t,10); W(k(qf2,o),k(km2,pi),t,10);
+      W(k(km1,po),k(q3,a),t,10); W(k(km2,po),k(q3,a),t,10); W(k(qf1,o),k(sf1,a),t,1.5); W(k(sf1,o),k(kv,t),t,1.5); });
+    W("in:N","xn:0","N",10); W("in2:N","xn:1","N",10); W("in:PE","xpe:0","PE",10); W("xn:2",k(q3,"t4"),"N",10); W("xn:3",k(kv,"N"),"N",1.5);
+    // KM1: SF1 → НЗ KM2.1 (21–22) → KV1.1 (25–28) → котушка KM1; HL1 через НВ KM1.2 (13–14)
+    W(k(sf1,"b1"),k(km2,"21"),"C",1.5); W(k(km2,"22"),k(kv,"25"),"C",1.5); W(k(kv,"28"),k(km1,"A1"),"C",1.5); W(k(km1,"A2"),"xn:4","N",1.5);
+    W(k(km2,"21"),k(km1,"13"),"C",1.5); W(k(km1,"14"),k(hl1,"X1"),"C",1.5); W(k(hl1,"X2"),"xn:5","N",1.5);
+    // KM2: QF2 фаза A2 → SF2 → НЗ KM1.1 (21–22) → KV1.2 (15–16) → котушка KM2; HL2 через НВ KM2.2 (13–14)
+    W(k(qf2,"b1"),k(sf2,"t1"),"L1",1.5); W(k(sf2,"b1"),k(km1,"21"),"C",1.5); W(k(km1,"22"),k(kv,"15"),"C",1.5); W(k(kv,"16"),k(km2,"A1"),"C",1.5); W(k(km2,"A2"),"xn:6","N",1.5);
+    W(k(sf2,"b1"),k(km2,"13"),"C",1.5); W(k(km2,"14"),k(hl2,"X1"),"C",1.5); W(k(hl2,"X2"),"xn:7","N",1.5); },
+  demo:{ controls:[{type:"src",id:"in",label:"Основний 3~"},{type:"src",id:"in2",label:"Резервний 3~",noU:true},
+      {type:"toggle",label:"Обрив фази B (основний)",get:()=>!!(S.src.in.lost||{}).L2,set:v=>{ (S.src.in.lost||(S.src.in.lost={})).L2=v; }},
+      {type:"toggle",label:"Переплутано B і C (основний)",get:()=>!!S.src.in.swap,set:v=>{ S.src.in.swap=v; }}],
+    status:()=>{ const q=S.devices.find(d=>d.type==="qf4p"), p=q&&S.sim?S.sim.X.ph(k(q,"t1")):null, m1=byDes("KM1"), m2=byDes("KM2"), kv=byDes("KV1"), s=kv&&kv.ks||{};
+      return [["Споживачі живляться від",!p?"немає живлення":p.startsWith("in2")?"резервного вводу":"основного вводу",!p?"e":p.startsWith("in2")?"w":"ok"],["KM1 / KM2",`${m1&&m1.pulled?"увімк.":"вимк."} / ${m2&&m2.pulled?"увімк.":"вимк."}`,m1&&m2&&m1.pulled&&m2.pulled?"e":""],
+        ["KV1 (основний)",s.ok?"фази в нормі":s.why||(s.pw?"перевірка…":"немає напруги"),s.ok?"ok":"w"]]; },
+    script:[
+      {say:"Подаємо обидва вводи. Перші 2 с KV1 перевіряє фази основного вводу, його 15–16 замкнутий — тимчасово працює резерв (KM2, HL2).", do(){ say("in",true,230); say("in2",true,230); }, wait:1},
+      {say:"Фази в нормі: KV1 розмикає 15–16 і замикає 25–28. KM2 відпадає, його НЗ 21–22 замикається — вмикається KM1. Щит на основному вводі, світить HL1.", do(){}, wait:4},
+      {say:"Обрив фази B на основному вводі. KV1 розмикає 25–28 — KM1 відпадає. Через НЗ KM1 і 15–16 вмикається KM2: резерв.", do(){ S.src.in.lost.L2=true; }, wait:3},
+      {say:"Фазу відновили. Через 2 с KV1 повертає щит на основний ввід.", do(){ S.src.in.lost.L2=false; }, wait:4},
+      {say:"Переплутали фази B і C на основному вводі. KV1 бачить неправильне чергування і переводить на резерв — двигуни не закрутяться в інший бік.", do(){ S.src.in.swap=true; }, wait:3},
+      {say:"Чергування виправили — щит знову на основному вводі.", do(){ S.src.in.swap=false; }, wait:4},
+      {say:"Основний ввід зник повністю. KV1 знеструмлений, його 15–16 замкнутий — працює резерв.", do(){ say("in",false); }, wait:3},
+      {say:"Мережа повернулась. KM1 і KM2 ніколи не ввімкнуться разом: кожен живиться через НЗ-контакт іншого.", do(){ say("in",true,230); }, wait:4}]},
+  checks(add){ add("ok","Взаємне блокування KM1 і KM2","Котушка KM1 — через НЗ 21–22 KM2, котушка KM2 — через НЗ 21–22 KM1."); }};
+
+// Квартира без ПЗВ: ввід, реле напруги, групи
+TPL.flat_norcd = { name:"Квартира без ПЗВ: ввід, реле напруги, 4 групи", cat:"Квартира і будинок",
+  info:"Найпростіший щит: вступний автомат 2P, реле напруги і групові автомати. Нуль від вступного автомата — на шину N, звідти до груп. Без ПЗВ щит захищає проводку, але не людей від ураження — перевірка це покаже.",
+  build(){ tplStart({rails:1, noRcd:true}); const q1=D("qf2p",0,0,"C32"), kv=D("kv",0,2,"40");
+    G1(0,4,"B16",0,"Розетки кухня",2.5,[["Чайник",2,1],["Холодильник",0.15,1]]); G1(0,5,"B16",1,"Розетки кімнати",2.5,[["Телевізор",0.15,1],["Пилосос",1.6,0]]);
+    G1(0,6,"C25",2,"Бойлер",4,[["Бойлер",2,1]]); G1(0,7,"B10",3,"Освітлення",1.5,[["Освітлення",0.1,1]]); S.comb={rail:0,from:4,to:7};
+    W("in:L",k(q1,"t1"),"L",6); W("in:N",k(q1,"t2"),"N",6); W("in:PE","xpe:0","PE",6);
+    W(k(q1,"b1"),k(kv,"t2"),"L",6); W(k(q1,"b2"),k(kv,"t1"),"N",6); W(k(kv,"b2"),k(S.devices[2],"t1"),"L",6); W(k(q1,"b2"),"xn:0","N",6); },
+  demo:{ get controls(){ return autoControls(); }, status:autoStatus, script:[
+      {say:"Подаємо мережу: через 3 с реле напруги KV1 вмикає щит.", do(){ say("in",true,230); }, wait:5},
+      {say:"Витік на корпус у групі кухні: без ПЗВ ніщо не вимкнеться — людину може вразити струмом.", do(){ S.leak.add(byDes("QF2").id); }, wait:3},
+      {say:"Коротке замикання в кімнатах: автомат QF3 вимикає лише свою групу.", do(){ S.leak.clear(); S.leakWarned.clear(); S.short.add(byDes("QF3").id); }, wait:3},
+      {say:"Готово. Для розеток і ванної ПЗВ або диф-автомати 30 мА все ж рекомендовані.", do(){ S.short.clear(); const q=byDes("QF3"); q.on=true; q.trip=null; }, wait:1}]}};
 /* ===== Шаблон: СЕС з гібридним інвертором ===== */
 const XT_PV = [["pa+","PV+","DC+"],["pa-","PV−","DC-"],["ip+","IP+","DC+"],["ip-","IP−","DC-"],["ba+","B+","DC+"],["ba-","B−","DC-"],["ib+","IB+","DC+"],["ib-","IB−","DC-"],
   ["gL","G-L","L"],["gN","G-N","N"],["oL","O-L","L"],["oN","O-N","N"],["pe","PE","PE"]].map(([k,l,r])=>({k,l,r}));
@@ -1874,7 +1929,7 @@ TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, л�
 const $ = id => document.getElementById(id);
 let toastT=null;
 function toast(msg,cls=""){ if(S.quiet) return; const t=$("toast"); t.textContent=msg; t.className="toast "+cls; t.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,2600); }
-const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","kvf","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","ats","qs","km2a","km3a"]],
+const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","kvf","kvf2","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","ats","qs","km2a","km3a"]],
   ["Керування",["sbp","sbs","hl","rel","kt","kimp","stair","photo","logo"]],["Двигуни",["qm"]],["Розподіл",["xtb","sock"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
 const TPL_ORDER = ["Конструктор","Квартира і будинок","АВР на 2 вводи","Сонячна станція","Двигуни"];
 let clearArm=0;
@@ -2420,9 +2475,9 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
       h:kind==="2inv"?"Мережа — на ввід I модуля АВР, вихід інвертора — на ввід II. АВР має перемикати і фазу, і нуль. Вихід інвертора ніколи не можна з’єднувати з мережею — інвертор згорить."
         :"Модуль АВР — найпростіше. Контактори з блокуванням через НЗ-контакти 21–22 — класика. Головне, щоб вводи ніколи не з’єднались між собою.",
       done:()=>has("ats")||S.devices.filter(d=>d.type==="km2a").length>=2, short:"Перемикання вводів", act:["Обрати АВР",null]}]:[]),
-    {id:"rcd", opt:kind==="3ph", t:"Захист людей: ПЗВ або диф-автомати",
+    ...(b.noRcd?[]:[{id:"rcd", opt:kind==="3ph", t:"Захист людей: ПЗВ або диф-автомати",
       h:"ПЗВ 30 мА вимикає лінію при витоку струму на корпус. Номінал ПЗВ — не менший за вступний автомат.",
-      done:()=>has("rcd","rcd4","rcbo"), short:"Захист людей", act:["Обрати ПЗВ",null]},
+      done:()=>has("rcd","rcd4","rcbo"), short:"Захист людей", act:["Обрати ПЗВ",null]}]),
     {id:"groups", t:"Групи й обладнання",
       h:"Кожен автомат 1P — окрема лінія: розетки, світло, кухня. Двигун, бойлер чи сонячні панелі додайте в «Обладнання поза щитом».",
       done:()=>G.length>0||S.field.length>0, short:"Групові автомати", act:["Обрати автомат",null]},
@@ -2681,7 +2736,7 @@ function dialog(title, body, buttons){
 const closeDlg = () => { $("dlg").hidden=true; };
 
 // ---- Структурний знімок і «Скасувати»
-const SKEYS=["id","type","rail","slot","rating","group","cap","model","Ir","variant","col","uc","delay","plug","th","noGroup","sid","n","name","map"];
+const SKEYS=["id","type","rail","slot","rating","group","cap","model","Ir","variant","col","uc","delay","plug","th","noGroup","sid","n","name","map","brand","pre"];
 const pickS = o => { const r={}; for(const key of SKEYS) if(o[key]!==undefined) r[key]=o[key]; return r; };
 function structSnap(){ return JSON.stringify({board:S.board, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires, comb:S.comb, plan:S.plan||null}); }
 S.hist=[]; S.lastSnap=null;
@@ -2763,10 +2818,10 @@ function boardFor(w){ const cur=S.board;
   const inputs = w.kind==="gnd"?cur.inputs : w.kind==="3ph"?[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}]
     : w.kind==="2in"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}]
     : w.kind==="2inv"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · інвертор",terms:["L","N"],inv:{kw:w.ikw,kwh:w.ikwh}}] : [{id:"in",label:"Ввід",terms:["L","N","PE"]}];
-  return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[], tb:!!w.tb}; }
+  return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[], tb:!!w.tb, noRcd:!!w.noRcd}; }
 function openWizard(edit){ const b=S.board;
   const iv=(b.inputs.find(i=>i.inv)||{}).inv||{kw:5,kwh:5};
-  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,tb:!!b.tb,guide:false,ikw:iv.kw,ikwh:iv.kwh}
+  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,tb:!!b.tb,noRcd:!!b.noRcd,guide:false,ikw:iv.kw,ikwh:iv.kwh}
     :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,tb:true,guide:true,ikw:5,ikwh:5};
   renderWizard(); $("dlg").hidden=false; }
 function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпус","Шини","Готово"], first=w.edit?1:0, last=4; let b="";
@@ -2779,8 +2834,9 @@ function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпу�
   if(w.step===3) b=`<p class="hint">Скільки отворів на шинах? Кожна група займає по отвору на N і PE.</p>
     <div class="volt"><span class="lbl">Шина N</span><input type="range" id="wzXn" min="0" max="12" value="${w.xn}"><output class="mono" id="wzXnO">${w.xn}</output></div>
     <div class="volt"><span class="lbl">Шина PE</span><input type="range" id="wzXpe" min="2" max="12" value="${w.xpe}"><output class="mono" id="wzXpeO">${w.xpe}</output></div>
+    <div class="row"><span class="lbl">ПЗВ</span><button class="chip" data-wrcd="0" aria-pressed="${!w.noRcd}">З ПЗВ (рекомендовано)</button><button class="chip" data-wrcd="1" aria-pressed="${!!w.noRcd}">Без ПЗВ</button></div>
     <label class="chk"><input type="checkbox" id="wzTb" ${w.tb?"checked":""}> Клемна колодка XT2 для відхідних ліній</label><p class="hint">Кабель кожної групи підключається до колодки внизу щита: L — від автомата, N — від шини N, PE — від шини PE.</p>`;
-  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}${w.tb?" · колодка XT2":""}</b></li></ul>`
+  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}${w.tb?" · колодка XT2":""}</b></li><li><span>ПЗВ</span><b>${w.noRcd?"без ПЗВ":"з ПЗВ"}</b></li></ul>`
     +(w.edit?"":`<label class="chk"><input type="checkbox" id="wzGuide" ${w.guide?"checked":""}> Увімкнути покроковий помічник складання</label>`);
   $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щит"}</h2><ol class="wz-steps">${names.slice(first).map((n,j)=>`<li class="${j+first<w.step?"done":j+first===w.step?"cur":""}">${n}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
     <div class="row dlg-f"><button class="btn" data-wz="cancel">Скасувати</button>${w.step>first?`<button class="btn" data-wz="prev">Назад</button>`:""}${w.step<last?`<button class="btn primary" data-wz="next">Далі</button>`:`<button class="btn primary" data-wz="${w.edit?"apply":"create"}">${w.edit?"Застосувати":"Створити щит"}</button>`}</div>`;
@@ -2792,7 +2848,7 @@ function wizardApply(){ const w=WZ, nb=boardFor(w);
   const lost=S.devices.filter(d=>(d.rail||0)>=w.rails); if(lost.length){ toast(`Спершу зніміть апарати з рейки ${w.rails+1}: ${lost.map(desig).join(", ")}`,"w"); return; }
   const keys=new Set(); for(const i of nb.inputs) for(const t of i.terms) keys.add(i.id+":"+t); for(let i=0;i<nb.xn;i++) keys.add("xn:"+i); for(let i=0;i<nb.xpe;i++) keys.add("xpe:"+i);
   const boardKey=x=>/^(in2?|gnd|xn|xpe):/.test(x), drop=S.wires.filter(x=>[x.a,x.b].some(q=>boardKey(q)&&!keys.has(q)));
-  const go=()=>{ S.wires=S.wires.filter(x=>!drop.includes(x)); if(!nb.tb) S.wires=S.wires.filter(x=>!/^tb:/.test(x.a)&&!/^tb:/.test(x.b)); Object.assign(S.board,{rails:nb.rails,inputs:nb.inputs,xn:nb.xn,xpe:nb.xpe,tb:nb.tb});
+  const go=()=>{ S.wires=S.wires.filter(x=>!drop.includes(x)); if(!nb.tb) S.wires=S.wires.filter(x=>!/^tb:/.test(x.a)&&!/^tb:/.test(x.b)); Object.assign(S.board,{rails:nb.rails,inputs:nb.inputs,xn:nb.xn,xpe:nb.xpe,tb:nb.tb,noRcd:nb.noRcd});
     const src={}; for(const i of nb.inputs) src[i.id]=S.src[i.id]||{on:false,U:230,lost:{}}; S.src=src; if(S.comb&&(S.comb.rail||0)>=nb.rails) S.comb=null;
     if(S.proj) S.proj.name=w.name; closeDlg(); GEO=null; commit(); renderProjBtn(); toast("Корпус і ввід змінено","ok"); };
   if(drop.length) dialog("Прибрати дроти?",`<p>${drop.length} дрот(и) підключено до клем, яких після змін не буде. Їх буде прибрано.</p>`,[{label:"Скасувати"},{label:"Прибрати і застосувати",cls:"primary",act:go}]); else go(); }
@@ -2900,6 +2956,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
     if(a==="cancel") closeDlg(); if(a==="prev"){ w.step--; renderWizard(); } if(a==="next"){ w.step++; renderWizard(); }
     if(a==="create") wizardCreate(); if(a==="apply") wizardApply(); return; }
   if(el=q("[data-wk]")){ WZ.kind=el.dataset.wk; if(WZ.kind==="3ph"&&WZ.xn<4) WZ.xn=4; renderWizard(); return; }
+  if(el=q("[data-wrcd]")){ WZ.noRcd=el.dataset.wrcd==="1"; renderWizard(); return; }
   if(el=q("[data-wikw]")){ WZ.ikw=+el.dataset.wikw; renderWizard(); return; }
   if(el=q("[data-wikwh]")){ WZ.ikwh=+el.dataset.wikwh; renderWizard(); return; }
   if(el=q("[data-wr]")){ WZ.rails=+el.dataset.wr; renderWizard(); return; }

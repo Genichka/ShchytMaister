@@ -45,3 +45,9 @@ defType("stair",{name:"Сходовий таймер (світло на час)"
   logic(d,X){ const c=coilOn(d,X,"A1","A2"); if(c&&!d.prev){ d.prev=true; const was=d.t>0; d.t=d.delay; if(!was){ logp("ok",`${desig(d)}: кнопка — світло на ${d.delay} с`); return true; } } if(!c) d.prev=false; return false; },
   tick(d,X,dt){ if(d.t>0){ d.t=Math.max(0,d.t-dt); if(!d.t) logp("w",`${desig(d)}: час минув — світло вимкнено`); } },
   face(d,g){ return tx(g.cx,g.y+66,mdl(d,"СХОДОВИЙ"),{fs:5.8,fw:700})+lcd(g.x+5,g.y+76,g.w-10,24,d.t>0?Math.ceil(d.t)+" с":"OFF",d.t>0,"#ffd23f")+tx(g.cx,g.y+118,"T = "+d.delay+" с",{fs:6})+led(g.cx,g.y+134,d.t>0?"#ffd23f":"#5a5e66"); }});
+
+defType("kvf2",{...T.kvf, name:"Реле контролю фаз, 2 контакти (25–28, 15–16)", short:"Реле контролю фаз 2К", w:3,
+  terms:[{k:"L1",s:"top",r:"P",l:"L1"},{k:"L2",s:"top",r:"P",l:"L2"},{k:"L3",s:"top",r:"P",l:"L3"},{k:"N",s:"top",r:"N",l:"N"},C("15","bot","15"),C("16","bot","16"),C("25","bot","25"),C("28","bot","28")],
+  aux:d=>d.ks&&d.ks.ok?[["25","28"]]:[["15","16"]], cap:"Контроль основного вводу",
+  logic(d,X){ const r=T.kvf.logic(d,X); return r; },
+  tick(d,X,dt){ const s=d.ks; if(!s||!s.good||s.ok) return; s.delay-=dt; if(s.delay<=0){ s.ok=true; logp("ok",`${desig(d)}: фази в нормі — 25–28 замкнено, 15–16 розімкнено`); } } });

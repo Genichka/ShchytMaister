@@ -67,7 +67,7 @@ function freeAt(r,slot,w,ignore){ if(r<0||r>=S.board.rails||slot<0||slot+w>SLOTS
   for(let i=slot;i<slot+w;i++){ const d=devAt(r,i); if(d&&d!==ignore) return false; } return true; }
 function desig(d){
   if(!T[d.type]) return d.name || FT[d.type].pre;
-  const p=T[d.type].pre; const same=S.devices.filter(x=>T[x.type].pre===p).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
+  const p=d.pre||T[d.type].pre; const same=S.devices.filter(x=>(x.pre||T[x.type].pre)===p).sort((a,b)=>((a.rail||0)-(b.rail||0))||(a.slot-b.slot));
   return p+(same.findIndex(x=>x.id===d.id)+1);
 }
 // Клеми: "in:L", "in2:N", "xn:3", "xpe:0", "xt:U", "d12:A1"

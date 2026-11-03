@@ -93,7 +93,7 @@ function runChecks(){
     if(rr.byp){ const R=devById(rr.byp.id); add("e",`${desig(g)} «${g.group.name}»: ${rr.byp.pt?"нуль":"фаза"} в обхід ${desig(R)}`,
       rr.byp.pt?"Фаза групи йде через ПЗВ, а нуль — ні. ПЗВ вимкнеться, щойно запрацює прилад. Нуль групи — із шини N, яку живить нижня клема N цього ПЗВ."
                :"Нуль групи йде через ПЗВ, а фаза взята до нього. ПЗВ вимкнеться, щойно запрацює прилад. Фазу групи беріть із нижньої клеми ПЗВ."); }
-    if(!rc) add(/освітл|світл/i.test(g.group.name)?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА."); }
+    if(!rc) add(/освітл|світл/i.test(g.group.name)||S.board.noRcd?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,S.board.noRcd?"Щит зібрано без ПЗВ: проводку захищено, а людей від ураження — ні. Для розеток і вологих приміщень рекомендовано ПЗВ або диф-автомат 30 мА.":"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА."); }
   if(mainIn&&b.inputs.length===1){ let low=0;
     for(const w of S.wires){ if(!["L","N"].includes(w.kind)) continue; const g2=build({ideal:true,skip:w.id}), g1=build({ideal:true});
       const aff=G.filter(g=>(g1(gL(g))===g1("in:L")&&g2(gL(g))!==g2("in:L"))||(g1(gN(g))===g1("in:N")&&g2(gN(g))!==g2("in:N")));
