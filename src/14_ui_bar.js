@@ -65,6 +65,7 @@ function devSet(d){ const t=T[d.type]; let s="";
   if(d.type==="sock") s+=chip("data-plug",!!d.plug,d.plug?"Інструмент 1,2 кВт увімкнено":"Увімкнути інструмент 1,2 кВт");
   if(d.type==="xtb") s+=[["grey","Сірий · L"],["blue","Синій · N"],["pe","Жовто-зелений · PE"]].map(([c,l])=>chip(`data-xcol="${c}"`,d.col===c,l)).join("");
   if(d.type==="photo") s+=[10,20,40].map(v=>chip(`data-th="${v}"`,d.th===v,"поріг "+v+" %")).join("");
+  if(d.type==="to219"||d.type==="qs") s+=`<span class="bl">Положення</span>`+[[1,"I"],[0,"0"],[2,"II"]].map(([v,l])=>chip(`data-qpos="${v}"`,d.pos===v,l,"mono")).join("");
   if(d.type==="ats") s+=chip(`data-atsm="0"`,!d.manual,"Автоматичний")+chip(`data-atsm="1"`,!!d.manual,"Ручний")+chip(`data-atsv="tomzn"`,d.variant==="tomzn","TOMZN")+chip(`data-atsv="geya"`,d.variant==="geya","GEYA");
   if(d.type==="ssw") s+=chip(`data-cmd="1"`,!!d.cmd,"Увімкнути з застосунку")+chip(`data-cmd="0"`,!d.cmd,"Вимкнути");
   if(d.type==="hl") s+=[["#3fbf4a","Зелений"],["#e23b3b","Червоний"],["#ffb21f","Жовтий"]].map(([c,l])=>chip(`data-hlc="${c}"`,d.col===c,l)).join("");

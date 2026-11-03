@@ -97,6 +97,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(el=q("[data-move]")){ const ns=d.slot+(+el.dataset.move); if(freeAt(d.rail||0,ns,T[d.type].w,d)){ d.slot=ns; commit(); } else toast("Там зайнято","w"); return; }
     if(el=q("[data-mrail]")){ const nr=(d.rail||0)+(+el.dataset.mrail); if(freeAt(nr,d.slot,T[d.type].w,d)){ d.rail=nr; commit(); } else toast("На іншій рейці це місце зайняте","w"); return; }
     if(el=q("[data-atsm]")){ d.manual=el.dataset.atsm==="1"; commit(false); return; }
+    if(el=q("[data-qpos]")){ d.pos=+el.dataset.qpos; delete d.seqI; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); commit(false); return; }
     if(el=q("[data-atsv]")){ d.variant=el.dataset.atsv; commit(false); return; }
     if(el=q("[data-cmd]")){ d.cmd=el.dataset.cmd==="1"; commit(false); return; }
     if(el=q("[data-hlc]")){ d.col=el.dataset.hlc; commit(false); return; }

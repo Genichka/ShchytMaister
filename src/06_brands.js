@@ -31,5 +31,5 @@ const brandsFor = type => ["eua",...Object.keys(MODELS[type]||{})];
 const brandOf = d => (d.brand&&MODELS[d.type]&&MODELS[d.type][d.brand]) ? d.brand : "eua";
 function modelOf(d){ const b=brandOf(d); return b==="eua"?"":MODELS[d.type][b](d); }
 const mdl = (d,def) => modelOf(d)||def;
-const brandName = d => { const b=BR[brandOf(d)]; return b.s||b.n; };
+const brandName = d => { if(T[d.type]&&T[d.type].maker) return T[d.type].maker; const b=BR[brandOf(d)]; return b.s||b.n; };
 const devFill = d => { const b=BR[brandOf(d)]; return b.tint?`color-mix(in srgb,var(--dev) 86%,${b.tint})`:""; };

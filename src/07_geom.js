@@ -77,7 +77,7 @@ function devSVG(d){
     else { const lw=String(tm.l).length*3.9, fitL=X-sr-2-lw>=x+2, fitR=X+sr+2+lw<=x+w-2;   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку
       s+=screw(X,y+H-22,sr)+((side||Math.abs(X-cx)<w/5)&&(fitL||fitR)
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-36,tm.l,{fs:6.8})); } }
-  s+=tx(cx,y+56,brandName(d),{fs:brandName(d).length>9?6.2:7,fw:700});
+  const bn=brandName(d); s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   const des=desig(d), pw=Math.max(38,des.length*7+12);
   s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});

@@ -86,3 +86,17 @@ defType("qs",{name:"Перемикач 1-0-2", short:"Перемикач 1-0-2",
   face(d,g){ const ang=d.pos===1?-45:d.pos===2?45:0;
     return tx(g.cx,g.y+64,"1 – 0 – 2 · 63 А",{fs:7,fw:700})+`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+110}" r="24" fill="#2a2d33"/><g transform="rotate(${ang} ${g.cx} ${g.y+110})"><rect x="${g.cx-6}" y="${g.y+84}" width="12" height="34" rx="5" fill="#1d1f23" stroke="#666"/></g></g>`
       +tx(g.cx-34,g.y+90,"1",{fs:10,fw:700})+tx(g.cx,g.y+80,"0",{fs:9})+tx(g.cx+34,g.y+90,"2",{fs:10,fw:700})+tx(g.cx,g.y+150,d.pos===1?"Мережа напряму":d.pos===2?"Від інвертора":"Вимкнено",{fs:7,fw:600}); }});
+// Перемикач вводів I–0–II, 2P 63 А, 4 модулі (як TOMZN TO219G). I: з’єднано 1–2 і 5–6; «0»: усе розімкнено; II: 1–4 і 5–8.
+// Спільні клеми 1 і 5 (3 і 7 — їх дублі) — на навантаження; 2 і 6 — ввід I (мережа); 4 і 8 — ввід II (генератор).
+defType("to219",{name:"Перемикач I–0–II 2P 63 А (тип TOMZN TO219G)", short:"Перемикач I–0–II", cat:"Комутація", w:4, pre:"QS", maker:"TOMZN",
+  terms:[{k:"1",s:"top",r:"L",l:"1"},{k:"3",s:"top",r:"L",l:"3"},{k:"5",s:"top",r:"N",l:"5"},{k:"7",s:"top",r:"N",l:"7"},
+    {k:"2",s:"bot",r:"L",l:"2"},{k:"4",s:"bot",r:"L",l:"4"},{k:"6",s:"bot",r:"N",l:"6"},{k:"8",s:"bot",r:"N",l:"8"}],
+  poles:[{a:"2",b:"1",r:"L"},{a:"6",b:"5",r:"N"},{a:"4",b:"1",r:"L"},{a:"8",b:"5",r:"N"}], links:()=>[["1","3"],["5","7"]],
+  closed:(d,pi)=>pi<2?d.pos===1:d.pos===2, init:d=>{ if(d.pos===undefined) d.pos=1; }, cap:"Мережа / генератор",
+  tap(d){ const seq=[1,0,2,0]; d.seqI=((d.seqI??seq.indexOf(d.pos))+1)%4; d.pos=seq[d.seqI]; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); return true; },
+  face(d,g){ const p=d.pos, hy=p===2?g.y+76:p===0?g.y+100:g.y+124, ww=g.w/2-24,
+      win=x=>`<rect x="${x}" y="${g.y+72}" width="${ww}" height="72" rx="3" fill="#dfe1e5" stroke="#b9bcc4"/><rect x="${x+ww/2-3}" y="${g.y+79}" width="6" height="14" rx="2" fill="#c3c6cc"/>`;
+    return tx(g.cx,g.y+66,"тип TO219G · 63 A · 400 В",{fs:6.6})+win(g.x+12)+win(g.cx+4)
+      +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${g.x+8}" y="${hy}" width="${g.w-30}" height="20" rx="3" fill="#f4f5f7" stroke="#8e939b"/><rect x="${g.cx-30}" y="${hy+4}" width="44" height="12" rx="2" fill="#e3e5e9" stroke="#b0b4bb"/></g>`
+      +tx(g.x+g.w-6,g.y+90,"II",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+114,"0",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+138,"I",{fs:8,fw:700,a:"end"})
+      +tx(g.cx,g.y+157,p===1?"I · 1–2, 5–6 · мережа":p===2?"II · 1–4, 5–8 · генератор":"0 · усе розімкнено",{fs:6.8,fw:600}); }});

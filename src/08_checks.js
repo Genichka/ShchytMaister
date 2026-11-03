@@ -42,14 +42,14 @@ function runChecks(){
     if(gi&&iv.terms.includes("N")&&fp(gi.id+":N")===fp(iv.id+":N")) add("w","Нуль інвертора з’єднано з нулем мережі напряму","АВР має перемикати і фазу, і нуль (2P). Багато інверторів у резервному режимі з’єднують N з PE всередині — спільний нуль з мережею дає хибні спрацювання ПЗВ.");
   }
   // 2. Прогін під напругою
-  const multi=b.inputs.length>1, res=sandbox(()=>{
-    const out={}; powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
+  const multi=b.inputs.length>1, man=v=>{ for(const d of S.devices) if(d.type==="to219") d.pos=v; }, res=sandbox(()=>{
+    const out={}; man(1); powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
     out.g=G.map(g=>({id:g.id, ok:!!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)}));
     out.trips=S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip);
-    if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; powerUp([inp.id]); runFor(1);
+    if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; man(2); powerUp([inp.id]); runFor(1);
         const fed=G.filter(g=>S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral).map(g=>g.id); runFor(9);
         return {inp, fed, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
-      S.log=[]; powerUp(); runFor(8); S.src[b.inputs[0].id].on=false; runFor(10); S.src[b.inputs[0].id].on=true; runFor(12);
+      S.log=[]; man(1); powerUp(); runFor(8); S.src[b.inputs[0].id].on=false; man(0); runFor(1); man(2); runFor(9); S.src[b.inputs[0].id].on=true; man(0); runFor(1); man(1); runFor(11);
       out.back={err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip)}; }
     if(S.tplObj&&S.tplObj.checks){ out.tpl=[]; S.tplObj.checks((s,t,d)=>out.tpl.push({sev:s,t,d})); }
     return out; });

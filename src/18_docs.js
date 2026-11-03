@@ -42,7 +42,7 @@ function symSVG(n,x,y){ const L=(a,b2,c,d2,w)=>`<line x1="${a}" y1="${b2}" x2="$
   if(t.rcd&&t.prot) return sw(true)+oval;
   if(t.rcd) return sw(false)+oval+`<text x="${x+10}" y="${y+42}" font-size="7">ΔI</text>`;
   if(t.prot) return sw(true);
-  if(t.meter) return box("kWh"); if(d.type==="kv") return box("U"); if(d.type==="pef") return box("L→"); if(d.type==="ats") return box("АВР");
+  if(t.meter) return box("kWh"); if(d.type==="kv") return box("U"); if(d.type==="pef") return box("L→"); if(d.type==="ats") return box("АВР"); if(d.type==="to219") return box("I-0-II");
   if(/^km|^kimp|^stair|^ssw|^photo|^rel/.test(d.type)) return sw(false,true);
   return sw(false); }
 
