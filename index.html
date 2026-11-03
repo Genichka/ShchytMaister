@@ -214,7 +214,7 @@ select.btn{padding-right:28px}
 .lbl2{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:4px}
 .dlg-b{display:flex;flex-direction:column;gap:8px;max-height:min(62vh,560px);overflow:auto;padding-right:2px}
 .dlg-b p{margin:0;font-size:13.5px}.dlg-f{justify-content:flex-end}
-.plist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r)}
+.plist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);flex:none}
 .pi{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line)}.pi:last-child{border-bottom:0}
 .pi.cur{background:color-mix(in srgb,var(--blue) 8%,transparent)}
 .pi-n{flex:1;min-width:0;display:flex;flex-direction:column}.pi-n b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pi-n small{font-size:11.5px;color:var(--muted)}
@@ -318,6 +318,14 @@ body{padding:0!important;overflow:hidden}
 .lab-c b{font-size:11px}.lab-c span{font-size:9.5px;line-height:1.1}.lab-c i{display:block;width:100%;height:5px;margin-top:3px}
 .sheet{z-index:24}
 body.demo-on .dock{display:none} body.demo-on .app{height:62dvh}
+.pcur{display:flex;flex-direction:column;gap:4px}.pst{margin:2px 0 0;font-size:12.5px;display:flex;align-items:center;gap:6px}.pst i{width:8px;height:8px;border-radius:50%;flex:none}
+.pst.ok{color:var(--green)}.pst.ok i{background:var(--green)}.pst.no{color:var(--orange)}.pst.no i{background:var(--orange)}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0}
+.pbtn{display:grid;grid-template-columns:26px 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;min-height:52px;color:var(--fg)}
+.pbtn svg{grid-row:1 / 3;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--blue)}
+.pbtn b{font-size:14px;color:var(--strong)}.pbtn small{font-size:11.5px;color:var(--muted)}.pbtn.wide{grid-column:1 / 3}.pbtn[data-pa="close"] svg{color:var(--red)}
+.pbtn.hot{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 14%,var(--panel2))}
+.proj-btn{gap:6px}.proj-btn .pdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}.proj-btn.unsaved .pdot{background:var(--orange)}
 .inp.num{width:72px;min-height:30px;padding:3px 6px;font-family:var(--mono)}
 .ptab{overflow:auto;border:1px solid var(--line);border-radius:3px}.ptab table{border-collapse:collapse;width:100%;font-size:12.5px}
 .ptab th,.ptab td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.ptab th{color:var(--muted);font-weight:500;font-size:11.5px}
@@ -344,7 +352,7 @@ body.demo-on .dock{display:none} body.demo-on .app{height:62dvh}
       <h1><span class="t1">Щит</span><span class="t2">Майстер</span></h1>
       <span class="verrow"><span class="ver mono" id="ver" role="button" tabindex="0" title="Що нового"></span><button class="btn upd" id="updBtn" title="Перевірити оновлення"><span aria-hidden="true">↻</span> Оновити<i class="dot" aria-hidden="true"></i></button></span>
     </div>
-    <button class="btn proj-btn" id="projBtn" aria-label="Проєкти"><span id="projName">Проєкти</span></button>
+    <button class="btn proj-btn" id="projBtn" aria-label="Проєкт: зберегти, відкрити, створити"><span class="pdot" aria-hidden="true"></span><span id="projName">Проєкт</span><span aria-hidden="true">▾</span></button>
   </header>
 
   <nav class="tbar" aria-label="Інструменти">
@@ -380,13 +388,16 @@ body.demo-on .dock{display:none} body.demo-on .app{height:62dvh}
 <aside class="drawer" id="drawer" hidden aria-label="Меню"><div class="drawer-in">
   <div class="dr-h"><b>ЩитМайстер</b><button class="btn" id="drawerX" aria-label="Закрити меню">✕</button></div>
   <div class="dr-g"><div class="dr-k">Проєкт</div>
-    <button class="dr-i" data-menu="new">＋ Новий щит (майстер)</button><button class="dr-i" data-menu="projects">Мої проєкти · зберегти · експорт</button><button class="dr-i" data-menu="board">Корпус і ввід</button><button class="dr-i" data-menu="guide">Покроковий помічник</button></div>
+    <button class="dr-i" data-menu="new">Створити новий щит</button><button class="dr-i" data-menu="projects">Відкрити збережений…</button><button class="dr-i" data-menu="save">Зберегти</button><button class="dr-i" data-menu="saveas">Зберегти як…</button>
+    <button class="dr-i" data-menu="export">Експорт у файл</button><button class="dr-i" data-menu="import">Імпорт з файлу</button><button class="dr-i" data-menu="close">Закрити щит</button></div>
+  <div class="dr-g"><div class="dr-k">Щит</div><button class="dr-i" data-menu="board">Корпус і ввід</button><button class="dr-i" data-menu="guide">Покроковий помічник</button></div>
   <div class="dr-g"><div class="dr-k">Документи</div>
     <button class="dr-i" data-menu="doc:sld">Однолінійна схема</button><button class="dr-i" data-menu="doc:cab">Кабельний журнал</button><button class="dr-i" data-menu="doc:spec">Специфікація обладнання</button><button class="dr-i" data-menu="doc:lab">Маркування автоматів (наклейки)</button><button class="dr-i" data-menu="plan">План приміщень і довжини кабелів</button></div>
   <div class="dr-g"><div class="dr-k">Приклади щитів <span class="hint" id="tplName"></span></div><div id="tplMenu" class="tpl-list"></div></div>
   <div class="dr-g"><div class="dr-k">Про застосунок</div><p class="foot">Навчальний симулятор. Номінали кабелів — за поширеною практикою для мідного кабелю в прихованій прокладці. Назви виробників і моделей — довідкові, без логотипів; моделі АВР спрощені.</p></div>
 </div></aside>
 
+<input type="file" id="pImport" accept=".json,application/json" hidden>
 <div class="docs" id="docs" hidden role="dialog" aria-modal="true" aria-label="Документи"><div class="docs-bar"><div class="dtabs" id="docTabs"></div><div class="row nowrap"><button class="btn" id="docPrint">Друк / PDF</button><button class="btn" id="docSvg">SVG</button><button class="btn" id="docsX" aria-label="Закрити">✕</button></div></div><div class="docs-b" id="docsB"></div></div>
 <div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheetIn"></div></div>
 <div class="toast" id="toast" style="opacity:0"></div>
@@ -396,7 +407,7 @@ body.demo-on .dock{display:none} body.demo-on .app{height:62dvh}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.0", date:"2026-11-03", notes:["Новий екран: щит на весь екран, панель інструментів знизу (на ПК — праворуч), меню ☰, «Назад» і «Вперед»","Однолінійна схема із зібраного щита з таблицею груп; друк / PDF і SVG","Кабельний журнал, специфікація обладнання (CSV) і маркування автоматів для друку","План приміщень: кімнати, щит, розетки, вимикачі, світло, виводи; довжини кабелів по групах і втрата напруги","Довжину лінії можна задати й у картці групи; перевірка попереджає про втрату напруги понад 4 %"] };
+const APP = { v:"4.0.1", date:"2026-11-03", notes:["Меню проєкту впорядковано: Створити, Відкрити, Зберегти, Зберегти як…, Експорт, Імпорт, Закрити щит","Кнопка проєкту вгорі показує назву щита: зелена крапка — збережено, помаранчева — ні","Ті самі дії — у меню ☰, розділ «Проєкт»; «Корпус і ввід» і помічник — у розділі «Щит»"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1941,7 +1952,8 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("#menuBtn")){ renderTplMenu(); tplLabel(); $("drawer").hidden=false; return; }
   if(q("#drawerX")||e.target.id==="drawer"){ closeDrawer(); return; }
   if(el=q("[data-menu]")){ const m=el.dataset.menu; closeDrawer();
-    if(m==="new") confirmLeave(()=>openWizard(false)); if(m==="projects") openProjects(); if(m==="board") openWizard(true);
+    if(m==="new") confirmLeave(()=>openWizard(false)); if(m==="projects"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); } if(m==="board") openWizard(true);
+    if(m==="save"){ saveProject(); } if(m==="saveas"){ openProjects(); document.querySelector('[data-pa="copy"]').click(); } if(m==="export") exportProject(); if(m==="import") $("pImport").click(); if(m==="close") closeBoard();
     if(m==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; S.mode="mount"; save(); renderAll(true); showTab("tools",true); }
     if(m.startsWith("doc:")) openDocs(m.slice(4)); if(m==="plan"){ S.mode="plan"; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; renderAll(); }
     return; }
@@ -2484,7 +2496,7 @@ function loadData(d){ Object.assign(S,{tpl:d.tpl||"custom", board:d.board, devic
 function openProject(id){ const db=projDB(), p=db.list.find(x=>x.id===id); if(!p) return; loadData(p.data); S.proj={id:p.id,name:p.name}; db.cur=id; projSave(db); afterSwitch(); toast(`Відкрито: «${p.name}»`,"ok"); }
 function afterSwitch(){ GEO=null; Object.assign(S,{pend:null,selWire:null,selDev:null,pick:null,heat:{},log:[]}); if(S.demo) demoStop(); S.leak.clear(); S.short.clear(); S.leakWarned.clear(); S.arc.clear(); S.arcWarned.clear();
   resetHistory(); S.baseSig=structSnap(); clearCheck(); save(); solve(0); renderAll(true); tplLabel(); renderProjBtn(); }
-function renderProjBtn(){ const el=$("projName"); if(el) el.textContent=S.proj&&S.proj.id?S.proj.name:"Проєкти"; }
+function renderProjBtn(){ const el=$("projName"); if(!el) return; const ok=!!(S.proj&&S.proj.id); el.textContent=(S.proj&&S.proj.name)||"Новий щит"; const b=$("projBtn"); if(b){ b.classList.toggle("unsaved",!ok); b.title=ok?"Збережено · відкрити меню проєкту":"Не збережено · відкрити меню проєкту"; } }
 const isDirty = () => !(S.proj&&S.proj.id) && S.baseSig && structSnap()!==S.baseSig;
 function confirmLeave(next){
   if(!isDirty()){ next(); return; }
@@ -2501,16 +2513,29 @@ function importProject(file){ const r=new FileReader();
       db.list.push({id,name,updated:Date.now(),data:d}); projSave(db); closeDlg(); confirmLeave(()=>openProject(id)); }
     catch(e){ toast(e.message==="types"?"Файл з новішої версії ЩитМайстра: оновіть застосунок":"Це не файл проєкту ЩитМайстра","e"); } };
   r.readAsText(file); }
-function openProjects(){ const db=projDB(), list=db.list.slice().sort((a,b)=>b.updated-a.updated), cur=S.proj||{};
-  const when=t=>new Date(t).toLocaleString("uk-UA",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
-  const body=`<label class="lbl2" for="pName">Поточний щит</label><div class="row nowrap"><input id="pName" class="inp" value="${esc(cur.name||"Мій щит")}" maxlength="60"><button class="btn primary" data-pa="save">${cur.id?"Перейменувати":"Зберегти"}</button></div>
-    <p class="hint">${cur.id?"Зміни в проєкті зберігаються автоматично.":"Цей щит ще не збережено як проєкт."}</p>
-    <div class="row"><button class="btn" data-pa="new">＋ Новий щит</button><button class="btn" data-pa="board">Корпус і ввід…</button>${cur.id?`<button class="btn" data-pa="copy">Копія</button>`:""}
-      <button class="btn" data-pa="guide">${S.guide&&S.guide.on?"Сховати помічника":"Покроковий помічник"}</button></div>
-    <div class="row"><button class="btn" data-pa="export">Експорт у файл</button><label class="btn" for="pImport">Імпорт з файлу</label><input type="file" id="pImport" accept=".json,application/json" hidden></div>
-    <div class="lbl2">Мої проєкти</div><div class="plist">${list.length?list.map(p=>`<div class="pi${p.id===cur.id?" cur":""}"><div class="pi-n"><b>${esc(p.name)}</b><small>${when(p.updated)} · ${(p.data.devices||[]).length} апаратів · ${(p.data.wires||[]).length} дротів</small></div>
-      ${p.id===cur.id?`<span class="pill ok">відкрито</span>`:`<button class="btn" data-pa="open" data-pid="${p.id}">Відкрити</button>`}<button class="btn danger" data-pa="del" data-pid="${p.id}" aria-label="Видалити ${esc(p.name)}">✕</button></div>`).join(""):`<p class="hint">Збережених проєктів ще немає.</p>`}</div>`;
-  dialog("Проєкти",body,[{label:"Закрити",cls:"primary"}]); }
+const PIC = {new:"M12 5v14M5 12h14", open:"M3 7h6l2 2h10v10H3z", save:"M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7", copy:"M8 8h12v12H8zM4 16V4h12",
+  exp:"M12 3v12M7 10l5 5 5-5M4 19h16", imp:"M12 21V9M7 14l5-5 5 5M4 5h16", close:"M6 6l12 12M18 6 6 18"};
+const pic = k => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${PIC[k]}"/></svg>`;
+const fWhen = t => new Date(t).toLocaleString("uk-UA",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+function projStatus(){ const cur=S.proj||{}, p=cur.id&&projDB().list.find(x=>x.id===cur.id);
+  return p?{ok:true,txt:`Збережено · зміни зберігаються автоматично · ${fWhen(p.updated)}`}:{ok:false,txt:isDirty()?"Не збережено — є зміни, натисніть «Зберегти»":"Не збережено як проєкт"}; }
+function openProjects(){ const db=projDB(), list=db.list.slice().sort((a,b)=>b.updated-a.updated), cur=S.proj||{}, st=projStatus();
+  const body=`<div class="pcur"><label class="lbl2" for="pName">Відкритий щит</label><input id="pName" class="inp" value="${esc(cur.name||"Мій щит")}" maxlength="60" aria-label="Назва щита">
+      <p class="pst ${st.ok?"ok":"no"}"><i></i>${esc(st.txt)}</p></div>
+    <div class="pgrid">
+      <button class="pbtn" data-pa="new">${pic("new")}<b>Створити</b><small>новий щит</small></button>
+      <button class="pbtn" data-pa="openlist">${pic("open")}<b>Відкрити</b><small>збережений</small></button>
+      <button class="pbtn${st.ok?"":" hot"}" data-pa="save">${pic("save")}<b>Зберегти</b><small>${cur.id?"під цією назвою":"як новий проєкт"}</small></button>
+      <button class="pbtn" data-pa="copy">${pic("copy")}<b>Зберегти як…</b><small>копію з новою назвою</small></button>
+      <button class="pbtn" data-pa="export">${pic("exp")}<b>Експорт</b><small>у файл .json</small></button>
+      <button class="pbtn" data-pa="import">${pic("imp")}<b>Імпорт</b><small>з файлу</small></button>
+      <button class="pbtn wide" data-pa="close">${pic("close")}<b>Закрити щит</b><small>${cur.id?"проєкт лишиться в списку":"незбережені зміни буде втрачено"}</small></button></div>
+    <div class="lbl2" id="plistH">Збережені проєкти · ${list.length}</div><div class="plist">${list.length?list.map(p=>`<div class="pi${p.id===cur.id?" cur":""}"><div class="pi-n"><b>${esc(p.name)}</b><small>${fWhen(p.updated)} · ${(p.data.devices||[]).length} апаратів · ${(p.data.wires||[]).length} дротів</small></div>
+      ${p.id===cur.id?`<span class="pill ok">відкрито</span>`:`<button class="btn" data-pa="open" data-pid="${p.id}">Відкрити</button>`}<button class="btn danger" data-pa="del" data-pid="${p.id}" aria-label="Видалити ${esc(p.name)}">✕</button></div>`).join(""):`<p class="hint" style="padding:10px">Збережених проєктів ще немає. Натисніть «Зберегти», щоб додати поточний щит.</p>`}</div>`;
+  dialog("Проєкт",body,[{label:"Готово",cls:"primary"}]); }
+function saveProject(){ const n=(($("pName")&&$("pName").value)||(S.proj&&S.proj.name)||"Мій щит").trim()||"Мій щит";
+  if(S.proj&&S.proj.id){ S.proj.name=n; storeProject(); renderProjBtn(); toast(`Збережено: «${n}»`,"ok"); } else newProjectFromCurrent(n); }
+function closeBoard(){ confirmLeave(()=>{ applyTemplate("empty"); S.proj={id:null,name:"Новий щит"}; S.baseSig=structSnap(); S.mode="mount"; save(); clearCheck(); afterSwitch(); toast("Щит закрито","ok"); openProjects(); }); }
 
 // ---- Майстер нового щита і налаштування корпусу
 let WZ=null;
@@ -2640,10 +2665,14 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(q("#projBtn")){ openProjects(); return; }
   if(q("#undoBtn")){ undo(); return; }
   if(el=q("[data-pa]")){ const a=el.dataset.pa, id=el.dataset.pid;
-    if(a==="save"){ const n=($("pName").value||"").trim()||"Мій щит"; if(S.proj&&S.proj.id){ S.proj.name=n; storeProject(); renderProjBtn(); toast("Перейменовано","ok"); } else newProjectFromCurrent(n); openProjects(); }
+    if(a==="save"){ saveProject(); openProjects(); }
+    if(a==="openlist"){ const h=$("plistH"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); }
+    if(a==="import") $("pImport").click();
+    if(a==="close"){ closeDlg(); closeBoard(); }
     if(a==="new"){ closeDlg(); confirmLeave(()=>openWizard(false)); }
     if(a==="board") openWizard(true);
-    if(a==="copy"){ newProjectFromCurrent(S.proj.name+" (копія)"); openProjects(); }
+    if(a==="copy"){ dialog("Зберегти як…",`<label class="lbl2" for="dlgName">Назва нового проєкту</label><input class="inp" id="dlgName" value="${esc(((S.proj&&S.proj.name)||"Мій щит")+(S.proj&&S.proj.id?" (копія)":""))}" maxlength="60">`,
+      [{label:"Скасувати",act:openProjects},{label:"Зберегти",cls:"primary",act:()=>{ newProjectFromCurrent(($("dlgName").value||"").trim()||"Мій щит"); openProjects(); }}]); }
     if(a==="export") exportProject();
     if(a==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; closeDlg(); save(); renderTools(); }
     if(a==="open"){ closeDlg(); confirmLeave(()=>openProject(id)); }
@@ -2673,7 +2702,8 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(q("#dbStop")){ if(S.demo) demoStop(); return; }
 });
 document.addEventListener("change",e=>{ const t=e.target;
-  if(t.id==="pImport"&&t.files&&t.files[0]){ importProject(t.files[0]); return; }
+  if(t.id==="pImport"&&t.files&&t.files[0]){ importProject(t.files[0]); t.value=""; return; }
+  if(t.id==="pName"&&S.proj){ const n=t.value.trim(); if(n){ S.proj.name=n; if(S.proj.id){ storeProject(); toast("Перейменовано","ok"); } save(); renderProjBtn(); } return; }
   if(t.id==="capIn"){ const d=S.devices.find(x=>x.id===t.dataset.capfor); if(!d) return; const v=t.value.trim(); if(d.group) d.group.name=v||"Група"; else d.cap=v||undefined; commit(); return; }
   if(t.id==="fldName"){ const f=S.field.find(x=>x.id===S.selDev); if(f){ f.name=t.value.trim()||f.name; commit(); } return; } });
 document.addEventListener("input",e=>{ const t=e.target;
