@@ -21,16 +21,34 @@ function demoNext(){ const sc=S.tplObj.demo.script; S.demo.i++; if(S.demo.i>=sc.
   const st=sc[S.demo.i]; try{ st.do(); }catch(e){ console.error(e); } S.demo.left=st.wait; logp("ok","▶ "+st.say); commit(false); renderTools(); updateDemoBar(); }
 function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length; S.lastCheck={sig:structSnap(),errors:ne};
   $("checks").innerHTML=C.map(c=>`<div class="ck"><span class="sev ${c.sev}">${c.sev==="e"?"Помилка":c.sev==="w"?"Увага":"OK"}</span><div><div class="t">${esc(c.t)}</div>${c.d?`<div class="d">${esc(c.d)}</div>`:""}</div></div>`).join("");
-  $("score").innerHTML=ne?`<span style="color:var(--red)">${ne} помил.</span> · <span style="color:var(--orange)">${nw} попер.</span>`:nw?`<span style="color:var(--orange)">${nw} попередж.</span>`:`<span style="color:var(--green)">Схема правильна</span>`;
-  $("checkOut").hidden=false; solve(0); renderAll(true); $("checkOut").scrollIntoView({behavior:"smooth",block:"start"}); }
+  $("score").innerHTML=ne?`<span style="color:var(--red)">● ${ne}</span>${nw?` <span style="color:var(--orange)">● ${nw}</span>`:""}`:nw?`<span style="color:var(--orange)">● ${nw}</span>`:`<span style="color:var(--green)">✓</span>`;
+  $("checkHint").textContent=ne?`Помилок: ${ne}, попереджень: ${nw}. Виправте помилки й перевірте ще раз.`:nw?`Помилок немає, попереджень: ${nw}.`:"Схема правильна: помилок і попереджень немає.";
+  solve(0); renderAll(true); showTab("check",true); }
+function clearCheck(){ $("checks").innerHTML=""; $("score").innerHTML=""; $("checkHint").textContent="Натисніть «Перевірка» вгорі — застосунок прожене схему під напругою і перевірить правила."; }
+function showTab(t,open){ S.dtab=t; document.querySelectorAll("[data-dtab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.dtab===t)); document.querySelectorAll(".dpane").forEach(p=>p.hidden=p.dataset.pane!==t);
+  const dk=$("dock"); if(open&&dk.classList.contains("s0")){ dk.classList.remove("s0"); dk.classList.add("s1"); } $("dockB").scrollTop=0; }
+function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
+function closeDrawer(){ $("drawer").hidden=true; }
 
 document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(eb=qb("[data-brand]")){ const d=devById(S.selDev); if(d){ const b=eb.dataset.brand; if(b==="eua") delete d.brand; else d.brand=b; S.brand=b; commit(false); renderSheet(); } return; }
   if(qb("[data-brandall]")){ const d=devById(S.selDev), b=d?brandOf(d):"eua"; let n=0; for(const x of S.devices) if(b==="eua"||(MODELS[x.type]&&MODELS[x.type][b])){ if(b==="eua") delete x.brand; else x.brand=b; n++; }
     S.brand=b; toast(`${BR[b].s||BR[b].n}: ${n} апарат(ів)`,"ok"); commit(false); renderSheet(); return; }
   const q=s=>e.target.closest(s); let el;
-  if(!q(".tpl-dd")&&!$("tplMenu").hidden){ $("tplMenu").hidden=true; $("tplBtn").setAttribute("aria-expanded","false"); }
-  if(el=q(".modes button")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; renderAll(); return; }
+  if(q("#menuBtn")){ renderTplMenu(); tplLabel(); $("drawer").hidden=false; return; }
+  if(q("#drawerX")||e.target.id==="drawer"){ closeDrawer(); return; }
+  if(el=q("[data-menu]")){ const m=el.dataset.menu; closeDrawer();
+    if(m==="new") confirmLeave(()=>openWizard(false)); if(m==="projects") openProjects(); if(m==="board") openWizard(true);
+    if(m==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; S.mode="mount"; save(); renderAll(true); showTab("tools",true); }
+    if(m.startsWith("doc:")) openDocs(m.slice(4)); if(m==="plan"){ S.mode="plan"; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; renderAll(); }
+    return; }
+  if(el=q("[data-dtab]")){ showTab(el.dataset.dtab,true); return; }
+  if(q("#dockGrip")){ const dk=$("dock"), st=dk.classList.contains("s1")?"s2":dk.classList.contains("s2")?"s0":"s1"; dk.classList.remove("s0","s1","s2"); dk.classList.add(st); return; }
+  if(q("#undoTop")){ undo(); return; }
+  if(q("#redoTop")){ redo(); return; }
+  if(q("#docsBtn")){ openDocs("sld"); return; }
+  if(q("#zAll")){ S.zoom=fitZoom(); renderAll(false); $("scroller").scrollTo(0,0); return; }
+  if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; renderAll(); return; }
   if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }
   if(el=q("[data-wire]")){ const id=el.dataset.wire; if(S.mode!=="wire"){ S.mode="wire"; S.pend=null; S.pick=null; S.selDev=null; selectWire(id); renderAll(true); toast("Проводка: дріт вибрано — дії в панелі внизу"); return; }
     if(S.selWire===id){ S.selWire=null; renderAll(); } else selectWire(id); return; }
@@ -46,10 +64,9 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(el=q("[data-fpick]")){ const o=S.devFilter.opts[+el.dataset.fpick]; S.pick=o[0]; S.pickRating=o[1]||null; S.pickExtra=o[3]||null; S.selDev=null;
     toast(`${o[2]}: торкніться вільного місця на рейці`); renderAll(); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); return; }
   if(q("[data-fall]")){ S.devFilter=null; S.devOpen=true; renderAll(); return; }
-  if(q("#tplBtn")){ const m=$("tplMenu"); if(m.hidden) renderTplMenu(); m.hidden=!m.hidden; $("tplBtn").setAttribute("aria-expanded",!m.hidden); return; }
-  if(el=q("[data-tpl]")){ $("tplMenu").hidden=true; $("tplBtn").setAttribute("aria-expanded","false"); const key=el.dataset.tpl;
+  if(el=q("[data-tpl]")){ closeDrawer(); const key=el.dataset.tpl;
     if(key==="__new"){ confirmLeave(()=>openWizard(false)); return; }
-    confirmLeave(()=>{ applyTemplate(key); $("checkOut").hidden=true; S.mode=S.tplObj.demo&&S.tplObj.demo.script.length?"test":"mount"; S.devOpen=S.mode==="mount";
+    confirmLeave(()=>{ applyTemplate(key); clearCheck(); S.mode=S.tplObj.demo&&S.tplObj.demo.script.length?"test":"mount"; S.devOpen=S.mode==="mount";
       toast("Шаблон завантажено","ok"); commit(); tplLabel(); renderProjBtn(); }); return; }
 
   if(q("#combBtn")){ if(S.comb) S.comb=null; else { const p=S.devices.filter(d=>d.type==="qf1p"); if(p.length<2){ toast("Потрібно щонайменше два автомати 1P","w"); return; }
@@ -81,8 +98,8 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(q("#devDel")){ removeDev(d); return; } }
   if(q("#sheetClose")){ S.selDev=null; renderAll(false); return; }
   if(q("#btnCheck")){ checkNow(); return; }
-  if(q("#zIn")){ S.zoom=Math.min(4,S.zoom+0.5); renderAll(false); return; }
-  if(q("#zOut")){ S.zoom=Math.max(1,S.zoom-0.5); renderAll(false); return; }
+  if(q("#zIn")){ S.zoom=Math.min(4,Math.round((S.zoom+(S.zoom>=1?0.5:0.1))*10)/10); renderAll(false); return; }
+  if(q("#zOut")){ S.zoom=Math.max(0.3,Math.round((S.zoom-(S.zoom>1?0.5:0.1))*10)/10); renderAll(false); return; }
   if(q("#zFit")){ S.zoom=1; renderAll(false); return; }
 });
 document.addEventListener("change",e=>{ const t=e.target;
@@ -90,8 +107,9 @@ document.addEventListener("change",e=>{ const t=e.target;
     const d=devById(id), L=gLoad(d); document.querySelector(`[data-gload="${id}"]`).innerHTML=L.txt; document.querySelector(`[data-gbar="${id}"]`).innerHTML=L.bar; return; }
   if(t.dataset.add){ if(t.value==="") return; const l=LOADS[+t.value]; devById(t.dataset.add).group.loads.push({n:l[0],kw:l[1],on:true}); commit(); return; }
   if(t.dataset.gsec){ devById(t.dataset.gsec).group.sec=+t.value; commit(); return; }
+  if(t.dataset.glen){ const g=devById(t.dataset.glen).group, v=+t.value; if(v>0) g.len=v; else delete g.len; commit(); return; }
   if(t.dataset.gname){ devById(t.dataset.gname).group.name=t.value.trim()||"Група"; save(); render(); return; }
-  if(t.id==="tpl"&&t.value){ applyTemplate(t.value); t.value=""; $("checkOut").hidden=true; S.mode=S.tplObj.demo&&S.tplObj.demo.script.length&&S.tpl!=="empty"?"test":"mount"; toast("Шаблон завантажено","ok"); commit(); return; }
+  if(t.id==="tpl"&&t.value){ applyTemplate(t.value); t.value=""; clearCheck(); S.mode=S.tplObj.demo&&S.tplObj.demo.script.length&&S.tpl!=="empty"?"test":"mount"; toast("Шаблон завантажено","ok"); commit(); return; }
 });
 document.addEventListener("input",e=>{ const t=e.target;
   if(t.dataset.srcu){ const s=S.src[t.dataset.srcu]; s.U=+t.value; const three=S.board.inputs.find(i=>i.id===t.dataset.srcu).terms.includes("L1");
@@ -106,5 +124,5 @@ function renderTplMenu(){ const cats=[...TPL_ORDER,...new Set(Object.values(TPL)
     return `<div class="tm-g"><div class="tm-h">${esc(c)}</div>`+it.map(([key,t])=>`<button class="tm-i" data-tpl="${key}" aria-current="${S.tpl===key}">${esc(t.name)}</button>`).join("")+`</div>`; }).join(""); }
 function tplLabel(){ const t=TPL[S.tpl]; $("tplName").textContent=S.tpl==="custom"?"Власний щит":t?t.name:"Шаблон"; }
 document.addEventListener("toggle",e=>{ if(e.target.id==="devDD") S.devOpen=e.target.open; },true);
-document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("tplMenu")&&!$("tplMenu").hidden){ $("tplMenu").hidden=true; $("tplBtn").focus(); } });
+document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("drawer").hidden) closeDrawer(); else if(!$("docs").hidden) $("docs").hidden=true; });
 

@@ -19,6 +19,7 @@ function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) re
 function hint(){ let h="";
   if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b> (${T[S.pick].w} мод.): торкніться вільного місця на рейці.`:"Оберіть апарат нижче і поставте на рейку. Торкніться апарата, щоб змінити його налаштування.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
+  if(S.mode==="plan") h=planHint();
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
   $("hint").innerHTML=h; }
 function ctlHTML(c,i){
@@ -30,7 +31,7 @@ function ctlHTML(c,i){
   if(c.type==="choice") return `<div class="row"><span class="lbl">${esc(c.label)}</span>`+c.opts.map(([v,l])=>`<button class="chip" data-ctl="${i}" data-v="${v}" aria-pressed="${c.get()===v}">${esc(l)}</button>`).join("")+`</div>`;
   if(c.type==="btn") return `<button class="btn ${c.cls||""}" data-ctl="${i}">${esc(c.label)}</button>`;
   return ""; }
-function renderTools(){ const el=$("tools"), gh=(typeof guideHTML==="function"?guideHTML():""); let s="";
+function renderTools(){ if(S.mode==="plan"){ $("tools").innerHTML=planToolsHTML(); return; } const el=$("tools"), gh=(typeof guideHTML==="function"?guideHTML():""); let s="";
   if(S.mode==="mount"){
     const listed=new Set(DEV_GROUPS.flatMap(g=>g[1])), rest=Object.keys(T).filter(x=>!listed.has(x)), F=S.devFilter;
     if(F) s+=`<details class="dd2 dd-f" id="devDD" open><summary><span>${esc(F.title)}: оберіть апарат</span><span class="cnt">${F.opts.length} варіант${F.opts.length===1?"":F.opts.length<5?"и":"ів"}</span></summary><div class="cat"><div class="cat-g">`
@@ -59,20 +60,21 @@ function gStatus(d){ const R=S.sim&&S.sim.g[d.id]; if(!R||!anySource()) return `
   return `<span class="pill bad">${R.phase?"Немає N":"Немає фази"}</span>`; }
 function gLoad(d){ const kw=kwOf(d), I=kw*1000/(g3(d)?690:230), In=inA(d.rating), p=Math.min(100,I/In*100), c=I>In?"var(--red)":I>0.8*In?"var(--orange)":"var(--green)";
   return {txt:`${fmt(kw,2)} кВт · <b class="mono">${fmt(I)} А</b> / ${In} А`, bar:`<i style="width:${p}%;background:${c}"></i>`}; }
-function renderGroups(){ const G=groupsOf(), el=$("groups"); $("groupsWrap").hidden=!G.length; if(!G.length){ el.innerHTML=""; return; }
+function renderGroups(){ const G=groupsOf(), el=$("groups"); if(!G.length){ el.innerHTML=`<p class="hint">Груп ще немає. Поставте груповий автомат, диф-автомат або AFDD у режимі «Апарати».</p>`; return; }
   el.innerHTML=G.map(d=>{ const g=d.group, L=gLoad(d);
     return `<article class="gcard" style="--gc:${g.color}" data-card="${d.id}"><div class="gh"><div style="min-width:0;flex:1"><div class="des">${desig(d)} ${esc(d.rating)}</div>
       <input class="gname" id="gn-${d.id}" data-gname="${d.id}" value="${esc(g.name)}" aria-label="Назва групи"><div class="sub">${g3(d)?"3 фази · струм на фазу":d.type==="rcbo"?"N від диф-автомата":"N від XN1"} · PE від XPE1</div></div><span data-gstat="${d.id}">${gStatus(d)}</span></div>
       <ul class="loads">${g.loads.map((l,i)=>`<li><label><input type="checkbox" id="ld-${d.id}-${i}" data-load="${d.id}:${i}" ${l.on?"checked":""}>${esc(l.n)}</label><span class="kw">${fmt(l.kw,2)} кВт</span><button class="x" data-del="${d.id}:${i}" aria-label="Прибрати ${esc(l.n)}">×</button></li>`).join("")||`<li class="hint">Додайте прилади</li>`}</ul>
       <div class="gadd"><select id="ga-${d.id}" data-add="${d.id}" aria-label="Додати прилад"><option value="">+ Додати прилад…</option>${LOADS.map((l,i)=>`<option value="${i}">${l[0]} · ${fmt(l[1],2)} кВт</option>`).join("")}</select></div>
       <div class="gf"><div class="line"><span>Кабель <select id="gs-${d.id}" data-gsec="${d.id}">${SECS.slice(0,6).map(x=>`<option value="${x}" ${g.sec===x?"selected":""}>${fmt(x,x%1?1:0)} мм²</option>`).join("")}</select></span><span class="mono" style="color:${inA(d.rating)>CAB[g.sec]?"var(--red)":"var(--muted)"}">до ${CAB[g.sec]} А</span></div>
+      <div class="line"><span>Довжина лінії</span>${S.planLen&&S.planLen[d.id]!==undefined?`<span class="mono">${fmt(S.planLen[d.id],1)} м · з плану</span>`:`<span><input class="inp num" type="number" min="0" step="0.5" id="gl-${d.id}" data-glen="${d.id}" value="${g.len||""}" placeholder="—" aria-label="Довжина лінії, м"> м</span>`}${(()=>{ const u=groupDU(d); return u===null?"":`<span class="mono" style="color:${u>4?"var(--red)":"var(--muted)"}">ΔU ${fmt(u,1)} %</span>`; })()}</div>
       <div class="line"><span>Увімкнено</span><span data-gload="${d.id}">${L.txt}</span></div><div class="bar" data-gbar="${d.id}">${L.bar}</div>
       ${S.mode==="test"?`<div class="gtest"><button class="btn" data-leak="${d.id}" style="${S.leak.has(d.id)?"border-color:var(--orange);color:var(--orange)":""}">Витік на корпус</button><button class="btn" data-short="${d.id}" style="${S.short.has(d.id)?"border-color:var(--red);color:var(--red)":""}">Коротке замикання</button><button class="btn" data-arc="${d.id}" style="${S.arc.has(d.id)?"border-color:var(--orange);color:var(--orange)":""}">Іскріння</button></div>`:""}</div></article>`; }).join(""); }
 function totalKW(){ const R=S.sim; if(!R) return 0; let p=0; for(const l of R.loads){ if(l.abc) p+=l.g3?l.I*3*(l.U||230)/1000:Math.max(...l.Is)*400*1.732*0.85/1000; else if(l.I) p+=l.I*(l.U||230)/1000; } return p; }
 function renderSummary(){ const mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
   $("summary").innerHTML=[["Модулі",`${mods}<small> / ${SLOTS*S.board.rails}</small>`],["Апарати",S.devices.length],["Дроти",S.wires.length],["Навантаження",`${fmt(totalKW(),2)}<small> кВт</small>`]]
     .map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join(""); }
-function renderSheet(){ const sw=S.mode==="wire"&&S.selWire&&wireById(S.selWire); if(sw){ renderWireSheet(sw); return; }
+function renderSheet(){ if(S.mode==="plan"){ renderPlanSheet(); return; } const sw=S.mode==="wire"&&S.selWire&&wireById(S.selWire); if(sw){ renderWireSheet(sw); return; }
   const f=S.selDev&&S.field.find(x=>x.id===S.selDev); if(f){ renderFieldSheet(f); return; }
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), sh=$("sheet"); if(!d){ sh.hidden=true; return; } sh.hidden=false; const t=T[d.type];
   let s=`<div class="sheet-h"><b>${desig(d)} · ${t.name}</b><button class="btn" id="sheetClose">Готово</button></div>`;
@@ -105,6 +107,7 @@ function updateLive(){
   if(typeof updateDemoStat==="function") updateDemoStat();
 }
 function renderAll(full=true){ render(); hint(); renderSummary(); renderSheet(); if(full){ renderTools(); renderGroups(); } else updateLive();
-  document.querySelectorAll(".modes button").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
+  document.querySelectorAll(".tb[data-mode]").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
+  $("undoTop").disabled=!(S.hist&&S.hist.length); $("redoTop").disabled=!(S.fut&&S.fut.length); $("gCount").textContent=groupsOf().length||"";
   $("svg").style.width=(S.zoom*100)+"%"; $("zFit").textContent=Math.round(S.zoom*100)+"%"; }
 function commit(full=true){ if(typeof trackHistory==="function") trackHistory(); save(); solve(0); renderAll(full); }

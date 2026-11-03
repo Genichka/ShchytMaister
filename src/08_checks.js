@@ -80,6 +80,7 @@ function runChecks(){
   for(const R of byp) add("e",`${desig(R)}: нуль іде в обхід ПЗВ`,`Верхня і нижня клеми N ${desig(R)} з’єднані напряму (через шину N або перемичку). ПЗВ вимикатиметься від будь-якого приладу. Нуль від вступного — лише на верхню N ПЗВ, а на шину XN1 — лише з нижньої N.`);
   for(const g of G){ const In=inA(g.rating), max=CAB[g.group.sec], I=kwOf(g,true)*1000/(g3(g)?690:230);
     if(In>max) add("e",`${desig(g)} ${g.rating} на кабель ${fmt(g.group.sec)} мм²`,`Для ${fmt(g.group.sec)} мм² автомат не більше ${max} А, або кабель від ${fmt(secFor(In))} мм².`);
+    const du=groupDU(g); if(du!==null){ if(du>4) add("w",`${desig(g)} «${g.group.name}»: втрата напруги ${fmt(du,1)} %`,`Лінія ${fmt(groupLen(g),1)} м, ${fmt(g.group.sec,g.group.sec%1?1:0)} мм². Понад 4 % — візьміть кабель від ${fmt(SECS.find(s2=>s2>g.group.sec&&du*g.group.sec/s2<=4)||50,1)} мм² або розділіть групу.`); }
     if(I>1.45*In) add("e",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Понад 1,45 × ${In} А, автомат вибиватиме. Розділіть групу.`);
     else if(I>In) add("w",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Більше за номінал ${In} А. При одночасній роботі можливе вимкнення.`);
     if(mainIn&&In>=mainIn) add("w",`${desig(g)} ${g.rating} не менший за вступний`,"Немає селективності: при перевантаженні може вимкнутись увесь щит.");

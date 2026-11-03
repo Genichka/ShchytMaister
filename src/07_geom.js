@@ -87,7 +87,7 @@ function devSVG(d){
   if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
   return s+"</g>";
 }
-function render(){
+function render(){ if(S.mode==="plan"){ renderPlan(); return; }
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
   svg.setAttribute("viewBox",`0 0 840 ${H}`);
   s+=`<rect class="encl" x="14" y="70" width="812" height="${enclB()-70}" rx="10"/><rect class="encl-in" x="26" y="82" width="788" height="${enclB()-94}" rx="6"/>`;

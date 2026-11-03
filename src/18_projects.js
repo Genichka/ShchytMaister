@@ -9,32 +9,34 @@ const closeDlg = () => { $("dlg").hidden=true; };
 // ---- Структурний знімок і «Скасувати»
 const SKEYS=["id","type","rail","slot","rating","group","cap","model","Ir","variant","col","uc","delay","plug","th","noGroup","sid","n","name","map"];
 const pickS = o => { const r={}; for(const key of SKEYS) if(o[key]!==undefined) r[key]=o[key]; return r; };
-function structSnap(){ return JSON.stringify({board:S.board, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires, comb:S.comb}); }
+function structSnap(){ return JSON.stringify({board:S.board, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires, comb:S.comb, plan:S.plan||null}); }
 S.hist=[]; S.lastSnap=null;
-function resetHistory(){ S.hist=[]; S.lastSnap=structSnap(); }
-function trackHistory(){ const cur=structSnap(); if(S.lastSnap===null){ S.lastSnap=cur; return; } if(cur!==S.lastSnap){ S.hist.push(S.lastSnap); if(S.hist.length>60) S.hist.shift(); S.lastSnap=cur; } }
-function undo(){ if(!S.hist.length){ toast("Немає дій для скасування","w"); return; } const j=JSON.parse(S.hist.pop());
+function resetHistory(){ S.hist=[]; S.fut=[]; S.lastSnap=structSnap(); }
+function trackHistory(){ const cur=structSnap(); if(S.lastSnap===null){ S.lastSnap=cur; return; } if(cur!==S.lastSnap){ S.hist.push(S.lastSnap); if(S.hist.length>60) S.hist.shift(); S.lastSnap=cur; S.fut=[]; } }
+function redo(){ if(!S.fut||!S.fut.length){ toast("Немає дій для повтору","w"); return; } S.hist.push(structSnap()); applySnap(JSON.parse(S.fut.pop())); toast("Повторено","ok"); }
+function undo(){ if(!S.hist.length){ toast("Немає дій для скасування","w"); return; } (S.fut||(S.fut=[])).push(structSnap()); applySnap(JSON.parse(S.hist.pop())); toast("Скасовано","ok"); }
+function applySnap(j){
   S.board=j.board; S.comb=j.comb; S.wires=j.wires;
   S.devices=j.devices.map(d=>{ const nd={...d,on:true,trip:null}; if(T[d.type]&&T[d.type].init) T[d.type].init(nd); return nd; });
   S.field=j.field.map(f=>{ const nd={...f}; if(FT[f.type].init) FT[f.type].init(nd); return nd; });
-  S.lastSnap=structSnap(); GEO=null; Object.assign(S,{selDev:null,selWire:null,pend:null}); save(); solve(0); renderAll(true); toast("Скасовано","ok"); }
+  S.plan=j.plan||null; S.lastSnap=structSnap(); GEO=null; Object.assign(S,{selDev:null,selWire:null,pend:null}); save(); solve(0); renderAll(true); }
 
 // ---- Проєкти
 const PKEY="shchyt-projects";
 function projDB(){ try{ const j=JSON.parse(localStorage.getItem(PKEY)||"null"); return j&&Array.isArray(j.list)?j:{list:[]}; }catch(e){ return {list:[]}; } }
 function projSave(db){ try{ localStorage.setItem(PKEY,JSON.stringify(db)); return true; }catch(e){ toast("Не вдалося зберегти: пам’ять браузера недоступна або заповнена","e"); return false; } }
-function curData(){ return JSON.parse(JSON.stringify({tpl:S.tpl, board:S.board, devices:S.devices, field:S.field, wires:S.wires, comb:S.comb, src:S.src, env:S.env, env0:S.env0, guide:S.guide||null, UID})); }
+function curData(){ return JSON.parse(JSON.stringify({tpl:S.tpl, board:S.board, devices:S.devices, field:S.field, wires:S.wires, comb:S.comb, src:S.src, env:S.env, env0:S.env0, guide:S.guide||null, plan:S.plan||null, UID})); }
 function storeProject(){ if(!S.proj||!S.proj.id) return; const db=projDB(), p=db.list.find(x=>x.id===S.proj.id); if(!p) return;
   p.data=curData(); p.name=S.proj.name; p.updated=Date.now(); db.cur=p.id; projSave(db); }
 function newProjectFromCurrent(name){ const db=projDB(), id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   db.list.push({id,name,updated:Date.now(),data:curData()}); db.cur=id; if(!projSave(db)) return;
   S.proj={id,name}; S.baseSig=structSnap(); save(); renderProjBtn(); toast(`Проєкт «${name}» збережено`,"ok"); }
 function loadData(d){ Object.assign(S,{tpl:d.tpl||"custom", board:d.board, devices:d.devices||[], field:d.field||[], wires:d.wires||[], comb:d.comb||null,
-  src:d.src||{}, env:d.env||{}, env0:d.env0||d.env||{}, guide:d.guide||null}); UID=Math.max(UID,d.UID||1);
+  src:d.src||{}, env:d.env||{}, env0:d.env0||d.env||{}, guide:d.guide||null, plan:d.plan||null}); UID=Math.max(UID,d.UID||1);
   for(const i of S.board.inputs){ S.src[i.id]=S.src[i.id]||{U:230,lost:{}}; S.src[i.id].on=false; } S.tplObj=TPL[S.tpl]||TPL.custom; }
 function openProject(id){ const db=projDB(), p=db.list.find(x=>x.id===id); if(!p) return; loadData(p.data); S.proj={id:p.id,name:p.name}; db.cur=id; projSave(db); afterSwitch(); toast(`Відкрито: «${p.name}»`,"ok"); }
 function afterSwitch(){ GEO=null; Object.assign(S,{pend:null,selWire:null,selDev:null,pick:null,heat:{},log:[]}); if(S.demo) demoStop(); S.leak.clear(); S.short.clear(); S.leakWarned.clear(); S.arc.clear(); S.arcWarned.clear();
-  resetHistory(); S.baseSig=structSnap(); $("checkOut").hidden=true; save(); solve(0); renderAll(true); tplLabel(); renderProjBtn(); }
+  resetHistory(); S.baseSig=structSnap(); clearCheck(); save(); solve(0); renderAll(true); tplLabel(); renderProjBtn(); }
 function renderProjBtn(){ const el=$("projName"); if(el) el.textContent=S.proj&&S.proj.id?S.proj.name:"Проєкти"; }
 const isDirty = () => !(S.proj&&S.proj.id) && S.baseSig && structSnap()!==S.baseSig;
 function confirmLeave(next){

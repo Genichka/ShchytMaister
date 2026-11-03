@@ -1,6 +1,6 @@
 /* ===== Шаблони: каркас + квартира + порожній щит ===== */
 const TPL = {};
-function tplStart(board){ S.board=Object.assign(DEFAULT_BOARD(), board||{}); S.devices=[]; S.field=[]; S.wires=[]; S.comb=null; S.env={}; S.src={};
+function tplStart(board){ S.board=Object.assign(DEFAULT_BOARD(), board||{}); S.devices=[]; S.field=[]; S.wires=[]; S.comb=null; S.env={}; S.src={}; S.plan=null; S.planLen={}; S.psel=null;
   for(const i of S.board.inputs) S.src[i.id]={on:false,U:230,lost:{}}; GEO=null; }
 const D = (type,rail,slot,rating,extra) => { const d=mkDev(type,rail,slot,rating,extra); S.devices.push(d); return d; };
 const F = (type,map,extra) => { const f=mkField(type,map,extra); S.field.push(f); return f; };

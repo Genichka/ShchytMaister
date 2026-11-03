@@ -49,13 +49,13 @@ const S = { tpl:"flat", board:DEFAULT_BOARD(), devices:[], field:[], wires:[], c
 const KEY = "shchyt-majster-v2";
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify({tpl:S.tpl, board:S.board, devices:S.devices, field:S.field, wires:S.wires, comb:S.comb,
-    src:S.src, env:S.env, env0:S.env0, proj:S.proj, guide:S.guide, baseSig:S.baseSig, UID})); }catch(e){}
+    src:S.src, env:S.env, env0:S.env0, proj:S.proj, guide:S.guide, baseSig:S.baseSig, plan:S.plan||null, UID})); }catch(e){}
   if(typeof storeProject==="function") storeProject();
 }
 function load(){
   try{ const j=JSON.parse(localStorage.getItem(KEY)||"null");
     if(j && Array.isArray(j.devices) && j.board){ Object.assign(S,{tpl:j.tpl, board:j.board, devices:j.devices, field:j.field||[], wires:j.wires||[],
-      comb:j.comb||null, src:j.src||{}, env:j.env||{}, env0:j.env0, proj:j.proj||null, guide:j.guide||null, baseSig:j.baseSig||null}); UID=Math.max(UID,j.UID||1);
+      comb:j.comb||null, src:j.src||{}, env:j.env||{}, env0:j.env0, proj:j.proj||null, guide:j.guide||null, baseSig:j.baseSig||null, plan:j.plan||null}); UID=Math.max(UID,j.UID||1);
       for(const k of Object.keys(S.src)) S.src[k].on=false;   // після перезавантаження джерела вимкнені
       return true; } }catch(e){}
   return false;

@@ -61,7 +61,7 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
       done:()=>G.every(g=>!/^(Група \d+|Нова група)$/.test(g.group.name))},
     {id:"loads", opt:!G.length, t:"Прилади в групах",
       h:"У картці групи внизу додайте прилади. Симулятор порахує струм і перевірить номінали.",
-      done:()=>G.every(g=>g.group.loads.length>0), act:["До карток груп",()=>$("groupsWrap").scrollIntoView({behavior:"smooth"})]},
+      done:()=>G.every(g=>g.group.loads.length>0), act:["До карток груп",()=>showTab("groups",true)]},
     {id:"check", t:"Перевірте схему",
       h:"«Перевірити схему» знайде КЗ, помилки кольорів дротів, групи без ПЗВ, замалі перерізи. Крок зараховується, коли помилок нуль.",
       done:()=>S.lastCheck&&S.lastCheck.sig===structSnap()&&S.lastCheck.errors===0, act:["Перевірити",()=>checkNow()]},
