@@ -23,10 +23,9 @@ function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw
   $("checks").innerHTML=C.map(c=>`<div class="ck"><span class="sev ${c.sev}">${c.sev==="e"?"Помилка":c.sev==="w"?"Увага":"OK"}</span><div><div class="t">${esc(c.t)}</div>${c.d?`<div class="d">${esc(c.d)}</div>`:""}</div></div>`).join("");
   $("score").innerHTML=ne?`<span style="color:var(--red)">● ${ne}</span>${nw?` <span style="color:var(--orange)">● ${nw}</span>`:""}`:nw?`<span style="color:var(--orange)">● ${nw}</span>`:`<span style="color:var(--green)">✓</span>`;
   $("checkHint").textContent=ne?`Помилок: ${ne}, попереджень: ${nw}. Виправте помилки й перевірте ще раз.`:nw?`Помилок немає, попереджень: ${nw}.`:"Схема правильна: помилок і попереджень немає.";
-  solve(0); renderAll(true); showTab("check",true); }
-function clearCheck(){ $("checks").innerHTML=""; $("score").innerHTML=""; $("checkHint").textContent="Натисніть «Перевірка» вгорі — застосунок прожене схему під напругою і перевірить правила."; }
-function showTab(t,open){ S.dtab=t; document.querySelectorAll("[data-dtab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.dtab===t)); document.querySelectorAll(".dpane").forEach(p=>p.hidden=p.dataset.pane!==t);
-  const dk=$("dock"); if(open&&dk.classList.contains("s0")){ dk.classList.remove("s0"); dk.classList.add("s1"); } $("dockB").scrollTop=0; }
+  S.chk={list:C,i:0}; S.chkOpen=true; solve(0); renderAll(true); }
+function clearCheck(){ S.chk=null; S.chkOpen=false; $("checks").innerHTML=""; $("score").innerHTML=""; $("checkHint").textContent="Натисніть «Перевірка» вгорі — застосунок прожене схему під напругою і перевірить правила."; }
+function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ const g=groupsOf()[0]; if(g){ S.selDev=g.id; S.bsegFor=g.id; S.bseg="load"; } } renderAll(false); }
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
 function closeDrawer(){ $("drawer").hidden=true; }
 
@@ -40,7 +39,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(el=q("[data-menu]")){ const m=el.dataset.menu; closeDrawer();
     if(m==="new") confirmLeave(()=>openWizard(false)); if(m==="projects"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); } if(m==="board") openWizard(true);
     if(m==="save"){ saveProject(); } if(m==="saveas"){ openProjects(); document.querySelector('[data-pa="copy"]').click(); } if(m==="export") exportProject(); if(m==="import") $("pImport").click(); if(m==="close") closeBoard();
-    if(m==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; S.mode="mount"; save(); renderAll(true); showTab("tools",true); }
+    if(m==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; S.mode="mount"; save(); renderAll(true); }
     if(m.startsWith("doc:")) openDocs(m.slice(4)); if(m==="plan"){ S.mode="plan"; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; renderAll(); }
     return; }
   if(el=q("[data-dtab]")){ showTab(el.dataset.dtab,true); return; }
@@ -71,7 +70,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
       toast("Шаблон завантажено","ok"); commit(); tplLabel(); renderProjBtn(); }); return; }
 
   if(q("#combBtn")){ if(S.comb) S.comb=null; else { const p=S.devices.filter(d=>d.type==="qf1p"); if(p.length<2){ toast("Потрібно щонайменше два автомати 1P","w"); return; }
-      const r=p[0].rail||0, sl=p.filter(d=>(d.rail||0)===r).map(d=>d.slot); S.comb={rail:r,from:Math.min(...sl),to:Math.max(...sl)}; } commit(); return; }
+      const sel=S.selDev&&devById(S.selDev), r=sel&&sel.type==="qf1p"?(sel.rail||0):(p[0].rail||0), sl=p.filter(d=>(d.rail||0)===r).map(d=>d.slot); if(sl.length<2){ toast("На цій рейці потрібно щонайменше два автомати 1P","w"); return; } S.comb={rail:r,from:Math.min(...sl),to:Math.max(...sl)}; } commit(); return; }
   if(el=q("[data-kind]")){ S.wireKind=el.dataset.kind; renderAll(); return; }
   if(el=q("[data-sec]")){ S.wireSec=+el.dataset.sec; renderAll(); return; }
   if(q("#delWire")){ S.wires=S.wires.filter(w=>w.id!==S.selWire); S.selWire=null; commit(); return; }

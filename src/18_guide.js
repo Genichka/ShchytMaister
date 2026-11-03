@@ -14,7 +14,7 @@ function stepOpts(id,kind){
   return null; }
 function showOpts(step){ const kind=boardKind(S.board), opts=stepOpts(step.id,kind); if(!opts) return;
   S.mode="mount"; S.devFilter={step:step.id,title:step.short||step.t,opts}; S.devOpen=true; S.pick=null; S.pickRating=null; S.pickExtra=null; renderAll(true);
-  const dd=$("devDD"); if(dd) dd.scrollIntoView({behavior:"smooth",block:"start"}); }
+  }
 function pickDev(type){ S.mode="mount"; S.pick=type; S.devOpen=false; renderAll(true); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); toast(`${T[type].short}: торкніться вільного місця на рейці`); }
 function goWire(kind){ S.mode="wire"; S.wireKind=kind; renderAll(true); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); }
 let JCACHE={sig:null,val:false};
@@ -30,7 +30,7 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
     {id:"main", t:kind==="2inv"?"Поставте два автомати 2P: вступний від мережі й на виході інвертора":kind==="2in"?"Поставте два вступні автомати 2P — по одному на кожен ввід":kind==="3ph"?"Поставте вступний автомат 3P або 4P":"Поставте вступний автомат 2P",
       h:"Вступний автомат стоїть першим і захищає весь щит. Номінал — за дозволеною потужністю вводу (для квартири зазвичай C25–C40).",
       done:()=>S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)).length>=(kind==="2in"||kind==="2inv"?2:1), short:"Вступний автомат", act:["Обрати автомат",null]},
-    {id:"inwire", t:"Заведіть ввід на верхні клеми вступного автомата",
+    {id:"inwire", short:"Ввід → вступний автомат", t:"Заведіть ввід на верхні клеми вступного автомата",
       h:kind==="3ph"?"У режимі «Проводка» оберіть вид дроту L1, L2, L3 і з’єднайте клеми вводу з клемами 1, 3, 5 автомата. Нуль N — на клему N автомата 4P або на шину N.":"У режимі «Проводка» оберіть «Фаза L» і з’єднайте клему вводу L з клемою 1 автомата, потім «Нуль N» — з клемою 3.",
       done:()=>mainsOk, act:["До проводки",()=>goWire(kind==="3ph"?"L1":"L")]},
     {id:"prot", opt:true, t:kind==="3ph"?"Захист від аварій мережі: реле контролю фаз, УЗІП":"Захист від перенапруги: реле напруги, УЗІП",
@@ -46,26 +46,26 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
     {id:"groups", t:"Групи й обладнання",
       h:"Кожен автомат 1P — окрема лінія: розетки, світло, кухня. Двигун, бойлер чи сонячні панелі додайте в «Обладнання поза щитом».",
       done:()=>G.length>0||S.field.length>0, short:"Групові автомати", act:["Обрати автомат",null]},
-    {id:"bus", t:"Шини N і PE",
+    {id:"bus", short:"Шини N і PE", t:"Шини N і PE",
       h:has("rcd")?"PE вводу — одразу на шину PE (XPE1), без апаратів. Шину N (XN1) живить лише нижня клема N ПЗВ — звідти беруть нуль групові автомати. Нуль від вступного автомата на XN1 не заводьте: так він піде в обхід ПЗВ."
         :"PE вводу — одразу на шину PE (XPE1), без апаратів. Нуль — на шину N (XN1), звідти беруть нуль групи.",
       done:()=>{ const pe=b.inputs.find(i=>i.terms.includes("PE")), rc=S.devices.filter(d=>d.type==="rcd");
         return (!pe||f0(pe.id+":PE")===f0("xpe:0"))&&!rcdNBypass(f0).length&&(!b.xn||!G.some(g=>g.type==="qf1p")||(rc.length?rc.some(R=>f0("xn:0")===f0(R.id+":b2")):S.wires.some(w=>/^xn:/.test(w.a)||/^xn:/.test(w.b)))); },
       act:["До проводки (PE)",()=>goWire("PE")]},
-    {id:"jump", t:"Перемички: живлення до кожної групи",
+    {id:"jump", short:"Перемички до груп", t:"Перемички: живлення до кожної групи",
       h:has("kv")&&has("rcd")?"Фаза: клема 2 вступного → «L вх» реле напруги, «L вих» реле → клема 1 ПЗВ, клема 2 ПЗВ → групові автомати. Нуль: клема 4 вступного → «N» реле і верхня «N» ПЗВ. Автомати 1P поруч зручно живити гребінкою (кнопка в режимі «Апарати»)."
         :"З’єднайте апарати по черзі: вступний → реле → ПЗВ → групові автомати. Автомати 1P поруч зручно живити гребінкою (кнопка в режимі «Апарати»).",
       done:jumpOK, act:["До проводки",()=>goWire("L")]},
-    {id:"labels", opt:!G.length, t:"Наклейки: підпишіть групи",
+    {id:"labels", short:"Підпишіть групи", opt:!G.length, t:"Наклейки: підпишіть групи",
       h:"Торкніться автомата і дайте назву в полі «Підпис»: «Кухня, розетки», «Освітлення»…",
       done:()=>G.every(g=>!/^(Група \d+|Нова група)$/.test(g.group.name))},
-    {id:"loads", opt:!G.length, t:"Прилади в групах",
+    {id:"loads", short:"Прилади в групах", opt:!G.length, t:"Прилади в групах",
       h:"У картці групи внизу додайте прилади. Симулятор порахує струм і перевірить номінали.",
       done:()=>G.every(g=>g.group.loads.length>0), act:["До карток груп",()=>showTab("groups",true)]},
-    {id:"check", t:"Перевірте схему",
+    {id:"check", short:"Перевірте схему", t:"Перевірте схему",
       h:"«Перевірити схему» знайде КЗ, помилки кольорів дротів, групи без ПЗВ, замалі перерізи. Крок зараховується, коли помилок нуль.",
       done:()=>S.lastCheck&&S.lastCheck.sig===structSnap()&&S.lastCheck.errors===0, act:["Перевірити",()=>checkNow()]},
-    {id:"test", t:"Випробування: подайте напругу",
+    {id:"test", short:"Подайте напругу", t:"Випробування: подайте напругу",
       h:"У режимі «Випробування» ввімкніть мережу. Групи мають показати «Під напругою», обладнання — запрацювати.",
       done:()=>!!(S.guide&&S.guide.testOK), act:["До випробування",()=>{ S.mode="test"; renderAll(true); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); }]}]; }
 let GSTEPS=[];
@@ -87,3 +87,11 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
 setInterval(()=>{ if(!S.guide||!S.guide.on||S.guide.testOK||S.mode!=="test"||!S.sim||!anySource()) return; const G=groupsOf();
   const ok=G.length?G.every(g=>S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral):S.field.some(f=>f.run||f.on||f.mode==="grid"||f.mode==="backup");
   if(ok){ S.guide.testOK=true; save(); renderTools(); toast("Випробування пройдено: щит працює","ok"); } },1000);
+// ---- Компактний помічник: рядок у нижній панелі + пояснення в рядку підказки вгорі
+function guideCur(){ if(!S.guide||!S.guide.on) return null; const st=guideSteps(), skip=new Set(S.guide.skip||[]), done=st.map(s=>{ try{ return !!s.done(); }catch(e){ return false; } }); GSTEPS=st;
+  const cur=st.findIndex((s,i)=>!done[i]&&!skip.has(s.id)); return {st,cur,s:st[cur]}; }
+function guideHint(){ const g=guideCur(); if(!g) return ""; return g.cur<0?"<b>Помічник:</b> щит зібрано і випробувано. Збережіть проєкт або зробіть документи.":`<b>Крок ${g.cur+1}:</b> ${esc(g.s.h)}`; }
+function guideBar(){ const g=guideCur(); if(!g) return "";
+  if(g.cur<0){ S.devFilter=null; return `<div class="br gd"><span class="gk">✓</span><b class="gt">Щит зібрано і випробувано</b><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`; }
+  const s=g.s; if(S.devFilter&&S.devFilter.step!==s.id) S.devFilter=null;
+  return `<div class="br gd"><span class="gk">${g.cur+1}/${g.st.length}</span><b class="gt">${esc(s.short||s.t)}</b>${s.act?`<button class="btn sm primary" data-gact="${g.cur}">${esc(s.act[0])}</button>`:""}<button class="btn sm" data-gskip="${s.id}">Пропустити</button><button class="bx" data-gx aria-label="Сховати помічника">✕</button></div>`; }
