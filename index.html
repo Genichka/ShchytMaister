@@ -235,6 +235,11 @@ select.btn{padding-right:26px}
 .tm-new{color:var(--blue)!important;font-weight:500}
 .dr-i.dr-exit{color:var(--red)}
 .tpl-list .tm-i{padding-left:24px} .tpl-list .tm-new{display:none}
+.app-qr{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:10px 16px 4px}
+.app-qr .qr{display:block;line-height:0;padding:8px;background:#fff;border-radius:var(--r);border:1px solid var(--line2)}
+.app-qr .qr svg{display:block;max-width:100%;height:auto}
+.app-qr .hint{margin:0}
+.app-qr .qlink{font-size:12.5px;color:var(--blue);text-decoration:none}
 .drawer .foot{margin:4px 0;padding:0 16px}
 
 /* ---- Документи */
@@ -352,7 +357,10 @@ select.btn{padding-right:26px}
     <button class="dr-i" data-menu="doc:sld">Однолінійна схема</button><button class="dr-i" data-menu="doc:cab">Кабельний журнал</button><button class="dr-i" data-menu="doc:spec">Специфікація обладнання</button><button class="dr-i" data-menu="doc:lab">Маркування автоматів (наклейки)</button><button class="dr-i" data-menu="plan">План приміщень і довжини кабелів</button></div>
   <div class="dr-g"><div class="dr-k">Приклади щитів <span class="hint" id="tplName"></span></div><div id="tplMenu" class="tpl-list"></div></div>
   <div class="dr-g"><button class="dr-i dr-exit" data-menu="exit">Вийти з застосунку</button></div>
-  <div class="dr-g"><div class="dr-k">Про застосунок</div><p class="foot">Навчальний симулятор. Номінали кабелів — за поширеною практикою для мідного кабелю в прихованій прокладці. Назви виробників і моделей — довідкові, без логотипів; моделі АВР спрощені.</p></div>
+  <div class="dr-g"><div class="dr-k">Про застосунок</div><p class="foot">Навчальний симулятор. Номінали кабелів — за поширеною практикою для мідного кабелю в прихованій прокладці. Назви виробників і моделей — довідкові, без логотипів; моделі АВР спрощені.</p>
+    <div class="app-qr"><a class="qr" href="https://genichka.github.io/ShchytMaister/" target="_blank" rel="noopener"><svg width="132" height="132" role="img" aria-label="QR-код: https://genichka.github.io/ShchytMaister/" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33"><path fill="#fff" d="M0 0h33v33h-33z"/><path stroke="#111217" d="M2 2.5h7m1 0h3m3 0h1m1 0h1m1 0h3m1 0h7m-29 1h1m5 0h1m1 0h1m2 0h1m1 0h2m1 0h1m5 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m4 0h4m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h4m2 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m5 0h2m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h2m2 0h3m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h1m3 0h1m1 0h1m2 0h1m2 0h1m-21 1h1m1 0h2m1 0h3m1 0h1m4 0h1m1 0h3m3 0h1m2 0h1m1 0h2m-29 1h6m1 0h2m2 0h2m3 0h9m3 0h1m-28 1h3m1 0h2m1 0h1m1 0h2m4 0h2m2 0h1m5 0h2m-28 1h2m2 0h1m2 0h3m3 0h2m3 0h4m2 0h1m3 0h1m-28 1h3m1 0h3m1 0h2m1 0h3m2 0h1m2 0h1m4 0h2m-27 1h2m1 0h1m4 0h2m6 0h1m2 0h1m2 0h1m3 0h3m-29 1h5m1 0h7m3 0h5m3 0h1m1 0h3m-28 1h1m2 0h2m1 0h3m5 0h2m4 0h1m1 0h1m3 0h1m-26 1h1m1 0h5m2 0h1m1 0h2m1 0h1m2 0h3m1 0h3m1 0h1m-27 1h5m1 0h3m5 0h1m1 0h1m2 0h1m2 0h1m1 0h3m-28 1h1m1 0h2m2 0h2m4 0h6m2 0h5m1 0h1m-25 1h1m4 0h1m1 0h1m7 0h3m1 0h2m3 0h1m-26 1h1m1 0h5m1 0h1m1 0h1m1 0h1m1 0h1m2 0h9m-19 1h1m1 0h3m3 0h1m3 0h1m3 0h5m-29 1h7m1 0h1m1 0h1m3 0h1m4 0h2m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m1 0h1m3 0h2m2 0h1m1 0h1m1 0h1m3 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m2 0h4m4 0h1m2 0h5m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m4 0h1m1 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m3 0h2m5 0h1m2 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h1m4 0h1m1 0h2m1 0h1m1 0h1m1 0h1m-28 1h7m1 0h6m4 0h1m1 0h2m5 0h1"/></svg></a>
+      <p class="hint">Наведи камеру іншого телефона — PanelCraft відкриється там</p>
+      <a class="qlink mono" href="https://genichka.github.io/ShchytMaister/" target="_blank" rel="noopener">genichka.github.io/ShchytMaister</a></div></div>
 </div></aside>
 
 <input type="file" id="pImport" accept=".json,application/json" hidden>
@@ -364,7 +372,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.8.0", date:"2026-11-06", notes:["Новий апарат: АВР TOMZN TOQ5-125/2 з поворотною ручкою на 6 модулів — зверху Source A (мережа, пріоритет), знизу Source B (генератор) і окремі клеми навантаження Load; індикатори A/B, повзунок Manual/Auto","Клеми керування AR/AN і BR/BN: блок керування бачить джерела лише через комплектні перемички; сигнальні контакти NC–C–NO для кожного вводу","Новий приклад «Мережа + генератор: АВР TOMZN TOQ5-125/2» з демонстрацією і лампою «Від генератора»; апарат є в помічнику, перевірка підкаже про не підключені AR/AN, BR/BN"] };
+const APP = { v:"4.9.0", date:"2026-11-06", notes:["Меню → Про застосунок: QR-код — наведи камеру іншого телефона, і PanelCraft відкриється там; під кодом — посилання"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
