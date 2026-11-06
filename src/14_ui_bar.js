@@ -116,8 +116,9 @@ function chkBar(){ const C=S.chk.list, ne=C.filter(c=>c.sev==="e").length, nw=C.
   s+=`<div class="br cd">${esc(c.d||"")}</div>`;
   // що робити далі: показати апарат чи дріт на щиті, або вести далі помічником
   const r=c.ref, gOn=!!(S.guide&&S.guide.on), gp=(ne||c.sev!=="ok")&&guidePending(), next=!ne&&gOn&&guidePending();
-  if((r&&(r.dev||r.wire))||gp||next) s+=brow((r&&(r.dev||r.wire)?`<button class="btn sm" data-cshow>Показати ${r.wire?"дріт":"на щиті"}</button>`:"")
-    +(next?`<button class="btn sm primary" data-gon>Далі →</button>`:gp?`<button class="btn sm primary" data-gon>${gOn?"До помічника":"Виправити з помічником"}</button>`:""));
+  if((r&&(r.dev||r.wire))||gp||next||ne) s+=brow((r&&(r.dev||r.wire)?`<button class="btn sm" data-cshow>Показати ${r.wire?"дріт":"на щиті"}</button>`:"")
+    +(next?`<button class="btn sm primary" data-gon>Далі →</button>`:gp?`<button class="btn sm primary" data-gon>${gOn?"До помічника":"Виправити з помічником"}</button>`:"")
+    +(ne&&mainsOf().length&&!wirePlan().some(x=>x.bad)?`<button class="btn sm" data-gall>Виправити все</button>`:""));
   return s; }
 
 // ---- План

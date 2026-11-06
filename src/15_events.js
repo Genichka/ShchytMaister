@@ -2,14 +2,15 @@
 // Ставить qty однакових апаратів підряд, починаючи з вибраного місця (або з першого вільного); вибір лишається активним
 function nextFree(w,r,slot){ for(let rr=r;rr<S.board.rails;rr++) for(let i=(rr===r?slot:0);i<SLOTS;i++) if(freeAt(rr,i,w)) return [rr,i];
   for(let rr=0;rr<S.board.rails;rr++) for(let i=0;i<SLOTS;i++) if(freeAt(rr,i,w)) return [rr,i]; return null; }
-function placeDev(type,r,slot,qty){ const w=T[type].w, n0=qty||S.pickQty||1, put=[];
+function placeDev(type,r,slot,qty){ const w=T[type].w, n0=qty||S.pickQty||1, put=[]; let motor=false;
   for(let j=0;j<n0;j++){ const at=j===0&&freeAt(r,slot,w)?[r,slot]:nextFree(w,r,j?slot:slot); if(!at){ toast(put.length?`Вмістилось лише ${put.length} — більше немає місця`:"На рейках немає місця для "+w+" мод.","w"); break; }
-    [r,slot]=at; const n=groupsOf().length, ex=Object.assign({},S.pickExtra||{}), asG=ex.asGroup; delete ex.asGroup;
-    if(T[type].group&&(!T[type].groupOpt||asG)) ex.group=mkGroup(n,"Група "+(n+1),S.pickRating&&/C(25|32)/.test(S.pickRating)?(/32/.test(S.pickRating)?6:4):/B10|C10|B6/.test(S.pickRating||"")?1.5:2.5,[]);
+    [r,slot]=at; const n=groupsOf().length, ex=Object.assign({},S.pickExtra||{}), asG=ex.asGroup, gname=ex.gname, gloads=ex.gloads; motor=motor||ex.withMotor; delete ex.asGroup; delete ex.gname; delete ex.gloads; delete ex.withMotor;
+    if(T[type].group&&(!T[type].groupOpt||asG)) ex.group=mkGroup(n,gname||"Група "+(n+1),S.pickRating&&/C(25|32)/.test(S.pickRating)?(/32/.test(S.pickRating)?6:4):/B10|C10|B6/.test(S.pickRating||"")?1.5:2.5,gloads||[]);
     if(S.brand&&S.brand!=="eua"&&MODELS[type]&&MODELS[type][S.brand]&&!ex.brand) ex.brand=S.brand;
     const d=mkDev(type,r,slot,S.pickRating||null,ex); S.devices.push(d); put.push(d); slot+=w; }
   if(!put.length) return; S.pick=null; S.pickRating=null; S.pickExtra=null; S.pickQty=1;   // поставили — режим розстановки закривається сам
-  toast(put.length>1?`Поставлено ${put.length} × ${T[type].short} ${put[0].rating||""}: ${put.map(desig).join(", ")}`:`${desig(put[0])} ${put[0].rating?put[0].rating+(T[type].unit||"")+" ":""}встановлено`,"ok"); commit(); }
+  toast(put.length>1?`Поставлено ${put.length} × ${T[type].short} ${put[0].rating||""}: ${put.map(desig).join(", ")}`:`${desig(put[0])} ${put[0].rating?put[0].rating+(T[type].unit||"")+" ":""}встановлено`,"ok"); commit();
+  if(motor&&S.field.filter(f=>f.type==="motor3").length<S.devices.filter(d=>d.type==="qm").length) addField("motor3"); }
 function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>![w.a,w.b].some(k=>k.startsWith(d.id+":")||k.startsWith("tb:"+d.id+":"))); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
 function termTap(key){
   if(!S.pend){ const r=termRole(key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,key); toast(`Вид дроту: ${WK[S.wireKind][0]} — за клемою`); }

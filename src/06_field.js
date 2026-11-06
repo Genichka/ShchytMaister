@@ -21,13 +21,13 @@ defField("motor3",{name:"Двигун 3~ 4 кВт", pre:"M", fw:220, fh:150, ter
   tick(d,X,dt){ const ps=["U","V","W"].map(k=>X.ph(K(d,k))); const set=new Set(ps.filter(Boolean)); const n=set.size, was=d.run;
     if(n===3){ const a=ps.map(p=>PH_ANG[p.split(".")[1]]); d.dir=((a[1]-a[0]+360)%360===120)?1:-1; d.run=!d.jam; d.hum=d.jam; }
     else if(n===2){ d.hum=true; if(!was) d.run=false; } else { d.run=false; d.hum=false; }
-    d.n=n; if(d.run!==was) logp(d.run?"ok":"w",`M1: ${d.run?"обертається "+(d.dir>0?"вправо":"вліво"):"зупинено"}`); },
+    d.nph=n; if(d.run!==was) logp(d.run?"ok":"w",`M1: ${d.run?"обертається "+(d.dir>0?"вправо":"вліво"):"зупинено"}`); },
   load(d,X){ const ps=["U","V","W"].map(k=>X.ph(K(d,k))); const n=new Set(ps.filter(Boolean)).size; if(n<2) return [];
     let I = n===3 ? (d.jam?this.In*6:this.In) : (d.run?this.In*1.73:this.In*6); return [{abc:["U","V","W"], Is:ps.map(p=>p?I:0)}]; },
   draw(d,x,y){ const l=S.sim&&S.sim.loads.find(l=>l.own===d.id), I=l?Math.max(...l.Is):0;
     return fbox(x,y,220,150,"M1 · двигун 3~ 4 кВт · Y/Δ 400 В")+motorSVG(x+6,y+12,{run:d.run,dir:d.dir,hum:d.hum},"M3~")
       +fst(x+140,y+60,d.run?(d.dir>0?"⟳ вправо":"⟲ вліво"):"",d.dir>0?"var(--green)":"var(--orange)")
-      +fst(x+10,y+132,d.run?(d.n===2?`Двофазний режим! ${fmt(I)} А`:`Обертається · ${fmt(I)} А`):d.hum?`Гуде, не запускається · ${fmt(I)} А`:"Зупинено",d.run&&d.n===3?"var(--green)":d.hum||d.n===2?"var(--red)":"var(--muted)")
+      +fst(x+10,y+132,d.run?(d.nph===2?`Двофазний режим! ${fmt(I)} А`:`Обертається · ${fmt(I)} А`):d.hum?`Гуде, не запускається · ${fmt(I)} А`:"Зупинено",d.run&&d.n===3?"var(--green)":d.hum||d.n===2?"var(--red)":"var(--muted)")
       +fst(x+10,y+145,d.jam?"Вал заклинило":"Навантаження номінальне","var(--muted)"); }});
 defField("pv",{name:"Сонячні панелі", fw:170, fh:150, terms:["p","m"],
   source:d=>{ const s=d.sid||"pv"; return (S.env.sun>0&&!d.fault)?[["p",s+"+"],["m",s+"-"]]:[]; },
