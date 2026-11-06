@@ -13,7 +13,6 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), f=S.selDev&&S.field.find(x=>x.id===S.selDev), w=S.mode==="wire"&&S.selWire&&wireById(S.selWire);
   if(S.noDoc) h=noDocBar();
   else if(S.chkOpen&&S.chk) h=chkBar();
-  else if(S.mode==="plan") h=planBar();
   else if(w) h=wireBar(w);
   else if(d) h=devBar(d);
   else if(f) h=fieldBar(f);
@@ -50,7 +49,7 @@ function devBar(d){ const t=T[d.type], g=d.group, m=modelOf(d), bl=brandsFor(d.t
     s+=brow(g.loads.map((l,i)=>`<span class="lchip${l.on?" on":""}"><button data-ltog="${d.id}:${i}" aria-pressed="${l.on}">${l.on?"●":"○"} ${esc(l.n)} <span class="mono">${fmt(l.kw,1)}</span></button><button class="lx" data-del="${d.id}:${i}" aria-label="Прибрати ${esc(l.n)}">✕</button></span>`).join("")
       +`<select class="btn sm" id="ga-${d.id}" data-add="${d.id}" aria-label="Додати прилад"><option value="">＋ Прилад</option>${LOADS.map((l,i)=>`<option value="${i}">${l[0]} · ${fmt(l[1],2)} кВт</option>`).join("")}</select>`);
     s+=brow(`<span class="bl" data-gload="${d.id}">${Ld.txt}</span><span data-gstat="${d.id}">${gStatus(d)}</span><label class="bl">Кабель <select class="btn sm" id="gs-${d.id}" data-gsec="${d.id}">${SECS.slice(0,6).map(x=>`<option value="${x}" ${g.sec===x?"selected":""}>${fmt(x,x%1?1:0)} мм²</option>`).join("")}</select></label>`
-      +(S.planLen&&S.planLen[d.id]!==undefined?`<span class="bl mono">${fmt(S.planLen[d.id],1)} м (план)</span>`:`<label class="bl">Довжина <input class="inp num" type="number" min="0" step="0.5" id="gl-${d.id}" data-glen="${d.id}" value="${g.len||""}" placeholder="—"> м</label>`)
+      +`<label class="bl">Довжина <input class="inp num" type="number" min="0" step="0.5" id="gl-${d.id}" data-glen="${d.id}" value="${g.len||""}" placeholder="—"> м</label>`
       +(du===null?"":`<span class="bl mono" style="color:${du>4?"var(--red)":"var(--muted)"}">ΔU ${fmt(du,1)} %</span>`)); }
   if(cur==="fault") s+=brow(chip(`data-leak="${d.id}"`,S.leak.has(d.id),"Витік на корпус")+chip(`data-short="${d.id}"`,S.short.has(d.id),"Коротке замикання")+chip(`data-arc="${d.id}"`,S.arc.has(d.id),"Іскріння")+`<span class="bl" data-gstat="${d.id}">${gStatus(d)}</span>`);
   if(cur==="set") s+=brow(set);
@@ -120,24 +119,6 @@ function chkBar(){ const C=S.chk.list, ne=C.filter(c=>c.sev==="e").length, nw=C.
     +(next?`<button class="btn sm primary" data-gon>Далі →</button>`:gp?`<button class="btn sm primary" data-gon>${gOn?"До помічника":"Виправити з помічником"}</button>`:"")
     +(ne&&mainsOf().length&&!wirePlan().some(x=>x.bad)?`<button class="btn sm" data-gall>Виправити все</button>`:""));
   return s; }
-
-// ---- План
-function planBar(){ const P=planObj(), G=groupsOf(), t=S.ptool||"sel", r=P.rooms.find(x=>x.id===S.psel), it=P.items.find(x=>x.id===S.psel); planLengths();
-  if(r) return bhead(`Кімната · ${esc(r.name)} <span class="bm">${fmt(r.w*r.h,1)} м²</span>`,`<button class="bx" data-psx aria-label="Закрити">✕</button>`)
-    +brow(`<input class="inp grow" data-prname value="${esc(r.name)}" maxlength="30" aria-label="Назва кімнати"><input class="inp num" type="number" step="0.1" min="0.5" data-prw value="${r.w}" aria-label="Ширина, м"><span class="bl">×</span><input class="inp num" type="number" step="0.1" min="0.5" data-prh value="${r.h}" aria-label="Довжина, м"><span class="bl">м</span>`)
-    +brow(`<span class="bl">Перетягніть синій кружок, щоб посунути, квадрат — щоб змінити розмір</span><button class="btn sm danger" data-pdel="${r.id}">Видалити</button>`);
-  if(it) return bhead(`${PIT[it.type][0]}${it.label?" · "+esc(it.label):""}`,`<button class="bx" data-psx aria-label="Закрити">✕</button>`)
-    +brow(`<span class="bl">Група</span>`+(G.map(g=>chip(`data-pig="${g.id}"`,it.g===g.id,`<span class="sw" style="background:${g.group.color}"></span>${esc(desig(g))} ${esc(g.group.name)}`)).join("")||`<span class="bl">немає груп</span>`))
-    +brow(`<span class="bl">Висота</span>`+[0.3,0.9,1.1,1.8].map(v=>chip(`data-pih="${v}"`,itemH(it)===v,fmt(v,1)+" м")).join("")+chip(`data-pih="ceil"`,itemH(it)===P.ceil,"стеля")
-      +(it.type==="ap"?`<input class="inp" data-pilab value="${esc(it.label||"")}" maxlength="20" placeholder="Прилад" aria-label="Прилад">`:"")+`<button class="btn sm danger" data-pdel="${it.id}">Видалити</button>`);
-  let s=brow(PTOOLS.map(([k,l])=>chip(`data-ptool="${k}"`,t===k,l)).join(""));
-  s+=PIT[t]?brow(`<span class="bl">Група</span>`+(G.map(g=>chip(`data-pgrp="${g.id}"`,S.pgrp===g.id,`<span class="sw" style="background:${g.group.color}"></span>${esc(desig(g))} ${esc(g.group.name)}`)).join("")||`<span class="bl">Спершу поставте групові автомати</span>`))
-    :brow(`<span class="bl">Стеля</span>`+[2.5,2.7,3].map(v=>chip(`data-pceil="${v}"`,P.ceil===v,fmt(v,1))).join("")+`<span class="bl">Траса</span>`+chip(`data-proute="ceil"`,P.route==="ceil","по стелі")+chip(`data-proute="floor"`,P.route==="floor","по підлозі")
-      +`<span class="bl">Запас</span>`+[0,10,15].map(v=>chip(`data-pres="${v}"`,P.res===v,v+" %")).join("")+`<button class="btn sm" data-pdemo>Приклад</button>`+(P.rooms.length||P.items.length?`<button class="btn sm danger" data-pclear>Очистити</button>`:""));
-  const det=S.planDet||{}, pills=G.filter(g=>det[g.id]).map(g=>{ const u=groupDU(g); return `<span class="pill2"><i style="background:${g.group.color}"></i>${esc(desig(g))} <b class="mono">${fmt(det[g.id].tot,1)} м</b>${u===null?"":` <span class="mono" style="color:${u>4?"var(--red)":"var(--muted)"}">${fmt(u,1)} %</span>`}</span>`; }).join("");
-  s+=brow(pills?pills+`<button class="btn sm" data-pdocs>Журнал</button>`:`<span class="bl">Намалюйте кімнати, поставте щит і точки та прив’яжіть до груп — довжини порахуються самі</span>`);
-  return s; }
-
 // ---- Події панелі
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(q("[data-bclose]")){ if(S.chkOpen){ S.chkOpen=false; } else { S.selDev=null; S.selWire=null; S.moveEnd=null; } renderAll(false); return; }

@@ -2,7 +2,7 @@
 const RHO = 0.0178;   // мідь, Ом·мм²/м
 const cableCores = g => g3(g) ? (g.type==="qf4p"?5:4) : 3;
 const cableName = g => `ВВГнг(А)-LS ${cableCores(g)}×${fmt(g.group.sec,g.group.sec%1?1:0)}`;
-const groupLen = g => (S.planLen&&S.planLen[g.id]!==undefined) ? S.planLen[g.id] : (g.group.len||null);
+const groupLen = g => g.group.len||null;
 const groupI = g => kwOf(g,true)*1000/(g3(g)?1.732*400:230);
 function groupDU(g){ const L=groupLen(g); if(!L) return null; const I=groupI(g), s=g.group.sec; return g3(g) ? 1.732*L*I*RHO/s/400*100 : 2*L*I*RHO/s/230*100; }
 const ferrule = s => `НШВИ ${fmt(s,s%1?1:0)}-${s>=6?12:s>=4?10:8}`;
@@ -81,7 +81,7 @@ function sldSVG(){ const M=sldModel(), CW=104, LH=112, X0=128, top=26; let col=0
 const tbl = (head,rows,num=[]) => `<div class="tw"><table><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${num.includes(i)?' class="n"':""}>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 function cabData(){ const ends={}; for(const w of S.wires) for(const k of [w.a,w.b]) ends[k]=(ends[k]||0)+1;
   const inner=S.wires.map((w,i)=>[String(i+1),`W${i+1}`,termName(w.a),termName(w.b),WK[w.kind][0]+(w.col?" · "+WCOL[w.col][0].toLowerCase():""),fmt(w.sec,w.sec%1?1:0)+" мм²",String(wireLenCm(w)),ferrule(w.sec)+" ×2"]);
-  const lines=groupsOf().map(g=>[desig(g)+" "+g.rating,g.group.name,cableName(g),groupLen(g)?fmt(groupLen(g),1):"—",(S.planRooms&&S.planRooms[g.id])||"—",(()=>{ const u=groupDU(g); return u===null?"—":fmt(u,1); })()]);
+  const lines=groupsOf().map(g=>[desig(g)+" "+g.rating,g.group.name,cableName(g),groupLen(g)?fmt(groupLen(g),1):"—",(()=>{ const u=groupDU(g); return u===null?"—":fmt(u,1); })()]);
   return {inner,lines}; }
 function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.push([name,model,qty,unit]);
   for(const d of S.devices){ const t=T[d.type], key=[t.name,brandName(d),modelOf(d)||d.rating||""].join("|"); cnt.set(key,(cnt.get(key)||0)+1); }
@@ -97,21 +97,20 @@ function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.pu
   const fr={}; for(const w of S.wires){ const f2=ferrule(w.sec); fr[f2]=(fr[f2]||0)+2; } for(const [k,n] of Object.entries(fr)) addR("Наконечник втулковий ізольований",k,String(n),"шт.");
   const cb={}; for(const g of groupsOf()){ const L=groupLen(g); if(!L) continue; cb[cableName(g)]=(cb[cableName(g)]||0)+L; }
   for(const [k,m] of Object.entries(cb)) addR("Кабель",k,fmt(Math.ceil(m),0),"м");
-  if(S.planSpec) for(const r of S.planSpec) addR(...r);
   return R; }
 
 // ---- Вікно документів
 const DOCT = [["sld","Однолінійна схема"],["cab","Кабельний журнал"],["spec","Специфікація"],["lab","Маркування"]];
-function openDocs(t){ S.docTab=t||S.docTab||"sld"; if(typeof planLengths==="function") planLengths(); $("docs").hidden=false; renderDocs(); }
+function openDocs(t){ S.docTab=t||S.docTab||"sld"; $("docs").hidden=false; renderDocs(); }
 function renderDocs(){ const t=S.docTab, nm=esc((S.proj&&S.proj.name)||"Щит");
   $("docTabs").innerHTML=DOCT.map(([k,l])=>`<button data-doct="${k}" aria-selected="${t===k}">${l}</button>`).join("");
   $("docSvg").textContent=t==="sld"?"SVG":t==="lab"?"—":"CSV"; $("docSvg").disabled=t==="lab";
   let h="";
   if(t==="sld"){ const noLen=groupsOf().some(g=>!groupLen(g));
-    h=`<div class="doc"><div class="sld">${sldSVG()}</div><p class="note">Кабель — ВВГнг(А)-LS, мідь. Iр — за встановленою потужністю групи, cos φ = 1. ΔU — втрата напруги в лінії (ρ = 0,0178 Ом·мм²/м); понад 4 % виділено червоним.${noLen?" Довжини ліній задайте на «Плані» або в картці групи.":""}</p></div>`; }
+    h=`<div class="doc"><div class="sld">${sldSVG()}</div><p class="note">Кабель — ВВГнг(А)-LS, мідь. Iр — за встановленою потужністю групи, cos φ = 1. ΔU — втрата напруги в лінії (ρ = 0,0178 Ом·мм²/м); понад 4 % виділено червоним.${noLen?" Довжини ліній задайте в картці групи.":""}</p></div>`; }
   if(t==="cab"){ const c=cabData(); h=`<div class="doc"><h3>Кабельний журнал · ${nm}</h3><p class="note">Дроти в щиті (довжина — за трасою на щиті, з запасом 4 см на зачистку)</p>`
     +tbl(["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],c.inner,[0,6])
-    +`<h3 style="margin-top:14px">Кабельні лінії від щита</h3>`+tbl(["Автомат","Група","Кабель","Довжина, м","Приміщення","ΔU, %"],c.lines,[3,5])+`</div>`; }
+    +`<h3 style="margin-top:14px">Кабельні лінії від щита</h3>`+tbl(["Автомат","Група","Кабель","Довжина, м","ΔU, %"],c.lines,[3,4])+`</div>`; }
   if(t==="spec") h=`<div class="doc"><h3>Специфікація обладнання · ${nm}</h3>`+tbl(["Найменування","Тип / модель","Кіл.","Од."],specData(),[2])+`<p class="note">Довжину монтажного проводу взято із запасом 20 %, кабелі — за довжинами ліній.</p></div>`;
   if(t==="lab"){ h=`<div class="doc"><h3>Маркування автоматів · ${nm}</h3><p class="note">Друк у масштабі 100 %: ширина клітинки — один модуль 18 мм. Виріжте смужки й наклейте над апаратами.</p><div class="labels">`;
     for(let r=0;r<S.board.rails;r++){ let row=""; for(let i=0;i<SLOTS;){ const d=devAt(r,i); if(d&&d.slot===i){ const w=T[d.type].w;
@@ -127,7 +126,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(q("#docPrint")){ window.print(); return; }
   if(q("#docSvg")){ const nm=((S.proj&&S.proj.name)||"shchyt").replace(/[^\wА-Яа-яІіЇїЄєҐґ-]+/g,"_");
     if(S.docTab==="sld") download(nm+"_odnolinijna.svg",sldSVG(),"image/svg+xml");
-    else { const rows=S.docTab==="cab"?[["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],...cabData().inner,[],["Автомат","Група","Кабель","Довжина, м","Приміщення","ΔU, %"],...cabData().lines]
+    else { const rows=S.docTab==="cab"?[["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],...cabData().inner,[],["Автомат","Група","Кабель","Довжина, м","ΔU, %"],...cabData().lines]
         :[["Найменування","Тип / модель","Кіл.","Од."],...specData()];
       download(nm+(S.docTab==="cab"?"_kabelnyj_zhurnal.csv":"_specyfikacija.csv"),"﻿"+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(";")).join("\n"),"text/csv"); }
     return; } });

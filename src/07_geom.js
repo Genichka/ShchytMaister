@@ -95,7 +95,7 @@ function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 840 
   for(let y=0;y<=520;y+=40) s+=`<line x1="0" y1="${y}" x2="840" y2="${y}" stroke="var(--line)" stroke-width="${y%200?0.5:1}"/>`;
   s+=`<text x="420" y="230" text-anchor="middle" font-size="26" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="420" y="268" text-anchor="middle" font-size="16" fill="var(--muted)">Створіть новий або відкрийте збережений — кнопки внизу</text>`;
   svg.innerHTML=s; }
-function render(){ if(S.noDoc){ renderEmpty(); return; } if(S.mode==="plan"){ renderPlan(); return; }
+function render(){ if(S.noDoc){ renderEmpty(); return; } 
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
   svg.setAttribute("viewBox",`0 0 840 ${H}`);
   s+=`<rect class="encl" x="14" y="70" width="812" height="${enclB()-70}" rx="10"/><rect class="encl-in" x="26" y="82" width="788" height="${enclB()-94}" rx="6"/>`;

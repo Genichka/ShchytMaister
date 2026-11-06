@@ -330,7 +330,6 @@ select.btn{padding-right:26px}
     <button class="tb" data-mode="mount" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h5v16H5zM14 4h5v16h-5zM2 10h20"/></svg><small>Апарати</small></button>
     <button class="tb" data-mode="wire" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c4 0 4-12 8-12s4 12 8 12M4 18h0M20 18h0"/></svg><small>Дроти</small></button>
     <button class="tb" data-mode="test" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><small>Тест</small></button>
-    <button class="tb" data-mode="plan" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3zM3 12h8M11 4v16M15 12h6"/></svg><small>План</small></button>
     <span class="tb-sep" aria-hidden="true"></span>
     <button class="tb nolab" id="undoTop" aria-label="Скасувати"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg><small>Назад</small></button>
     <button class="tb nolab" id="redoTop" aria-label="Повторити"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/></svg><small>Вперед</small></button>
@@ -354,7 +353,7 @@ select.btn{padding-right:26px}
     <button class="dr-i" data-menu="export">Експорт у файл</button><button class="dr-i" data-menu="import">Імпорт з файлу</button><button class="dr-i" data-menu="close">Закрити щит</button></div>
   <div class="dr-g"><div class="dr-k">Щит</div><button class="dr-i" data-menu="board">Корпус і ввід</button><button class="dr-i" data-menu="tb">Клемна колодка XT2: увімкнути / вимкнути</button><button class="dr-i" data-menu="guide">Покроковий помічник</button></div>
   <div class="dr-g"><div class="dr-k">Документи</div>
-    <button class="dr-i" data-menu="doc:sld">Однолінійна схема</button><button class="dr-i" data-menu="doc:cab">Кабельний журнал</button><button class="dr-i" data-menu="doc:spec">Специфікація обладнання</button><button class="dr-i" data-menu="doc:lab">Маркування автоматів (наклейки)</button><button class="dr-i" data-menu="plan">План приміщень і довжини кабелів</button></div>
+    <button class="dr-i" data-menu="doc:sld">Однолінійна схема</button><button class="dr-i" data-menu="doc:cab">Кабельний журнал</button><button class="dr-i" data-menu="doc:spec">Специфікація обладнання</button><button class="dr-i" data-menu="doc:lab">Маркування автоматів (наклейки)</button></div>
   <div class="dr-g"><div class="dr-k">Приклади щитів <span class="hint" id="tplName"></span></div><div id="tplMenu" class="tpl-list"></div></div>
   <div class="dr-g"><button class="dr-i dr-exit" data-menu="exit">Вийти з застосунку</button></div>
   <div class="dr-g"><div class="dr-k">Про застосунок</div><p class="foot">Навчальний симулятор. Номінали кабелів — за поширеною практикою для мідного кабелю в прихованій прокладці. Назви виробників і моделей — довідкові, без логотипів; моделі АВР спрощені.</p>
@@ -372,7 +371,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.10.0", date:"2026-11-06", notes:["Помічник доводить щит до кінця: кожен дріт підказано «1 → 2», для трифазного щита, двох вводів з АВР, колодки XT2 і двигуна теж","«Підключити все» — помічник прокладає всю проводку одним натиском і одразу перевіряє схему","Перевірка з помилками: «Виправити все» перекладає дроти за правильною схемою й підбирає номінали ПЗВ, реле і перерізи кабелів","Трифазний щит: нуль вводу йде через ПЗВ 4P, а не напряму на шину N; однофазні групи розкладаються по L1, L2, L3","Групи одразу отримують назву й типові прилади, «Автомат захисту двигуна» додає двигун, «Подати напругу» вмикає всі вводи","Прибрано зайве: «Пропустити» на обов’язкових кроках і в проводці, «Усі в кроці», АВР на контакторах і LOGO! у помічнику (лишились у прикладах), ПЗВ і УЗІП 1P+N у трифазному щиті","Виправлено: перевірка тепер бачить ввідний автомат 4P і ПЗВ 4P, а реле контролю фаз зараховує як захист; хибна вимога 10 мм² для нуля диф-автомата"] };
+const APP = { v:"4.11.0", date:"2026-11-06", notes:["Прибрано пункт «План» (план приміщень) з нижньої панелі й меню","Довжини кабельних ліній тепер задаються лише в картці групи; кабельний журнал без колонки «Приміщення»"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1265,7 +1264,7 @@ function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 840 
   for(let y=0;y<=520;y+=40) s+=`<line x1="0" y1="${y}" x2="840" y2="${y}" stroke="var(--line)" stroke-width="${y%200?0.5:1}"/>`;
   s+=`<text x="420" y="230" text-anchor="middle" font-size="26" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="420" y="268" text-anchor="middle" font-size="16" fill="var(--muted)">Створіть новий або відкрийте збережений — кнопки внизу</text>`;
   svg.innerHTML=s; }
-function render(){ if(S.noDoc){ renderEmpty(); return; } if(S.mode==="plan"){ renderPlan(); return; }
+function render(){ if(S.noDoc){ renderEmpty(); return; } 
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
   svg.setAttribute("viewBox",`0 0 840 ${H}`);
   s+=`<rect class="encl" x="14" y="70" width="812" height="${enclB()-70}" rx="10"/><rect class="encl-in" x="26" y="82" width="788" height="${enclB()-94}" rx="6"/>`;
@@ -1985,10 +1984,9 @@ function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=2
 function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
-function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щит, відкрийте збережений проєкт або приклад.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&S.mode!=="plan"&&typeof guideHint==="function")?guideHint():"";
+function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щит, відкрийте збережений проєкт або приклад.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
   if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця на рейці${S.pickQty>1?` — поставиться ${S.pickQty} шт. підряд`:""}. ✕ унизу — скасувати.`:"Оберіть апарат нижче й поставте на рейку. Торкніться апарата — налаштування; затисніть і тягніть — пересунути.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
-  if(S.mode==="plan") h=planHint();
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
   if(gh0) h=gh0; $("hint").innerHTML=`<span>${h}</span>`; }
 function ctlHTML(c,i){
@@ -2036,7 +2034,6 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), f=S.selDev&&S.field.find(x=>x.id===S.selDev), w=S.mode==="wire"&&S.selWire&&wireById(S.selWire);
   if(S.noDoc) h=noDocBar();
   else if(S.chkOpen&&S.chk) h=chkBar();
-  else if(S.mode==="plan") h=planBar();
   else if(w) h=wireBar(w);
   else if(d) h=devBar(d);
   else if(f) h=fieldBar(f);
@@ -2073,7 +2070,7 @@ function devBar(d){ const t=T[d.type], g=d.group, m=modelOf(d), bl=brandsFor(d.t
     s+=brow(g.loads.map((l,i)=>`<span class="lchip${l.on?" on":""}"><button data-ltog="${d.id}:${i}" aria-pressed="${l.on}">${l.on?"●":"○"} ${esc(l.n)} <span class="mono">${fmt(l.kw,1)}</span></button><button class="lx" data-del="${d.id}:${i}" aria-label="Прибрати ${esc(l.n)}">✕</button></span>`).join("")
       +`<select class="btn sm" id="ga-${d.id}" data-add="${d.id}" aria-label="Додати прилад"><option value="">＋ Прилад</option>${LOADS.map((l,i)=>`<option value="${i}">${l[0]} · ${fmt(l[1],2)} кВт</option>`).join("")}</select>`);
     s+=brow(`<span class="bl" data-gload="${d.id}">${Ld.txt}</span><span data-gstat="${d.id}">${gStatus(d)}</span><label class="bl">Кабель <select class="btn sm" id="gs-${d.id}" data-gsec="${d.id}">${SECS.slice(0,6).map(x=>`<option value="${x}" ${g.sec===x?"selected":""}>${fmt(x,x%1?1:0)} мм²</option>`).join("")}</select></label>`
-      +(S.planLen&&S.planLen[d.id]!==undefined?`<span class="bl mono">${fmt(S.planLen[d.id],1)} м (план)</span>`:`<label class="bl">Довжина <input class="inp num" type="number" min="0" step="0.5" id="gl-${d.id}" data-glen="${d.id}" value="${g.len||""}" placeholder="—"> м</label>`)
+      +`<label class="bl">Довжина <input class="inp num" type="number" min="0" step="0.5" id="gl-${d.id}" data-glen="${d.id}" value="${g.len||""}" placeholder="—"> м</label>`
       +(du===null?"":`<span class="bl mono" style="color:${du>4?"var(--red)":"var(--muted)"}">ΔU ${fmt(du,1)} %</span>`)); }
   if(cur==="fault") s+=brow(chip(`data-leak="${d.id}"`,S.leak.has(d.id),"Витік на корпус")+chip(`data-short="${d.id}"`,S.short.has(d.id),"Коротке замикання")+chip(`data-arc="${d.id}"`,S.arc.has(d.id),"Іскріння")+`<span class="bl" data-gstat="${d.id}">${gStatus(d)}</span>`);
   if(cur==="set") s+=brow(set);
@@ -2143,24 +2140,6 @@ function chkBar(){ const C=S.chk.list, ne=C.filter(c=>c.sev==="e").length, nw=C.
     +(next?`<button class="btn sm primary" data-gon>Далі →</button>`:gp?`<button class="btn sm primary" data-gon>${gOn?"До помічника":"Виправити з помічником"}</button>`:"")
     +(ne&&mainsOf().length&&!wirePlan().some(x=>x.bad)?`<button class="btn sm" data-gall>Виправити все</button>`:""));
   return s; }
-
-// ---- План
-function planBar(){ const P=planObj(), G=groupsOf(), t=S.ptool||"sel", r=P.rooms.find(x=>x.id===S.psel), it=P.items.find(x=>x.id===S.psel); planLengths();
-  if(r) return bhead(`Кімната · ${esc(r.name)} <span class="bm">${fmt(r.w*r.h,1)} м²</span>`,`<button class="bx" data-psx aria-label="Закрити">✕</button>`)
-    +brow(`<input class="inp grow" data-prname value="${esc(r.name)}" maxlength="30" aria-label="Назва кімнати"><input class="inp num" type="number" step="0.1" min="0.5" data-prw value="${r.w}" aria-label="Ширина, м"><span class="bl">×</span><input class="inp num" type="number" step="0.1" min="0.5" data-prh value="${r.h}" aria-label="Довжина, м"><span class="bl">м</span>`)
-    +brow(`<span class="bl">Перетягніть синій кружок, щоб посунути, квадрат — щоб змінити розмір</span><button class="btn sm danger" data-pdel="${r.id}">Видалити</button>`);
-  if(it) return bhead(`${PIT[it.type][0]}${it.label?" · "+esc(it.label):""}`,`<button class="bx" data-psx aria-label="Закрити">✕</button>`)
-    +brow(`<span class="bl">Група</span>`+(G.map(g=>chip(`data-pig="${g.id}"`,it.g===g.id,`<span class="sw" style="background:${g.group.color}"></span>${esc(desig(g))} ${esc(g.group.name)}`)).join("")||`<span class="bl">немає груп</span>`))
-    +brow(`<span class="bl">Висота</span>`+[0.3,0.9,1.1,1.8].map(v=>chip(`data-pih="${v}"`,itemH(it)===v,fmt(v,1)+" м")).join("")+chip(`data-pih="ceil"`,itemH(it)===P.ceil,"стеля")
-      +(it.type==="ap"?`<input class="inp" data-pilab value="${esc(it.label||"")}" maxlength="20" placeholder="Прилад" aria-label="Прилад">`:"")+`<button class="btn sm danger" data-pdel="${it.id}">Видалити</button>`);
-  let s=brow(PTOOLS.map(([k,l])=>chip(`data-ptool="${k}"`,t===k,l)).join(""));
-  s+=PIT[t]?brow(`<span class="bl">Група</span>`+(G.map(g=>chip(`data-pgrp="${g.id}"`,S.pgrp===g.id,`<span class="sw" style="background:${g.group.color}"></span>${esc(desig(g))} ${esc(g.group.name)}`)).join("")||`<span class="bl">Спершу поставте групові автомати</span>`))
-    :brow(`<span class="bl">Стеля</span>`+[2.5,2.7,3].map(v=>chip(`data-pceil="${v}"`,P.ceil===v,fmt(v,1))).join("")+`<span class="bl">Траса</span>`+chip(`data-proute="ceil"`,P.route==="ceil","по стелі")+chip(`data-proute="floor"`,P.route==="floor","по підлозі")
-      +`<span class="bl">Запас</span>`+[0,10,15].map(v=>chip(`data-pres="${v}"`,P.res===v,v+" %")).join("")+`<button class="btn sm" data-pdemo>Приклад</button>`+(P.rooms.length||P.items.length?`<button class="btn sm danger" data-pclear>Очистити</button>`:""));
-  const det=S.planDet||{}, pills=G.filter(g=>det[g.id]).map(g=>{ const u=groupDU(g); return `<span class="pill2"><i style="background:${g.group.color}"></i>${esc(desig(g))} <b class="mono">${fmt(det[g.id].tot,1)} м</b>${u===null?"":` <span class="mono" style="color:${u>4?"var(--red)":"var(--muted)"}">${fmt(u,1)} %</span>`}</span>`; }).join("");
-  s+=brow(pills?pills+`<button class="btn sm" data-pdocs>Журнал</button>`:`<span class="bl">Намалюйте кімнати, поставте щит і точки та прив’яжіть до груп — довжини порахуються самі</span>`);
-  return s; }
-
 // ---- Події панелі
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(q("[data-bclose]")){ if(S.chkOpen){ S.chkOpen=false; } else { S.selDev=null; S.selWire=null; S.moveEnd=null; } renderAll(false); return; }
@@ -2222,7 +2201,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(m==="tb"){ S.board.tb=!S.board.tb; if(!S.board.tb) S.wires=S.wires.filter(w=>!/^tb:/.test(w.a)&&!/^tb:/.test(w.b)); GEO=null; commit(); toast(S.board.tb?"Колодку XT2 додано: підключіть до неї L, N і PE кожної групи":"Колодку XT2 прибрано","ok"); }
     if(m==="save"){ saveProject(); } if(m==="saveas"){ openProjects(); document.querySelector('[data-pa="copy"]').click(); } if(m==="export") exportProject(); if(m==="exit") exitApp(); if(m==="import") $("pImport").click(); if(m==="close") closeBoard();
     if(m==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; S.mode="mount"; save(); renderAll(true); }
-    if(m.startsWith("doc:")) openDocs(m.slice(4)); if(m==="plan"){ S.mode="plan"; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; renderAll(); }
+    if(m.startsWith("doc:")) openDocs(m.slice(4));
     return; }
   if(q("#undoTop")){ undo(); return; }
   if(q("#redoTop")){ redo(); return; }
@@ -2524,7 +2503,7 @@ document.addEventListener("click",e=>{ if(e.target.closest("[data-gall]")) autoW
 const RHO = 0.0178;   // мідь, Ом·мм²/м
 const cableCores = g => g3(g) ? (g.type==="qf4p"?5:4) : 3;
 const cableName = g => `ВВГнг(А)-LS ${cableCores(g)}×${fmt(g.group.sec,g.group.sec%1?1:0)}`;
-const groupLen = g => (S.planLen&&S.planLen[g.id]!==undefined) ? S.planLen[g.id] : (g.group.len||null);
+const groupLen = g => g.group.len||null;
 const groupI = g => kwOf(g,true)*1000/(g3(g)?1.732*400:230);
 function groupDU(g){ const L=groupLen(g); if(!L) return null; const I=groupI(g), s=g.group.sec; return g3(g) ? 1.732*L*I*RHO/s/400*100 : 2*L*I*RHO/s/230*100; }
 const ferrule = s => `НШВИ ${fmt(s,s%1?1:0)}-${s>=6?12:s>=4?10:8}`;
@@ -2603,7 +2582,7 @@ function sldSVG(){ const M=sldModel(), CW=104, LH=112, X0=128, top=26; let col=0
 const tbl = (head,rows,num=[]) => `<div class="tw"><table><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${num.includes(i)?' class="n"':""}>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 function cabData(){ const ends={}; for(const w of S.wires) for(const k of [w.a,w.b]) ends[k]=(ends[k]||0)+1;
   const inner=S.wires.map((w,i)=>[String(i+1),`W${i+1}`,termName(w.a),termName(w.b),WK[w.kind][0]+(w.col?" · "+WCOL[w.col][0].toLowerCase():""),fmt(w.sec,w.sec%1?1:0)+" мм²",String(wireLenCm(w)),ferrule(w.sec)+" ×2"]);
-  const lines=groupsOf().map(g=>[desig(g)+" "+g.rating,g.group.name,cableName(g),groupLen(g)?fmt(groupLen(g),1):"—",(S.planRooms&&S.planRooms[g.id])||"—",(()=>{ const u=groupDU(g); return u===null?"—":fmt(u,1); })()]);
+  const lines=groupsOf().map(g=>[desig(g)+" "+g.rating,g.group.name,cableName(g),groupLen(g)?fmt(groupLen(g),1):"—",(()=>{ const u=groupDU(g); return u===null?"—":fmt(u,1); })()]);
   return {inner,lines}; }
 function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.push([name,model,qty,unit]);
   for(const d of S.devices){ const t=T[d.type], key=[t.name,brandName(d),modelOf(d)||d.rating||""].join("|"); cnt.set(key,(cnt.get(key)||0)+1); }
@@ -2619,21 +2598,20 @@ function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.pu
   const fr={}; for(const w of S.wires){ const f2=ferrule(w.sec); fr[f2]=(fr[f2]||0)+2; } for(const [k,n] of Object.entries(fr)) addR("Наконечник втулковий ізольований",k,String(n),"шт.");
   const cb={}; for(const g of groupsOf()){ const L=groupLen(g); if(!L) continue; cb[cableName(g)]=(cb[cableName(g)]||0)+L; }
   for(const [k,m] of Object.entries(cb)) addR("Кабель",k,fmt(Math.ceil(m),0),"м");
-  if(S.planSpec) for(const r of S.planSpec) addR(...r);
   return R; }
 
 // ---- Вікно документів
 const DOCT = [["sld","Однолінійна схема"],["cab","Кабельний журнал"],["spec","Специфікація"],["lab","Маркування"]];
-function openDocs(t){ S.docTab=t||S.docTab||"sld"; if(typeof planLengths==="function") planLengths(); $("docs").hidden=false; renderDocs(); }
+function openDocs(t){ S.docTab=t||S.docTab||"sld"; $("docs").hidden=false; renderDocs(); }
 function renderDocs(){ const t=S.docTab, nm=esc((S.proj&&S.proj.name)||"Щит");
   $("docTabs").innerHTML=DOCT.map(([k,l])=>`<button data-doct="${k}" aria-selected="${t===k}">${l}</button>`).join("");
   $("docSvg").textContent=t==="sld"?"SVG":t==="lab"?"—":"CSV"; $("docSvg").disabled=t==="lab";
   let h="";
   if(t==="sld"){ const noLen=groupsOf().some(g=>!groupLen(g));
-    h=`<div class="doc"><div class="sld">${sldSVG()}</div><p class="note">Кабель — ВВГнг(А)-LS, мідь. Iр — за встановленою потужністю групи, cos φ = 1. ΔU — втрата напруги в лінії (ρ = 0,0178 Ом·мм²/м); понад 4 % виділено червоним.${noLen?" Довжини ліній задайте на «Плані» або в картці групи.":""}</p></div>`; }
+    h=`<div class="doc"><div class="sld">${sldSVG()}</div><p class="note">Кабель — ВВГнг(А)-LS, мідь. Iр — за встановленою потужністю групи, cos φ = 1. ΔU — втрата напруги в лінії (ρ = 0,0178 Ом·мм²/м); понад 4 % виділено червоним.${noLen?" Довжини ліній задайте в картці групи.":""}</p></div>`; }
   if(t==="cab"){ const c=cabData(); h=`<div class="doc"><h3>Кабельний журнал · ${nm}</h3><p class="note">Дроти в щиті (довжина — за трасою на щиті, з запасом 4 см на зачистку)</p>`
     +tbl(["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],c.inner,[0,6])
-    +`<h3 style="margin-top:14px">Кабельні лінії від щита</h3>`+tbl(["Автомат","Група","Кабель","Довжина, м","Приміщення","ΔU, %"],c.lines,[3,5])+`</div>`; }
+    +`<h3 style="margin-top:14px">Кабельні лінії від щита</h3>`+tbl(["Автомат","Група","Кабель","Довжина, м","ΔU, %"],c.lines,[3,4])+`</div>`; }
   if(t==="spec") h=`<div class="doc"><h3>Специфікація обладнання · ${nm}</h3>`+tbl(["Найменування","Тип / модель","Кіл.","Од."],specData(),[2])+`<p class="note">Довжину монтажного проводу взято із запасом 20 %, кабелі — за довжинами ліній.</p></div>`;
   if(t==="lab"){ h=`<div class="doc"><h3>Маркування автоматів · ${nm}</h3><p class="note">Друк у масштабі 100 %: ширина клітинки — один модуль 18 мм. Виріжте смужки й наклейте над апаратами.</p><div class="labels">`;
     for(let r=0;r<S.board.rails;r++){ let row=""; for(let i=0;i<SLOTS;){ const d=devAt(r,i); if(d&&d.slot===i){ const w=T[d.type].w;
@@ -2649,7 +2627,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(q("#docPrint")){ window.print(); return; }
   if(q("#docSvg")){ const nm=((S.proj&&S.proj.name)||"shchyt").replace(/[^\wА-Яа-яІіЇїЄєҐґ-]+/g,"_");
     if(S.docTab==="sld") download(nm+"_odnolinijna.svg",sldSVG(),"image/svg+xml");
-    else { const rows=S.docTab==="cab"?[["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],...cabData().inner,[],["Автомат","Група","Кабель","Довжина, м","Приміщення","ΔU, %"],...cabData().lines]
+    else { const rows=S.docTab==="cab"?[["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],...cabData().inner,[],["Автомат","Група","Кабель","Довжина, м","ΔU, %"],...cabData().lines]
         :[["Найменування","Тип / модель","Кіл.","Од."],...specData()];
       download(nm+(S.docTab==="cab"?"_kabelnyj_zhurnal.csv":"_specyfikacija.csv"),"﻿"+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(";")).join("\n"),"text/csv"); }
     return; } });
@@ -2815,123 +2793,6 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); const it=
   if(q("[data-gshow]")){ S.mode="wire"; selectWire(w.id); return; } });
 
 document.addEventListener("click",e=>{ const el=e.target.closest("[data-gnext]"); if(!el||!S.guide) return; if(el.dataset.gnext==="groups") S.guide.gDone=true; S.pick=null; S.devFilter=null; save(); renderAll(true); });
-/* ===== План приміщень: кімнати, щит, розетки, вимикачі, світло, виводи; траси й довжини кабелів по групах ===== */
-const PX = 60;   // 1 м = 60 одиниць SVG
-const PIT = { s:["Розетка",0.3], s2:["Розетка подвійна",0.3], sw:["Вимикач",0.9], lt:["Світильник",null], ap:["Вивід під прилад",0.6] };
-const PTOOLS = [["sel","Вибір"],["room","Кімната"],["board","Щит"],["s","Розетка"],["s2","Розетка ×2"],["sw","Вимикач"],["lt","Світло"],["ap","Вивід"],["del","Видалити"]];
-const RCOL = ["#f6e3c8","#e6def3","#dcefe0","#dce8f5","#f5dde3","#efeccf","#d9f0f0"];
-function planObj(){ if(!S.plan) S.plan={rooms:[],items:[],board:{x:1,y:0.4},ceil:2.7,route:"ceil",res:10}; return S.plan; }
-const snapM = v => Math.round(v*10)/10;
-const gById = id => S.devices.find(d=>d.id===id&&d.group);
-const roomAt = (x,y) => planObj().rooms.find(r=>x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h);
-function itemH(it){ const P=planObj(); return it.h!==undefined?it.h:(PIT[it.type][1]??P.ceil); }
-
-// ---- Розрахунок довжин: ланцюжок від щита до найближчої точки, далі до наступної (траса по осях), плюс спуски й запас
-function planLengths(){ const P=planObj(), out={}, rooms={}, det={}, cnt={s:0,s2:0,sw:0,lt:0,ap:0}, boxes=new Set();
-  const bTop=1.8, bBot=1.2;
-  for(const g of groupsOf()){ const its=P.items.filter(i=>i.g===g.id); if(!its.length) continue;
-    let cur={x:P.board.x+0.3,y:P.board.y+0.15}, left=its.slice(), order=[], hz=0;
-    while(left.length){ left.sort((a,b)=>(Math.abs(a.x-cur.x)+Math.abs(a.y-cur.y))-(Math.abs(b.x-cur.x)+Math.abs(b.y-cur.y))); const n=left.shift(); hz+=Math.abs(n.x-cur.x)+Math.abs(n.y-cur.y); order.push(n); cur=n; }
-    let vt=P.route==="ceil"?P.ceil-bTop:bBot; order.forEach((it,i)=>{ const h=itemH(it), d=P.route==="ceil"?Math.max(0,P.ceil-h):h; vt+=i<order.length-1?2*d:d; });
-    const ends=0.5+order.length*0.3, tot=(hz+vt+ends)*(1+(P.res||0)/100);
-    out[g.id]=Math.round(tot*10)/10; det[g.id]={order,hz,vt,ends,tot};
-    rooms[g.id]=[...new Set(order.map(i=>(roomAt(i.x,i.y)||{}).name).filter(Boolean))].join(", ");
-    for(const it of order){ cnt[it.type]++; const r=roomAt(it.x,it.y); boxes.add(g.id+"|"+(r?r.id:"-")); } }
-  S.planLen=out; S.planRooms=rooms; S.planDet=det;
-  const sp=[]; if(cnt.s) sp.push(["Розетка з заземленням","16 А, 250 В",String(cnt.s),"шт."]); if(cnt.s2) sp.push(["Розетка подвійна з заземленням","16 А, 250 В",String(cnt.s2),"шт."]);
-  if(cnt.sw) sp.push(["Вимикач одноклавішний","10 А",String(cnt.sw),"шт."]); if(cnt.lt) sp.push(["Світильник (точка підключення)","",String(cnt.lt),"шт."]);
-  if(cnt.ap) sp.push(["Вивід кабелю під прилад","",String(cnt.ap),"шт."]);
-  const pod=cnt.s+cnt.s2+cnt.sw; if(pod) sp.push(["Підрозетник","Ø68 мм",String(pod+cnt.s2),"шт."]); if(boxes.size) sp.push(["Коробка розподільча","",String(boxes.size),"шт."]);
-  const all=Object.values(out).reduce((a,b)=>a+b,0); if(all) sp.push(["Труба гофрована ПВХ","Ø20 мм",fmt(Math.ceil(all),0),"м"]);
-  S.planSpec=sp; return out; }
-
-// ---- Малювання плану
-function renderPlan(){ const P=planObj(), svg=$("svg"); planLengths();
-  const xs=[0,10,P.board.x+1,...P.rooms.map(r=>r.x+r.w),...P.items.map(i=>i.x)], ys=[0,8,P.board.y+1,...P.rooms.map(r=>r.y+r.h),...P.items.map(i=>i.y)];
-  const W=Math.ceil(Math.max(...xs))+1, H=Math.ceil(Math.max(...ys))+1; svg.setAttribute("viewBox",`${-0.6*PX} ${-0.6*PX} ${(W+1.2)*PX} ${(H+1.2)*PX}`);
-  let s=`<rect x="${-0.6*PX}" y="${-0.6*PX}" width="${(W+1.2)*PX}" height="${(H+1.2)*PX}" fill="var(--panel)" data-pbg="1"/>`;
-  for(let x=0;x<=W;x+=0.5) s+=`<line x1="${x*PX}" y1="0" x2="${x*PX}" y2="${H*PX}" stroke="var(--line)" stroke-width="${x%1?0.5:1}" pointer-events="none"/>`;
-  for(let y=0;y<=H;y+=0.5) s+=`<line x1="0" y1="${y*PX}" x2="${W*PX}" y2="${y*PX}" stroke="var(--line)" stroke-width="${y%1?0.5:1}" pointer-events="none"/>`;
-  for(let x=0;x<=W;x++) s+=`<text x="${x*PX}" y="-10" font-size="10" text-anchor="middle" fill="var(--muted)" pointer-events="none">${x}</text>`;
-  for(let y=1;y<=H;y++) s+=`<text x="-12" y="${y*PX+3}" font-size="10" text-anchor="end" fill="var(--muted)" pointer-events="none">${y}</text>`;
-  P.rooms.forEach((r,i)=>{ const sel=S.psel===r.id;
-    s+=`<g data-proom="${r.id}"><rect x="${r.x*PX}" y="${r.y*PX}" width="${r.w*PX}" height="${r.h*PX}" fill="${RCOL[i%RCOL.length]}" fill-opacity=".75" stroke="${sel?"var(--blue)":"#5b616b"}" stroke-width="${sel?4:3}"/>`
-      +`<text x="${(r.x+r.w/2)*PX}" y="${(r.y+r.h/2)*PX-4}" font-size="13" font-weight="700" text-anchor="middle" fill="#2b2f36">${esc(r.name)}</text>`
-      +`<text x="${(r.x+r.w/2)*PX}" y="${(r.y+r.h/2)*PX+12}" font-size="10.5" text-anchor="middle" fill="#4a4f57">${fmt(r.w,1)} × ${fmt(r.h,1)} м · ${fmt(r.w*r.h,1)} м²</text></g>`;
-    if(sel) s+=`<circle data-pdrag="room:${r.id}:move" cx="${(r.x+r.w/2)*PX}" cy="${(r.y+r.h/2)*PX+30}" r="13" fill="var(--blue)" stroke="#fff" stroke-width="2" style="touch-action:none"/><text x="${(r.x+r.w/2)*PX}" y="${(r.y+r.h/2)*PX+34}" font-size="12" text-anchor="middle" fill="#fff" pointer-events="none">✥</text>`
-      +`<rect data-pdrag="room:${r.id}:size" x="${(r.x+r.w)*PX-12}" y="${(r.y+r.h)*PX-12}" width="24" height="24" rx="4" fill="var(--blue)" stroke="#fff" stroke-width="2" style="touch-action:none"/>`; });
-  if(S.proomA) s+=`<circle cx="${S.proomA.x*PX}" cy="${S.proomA.y*PX}" r="7" fill="var(--blue)"/>`;
-  // траси
-  const det=S.planDet||{}; let k=0;
-  for(const g of groupsOf()){ const dd=det[g.id]; if(!dd) continue; const off=(k++%5)*3-6, c=g.group.color; let cur={x:P.board.x+0.3,y:P.board.y+0.15}, d=`M${cur.x*PX+off} ${cur.y*PX+off}`;
-    for(const it of dd.order){ d+=` H${it.x*PX+off} V${it.y*PX+off}`; cur=it; }
-    s+=`<path d="${d}" fill="none" stroke="${c}" stroke-width="2.6" stroke-dasharray="7 4" stroke-linejoin="round" pointer-events="none"/>`;
-    const f=dd.order[0]; s+=`<text x="${(f.x+P.board.x)/2*PX}" y="${P.board.y*PX+off-6}" font-size="10" font-weight="700" fill="${c}" text-anchor="middle" pointer-events="none" style="paint-order:stroke;stroke:var(--panel);stroke-width:3px">${esc(desig(g))} · ${fmt(S.planLen[g.id],1)} м</text>`; }
-  // щит
-  const b=P.board; s+=`<g data-pdrag="board" style="touch-action:none"><rect x="${b.x*PX}" y="${b.y*PX}" width="${0.6*PX}" height="${0.3*PX}" rx="3" fill="#fade2a" stroke="${S.psel==="board"?"var(--blue)":"#8a6d00"}" stroke-width="${S.psel==="board"?3:1.5}"/><text x="${(b.x+0.3)*PX}" y="${(b.y+0.15)*PX+4}" font-size="11" font-weight="700" text-anchor="middle" fill="#222">ЩР</text></g>`;
-  // точки
-  for(const it of P.items){ const g=gById(it.g), c=g?g.group.color:"#8f93a2", x=it.x*PX, y=it.y*PX, sel=S.psel===it.id; let ic="";
-    if(it.type==="s"||it.type==="s2"){ const n=it.type==="s2"?2:1; for(let j=0;j<n;j++){ const cx=x+(n===2?(j?7:-7):0); ic+=`<circle cx="${cx}" cy="${y}" r="8" fill="#fff" stroke="${c}" stroke-width="2.5"/><path d="M${cx-8} ${y} a8 8 0 0 1 16 0z" fill="${c}"/>`; } }
-    if(it.type==="sw") ic=`<circle cx="${x}" cy="${y}" r="7" fill="#fff" stroke="${c}" stroke-width="2.5"/><line x1="${x+3}" y1="${y-3}" x2="${x+13}" y2="${y-13}" stroke="${c}" stroke-width="2.5"/>`;
-    if(it.type==="lt") ic=`<circle cx="${x}" cy="${y}" r="11" fill="#fffbe0" stroke="${c}" stroke-width="2.5"/><path d="M${x-8} ${y-8}L${x+8} ${y+8}M${x+8} ${y-8}L${x-8} ${y+8}" stroke="${c}" stroke-width="2"/>`;
-    if(it.type==="ap") ic=`<rect x="${x-12}" y="${y-9}" width="24" height="18" rx="3" fill="#fff" stroke="${c}" stroke-width="2.5"/><text x="${x}" y="${y+4}" font-size="9" font-weight="700" text-anchor="middle" fill="#222">${esc((it.label||"П").slice(0,3))}</text>`;
-    s+=`<g data-pitem="${it.id}" data-pdrag="item:${it.id}" style="touch-action:none">${sel?`<circle cx="${x}" cy="${y}" r="17" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`:""}<circle cx="${x}" cy="${y}" r="16" fill="transparent"/>${ic}`
-      +`<text x="${x+12}" y="${y+19}" font-size="8.5" fill="var(--muted)" pointer-events="none">${g?esc(desig(g)):"без групи"}${it.h!==undefined||PIT[it.type][1]!==null?" · h "+fmt(itemH(it),1):""}</text></g>`; }
-  svg.innerHTML=s; }
-
-// ---- Інструменти плану (у панелі внизу)
-function planHint(){ const t=S.ptool||"sel";
-  return t==="room"?(S.proomA?"Торкніться протилежного кута кімнати.":"Кімната: торкніться одного кута, потім протилежного."):t==="board"?"Торкніться місця, де висить щит."
-    :t==="del"?"Торкніться точки або кімнати, щоб видалити.":t==="sel"?"Торкніться кімнати чи точки, щоб змінити. Перетягуйте точки й щит; кімнату — за синій кружок, розмір — за квадрат."
-    :`${PIT[t][0]}: торкніться плану, щоб поставити. ${S.pgrp&&gById(S.pgrp)?"Група "+desig(gById(S.pgrp)):"Оберіть групу внизу."}`; }
-
-// ---- Приклад: квартира з двох кімнат; точки прив’язуються до груп за назвою
-function planDemo(){ const P=planObj(); P.rooms=[{id:uid("r"),name:"Передпокій",x:0,y:0,w:2.6,h:3.2},{id:uid("r"),name:"Кухня",x:2.6,y:0,w:3.4,h:3.2},{id:uid("r"),name:"Зал",x:0,y:3.2,w:4.4,h:4.2},
-    {id:uid("r"),name:"Спальня",x:4.4,y:3.2,w:3.6,h:4.2},{id:uid("r"),name:"Ванна",x:6,y:0,w:2,h:3.2}];
-  P.board={x:0.3,y:0.1}; P.items=[]; const G=groupsOf(), find=re=>G.find(g=>re.test(g.group.name)), light=find(/світл|освітл/i), kit=find(/кух/i), bath=find(/ванн|сануз/i), stove=find(/плит|духов/i), sock=find(/зал|кімнат|спальн|вітальн/i)||G.find(g=>/розет/i.test(g.group.name)&&g!==kit)||G[0];
-  const I=(type,x,y,g,ex)=>P.items.push(Object.assign({id:uid("pi"),type,x,y,g:g?g.id:null},ex||{}));
-  if(light){ I("lt",1.3,1.6,light); I("lt",4.3,1.6,light); I("lt",2.2,5.3,light); I("lt",6.2,5.3,light); I("lt",7,1.6,light); I("sw",2.4,0.6,light); I("sw",2.8,2.9,light); I("sw",0.8,3.4,light); I("sw",4.6,3.4,light); I("sw",5.8,0.6,light); }
-  if(kit){ I("s2",3.4,0.2,kit,{h:1.1}); I("s2",4.6,0.2,kit,{h:1.1}); I("s",5.8,1.5,kit); }
-  if(stove) I("ap",5.8,2.6,stove,{label:"Плита",h:0.6});
-  if(bath){ I("s",7.8,2.6,bath,{h:1.1}); I("ap",7.4,0.2,bath,{label:"Бойлер",h:1.8}); }
-  if(sock){ I("s2",0.2,5,sock); I("s",2,7.2,sock); I("s2",4.2,6.2,sock); I("s2",7.8,4.8,sock); I("s",5.4,7.2,sock); }
-  S.psel=null; }
-
-// ---- Події плану
-const svgPt = e => { const svg=$("svg"), m=svg.getScreenCTM(); if(!m) return {x:0,y:0}; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()); return {x:p.x/PX, y:p.y/PX}; };
-let PDRAG=null;
-$("svg").addEventListener("pointerdown",e=>{ if(S.mode!=="plan"||(S.ptool||"sel")!=="sel") return; const el=e.target.closest("[data-pdrag]"); if(!el) return;
-  const P=planObj(), [kind,id,how]=el.dataset.pdrag.split(":"), p=svgPt(e); let obj=kind==="board"?P.board:kind==="item"?P.items.find(x=>x.id===id):P.rooms.find(x=>x.id===id); if(!obj) return;
-  PDRAG={kind,id,how,obj,p0:p,o0:{x:obj.x,y:obj.y,w:obj.w,h:obj.h},moved:false}; try{ el.setPointerCapture(e.pointerId); }catch(_){} e.preventDefault(); });
-$("svg").addEventListener("pointermove",e=>{ if(!PDRAG) return; const p=svgPt(e), dx=p.x-PDRAG.p0.x, dy=p.y-PDRAG.p0.y; if(Math.abs(dx)+Math.abs(dy)<0.05&&!PDRAG.moved) return; PDRAG.moved=true; const o=PDRAG.obj, o0=PDRAG.o0;
-  if(PDRAG.how==="size"){ o.w=Math.max(0.5,snapM(o0.w+dx)); o.h=Math.max(0.5,snapM(o0.h+dy)); } else { o.x=Math.max(0,snapM(o0.x+dx)); o.y=Math.max(0,snapM(o0.y+dy)); } renderPlan(); e.preventDefault(); });
-$("svg").addEventListener("pointerup",e=>{ if(!PDRAG) return; const d=PDRAG; PDRAG=null; if(d.moved){ S.pnoClick=Date.now()+300; commit(false); } });
-$("svg").addEventListener("click",e=>{ if(S.mode!=="plan") return; if(S.pnoClick&&Date.now()<S.pnoClick) return; const P=planObj(), t=S.ptool||"sel", p=svgPt(e), x=Math.max(0,snapM(p.x)), y=Math.max(0,snapM(p.y));
-  const itEl=e.target.closest("[data-pitem]"), rmEl=e.target.closest("[data-proom]"), bd=e.target.closest("[data-pdrag='board']");
-  if(t==="sel"){ S.psel=itEl?itEl.dataset.pitem:bd?"board":rmEl?rmEl.dataset.proom:null; renderAll(false); return; }
-  if(t==="del"){ if(itEl) P.items=P.items.filter(i=>i.id!==itEl.dataset.pitem); else if(rmEl) P.rooms=P.rooms.filter(r=>r.id!==rmEl.dataset.proom); else return; S.psel=null; commit(); return; }
-  if(t==="room"){ if(!S.proomA){ S.proomA={x,y}; renderAll(false); return; } const a=S.proomA; S.proomA=null; const r={id:uid("r"),name:"Кімната "+(P.rooms.length+1),x:Math.min(a.x,x),y:Math.min(a.y,y),w:Math.abs(x-a.x),h:Math.abs(y-a.y)};
-    if(r.w<0.5||r.h<0.5){ toast("Кімната замала — мінімум 0,5 м","w"); renderAll(false); return; } P.rooms.push(r); S.psel=r.id; S.ptool="sel"; commit(); toast("Кімнату додано — дайте їй назву внизу","ok"); return; }
-  if(t==="board"){ P.board={x,y}; commit(); return; }
-  if(PIT[t]){ const g=S.pgrp&&gById(S.pgrp)?S.pgrp:null; P.items.push({id:uid("pi"),type:t,x,y,g}); if(!g) toast("Точку додано без групи — оберіть групу внизу","w"); commit(); } });
-document.addEventListener("click",e=>{ if(S.mode!=="plan") return; const q=s=>e.target.closest(s); let el; const P=planObj(), cur=P.items.find(i=>i.id===S.psel);
-  if(el=q("[data-ptool]")){ S.ptool=el.dataset.ptool; S.proomA=null; if(PIT[S.ptool]&&!S.pgrp){ const G=groupsOf(); const pref=S.ptool==="lt"||S.ptool==="sw"?/світл|освітл/i:/розет|кух|зал/i; S.pgrp=(G.find(g=>pref.test(g.group.name))||G[0]||{}).id||null; } renderAll(true); return; }
-  if(el=q("[data-pgrp]")){ S.pgrp=el.dataset.pgrp; renderAll(true); return; }
-  if(el=q("[data-pceil]")){ P.ceil=+el.dataset.pceil; commit(); return; }
-  if(el=q("[data-proute]")){ P.route=el.dataset.proute; commit(); return; }
-  if(el=q("[data-pres]")){ P.res=+el.dataset.pres; commit(); return; }
-  if(q("[data-pdemo]")){ planDemo(); commit(); toast("Приклад плану додано, точки прив’язано до груп за назвами","ok"); return; }
-  if(q("[data-pdocs]")){ openDocs("cab"); return; }
-  if(q("[data-pclear]")){ dialog("Очистити план?","<p>Кімнати й точки буде видалено. «Назад» поверне їх.</p>",[{label:"Скасувати"},{label:"Очистити",cls:"primary",act:()=>{ P.rooms=[]; P.items=[]; S.psel=null; commit(); }}]); return; }
-  if(q("[data-psx]")){ S.psel=null; renderAll(false); return; }
-  if(el=q("[data-pdel]")){ const id=el.dataset.pdel; P.items=P.items.filter(i=>i.id!==id); P.rooms=P.rooms.filter(r=>r.id!==id); S.psel=null; commit(); return; }
-  if(cur&&(el=q("[data-pig]"))){ cur.g=el.dataset.pig; commit(false); return; }
-  if(cur&&(el=q("[data-pih]"))){ if(el.dataset.pih==="ceil") cur.h=P.ceil; else cur.h=+el.dataset.pih; commit(false); return; } });
-document.addEventListener("change",e=>{ if(S.mode!=="plan") return; const t=e.target, P=planObj(), r=P.rooms.find(x=>x.id===S.psel), it=P.items.find(x=>x.id===S.psel);
-  if(r&&t.dataset.prname!==undefined){ r.name=t.value.trim()||r.name; commit(false); return; }
-  if(r&&t.dataset.prw!==undefined){ r.w=Math.max(0.5,snapM(+t.value||r.w)); commit(false); return; }
-  if(r&&t.dataset.prh!==undefined){ r.h=Math.max(0.5,snapM(+t.value||r.h)); commit(false); return; }
-  if(it&&t.dataset.pilab!==undefined){ it.label=t.value.trim(); commit(false); return; } });
 /* ===== Проєкти, майстер нового щита, корпус, обладнання, «Скасувати», демо-панель ===== */
 // ---- Діалог
 let DLG=[];
@@ -3241,5 +3102,5 @@ document.addEventListener("toggle",e=>{ if(e.target.id==="wireDD") S.wListOpen=e
 })();
 
 // На широкому екрані щит одразу вписується у висоту
-(function(){ const fit=()=>{ if(window.innerWidth>=900&&S.mode!=="plan"){ const z=fitZoom(); if(z<1){ S.zoom=z; renderAll(false); } } }; setTimeout(fit,50); let t=null; window.addEventListener("resize",()=>{ clearTimeout(t); t=setTimeout(fit,200); }); })();
+(function(){ const fit=()=>{ if(window.innerWidth>=900){ const z=fitZoom(); if(z<1){ S.zoom=z; renderAll(false); } } }; setTimeout(fit,50); let t=null; window.addEventListener("resize",()=>{ clearTimeout(t); t=setTimeout(fit,200); }); })();
 </script></body></html>
