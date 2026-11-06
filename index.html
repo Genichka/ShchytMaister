@@ -364,7 +364,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.7.0", date:"2026-11-03", notes:["Новий апарат: перемикач I–0–II 2P 63 А на 4 модулі (тип TOMZN TO219G) — I: клеми 1–2 і 5–6, «0»: усе розімкнено, II: 1–4 і 5–8; дотик по ручці або вибір положення в «Налаштуваннях»","Новий приклад «Мережа + генератор через перемикач I–0–II» з демонстрацією; перемикач є і в помічнику (крок «Перемикання вводів»)","Меню → «Вийти з застосунку»"] };
+const APP = { v:"4.8.0", date:"2026-11-06", notes:["Новий апарат: АВР TOMZN TOQ5-125/2 з поворотною ручкою на 6 модулів — зверху Source A (мережа, пріоритет), знизу Source B (генератор) і окремі клеми навантаження Load; індикатори A/B, повзунок Manual/Auto","Клеми керування AR/AN і BR/BN: блок керування бачить джерела лише через комплектні перемички; сигнальні контакти NC–C–NO для кожного вводу","Новий приклад «Мережа + генератор: АВР TOMZN TOQ5-125/2» з демонстрацією і лампою «Від генератора»; апарат є в помічнику, перевірка підкаже про не підключені AR/AN, BR/BN"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -834,6 +834,50 @@ defType("to219",{name:"Перемикач I–0–II 2P 63 А (тип TOMZN TO21
       +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${g.x+8}" y="${hy}" width="${g.w-30}" height="20" rx="3" fill="#f4f5f7" stroke="#8e939b"/><rect x="${g.cx-30}" y="${hy+4}" width="44" height="12" rx="2" fill="#e3e5e9" stroke="#b0b4bb"/></g>`
       +tx(g.x+g.w-6,g.y+90,"II",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+114,"0",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+138,"I",{fs:8,fw:700,a:"end"})
       +tx(g.cx,g.y+157,p===1?"I · 1–2, 5–6 · мережа":p===2?"II · 1–4, 5–8 · генератор":"0 · усе розімкнено",{fs:6.8,fw:600}); }});
+// АВР TOMZN TOQ5-…/2 з поворотною ручкою, 6 модулів (мережа + генератор). Зверху Source A (R, N) — мережа, пріоритет;
+// знизу Source B (R, N) — генератор, і окремі клеми навантаження Load (R, N). Блок керування бачить напругу лише через
+// клеми AR/AN і BR/BN — їх з’єднують із силовими клемами комплектними перемичками. NC–C–NO: сигнальні контакти положення
+// (зверху — «на вводі A», знизу — «на вводі B»). Перемикання < 10 мс, без витримок; повзунок Manual/Auto — ручний режим.
+defType("toq5",{name:"АВР TOMZN TOQ5 2P з ручкою (мережа + генератор)", short:"АВР TOQ5", cat:"Комутація", w:6, pre:"QA", maker:"TOMZN",
+  ratings:["63","100","125"], def:"125", unit:" А",
+  terms:[{k:"RA",s:"top",r:"L",l:"R (A)",m:0.3,nl:1},{k:"NA",s:"top",r:"N",l:"N (A)",m:1.5,nl:1},
+    {k:"AR",s:"top",r:"L",l:"AR",m:3.0,nl:1},{k:"AN",s:"top",r:"N",l:"AN",m:3.55,nl:1},{k:"NCA",s:"top",r:"C",l:"NC (A)",m:4.1,nl:1},{k:"CA",s:"top",r:"C",l:"C (A)",m:4.65,nl:1},{k:"NOA",s:"top",r:"C",l:"NO (A)",m:5.2,nl:1},
+    {k:"RB",s:"bot",r:"L",l:"R (B)",m:0.05,nl:1},{k:"NB",s:"bot",r:"N",l:"N (B)",m:0.75,nl:1},{k:"RL",s:"bot",r:"L",l:"R (Load)",m:1.45,nl:1},{k:"NL",s:"bot",r:"N",l:"N (Load)",m:2.15,nl:1},
+    {k:"BR",s:"bot",r:"L",l:"BR",m:3.0,nl:1},{k:"BN",s:"bot",r:"N",l:"BN",m:3.55,nl:1},{k:"NCB",s:"bot",r:"C",l:"NC (B)",m:4.1,nl:1},{k:"CB",s:"bot",r:"C",l:"C (B)",m:4.65,nl:1},{k:"NOB",s:"bot",r:"C",l:"NO (B)",m:5.2,nl:1}],
+  poles:[{a:"RA",b:"RL",r:"L"},{a:"NA",b:"NL",r:"N"},{a:"RB",b:"RL",r:"L"},{a:"NB",b:"NL",r:"N"},
+    {a:"CA",b:"NOA",r:"C"},{a:"CA",b:"NCA",r:"C"},{a:"CB",b:"NOB",r:"C"},{a:"CB",b:"NCB",r:"C"}],
+  closed:(d,pi)=>{ const A=d.pos==="A"; return [A,A,!A,!A,A,!A,!A,A][pi]; },
+  init:d=>{ d.pos=d.pos||"A"; d.manual=!!d.manual; }, cap:"Мережа / генератор",
+  logic(d,X){ const ok=(a,b)=>{ const u=X.volt(K(d,a),K(d,b)); return u>=187&&u<=253; }, okA=ok("AR","AN"), okB=ok("BR","BN");
+    d.ok=[okA,okB]; d.pw=okA||okB;
+    if(d.manual||!d.pw) return false; const t=okA?"A":"B";
+    if(t!==d.pos){ d.pos=t; logp(t==="A"?"ok":"w",`${desig(d)}: навантаження переведено на Source ${t} (${t==="A"?"мережа":"генератор"}), < 10 мс`); return true; } return false; },
+  tap(d,el){ if(el&&el.dataset.zone==="mode"){ d.manual=!d.manual; logp("w",`${desig(d)}: повзунок у положенні ${d.manual?"Manual — ручний режим":"Auto — автоматичний режим"}`); return true; }
+    if(!d.manual){ toast("Ручка працює лише в режимі Manual — пересуньте повзунок Manual/Auto","w"); return false; }
+    d.pos=d.pos==="A"?"B":"A"; logp("w",`${desig(d)}: ручкою переведено на Source ${d.pos}`); return true; },
+  face(d,g){ const X0=g.x-1, tx_=m=>X0+(m+0.5)*G.MW, A=d.pos==="A", pw=!!d.pw, ok=d.ok||[false,false], cx0=g.x+82, cy0=g.y+106,
+      ang=A?-38:38, lab=(x,y,t)=>`<rect x="${x-21}" y="${y-7}" width="42" height="10" rx="1.5" fill="none" stroke="#5c616b" stroke-width=".8"/>`+tx(x,y+0.6,t,{fs:6.2});
+    let s=`<line x1="${g.x+176}" y1="${g.y+48}" x2="${g.x+176}" y2="${g.y+162}" stroke="#b9bcc4"/>`;
+    // надписи клем, як на корпусі
+    [["RA","R"],["NA","N"],["AR","AR"],["AN","AN"],["NCA","NC"],["CA","C"],["NOA","NO"]].forEach(([k,l])=>{ const m=T.toq5.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+42,l,{fs:k.length>2||k==="AR"||k==="AN"?6.4:8,fw:700}); });
+    [["RB","R"],["NB","N"],["RL","R"],["NL","N"],["BR","BR"],["BN","BN"],["NCB","NC"],["CB","C"],["NOB","NO"]].forEach(([k,l])=>{ const m=T.toq5.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+160,l,{fs:l.length>1?6.4:8,fw:700}); });
+    s+=lab(g.x+76,g.y+62,"Source A")+lab((tx_(0.05)+tx_(0.75))/2,g.y+146,"Source B")+lab((tx_(1.45)+tx_(2.15))/2,g.y+146,"Load");
+    // поворотна ручка
+    s+=`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${cx0}" cy="${cy0}" r="31" fill="#f1f2f4" stroke="#b9bcc4" stroke-width="1.5"/>`
+      +`<path d="M${cx0+24} ${cy0-20} A31 31 0 0 1 ${cx0+24} ${cy0+20}" fill="none" stroke="#5c616b" stroke-width="1.2" marker-end="none"/>`
+      +`<g transform="rotate(${ang} ${cx0} ${cy0})"><rect x="${cx0-20}" y="${cy0-6}" width="50" height="12" rx="6" fill="#e0352b" stroke="#9e1e17" stroke-width="1"/><circle cx="${cx0}" cy="${cy0}" r="10" fill="#d42d24" stroke="#9e1e17"/><circle cx="${cx0}" cy="${cy0}" r="2.5" fill="#7a1611"/></g></g>`
+      +`<circle cx="${cx0+40}" cy="${cy0-30}" r="6" fill="none" stroke="#5c616b" stroke-width=".8"/>`+tx(cx0+40,cy0-27.5,"A",{fs:7,fw:700})
+      +`<circle cx="${cx0+40}" cy="${cy0+30}" r="6" fill="none" stroke="#5c616b" stroke-width=".8"/>`+tx(cx0+40,cy0+32.5,"B",{fs:7,fw:700});
+    // блок керування: тип, стан вводів, індикатори A/B, повзунок Manual/Auto
+    s+=tx(g.x+232,g.y+70,`Type: TOQ5-${d.rating||"125"}/2`,{fs:7.4,fw:700})+tx(g.x+232,g.y+80,`${d.rating||"125"} A · 220 V~ · < 10 мс`,{fs:5.8});
+    s+=tx(g.x+184,g.y+98,"Ⅰ мережа: "+(ok[0]?"є":"немає"),{fs:6.4,a:"start",fill:ok[0]?"#1b855e":"#7a7e86",fw:600})
+      +tx(g.x+184,g.y+110,"Ⅱ генератор: "+(ok[1]?"є":"немає"),{fs:6.4,a:"start",fill:ok[1]?"#1b855e":"#7a7e86",fw:600});
+    s+=led(g.x+298,g.y+94,pw&&A?"#ff4a3d":"#8f949c")+tx(g.x+311,g.y+97,"A",{fs:8,fw:700})+led(g.x+298,g.y+146,pw&&!A?"#3fbf4a":"#8f949c")+tx(g.x+311,g.y+149,"B",{fs:8,fw:700});
+    s+=`<g data-lever="${d.id}" data-zone="mode" style="cursor:pointer"><rect x="${g.x+250}" y="${g.y+104}" width="64" height="32" fill="transparent"/>`
+      +tx(g.x+284,g.y+113,"Manual",{fs:6.2,a:"end"})+tx(g.x+284,g.y+133,"Auto",{fs:6.2,a:"end"})
+      +`<rect x="${g.x+290}" y="${g.y+104}" width="16" height="32" rx="4" fill="#2a2d33"/><rect x="${g.x+292}" y="${d.manual?g.y+106:g.y+120}" width="12" height="14" rx="3" fill="#e0352b"/></g>`
+      +tx(g.x+232,g.y+128,d.manual?"РУЧНИЙ":"АВТО",{fs:7,fw:700,fill:d.manual?"#c25e00":"#1b855e"});
+    return s; }});
 /* ===== Розумний будинок і DC-апарати ===== */
 const online = (d,X) => X.volt(K(d,"L"),K(d,"N"))>=150;
 const onlineLogic = (d,X) => { const o=online(d,X); if(o!==!!d.online){ d.online=o; return true; } return false; };
@@ -1191,9 +1235,9 @@ function devSVG(d){
   const sr=t.terms.filter(q=>q.s==="top").length>w/27?9:11;
   const bx=t.terms.filter(q=>q.s==="bot").map(q=>termX(d,q)).sort((a,c)=>a-c), side=bx.every((v,i)=>!i||v-bx[i-1]>=44);
   for(const tm of t.terms){ const X=termX(d,tm);
-    if(tm.s==="top") s+=screw(X,y+22,sr)+tx(X,y+42,tm.l,{fs:6.8});
+    if(tm.s==="top") s+=screw(X,y+22,sr)+(tm.nl?"":tx(X,y+42,tm.l,{fs:6.8}));   // nl — підпис малює сам апарат
     else { const lw=String(tm.l).length*3.9, fitL=X-sr-2-lw>=x+2, fitR=X+sr+2+lw<=x+w-2;   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку
-      s+=screw(X,y+H-22,sr)+((side||Math.abs(X-cx)<w/5)&&(fitL||fitR)
+      s+=screw(X,y+H-22,sr)+(tm.nl?"":(side||Math.abs(X-cx)<w/5)&&(fitL||fitR)
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-36,tm.l,{fs:6.8})); } }
   const bn=brandName(d); s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
@@ -1311,6 +1355,10 @@ function runChecks(){
   if(!roleErr&&S.wires.length) add("ok","Кольори дротів відповідають клемам","Фаза, нуль (синій), PE (жовто-зелений), керування, DC + і −.");
   for(const [k,n] of Object.entries(cnt)) if(n>2&&!/^x(n|pe):/.test(k)) add("w",`${termName(k)}: ${n} дроти під одним гвинтом`,"Більше двох дротів під клемою — ненадійний контакт. Використайте шину або клемник.");
   for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до апарата або шини."); }
+  // TOQ5: блок керування бачить джерела лише через клеми AR/AN і BR/BN
+  for(const d of S.devices) if(d.type==="toq5"){ const free=t=>!S.wires.some(w=>w.a===K(d,t)||w.b===K(d,t));
+    if(free("AR")||free("AN")) add("w",`${desig(d)}: не підключено клеми керування AR/AN`,"Блок керування TOQ5 бачить мережу лише через AR і AN. З’єднайте їх комплектними перемичками з клемами R і N Source A — інакше апарат не перейде назад на мережу.",{dev:d.id});
+    if(free("BR")||free("BN")) add("w",`${desig(d)}: не підключено клеми керування BR/BN`,"Без перемичок від R і N Source B апарат не бачить генератор і не перемкнеться на нього.",{dev:d.id}); }
   const pe=b.inputs.find(i=>i.terms.includes("PE"));
   if(pe&&b.xpe){ if(f0(pe.id+":PE")!==f0("xpe:0")) add("e","Шина PE не з’єднана з вводом PE","Захисний провідник має йти на XPE1 напряму, без апаратів."); else add("ok","Шина PE підключена до вводу напряму"); }
   for(const iv of b.inputs.filter(i=>i.inv)){ const gi=b.inputs.find(i=>!i.inv&&i.terms.includes("N"));
@@ -1520,6 +1568,35 @@ TPL.ats_to219 = { name:"Мережа + генератор через перем�
       {say:"…у положення I — знову мережа. Генератор можна глушити.", do(){ qsPos(1); }, wait:3},
       {say:"Кінець демонстрації.", do(){ say("in2",false); }, wait:1}]},
   checks(add){ add("ok","Мережа й генератор механічно розведені","Перемикач I–0–II не може з’єднати вводи навіть на мить: між I і II завжди є «0»."); }};
+
+// АВР TOMZN TOQ5-125/2 з ручкою: мережа на Source A (зверху), генератор на Source B і навантаження Load (знизу)
+const tqA = () => byDes("QA1");
+const tqName = a => a ? `${a.manual?"Manual":"Auto"} · Source ${a.pos} (${a.pos==="A"?"мережа":"генератор"})` : "—";
+TPL.ats_toq5 = { name:"Мережа + генератор: АВР TOMZN TOQ5-125/2 з ручкою", cat:"АВР на 2 вводи",
+  info:"АВР на 6 модулів з поворотною ручкою. Зверху Source A — мережа (пріоритет), знизу Source B — генератор і окремі клеми навантаження Load. Блок керування бачить напругу лише через клеми AR/AN і BR/BN — їх з’єднують із силовими клемами комплектними перемичками. Перемикання < 10 мс, без витримок. Повзунок Manual/Auto: у Manual навантаження перекидають ручкою. Сигнальний контакт C–NO знизу замикається, коли апарат на генераторі, — тут він засвічує лампу HL1.",
+  build(){ tplStart(ATS_BOARD());
+    const qf1=D("qf2p",0,0,"C63",{cap:"Ввід 1 мережа"}), qf2=D("qf2p",0,2,"C63",{cap:"Ввід 2 генератор"}), qa=D("toq5",0,4,"125"), qd=D("rcd",0,10,"63");
+    const g=atsGroups(1,0); wireIn(qf1,16); wireIn(qf2,16,null,"in2");
+    W(k(qf1,"b1"),k(qa,"RA"),"L",16); W(k(qf1,"b2"),k(qa,"NA"),"N",16); W(k(qf2,"b1"),k(qa,"RB"),"L",16); W(k(qf2,"b2"),k(qa,"NB"),"N",16);
+    // комплектні перемички: силові клеми → клеми керування
+    W(k(qa,"RA"),k(qa,"AR"),"L",1.5); W(k(qa,"NA"),k(qa,"AN"),"N",1.5); W(k(qa,"RB"),k(qa,"BR"),"L",1.5); W(k(qa,"NB"),k(qa,"BN"),"N",1.5);
+    W(k(qa,"RL"),k(qd,"t1"),"L",16); W(k(qa,"NL"),k(qd,"t2"),"N",16); W(k(qd,"b1"),k(g,"t1"),"L",10); W(k(qd,"b2"),"xn:0","N",10);
+    // лампа «Від генератора» через сигнальний контакт C–NO вводу B
+    const hl=D("hl",1,4,"",{cap:"Від генератора", col:"#ffb21f"});
+    W(k(qd,"b1"),k(qa,"CB"),"C",1.5); W(k(qa,"NOB"),k(hl,"X1"),"C",1.5); W(k(hl,"X2"),"xn:1","N",1.5); },
+  demo:{ controls:[...ATS_CTRL,{type:"toggle",label:"Повзунок Manual (ручний режим)",get:()=>!!(tqA()||{}).manual,set(v){ const a=tqA(); a.manual=v; logp("w",`QA1: ${v?"Manual":"Auto"}`); }}],
+    status:atsStatus(()=>{ const a=tqA(), lamp=a&&a.pos==="B"&&/генер/.test(feedFrom()); return [["TOQ5 QA1",tqName(a),a&&a.manual?"w":"ok"],["Лампа HL1 «Від генератора»",lamp?"світиться":"не світиться",lamp?"w":""]]; }),
+    script:[
+      {say:"Мережа є, генератор зупинено. TOQ5 на Source A — світиться червоний індикатор A.", do(){ say("in",true,230); say("in2",false); tqA().manual=false; }, wait:4},
+      {say:"Мережу відключили — щит знеструмлено, індикатори згасли.", do(){ say("in",false); }, wait:3},
+      {say:"Запускаємо генератор. Через клеми BR/BN блок керування бачить напругу й за < 10 мс переводить навантаження на Source B.", do(){ say("in2",true,230); }, wait:4},
+      {say:"Сигнальний контакт C–NO знизу замкнувся — лампа HL1 «Від генератора» світиться.", do(){}, wait:3},
+      {say:"Мережа повернулась. Пріоритет у Source A — апарат одразу повертається на мережу, лампа гасне.", do(){ say("in",true,230); }, wait:4},
+      {say:"Повзунок у Manual, ручкою переводимо на B: так перевіряють генератор під навантаженням, коли мережа є.", do(){ say("in2",true,230); const a=tqA(); a.manual=true; a.pos="B"; }, wait:5},
+      {say:"Повертаємо Auto — апарат сам іде на мережу.", do(){ tqA().manual=false; }, wait:4},
+      {say:"Кінець демонстрації. Генератор можна глушити.", do(){ say("in2",false); }, wait:1}]},
+  checks(add){ const a=tqA(), on=t=>a&&S.wires.some(w=>w.a===k(a,t)||w.b===k(a,t));
+    if(on("AR")&&on("AN")&&on("BR")&&on("BN")) add("ok","Перемички AR/AN і BR/BN на місці","Блок керування бачить обидва джерела. Без перемичок TOQ5 не перемикається сам."); }};
 
 TPL.ats_logo = { name:"АВР на Siemens LOGO! + 2 контактори", cat:"АВР на 2 вводи",
   info:`Програма LOGO!: Q1 (мережа) вмикається через ${LOGO_T.T1} с стабільної мережі; після її зникнення через ${LOGO_T.T2} с і ${LOGO_T.T3} с роботи генератора — Q2. Між перемиканнями пауза ${LOGO_T.DEAD} с. Контактори мають електричне блокування через НЗ-контакти 21–22. Живлення LOGO! перемикає реле K1.`,
@@ -1886,7 +1963,7 @@ TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, л�
 const $ = id => document.getElementById(id);
 let toastT=null;
 function toast(msg,cls=""){ if(S.quiet) return; const t=$("toast"); t.textContent=msg; t.className="toast "+cls; t.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,2600); }
-const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","kvf","kvf2","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","ats","to219","qs","km2a","km3a"]],
+const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","kvf","kvf2","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","ats","toq5","to219","qs","km2a","km3a"]],
   ["Керування",["sbp","sbs","hl","rel","kt","kimp","stair","photo","logo"]],["Двигуни",["qm"]],["Розподіл",["xtb","sock"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
 const TPL_ORDER = ["Конструктор","Квартира і будинок","АВР на 2 вводи","Сонячна станція","Двигуни"];
 let clearArm=0;
@@ -1894,7 +1971,7 @@ function applyTemplate(name){ const t=TPL[name]||TPL.flat; t.build(); S.tpl=TPL[
   Object.assign(S,{pend:null,selWire:null,selDev:null,pick:null,heat:{},log:[],demo:null}); S.leak.clear(); S.short.clear(); S.leakWarned.clear(); S.arc.clear(); S.arcWarned.clear();
   if(typeof resetHistory==="function"){ resetHistory(); S.baseSig=structSnap(); } if(typeof hideDemoBar==="function") hideDemoBar(); save(); }
 function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=230; s.lost={}; }
-  for(const d of S.devices){ const t=T[d.type]; if(t.prot||t.rcd){ d.on=true; d.trip=null; } d.pulled=false; d.pressed=false; if(d.type==="logo"||d.type==="kv") { delete d.ks; if(t.init) t.init(d); } if(d.type==="ats") d.manual=false; if(d.type==="spdc") d.wear=0; }
+  for(const d of S.devices){ const t=T[d.type]; if(t.prot||t.rcd){ d.on=true; d.trip=null; } d.pulled=false; d.pressed=false; if(d.type==="logo"||d.type==="kv") { delete d.ks; if(t.init) t.init(d); } if(d.type==="ats"||d.type==="toq5") d.manual=false; if(d.type==="spdc") d.wear=0; }
   for(const f of S.field){ Object.assign(f,{jam:false,cap:true,fault:false,faultT:0,en:true,run:false,dead:false}); if(f.type==="valve") f.pos=100; }
   S.env=JSON.parse(JSON.stringify(S.env0||{})); S.heat={}; S.log=[]; S.leak.clear(); S.short.clear(); S.leakWarned.clear(); S.arc.clear(); S.arcWarned.clear(); }
 function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
@@ -2005,6 +2082,7 @@ function devSet(d){ const t=T[d.type]; let s="";
   if(d.type==="photo") s+=[10,20,40].map(v=>chip(`data-th="${v}"`,d.th===v,"поріг "+v+" %")).join("");
   if(d.type==="to219"||d.type==="qs") s+=`<span class="bl">Положення</span>`+[[1,"I"],[0,"0"],[2,"II"]].map(([v,l])=>chip(`data-qpos="${v}"`,d.pos===v,l,"mono")).join("");
   if(d.type==="ats") s+=chip(`data-atsm="0"`,!d.manual,"Автоматичний")+chip(`data-atsm="1"`,!!d.manual,"Ручний")+chip(`data-atsv="tomzn"`,d.variant==="tomzn","TOMZN")+chip(`data-atsv="geya"`,d.variant==="geya","GEYA");
+  if(d.type==="toq5") s+=chip(`data-atsm="0"`,!d.manual,"Auto — автоматичний")+chip(`data-atsm="1"`,!!d.manual,"Manual — ручний")+`<span class="bl">Ручка</span>`+["A","B"].map(v=>chip(`data-tqpos="${v}"`,d.pos===v,v==="A"?"A · мережа":"B · генератор","mono")).join("");
   if(d.type==="ssw") s+=chip(`data-cmd="1"`,!!d.cmd,"Увімкнути з застосунку")+chip(`data-cmd="0"`,!d.cmd,"Вимкнути");
   if(d.type==="hl") s+=[["#3fbf4a","Зелений"],["#e23b3b","Червоний"],["#ffb21f","Жовтий"]].map(([c,l])=>chip(`data-hlc="${c}"`,d.col===c,l)).join("");
   return s; }
@@ -2146,7 +2224,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(S.selWire===id){ S.selWire=null; renderAll(); } else selectWire(id); return; }
   if(el=q("[data-press]")){ if(S.mode==="wire") return; livePress(devById(el.dataset.press)); return; }
   if(el=q("[data-lever]")){ if(S.mode==="wire") return; const d=devById(el.dataset.lever), t=T[d.type];
-    if(t.tap){ if(t.tap(d)) commit(false); return; }
+    if(t.tap){ if(t.tap(d,el)) commit(false); return; }
     if(t.prot||t.rcd){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; S.heat[d.id]=0; } commit(false); } return; }
   if(el=q("[data-test]")){ const d=devById(el.dataset.test), X=evaluate({extra:shortsExtra()});
     if(d.on&&!d.trip&&X.volt(k(d,"t1"),k(d,"t2"))>=150){ trip(d,"кнопка «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює, лише коли ПЗВ під напругою і ввімкнений","w"); return; }
@@ -2188,6 +2266,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(el=q("[data-atsm]")){ d.manual=el.dataset.atsm==="1"; commit(false); return; }
     if(el=q("[data-qpos]")){ d.pos=+el.dataset.qpos; delete d.seqI; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); commit(false); return; }
     if(el=q("[data-atsv]")){ d.variant=el.dataset.atsv; commit(false); return; }
+    if(el=q("[data-tqpos]")){ if(!d.manual){ toast("Ручка працює лише в режимі Manual","w"); return; } d.pos=el.dataset.tqpos; logp("w",`${desig(d)}: ручкою переведено на Source ${d.pos}`); commit(false); return; }
     if(el=q("[data-cmd]")){ d.cmd=el.dataset.cmd==="1"; commit(false); return; }
     if(el=q("[data-hlc]")){ d.col=el.dataset.hlc; commit(false); return; }
     if(q("#devToggle")){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; } commit(false); return; }
@@ -2363,7 +2442,7 @@ function symSVG(n,x,y){ const L=(a,b2,c,d2,w)=>`<line x1="${a}" y1="${b2}" x2="$
   if(t.rcd&&t.prot) return sw(true)+oval;
   if(t.rcd) return sw(false)+oval+`<text x="${x+10}" y="${y+42}" font-size="7">ΔI</text>`;
   if(t.prot) return sw(true);
-  if(t.meter) return box("kWh"); if(d.type==="kv") return box("U"); if(d.type==="pef") return box("L→"); if(d.type==="ats") return box("АВР"); if(d.type==="to219") return box("I-0-II");
+  if(t.meter) return box("kWh"); if(d.type==="kv") return box("U"); if(d.type==="pef") return box("L→"); if(d.type==="ats"||d.type==="toq5") return box("АВР"); if(d.type==="to219") return box("I-0-II");
   if(/^km|^kimp|^stair|^ssw|^photo|^rel/.test(d.type)) return sw(false,true);
   return sw(false); }
 
@@ -2458,7 +2537,7 @@ function stepOpts(id,kind){
   if(id==="main") return kind==="3ph"?[...R("qf3p",["C25","C32","C40"]),...R("qf4p",["C25","C32","C40"])]:R("qf2p",["C25","C32","C40","C50","C63"]);
   if(id==="prot") return kind==="3ph"?[["kvf",null,"Реле контролю фаз (обрив, чергування, напруга)"],["spdac",null,"УЗІП Т2 1P+N (AC)"]]
     :[...R("kv",["40","63"],"Реле напруги"),["spdac",null,"УЗІП Т2 1P+N (AC)"]];
-  if(id==="ats") return [["ats",null,"Модуль АВР TOMZN (тип TOQ5)",{variant:"tomzn"}],["to219",null,"Перемикач I–0–II TOMZN (тип TO219G), ручний"],["ats",null,"Модуль АВР GEYA (тип G2R)",{variant:"geya"}],
+  if(id==="ats") return [["ats",null,"Модуль АВР TOMZN (тип TOQ5)",{variant:"tomzn"}],["toq5","125","АВР TOMZN TOQ5-125/2 з ручкою, 6 модулів (мережа + генератор)"],["to219",null,"Перемикач I–0–II TOMZN (тип TO219G), ручний"],["ats",null,"Модуль АВР GEYA (тип G2R)",{variant:"geya"}],
     ["km2a",null,"Контактор 2НВ + блок 1НВ/1НЗ (для АВР на контакторах)"],["rel",null,"Реле проміжне 1CO (блокування)"],["logo",null,"Siemens LOGO! 230RCE (АВР на контролері)"]];
   if(id==="rcd") return kind==="3ph"?[...R("rcd4",["40","63"]),...R("rcd",["40","63"])]:[...R("rcd",["25","40","63"]),...R("rcbo",["B16","C16"])];
   if(id==="groups") return [["qf1p","B10","Автомат 1P B10 — освітлення"],["qf1p","B16","Автомат 1P B16 — розетки"],["qf1p","C16","Автомат 1P C16 — котел, насос"],
@@ -2489,7 +2568,7 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), f0=build({allOpen:tru
     ...(kind==="2in"||kind==="2inv"?[{id:"ats", t:kind==="2inv"?"Перемикання мережа ↔ інвертор: модуль АВР":"Перемикання вводів: модуль АВР або два контактори",
       h:kind==="2inv"?"Мережа — на ввід I модуля АВР, вихід інвертора — на ввід II. АВР має перемикати і фазу, і нуль. Вихід інвертора ніколи не можна з’єднувати з мережею — інвертор згорить."
         :"Модуль АВР — найпростіше. Контактори з блокуванням через НЗ-контакти 21–22 — класика. Головне, щоб вводи ніколи не з’єднались між собою.",
-      done:()=>has("ats","to219")||S.devices.filter(d=>d.type==="km2a").length>=2, short:"Перемикання вводів", act:["Обрати АВР",null]}]:[]),
+      done:()=>has("ats","toq5","to219")||S.devices.filter(d=>d.type==="km2a").length>=2, short:"Перемикання вводів", act:["Обрати АВР",null]}]:[]),
     ...(b.noRcd?[]:[{id:"rcd", opt:kind==="3ph", t:"Захист людей: ПЗВ або диф-автомати",
       h:"ПЗВ 30 мА вимикає лінію при витоку струму на корпус. Номінал ПЗВ — не менший за ввідний автомат.",
       done:()=>has("rcd","rcd4","rcbo"), short:"Захист людей", act:["Обрати ПЗВ",null]}]),

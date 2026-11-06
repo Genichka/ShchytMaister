@@ -100,3 +100,47 @@ defType("to219",{name:"Перемикач I–0–II 2P 63 А (тип TOMZN TO21
       +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${g.x+8}" y="${hy}" width="${g.w-30}" height="20" rx="3" fill="#f4f5f7" stroke="#8e939b"/><rect x="${g.cx-30}" y="${hy+4}" width="44" height="12" rx="2" fill="#e3e5e9" stroke="#b0b4bb"/></g>`
       +tx(g.x+g.w-6,g.y+90,"II",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+114,"0",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+138,"I",{fs:8,fw:700,a:"end"})
       +tx(g.cx,g.y+157,p===1?"I · 1–2, 5–6 · мережа":p===2?"II · 1–4, 5–8 · генератор":"0 · усе розімкнено",{fs:6.8,fw:600}); }});
+// АВР TOMZN TOQ5-…/2 з поворотною ручкою, 6 модулів (мережа + генератор). Зверху Source A (R, N) — мережа, пріоритет;
+// знизу Source B (R, N) — генератор, і окремі клеми навантаження Load (R, N). Блок керування бачить напругу лише через
+// клеми AR/AN і BR/BN — їх з’єднують із силовими клемами комплектними перемичками. NC–C–NO: сигнальні контакти положення
+// (зверху — «на вводі A», знизу — «на вводі B»). Перемикання < 10 мс, без витримок; повзунок Manual/Auto — ручний режим.
+defType("toq5",{name:"АВР TOMZN TOQ5 2P з ручкою (мережа + генератор)", short:"АВР TOQ5", cat:"Комутація", w:6, pre:"QA", maker:"TOMZN",
+  ratings:["63","100","125"], def:"125", unit:" А",
+  terms:[{k:"RA",s:"top",r:"L",l:"R (A)",m:0.3,nl:1},{k:"NA",s:"top",r:"N",l:"N (A)",m:1.5,nl:1},
+    {k:"AR",s:"top",r:"L",l:"AR",m:3.0,nl:1},{k:"AN",s:"top",r:"N",l:"AN",m:3.55,nl:1},{k:"NCA",s:"top",r:"C",l:"NC (A)",m:4.1,nl:1},{k:"CA",s:"top",r:"C",l:"C (A)",m:4.65,nl:1},{k:"NOA",s:"top",r:"C",l:"NO (A)",m:5.2,nl:1},
+    {k:"RB",s:"bot",r:"L",l:"R (B)",m:0.05,nl:1},{k:"NB",s:"bot",r:"N",l:"N (B)",m:0.75,nl:1},{k:"RL",s:"bot",r:"L",l:"R (Load)",m:1.45,nl:1},{k:"NL",s:"bot",r:"N",l:"N (Load)",m:2.15,nl:1},
+    {k:"BR",s:"bot",r:"L",l:"BR",m:3.0,nl:1},{k:"BN",s:"bot",r:"N",l:"BN",m:3.55,nl:1},{k:"NCB",s:"bot",r:"C",l:"NC (B)",m:4.1,nl:1},{k:"CB",s:"bot",r:"C",l:"C (B)",m:4.65,nl:1},{k:"NOB",s:"bot",r:"C",l:"NO (B)",m:5.2,nl:1}],
+  poles:[{a:"RA",b:"RL",r:"L"},{a:"NA",b:"NL",r:"N"},{a:"RB",b:"RL",r:"L"},{a:"NB",b:"NL",r:"N"},
+    {a:"CA",b:"NOA",r:"C"},{a:"CA",b:"NCA",r:"C"},{a:"CB",b:"NOB",r:"C"},{a:"CB",b:"NCB",r:"C"}],
+  closed:(d,pi)=>{ const A=d.pos==="A"; return [A,A,!A,!A,A,!A,!A,A][pi]; },
+  init:d=>{ d.pos=d.pos||"A"; d.manual=!!d.manual; }, cap:"Мережа / генератор",
+  logic(d,X){ const ok=(a,b)=>{ const u=X.volt(K(d,a),K(d,b)); return u>=187&&u<=253; }, okA=ok("AR","AN"), okB=ok("BR","BN");
+    d.ok=[okA,okB]; d.pw=okA||okB;
+    if(d.manual||!d.pw) return false; const t=okA?"A":"B";
+    if(t!==d.pos){ d.pos=t; logp(t==="A"?"ok":"w",`${desig(d)}: навантаження переведено на Source ${t} (${t==="A"?"мережа":"генератор"}), < 10 мс`); return true; } return false; },
+  tap(d,el){ if(el&&el.dataset.zone==="mode"){ d.manual=!d.manual; logp("w",`${desig(d)}: повзунок у положенні ${d.manual?"Manual — ручний режим":"Auto — автоматичний режим"}`); return true; }
+    if(!d.manual){ toast("Ручка працює лише в режимі Manual — пересуньте повзунок Manual/Auto","w"); return false; }
+    d.pos=d.pos==="A"?"B":"A"; logp("w",`${desig(d)}: ручкою переведено на Source ${d.pos}`); return true; },
+  face(d,g){ const X0=g.x-1, tx_=m=>X0+(m+0.5)*G.MW, A=d.pos==="A", pw=!!d.pw, ok=d.ok||[false,false], cx0=g.x+82, cy0=g.y+106,
+      ang=A?-38:38, lab=(x,y,t)=>`<rect x="${x-21}" y="${y-7}" width="42" height="10" rx="1.5" fill="none" stroke="#5c616b" stroke-width=".8"/>`+tx(x,y+0.6,t,{fs:6.2});
+    let s=`<line x1="${g.x+176}" y1="${g.y+48}" x2="${g.x+176}" y2="${g.y+162}" stroke="#b9bcc4"/>`;
+    // надписи клем, як на корпусі
+    [["RA","R"],["NA","N"],["AR","AR"],["AN","AN"],["NCA","NC"],["CA","C"],["NOA","NO"]].forEach(([k,l])=>{ const m=T.toq5.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+42,l,{fs:k.length>2||k==="AR"||k==="AN"?6.4:8,fw:700}); });
+    [["RB","R"],["NB","N"],["RL","R"],["NL","N"],["BR","BR"],["BN","BN"],["NCB","NC"],["CB","C"],["NOB","NO"]].forEach(([k,l])=>{ const m=T.toq5.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+160,l,{fs:l.length>1?6.4:8,fw:700}); });
+    s+=lab(g.x+76,g.y+62,"Source A")+lab((tx_(0.05)+tx_(0.75))/2,g.y+146,"Source B")+lab((tx_(1.45)+tx_(2.15))/2,g.y+146,"Load");
+    // поворотна ручка
+    s+=`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${cx0}" cy="${cy0}" r="31" fill="#f1f2f4" stroke="#b9bcc4" stroke-width="1.5"/>`
+      +`<path d="M${cx0+24} ${cy0-20} A31 31 0 0 1 ${cx0+24} ${cy0+20}" fill="none" stroke="#5c616b" stroke-width="1.2" marker-end="none"/>`
+      +`<g transform="rotate(${ang} ${cx0} ${cy0})"><rect x="${cx0-20}" y="${cy0-6}" width="50" height="12" rx="6" fill="#e0352b" stroke="#9e1e17" stroke-width="1"/><circle cx="${cx0}" cy="${cy0}" r="10" fill="#d42d24" stroke="#9e1e17"/><circle cx="${cx0}" cy="${cy0}" r="2.5" fill="#7a1611"/></g></g>`
+      +`<circle cx="${cx0+40}" cy="${cy0-30}" r="6" fill="none" stroke="#5c616b" stroke-width=".8"/>`+tx(cx0+40,cy0-27.5,"A",{fs:7,fw:700})
+      +`<circle cx="${cx0+40}" cy="${cy0+30}" r="6" fill="none" stroke="#5c616b" stroke-width=".8"/>`+tx(cx0+40,cy0+32.5,"B",{fs:7,fw:700});
+    // блок керування: тип, стан вводів, індикатори A/B, повзунок Manual/Auto
+    s+=tx(g.x+232,g.y+70,`Type: TOQ5-${d.rating||"125"}/2`,{fs:7.4,fw:700})+tx(g.x+232,g.y+80,`${d.rating||"125"} A · 220 V~ · < 10 мс`,{fs:5.8});
+    s+=tx(g.x+184,g.y+98,"Ⅰ мережа: "+(ok[0]?"є":"немає"),{fs:6.4,a:"start",fill:ok[0]?"#1b855e":"#7a7e86",fw:600})
+      +tx(g.x+184,g.y+110,"Ⅱ генератор: "+(ok[1]?"є":"немає"),{fs:6.4,a:"start",fill:ok[1]?"#1b855e":"#7a7e86",fw:600});
+    s+=led(g.x+298,g.y+94,pw&&A?"#ff4a3d":"#8f949c")+tx(g.x+311,g.y+97,"A",{fs:8,fw:700})+led(g.x+298,g.y+146,pw&&!A?"#3fbf4a":"#8f949c")+tx(g.x+311,g.y+149,"B",{fs:8,fw:700});
+    s+=`<g data-lever="${d.id}" data-zone="mode" style="cursor:pointer"><rect x="${g.x+250}" y="${g.y+104}" width="64" height="32" fill="transparent"/>`
+      +tx(g.x+284,g.y+113,"Manual",{fs:6.2,a:"end"})+tx(g.x+284,g.y+133,"Auto",{fs:6.2,a:"end"})
+      +`<rect x="${g.x+290}" y="${g.y+104}" width="16" height="32" rx="4" fill="#2a2d33"/><rect x="${g.x+292}" y="${d.manual?g.y+106:g.y+120}" width="12" height="14" rx="3" fill="#e0352b"/></g>`
+      +tx(g.x+232,g.y+128,d.manual?"РУЧНИЙ":"АВТО",{fs:7,fw:700,fill:d.manual?"#c25e00":"#1b855e"});
+    return s; }});
