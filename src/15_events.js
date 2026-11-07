@@ -30,6 +30,12 @@ function clearCheck(){ S.chk=null; S.chkOpen=false; }
 function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ const g=groupsOf()[0]; if(g){ S.selDev=g.id; S.bsegFor=g.id; S.bseg="load"; } } renderAll(false); }
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
 function closeDrawer(){ $("drawer").hidden=true; }
+// Меню: лише те, чого немає на панелі (проєкти — кнопка «Проєкт», документи — вкладка «Документи»)
+function openDrawer(tpl){ renderTplMenu(); tplLabel();
+  for(const el of document.querySelectorAll("#drawer [data-needdoc]")) el.hidden=!!S.noDoc;
+  const g=$("mGuide"); if(g) g.textContent=S.guide&&S.guide.on?"🧭 Вимкнути покрокового помічника":"🧭 Увімкнути покрокового помічника";
+  const d=$("tplDet"); if(d) d.open=!!tpl||!!S.noDoc;
+  $("drawer").hidden=false; if(tpl&&d) setTimeout(()=>d.scrollIntoView({block:"start"}),30); }
 // Вийти з застосунку. Стан щита зберігається завжди, тож нічого не губиться; якщо система не дає закрити вікно кнопкою — підказуємо як.
 function exitApp(){ save(); closeDrawer(); window.close();
   setTimeout(()=>{ if(!document.hidden) dialog("Вийти з PanelCraft",`<p>Телефон не дозволив закрити застосунок кнопкою. Закрийте його звичайно: відкрийте список нещодавніх програм і змахніть картку PanelCraft.</p><p>Щит і проєкти збережено — наступного разу все відкриється як було.</p>`,[{label:"Зрозуміло",cls:"primary"}]); },400); }
@@ -39,7 +45,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(qb("[data-brandall]")){ const d=devById(S.selDev), b=d?brandOf(d):"eua"; let n=0; for(const x of S.devices) if(b==="eua"||(MODELS[x.type]&&MODELS[x.type][b])){ if(b==="eua") delete x.brand; else x.brand=b; n++; }
     S.brand=b; toast(`${BR[b].s||BR[b].n}: ${n} апарат(ів)`,"ok"); commit(false); return; }
   const q=s=>e.target.closest(s); let el;
-  if(q("#menuBtn")){ renderTplMenu(); tplLabel(); $("drawer").hidden=false; return; }
+  if(q("#menuBtn")){ openDrawer(false); return; }
   if(q("#drawerX")||e.target.id==="drawer"){ closeDrawer(); return; }
   if(el=q("[data-menu]")){ const m=el.dataset.menu; closeDrawer();
     if(m==="new") confirmLeave(()=>openWizard(false)); if(m==="projects"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); } if(m==="board") openWizard(true);

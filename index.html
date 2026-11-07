@@ -247,6 +247,8 @@ select.btn{padding-right:26px}
 .dr-h b{font-size:16px;font-weight:500}
 .dr-g{padding:8px 0;border-bottom:1px solid var(--line)}
 .dr-k{display:flex;gap:8px;align-items:baseline;margin:0 0 4px;padding:7px 13px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);background:color-mix(in srgb,var(--orange) 9%,transparent);border-left:3px solid var(--orange)}
+details.dr-d>summary{cursor:pointer;list-style:none} details.dr-d>summary::-webkit-details-marker{display:none}
+details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transition:transform .15s} details.dr-d[open]>summary::after{transform:rotate(90deg)}
 .dr-k .hint{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)}
 .dr-i,.tm-i{position:relative;display:block;width:100%;padding:8px 16px;text-align:left;font-size:14px;color:var(--fg);background:none;border:0}
 .dr-i:hover,.tm-i:hover,.tm-i:focus-visible{background:var(--hover)}
@@ -381,18 +383,17 @@ select.btn{padding-right:26px}
 
 <aside class="drawer" id="drawer" hidden aria-label="Меню"><div class="drawer-in">
   <div class="dr-h"><b><span class="t1">Panel</span><span class="t2">Craft</span></b><button class="btn" id="drawerX" aria-label="Закрити меню">✕</button></div>
-  <div class="dr-g"><div class="dr-k">Проєкт</div>
-    <button class="dr-i" data-menu="new">Створити новий щит</button><button class="dr-i" data-menu="projects">Відкрити збережений…</button><button class="dr-i" data-menu="save">Зберегти</button><button class="dr-i" data-menu="saveas">Зберегти як…</button>
-    <button class="dr-i" data-menu="export">Експорт у файл</button><button class="dr-i" data-menu="import">Імпорт з файлу</button><button class="dr-i" data-menu="close">Закрити щит</button></div>
-  <div class="dr-g"><div class="dr-k">Щит</div><button class="dr-i" data-menu="board">Корпус і ввід</button><button class="dr-i" data-menu="autowire">⚡ Прокласти всі дроти автоматично</button><button class="dr-i" data-menu="tb">Клемна колодка XT2: увімкнути / вимкнути</button><button class="dr-i" data-menu="guide">Покроковий помічник</button></div>
-  <div class="dr-g"><div class="dr-k">Документи</div>
-    <button class="dr-i" data-menu="doc:sld">Однолінійна схема</button><button class="dr-i" data-menu="doc:cab">Кабельний журнал</button><button class="dr-i" data-menu="doc:spec">Специфікація обладнання</button><button class="dr-i" data-menu="doc:lab">Маркування автоматів (наклейки)</button></div>
-  <div class="dr-g"><div class="dr-k">Приклади щитів <span class="hint" id="tplName"></span></div><div id="tplMenu" class="tpl-list"></div></div>
-  <div class="dr-g"><button class="dr-i dr-exit" data-menu="exit">Вийти з застосунку</button></div>
+  <div class="dr-g"><div class="dr-k">Щит</div>
+    <button class="dr-i" data-menu="new">＋ Новий щит</button>
+    <button class="dr-i" data-menu="board" data-needdoc>⚙️ Корпус, ввід, шини, колодка XT2</button>
+    <button class="dr-i" data-menu="autowire" data-needdoc>⚡ Прокласти всі дроти автоматично</button>
+    <button class="dr-i" data-menu="guide" data-needdoc id="mGuide">🧭 Покроковий помічник</button></div>
+  <details class="dr-g dr-d" id="tplDet"><summary class="dr-k">Приклади щитів <span class="hint" id="tplName"></span></summary><div id="tplMenu" class="tpl-list"></div></details>
   <div class="dr-g"><div class="dr-k">Про застосунок</div><p class="foot">Навчальний симулятор. Номінали кабелів — за поширеною практикою для мідного кабелю в прихованій прокладці. Назви виробників і моделей — довідкові, без логотипів; моделі АВР спрощені.</p>
     <div class="app-qr"><a class="qr" href="https://genichka.github.io/ShchytMaister/" target="_blank" rel="noopener"><svg width="132" height="132" role="img" aria-label="QR-код: https://genichka.github.io/ShchytMaister/" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33"><path fill="#fff" d="M0 0h33v33h-33z"/><path stroke="#111217" d="M2 2.5h7m1 0h3m3 0h1m1 0h1m1 0h3m1 0h7m-29 1h1m5 0h1m1 0h1m2 0h1m1 0h2m1 0h1m5 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m4 0h4m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h4m2 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m5 0h2m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h2m2 0h3m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h1m3 0h1m1 0h1m2 0h1m2 0h1m-21 1h1m1 0h2m1 0h3m1 0h1m4 0h1m1 0h3m3 0h1m2 0h1m1 0h2m-29 1h6m1 0h2m2 0h2m3 0h9m3 0h1m-28 1h3m1 0h2m1 0h1m1 0h2m4 0h2m2 0h1m5 0h2m-28 1h2m2 0h1m2 0h3m3 0h2m3 0h4m2 0h1m3 0h1m-28 1h3m1 0h3m1 0h2m1 0h3m2 0h1m2 0h1m4 0h2m-27 1h2m1 0h1m4 0h2m6 0h1m2 0h1m2 0h1m3 0h3m-29 1h5m1 0h7m3 0h5m3 0h1m1 0h3m-28 1h1m2 0h2m1 0h3m5 0h2m4 0h1m1 0h1m3 0h1m-26 1h1m1 0h5m2 0h1m1 0h2m1 0h1m2 0h3m1 0h3m1 0h1m-27 1h5m1 0h3m5 0h1m1 0h1m2 0h1m2 0h1m1 0h3m-28 1h1m1 0h2m2 0h2m4 0h6m2 0h5m1 0h1m-25 1h1m4 0h1m1 0h1m7 0h3m1 0h2m3 0h1m-26 1h1m1 0h5m1 0h1m1 0h1m1 0h1m1 0h1m2 0h9m-19 1h1m1 0h3m3 0h1m3 0h1m3 0h5m-29 1h7m1 0h1m1 0h1m3 0h1m4 0h2m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m1 0h1m3 0h2m2 0h1m1 0h1m1 0h1m3 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m2 0h4m4 0h1m2 0h5m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m4 0h1m1 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m3 0h2m5 0h1m2 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h1m4 0h1m1 0h2m1 0h1m1 0h1m1 0h1m-28 1h7m1 0h6m4 0h1m1 0h2m5 0h1"/></svg></a>
       <p class="hint">Наведи камеру іншого телефона — PanelCraft відкриється там</p>
       <a class="qlink mono" href="https://genichka.github.io/ShchytMaister/" target="_blank" rel="noopener">genichka.github.io/ShchytMaister</a></div></div>
+  <div class="dr-g"><button class="dr-i dr-exit" data-menu="exit">Вийти з застосунку</button></div>
 </div></aside>
 
 <input type="file" id="pImport" accept=".json,application/json" hidden>
@@ -404,7 +405,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.16.2", date:"2026-11-07", notes:["Тест на телефоні: кожен ввід — окремим рядком, кнопки й стан переносяться, нічого не ховається за край екрана","Прибрано «Удар блискавки поруч» з тесту власного щита","Помічник: «Усі апарати» відкриває весь каталог (з TOMZN), «← До кроку помічника» повертає назад","Струм на автоматах у тесті більше не налазить на позначення QF","Помічник: варіанти апаратів показано повністю, сіткою — видно й можна вибрати TOMZN TOVPD1, TO219G, TOQ5, TOQ7","Підписи під апаратами більше не обрізаються: довга назва групи стає дрібнішим шрифтом у 2 рядки","Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
+const APP = { v:"4.17.0", date:"2026-11-07", notes:["Меню без зайвого: Новий щит, Корпус і ввід (разом із шинами й колодкою XT2), Прокласти всі дроти, Помічник, Приклади щитів (згортаються), QR-код. Збереження, відкриття, експорт та імпорт — у кнопці «Проєкт», документи — у вкладці «Документи»","Тест на телефоні: кожен ввід — окремим рядком, кнопки й стан переносяться, нічого не ховається за край екрана","Прибрано «Удар блискавки поруч» з тесту власного щита","Помічник: «Усі апарати» відкриває весь каталог (з TOMZN), «← До кроку помічника» повертає назад","Струм на автоматах у тесті більше не налазить на позначення QF","Помічник: варіанти апаратів показано повністю, сіткою — видно й можна вибрати TOMZN TOVPD1, TO219G, TOQ5, TOQ7","Підписи під апаратами більше не обрізаються: довга назва групи стає дрібнішим шрифтом у 2 рядки","Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -2098,7 +2099,7 @@ function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=2
 function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
-function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щит або відкрийте приклад; збережені проєкти та імпорт — у «Меню».</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
+function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щит або відкрийте приклад; збережені проєкти та імпорт — кнопка «Проєкт» справа вгорі.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
   if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця на рейці${S.pickQty>1?` — поставиться ${S.pickQty} шт. підряд`:""}. ✕ унизу — скасувати.`:"Оберіть апарат нижче й поставте на рейку. Торкніться апарата — налаштування; затисніть і тягніть — пересунути.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
@@ -2154,7 +2155,7 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter&&!S.allDev?"":mountBar()):S.mode==="wire"?(guideOn?"":wireToolsBar()):testBar()); }
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
-// ---- Порожня робоча зона: стартові дії (збережені проєкти й імпорт — у «Меню» та «Проєкт»)
+// ---- Порожня робоча зона: стартові дії (збережені проєкти й імпорт — кнопка «Проєкт»)
 function noDocBar(){
   return bhead("Немає відкритого щита")+brow(`<button class="btn sm primary" data-pa="new">＋ Створити новий щит</button><button class="btn sm" data-nodoc="tpl">Приклади щитів</button>`); }
 // ---- Апарати: категорії + картки
@@ -2333,6 +2334,12 @@ function clearCheck(){ S.chk=null; S.chkOpen=false; }
 function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ const g=groupsOf()[0]; if(g){ S.selDev=g.id; S.bsegFor=g.id; S.bseg="load"; } } renderAll(false); }
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
 function closeDrawer(){ $("drawer").hidden=true; }
+// Меню: лише те, чого немає на панелі (проєкти — кнопка «Проєкт», документи — вкладка «Документи»)
+function openDrawer(tpl){ renderTplMenu(); tplLabel();
+  for(const el of document.querySelectorAll("#drawer [data-needdoc]")) el.hidden=!!S.noDoc;
+  const g=$("mGuide"); if(g) g.textContent=S.guide&&S.guide.on?"🧭 Вимкнути покрокового помічника":"🧭 Увімкнути покрокового помічника";
+  const d=$("tplDet"); if(d) d.open=!!tpl||!!S.noDoc;
+  $("drawer").hidden=false; if(tpl&&d) setTimeout(()=>d.scrollIntoView({block:"start"}),30); }
 // Вийти з застосунку. Стан щита зберігається завжди, тож нічого не губиться; якщо система не дає закрити вікно кнопкою — підказуємо як.
 function exitApp(){ save(); closeDrawer(); window.close();
   setTimeout(()=>{ if(!document.hidden) dialog("Вийти з PanelCraft",`<p>Телефон не дозволив закрити застосунок кнопкою. Закрийте його звичайно: відкрийте список нещодавніх програм і змахніть картку PanelCraft.</p><p>Щит і проєкти збережено — наступного разу все відкриється як було.</p>`,[{label:"Зрозуміло",cls:"primary"}]); },400); }
@@ -2342,7 +2349,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(qb("[data-brandall]")){ const d=devById(S.selDev), b=d?brandOf(d):"eua"; let n=0; for(const x of S.devices) if(b==="eua"||(MODELS[x.type]&&MODELS[x.type][b])){ if(b==="eua") delete x.brand; else x.brand=b; n++; }
     S.brand=b; toast(`${BR[b].s||BR[b].n}: ${n} апарат(ів)`,"ok"); commit(false); return; }
   const q=s=>e.target.closest(s); let el;
-  if(q("#menuBtn")){ renderTplMenu(); tplLabel(); $("drawer").hidden=false; return; }
+  if(q("#menuBtn")){ openDrawer(false); return; }
   if(q("#drawerX")||e.target.id==="drawer"){ closeDrawer(); return; }
   if(el=q("[data-menu]")){ const m=el.dataset.menu; closeDrawer();
     if(m==="new") confirmLeave(()=>openWizard(false)); if(m==="projects"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); } if(m==="board") openWizard(true);
@@ -3152,7 +3159,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(el=q("[data-dlg]")){ const x=DLG[+el.dataset.dlg]; closeDlg(); if(x&&x.act) x.act(); return; }
   if(e.target.id==="dlg"){ closeDlg(); return; }
   if(q("#projBtn")){ openProjects(); return; }
-  if(q("[data-nodoc='tpl']")){ renderTplMenu(); tplLabel(); $("drawer").hidden=false; return; }
+  if(q("[data-nodoc='tpl']")){ openDrawer(true); return; }
   if(el=q("[data-pa]")){ const a=el.dataset.pa, id=el.dataset.pid;
     if(a==="save"){ saveProject(); openProjects(); }
     if(a==="openlistdlg"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); }

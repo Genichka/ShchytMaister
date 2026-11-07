@@ -244,6 +244,8 @@ select.btn{padding-right:26px}
 .dr-h b{font-size:16px;font-weight:500}
 .dr-g{padding:8px 0;border-bottom:1px solid var(--line)}
 .dr-k{display:flex;gap:8px;align-items:baseline;margin:0 0 4px;padding:7px 13px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);background:color-mix(in srgb,var(--orange) 9%,transparent);border-left:3px solid var(--orange)}
+details.dr-d>summary{cursor:pointer;list-style:none} details.dr-d>summary::-webkit-details-marker{display:none}
+details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transition:transform .15s} details.dr-d[open]>summary::after{transform:rotate(90deg)}
 .dr-k .hint{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)}
 .dr-i,.tm-i{position:relative;display:block;width:100%;padding:8px 16px;text-align:left;font-size:14px;color:var(--fg);background:none;border:0}
 .dr-i:hover,.tm-i:hover,.tm-i:focus-visible{background:var(--hover)}
@@ -378,18 +380,17 @@ select.btn{padding-right:26px}
 
 <aside class="drawer" id="drawer" hidden aria-label="Меню"><div class="drawer-in">
   <div class="dr-h"><b><span class="t1">Panel</span><span class="t2">Craft</span></b><button class="btn" id="drawerX" aria-label="Закрити меню">✕</button></div>
-  <div class="dr-g"><div class="dr-k">Проєкт</div>
-    <button class="dr-i" data-menu="new">Створити новий щит</button><button class="dr-i" data-menu="projects">Відкрити збережений…</button><button class="dr-i" data-menu="save">Зберегти</button><button class="dr-i" data-menu="saveas">Зберегти як…</button>
-    <button class="dr-i" data-menu="export">Експорт у файл</button><button class="dr-i" data-menu="import">Імпорт з файлу</button><button class="dr-i" data-menu="close">Закрити щит</button></div>
-  <div class="dr-g"><div class="dr-k">Щит</div><button class="dr-i" data-menu="board">Корпус і ввід</button><button class="dr-i" data-menu="autowire">⚡ Прокласти всі дроти автоматично</button><button class="dr-i" data-menu="tb">Клемна колодка XT2: увімкнути / вимкнути</button><button class="dr-i" data-menu="guide">Покроковий помічник</button></div>
-  <div class="dr-g"><div class="dr-k">Документи</div>
-    <button class="dr-i" data-menu="doc:sld">Однолінійна схема</button><button class="dr-i" data-menu="doc:cab">Кабельний журнал</button><button class="dr-i" data-menu="doc:spec">Специфікація обладнання</button><button class="dr-i" data-menu="doc:lab">Маркування автоматів (наклейки)</button></div>
-  <div class="dr-g"><div class="dr-k">Приклади щитів <span class="hint" id="tplName"></span></div><div id="tplMenu" class="tpl-list"></div></div>
-  <div class="dr-g"><button class="dr-i dr-exit" data-menu="exit">Вийти з застосунку</button></div>
+  <div class="dr-g"><div class="dr-k">Щит</div>
+    <button class="dr-i" data-menu="new">＋ Новий щит</button>
+    <button class="dr-i" data-menu="board" data-needdoc>⚙️ Корпус, ввід, шини, колодка XT2</button>
+    <button class="dr-i" data-menu="autowire" data-needdoc>⚡ Прокласти всі дроти автоматично</button>
+    <button class="dr-i" data-menu="guide" data-needdoc id="mGuide">🧭 Покроковий помічник</button></div>
+  <details class="dr-g dr-d" id="tplDet"><summary class="dr-k">Приклади щитів <span class="hint" id="tplName"></span></summary><div id="tplMenu" class="tpl-list"></div></details>
   <div class="dr-g"><div class="dr-k">Про застосунок</div><p class="foot">Навчальний симулятор. Номінали кабелів — за поширеною практикою для мідного кабелю в прихованій прокладці. Назви виробників і моделей — довідкові, без логотипів; моделі АВР спрощені.</p>
     <div class="app-qr"><a class="qr" href="https://genichka.github.io/ShchytMaister/" target="_blank" rel="noopener"><svg width="132" height="132" role="img" aria-label="QR-код: https://genichka.github.io/ShchytMaister/" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33"><path fill="#fff" d="M0 0h33v33h-33z"/><path stroke="#111217" d="M2 2.5h7m1 0h3m3 0h1m1 0h1m1 0h3m1 0h7m-29 1h1m5 0h1m1 0h1m2 0h1m1 0h2m1 0h1m5 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m4 0h4m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h4m2 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m5 0h2m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h2m2 0h3m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h1m3 0h1m1 0h1m2 0h1m2 0h1m-21 1h1m1 0h2m1 0h3m1 0h1m4 0h1m1 0h3m3 0h1m2 0h1m1 0h2m-29 1h6m1 0h2m2 0h2m3 0h9m3 0h1m-28 1h3m1 0h2m1 0h1m1 0h2m4 0h2m2 0h1m5 0h2m-28 1h2m2 0h1m2 0h3m3 0h2m3 0h4m2 0h1m3 0h1m-28 1h3m1 0h3m1 0h2m1 0h3m2 0h1m2 0h1m4 0h2m-27 1h2m1 0h1m4 0h2m6 0h1m2 0h1m2 0h1m3 0h3m-29 1h5m1 0h7m3 0h5m3 0h1m1 0h3m-28 1h1m2 0h2m1 0h3m5 0h2m4 0h1m1 0h1m3 0h1m-26 1h1m1 0h5m2 0h1m1 0h2m1 0h1m2 0h3m1 0h3m1 0h1m-27 1h5m1 0h3m5 0h1m1 0h1m2 0h1m2 0h1m1 0h3m-28 1h1m1 0h2m2 0h2m4 0h6m2 0h5m1 0h1m-25 1h1m4 0h1m1 0h1m7 0h3m1 0h2m3 0h1m-26 1h1m1 0h5m1 0h1m1 0h1m1 0h1m1 0h1m2 0h9m-19 1h1m1 0h3m3 0h1m3 0h1m3 0h5m-29 1h7m1 0h1m1 0h1m3 0h1m4 0h2m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m1 0h1m3 0h2m2 0h1m1 0h1m1 0h1m3 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m2 0h4m4 0h1m2 0h5m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m4 0h1m1 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m3 0h2m5 0h1m2 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h1m4 0h1m1 0h2m1 0h1m1 0h1m1 0h1m-28 1h7m1 0h6m4 0h1m1 0h2m5 0h1"/></svg></a>
       <p class="hint">Наведи камеру іншого телефона — PanelCraft відкриється там</p>
       <a class="qlink mono" href="https://genichka.github.io/ShchytMaister/" target="_blank" rel="noopener">genichka.github.io/ShchytMaister</a></div></div>
+  <div class="dr-g"><button class="dr-i dr-exit" data-menu="exit">Вийти з застосунку</button></div>
 </div></aside>
 
 <input type="file" id="pImport" accept=".json,application/json" hidden>

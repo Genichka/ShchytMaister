@@ -204,7 +204,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(el=q("[data-dlg]")){ const x=DLG[+el.dataset.dlg]; closeDlg(); if(x&&x.act) x.act(); return; }
   if(e.target.id==="dlg"){ closeDlg(); return; }
   if(q("#projBtn")){ openProjects(); return; }
-  if(q("[data-nodoc='tpl']")){ renderTplMenu(); tplLabel(); $("drawer").hidden=false; return; }
+  if(q("[data-nodoc='tpl']")){ openDrawer(true); return; }
   if(el=q("[data-pa]")){ const a=el.dataset.pa, id=el.dataset.pid;
     if(a==="save"){ saveProject(); openProjects(); }
     if(a==="openlistdlg"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); }
