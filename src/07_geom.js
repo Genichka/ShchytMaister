@@ -91,7 +91,7 @@ function devSVG(d){
   return s+"</g>";
 }
 function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 600 120"); let s="";   // сітку малює CSS (.scroller.empty) — на все поле
-  s+=`<text x="300" y="52" text-anchor="middle" font-size="30" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="300" y="90" text-anchor="middle" font-size="17" fill="var(--muted)">Створіть новий або відкрийте збережений — кнопки внизу</text>`;
+  s+=`<text x="300" y="52" text-anchor="middle" font-size="30" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="300" y="90" text-anchor="middle" font-size="17" fill="var(--muted)">Створіть новий щит або відкрийте приклад — кнопки внизу</text>`;
   svg.innerHTML=s; }
 function render(){ if(S.noDoc){ renderEmpty(); return; } 
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";

@@ -19,10 +19,9 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter?"":mountBar()):S.mode==="wire"?(guideOn?"":wireToolsBar()):testBar()); }
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
-// ---- Порожня робоча зона: стартові дії й останні проєкти
-function noDocBar(){ const list=projDB().list.slice().sort((a,b)=>b.updated-a.updated).slice(0,8);
-  return bhead("Немає відкритого щита")+brow(`<button class="btn sm primary" data-pa="new">＋ Створити новий щит</button><button class="btn sm" data-pa="openlistdlg">Відкрити збережений…</button><button class="btn sm" data-nodoc="tpl">Приклади щитів</button><button class="btn sm" data-pa="import">Імпорт з файлу</button>`)
-    +brow(list.length?`<span class="bl">Останні:</span>`+list.map(p=>`<button class="chip" data-pa="open" data-pid="${p.id}">${esc(p.name)}</button>`).join(""):`<span class="bl">Збережених проєктів ще немає</span>`); }
+// ---- Порожня робоча зона: стартові дії (збережені проєкти й імпорт — у «Меню» та «Проєкт»)
+function noDocBar(){
+  return bhead("Немає відкритого щита")+brow(`<button class="btn sm primary" data-pa="new">＋ Створити новий щит</button><button class="btn sm" data-nodoc="tpl">Приклади щитів</button>`); }
 // ---- Апарати: категорії + картки
 function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def||"";
   return bhead(`Ставимо: ${esc(t.short)}${rate?" "+esc(rate)+(t.unit||""):""} <span class="bm">${t.w} мод.</span>`,`<button class="bx" data-pickx aria-label="Скасувати">✕</button>`)

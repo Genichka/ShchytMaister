@@ -398,7 +398,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.14.0", date:"2026-11-07", notes:["Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
+const APP = { v:"4.14.1", date:"2026-11-07", notes:["Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1318,7 +1318,7 @@ function devSVG(d){
   return s+"</g>";
 }
 function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 600 120"); let s="";   // сітку малює CSS (.scroller.empty) — на все поле
-  s+=`<text x="300" y="52" text-anchor="middle" font-size="30" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="300" y="90" text-anchor="middle" font-size="17" fill="var(--muted)">Створіть новий або відкрийте збережений — кнопки внизу</text>`;
+  s+=`<text x="300" y="52" text-anchor="middle" font-size="30" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="300" y="90" text-anchor="middle" font-size="17" fill="var(--muted)">Створіть новий щит або відкрийте приклад — кнопки внизу</text>`;
   svg.innerHTML=s; }
 function render(){ if(S.noDoc){ renderEmpty(); return; } 
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
@@ -2048,7 +2048,7 @@ function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=2
 function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
-function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щит, відкрийте збережений проєкт або приклад.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
+function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щит або відкрийте приклад; збережені проєкти та імпорт — у «Меню».</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
   if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця на рейці${S.pickQty>1?` — поставиться ${S.pickQty} шт. підряд`:""}. ✕ унизу — скасувати.`:"Оберіть апарат нижче й поставте на рейку. Торкніться апарата — налаштування; затисніть і тягніть — пересунути.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: змініть його в панелі внизу або торкніться іншого дроту.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Торкніться першої клеми, потім другої. Торкніться дроту, щоб вибрати його.";
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
@@ -2104,10 +2104,9 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter?"":mountBar()):S.mode==="wire"?(guideOn?"":wireToolsBar()):testBar()); }
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
-// ---- Порожня робоча зона: стартові дії й останні проєкти
-function noDocBar(){ const list=projDB().list.slice().sort((a,b)=>b.updated-a.updated).slice(0,8);
-  return bhead("Немає відкритого щита")+brow(`<button class="btn sm primary" data-pa="new">＋ Створити новий щит</button><button class="btn sm" data-pa="openlistdlg">Відкрити збережений…</button><button class="btn sm" data-nodoc="tpl">Приклади щитів</button><button class="btn sm" data-pa="import">Імпорт з файлу</button>`)
-    +brow(list.length?`<span class="bl">Останні:</span>`+list.map(p=>`<button class="chip" data-pa="open" data-pid="${p.id}">${esc(p.name)}</button>`).join(""):`<span class="bl">Збережених проєктів ще немає</span>`); }
+// ---- Порожня робоча зона: стартові дії (збережені проєкти й імпорт — у «Меню» та «Проєкт»)
+function noDocBar(){
+  return bhead("Немає відкритого щита")+brow(`<button class="btn sm primary" data-pa="new">＋ Створити новий щит</button><button class="btn sm" data-nodoc="tpl">Приклади щитів</button>`); }
 // ---- Апарати: категорії + картки
 function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def||"";
   return bhead(`Ставимо: ${esc(t.short)}${rate?" "+esc(rate)+(t.unit||""):""} <span class="bm">${t.w} мод.</span>`,`<button class="bx" data-pickx aria-label="Скасувати">✕</button>`)
