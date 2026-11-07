@@ -46,6 +46,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(m==="tb"){ S.board.tb=!S.board.tb; if(!S.board.tb) S.wires=S.wires.filter(w=>!/^tb:/.test(w.a)&&!/^tb:/.test(w.b)); GEO=null; commit(); toast(S.board.tb?"Колодку XT2 додано: підключіть до неї L, N і PE кожної групи":"Колодку XT2 прибрано","ok"); }
     if(m==="save"){ saveProject(); } if(m==="saveas"){ openProjects(); document.querySelector('[data-pa="copy"]').click(); } if(m==="export") exportProject(); if(m==="exit") exitApp(); if(m==="import") $("pImport").click(); if(m==="close") closeBoard();
     if(m==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; S.mode="mount"; save(); renderAll(true); }
+    if(m==="autowire") autoWire();
     if(m.startsWith("doc:")) openDocs(m.slice(4));
     return; }
   if(q("#undoTop")){ undo(); return; }

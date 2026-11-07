@@ -34,7 +34,7 @@ function wirePlan(){
   // 2. Після ввідного: для двох вводів — через АВР
   let ph, n;
   if(two){ const m1=mains[0], m2=mains[1];
-    if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат 2P — для вводу 2":"Поставте модуль АВР, АВР TOQ5 або перемикач I–0–II — без нього вводи нема чим перемикати"}); return out; }
+    if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат 2P — для вводу 2":"Поставте АВР: модуль АВР, TOQ5/TOQ7 або механічний АВР TO219G — без нього вводи нема чим перемикати"}); return out; }
     const L1=K2(m1,"b1"), N1=K2(m1,"b2"), L2=K2(m2,"b1"), N2=K2(m2,"b2"), s1=secFor(protIn(m1)), s2=secFor(protIn(m2));
     if(sw.type==="ats"){ add("jump",L1,K2(sw,"IL"),"L",s1); add("jump",N1,K2(sw,"IN"),"N",s1); add("jump",L2,K2(sw,"IIL"),"L",s2); add("jump",N2,K2(sw,"IIN"),"N",s2); ph=[K2(sw,"L")]; n=K2(sw,"N"); }
     else if(sw.type==="toq5"||sw.type==="toq7"){ add("jump",L1,K2(sw,"RA"),"L",s1); add("jump",N1,K2(sw,"NA"),"N",s1); add("jump",L2,K2(sw,"RB"),"L",s2); add("jump",N2,K2(sw,"NB"),"N",s2);
