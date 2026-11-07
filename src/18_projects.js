@@ -112,7 +112,8 @@ function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпу�
     <div class="row"><span class="lbl">ПЗВ</span><button class="chip" data-wrcd="0" aria-pressed="${!w.noRcd}">З ПЗВ (рекомендовано)</button><button class="chip" data-wrcd="1" aria-pressed="${!!w.noRcd}">Без ПЗВ</button></div>
     <label class="chk"><input type="checkbox" id="wzTb" ${w.tb?"checked":""}> Клемна колодка XT2 для відхідних ліній</label><p class="hint">Кабель кожної групи підключається до колодки внизу щита: L — від автомата, N — від шини N, PE — від шини PE.</p>`;
   if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}${w.tb?" · колодка XT2":""}</b></li><li><span>ПЗВ</span><b>${w.noRcd?"без ПЗВ":"з ПЗВ"}</b></li></ul>`
-    +(w.edit?"":`<label class="chk"><input type="checkbox" id="wzGuide" ${w.guide?"checked":""}> Увімкнути покроковий помічник складання</label>`);
+    +(w.edit?"":`<p class="hint">Як будемо збирати?</p><button class="wz-opt" data-wg="1" aria-pressed="${!!w.guide}"><b>🧭 З помічником</b><span>Підказує кожен крок: що поставити на рейку, куди підключити дроти, як перевірити</span></button>`
+      +`<button class="wz-opt" data-wg="0" aria-pressed="${!w.guide}"><b>✋ Самостійно</b><span>Порожній щит — апарати й дроти ставиш сам; помічник можна ввімкнути пізніше</span></button>`);
   $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щит"}</h2><ol class="wz-steps">${names.slice(first).map((n,j)=>`<li class="${j+first<w.step?"done":j+first===w.step?"cur":""}">${n}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
     <div class="row dlg-f"><button class="btn" data-wz="cancel">Скасувати</button>${w.step>first?`<button class="btn" data-wz="prev">Назад</button>`:""}${w.step<last?`<button class="btn primary" data-wz="next">Далі</button>`:`<button class="btn primary" data-wz="${w.edit?"apply":"create"}">${w.edit?"Застосувати":"Створити щит"}</button>`}</div>`;
   const f=$("dlgCard").querySelector("input.inp,.wz-opt[aria-pressed=true],.btn.primary"); if(f) f.focus(); }
@@ -225,6 +226,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
     if(w.step===0){ const n=$("wzName"); if(n) w.name=(n.value||"").trim()||"Мій щит"; } if(w.step===4&&$("wzGuide")) w.guide=$("wzGuide").checked;
     if(a==="cancel") closeDlg(); if(a==="prev"){ w.step--; renderWizard(); } if(a==="next"){ w.step++; renderWizard(); }
     if(a==="create") wizardCreate(); if(a==="apply") wizardApply(); return; }
+  if(el=q("[data-wg]")){ WZ.guide=el.dataset.wg==="1"; renderWizard(); return; }
   if(el=q("[data-wk]")){ WZ.kind=el.dataset.wk; if(WZ.kind==="3ph"&&WZ.xn<4) WZ.xn=4; renderWizard(); return; }
   if(el=q("[data-wrcd]")){ WZ.noRcd=el.dataset.wrcd==="1"; renderWizard(); return; }
   if(el=q("[data-wikw]")){ WZ.ikw=+el.dataset.wikw; renderWizard(); return; }

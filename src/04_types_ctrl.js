@@ -144,3 +144,34 @@ defType("toq5",{name:"АВР TOMZN TOQ5 2P з ручкою (мережа + ге�
       +`<rect x="${g.x+290}" y="${g.y+104}" width="16" height="32" rx="4" fill="#2a2d33"/><rect x="${g.x+292}" y="${d.manual?g.y+106:g.y+120}" width="12" height="14" rx="3" fill="#e0352b"/></g>`
       +tx(g.x+232,g.y+128,d.manual?"РУЧНИЙ":"АВТО",{fs:7,fw:700,fill:d.manual?"#c25e00":"#1b855e"});
     return s; }});
+// ---- АВР TOMZN TOQ7 2P: принцип як у TOQ5 (пріоритет A, ручка, Manual/Auto, сигнальні контакти), чорний корпус, перемикання < 50 мс
+defType("toq7",{...T.toq5, name:"АВР TOMZN TOQ7 2P з ручкою (мережа + генератор)", short:"АВР TOQ7", body:"#2a2d33", faceFill:"#1c1e23",
+  logic(d,X){ const ok=(a,b)=>{ const u=X.volt(K(d,a),K(d,b)); return u>=187&&u<=253; }, okA=ok("AR","AN"), okB=ok("BR","BN");
+    d.ok=[okA,okB]; d.pw=okA||okB;
+    if(d.manual||!d.pw) return false; const t=okA?"A":"B";
+    if(t!==d.pos){ d.pos=t; logp(t==="A"?"ok":"w",`${desig(d)}: навантаження переведено на Source ${t} (${t==="A"?"мережа":"генератор"}), < 50 мс`); return true; } return false; },
+  face(d,g){ const X0=g.x-1, tx_=m=>X0+(m+0.5)*G.MW, A=d.pos==="A", pw=!!d.pw, ok=d.ok||[false,false], cx0=g.x+82, cy0=g.y+106, W_="#eceef2", M_="#9aa0aa",
+      ang=A?-38:38, lab=(x,y,t)=>`<rect x="${x-21}" y="${y-7}" width="42" height="10" rx="1.5" fill="none" stroke="${M_}" stroke-width=".8"/>`+tx(x,y+0.6,t,{fs:6.2,fill:W_});
+    let s=`<rect x="${g.cx-34}" y="${g.y+47}" width="68" height="12" fill="#1c1e23"/>`;   // ховаємо загальний підпис бренду — на TOQ7 своя біла табличка
+    s+=`<rect x="${g.x+180}" y="${g.y+49}" width="${g.w-186}" height="12" rx="1.5" fill="#f4f5f7"/>`+tx(g.x+232,g.y+57.6,"TOMZN",{fs:7.6,fw:800,fill:"#1d4fa8"})
+      +`<line x1="${g.x+176}" y1="${g.y+48}" x2="${g.x+176}" y2="${g.y+162}" stroke="#454a54"/>`;
+    // надписи клем на корпусі (зверху — Source A і керування A, знизу — Source B, Load і керування B)
+    [["RA","R"],["NA","N"],["AR","AR"],["AN","AN"],["NCA","NC"],["CA","C"],["NOA","NO"]].forEach(([k,l])=>{ const m=T.toq7.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+42,l,{fs:l.length>1?6.4:8,fw:700,fill:W_}); });
+    [["RB","R"],["NB","N"],["RL","R"],["NL","N"],["BR","BR"],["BN","BN"],["NCB","NC"],["CB","C"],["NOB","NO"]].forEach(([k,l])=>{ const m=T.toq7.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+160,l,{fs:l.length>1?6.4:8,fw:700,fill:W_}); });
+    s+=lab(g.x+76,g.y+62,"Source A")+lab((tx_(0.05)+tx_(0.75))/2,g.y+146,"Source B")+lab((tx_(1.45)+tx_(2.15))/2,g.y+146,"Load");
+    // поворотна червона ручка на чорній основі
+    s+=`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${cx0}" cy="${cy0}" r="31" fill="#121316" stroke="#4a4f59" stroke-width="1.5"/>`
+      +`<path d="M${cx0+24} ${cy0-20} A31 31 0 0 1 ${cx0+24} ${cy0+20}" fill="none" stroke="${M_}" stroke-width="1.2"/>`
+      +`<g transform="rotate(${ang} ${cx0} ${cy0})"><rect x="${cx0-20}" y="${cy0-6}" width="50" height="12" rx="6" fill="#e0352b" stroke="#9e1e17" stroke-width="1"/><circle cx="${cx0}" cy="${cy0}" r="10" fill="#d42d24" stroke="#9e1e17"/><circle cx="${cx0}" cy="${cy0}" r="2.5" fill="#7a1611"/></g></g>`
+      +`<circle cx="${cx0+40}" cy="${cy0-25}" r="6" fill="none" stroke="${M_}" stroke-width=".8"/>`+tx(cx0+40,cy0-22.5,"A",{fs:7,fw:700,fill:W_})
+      +`<circle cx="${cx0+40}" cy="${cy0+24}" r="6" fill="none" stroke="${M_}" stroke-width=".8"/>`+tx(cx0+40,cy0+26.5,"B",{fs:7,fw:700,fill:W_});
+    // тип, стан вводів, індикатори A/B, повзунок Manual/Auto
+    s+=tx(g.x+232,g.y+72,`Type: TOQ7-${d.rating||"125"}/2`,{fs:7.4,fw:700,fill:W_})+tx(g.x+232,g.y+82,`${d.rating||"125"} A · 220 V~ · < 50 мс`,{fs:5.8,fill:M_});
+    s+=tx(g.x+184,g.y+98,"Ⅰ мережа: "+(ok[0]?"є":"немає"),{fs:6.4,a:"start",fill:ok[0]?"#5fd38a":"#8e939c",fw:600})
+      +tx(g.x+184,g.y+110,"Ⅱ генератор: "+(ok[1]?"є":"немає"),{fs:6.4,a:"start",fill:ok[1]?"#5fd38a":"#8e939c",fw:600});
+    s+=led(g.x+298,g.y+94,pw&&A?"#ff4a3d":"#4d5159")+tx(g.x+311,g.y+97,"A",{fs:8,fw:700,fill:W_})+led(g.x+298,g.y+146,pw&&!A?"#3fbf4a":"#4d5159")+tx(g.x+311,g.y+149,"B",{fs:8,fw:700,fill:W_});
+    s+=`<g data-lever="${d.id}" data-zone="mode" style="cursor:pointer"><rect x="${g.x+250}" y="${g.y+104}" width="64" height="32" fill="transparent"/>`
+      +tx(g.x+284,g.y+113,"Manual",{fs:6.2,a:"end",fill:W_})+tx(g.x+284,g.y+133,"Auto",{fs:6.2,a:"end",fill:W_})
+      +`<rect x="${g.x+290}" y="${g.y+104}" width="16" height="32" rx="4" fill="#0d0e11" stroke="#454a54"/><rect x="${g.x+292}" y="${d.manual?g.y+106:g.y+120}" width="12" height="14" rx="3" fill="#e0352b"/></g>`
+      +tx(g.x+232,g.y+128,d.manual?"РУЧНИЙ":"АВТО",{fs:7,fw:700,fill:d.manual?"#ffa04d":"#5fd38a"});
+    return s; }});

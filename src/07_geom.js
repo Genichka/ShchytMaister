@@ -69,7 +69,7 @@ function devSVG(d){
   let s=`<g data-dev="${d.id}">`;
   if(heat>0.15) s+=`<rect class="heat" x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--orange)" stroke-width="3"/>`;
   if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
-  const fillB=devFill(d); s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"${fillB?` style="fill:${fillB}"`:""}/><rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"/>`;
+  const fillB=t.body||devFill(d); s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"${fillB?` style="fill:${fillB}"`:""}/><rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"${t.faceFill?` style="fill:${t.faceFill}"`:""}/>`;
   const sr=t.terms.filter(q=>q.s==="top").length>w/27?9:11;
   const bx=t.terms.filter(q=>q.s==="bot").map(q=>termX(d,q)).sort((a,c)=>a-c), side=bx.every((v,i)=>!i||v-bx[i-1]>=44);
   for(const tm of t.terms){ const X=termX(d,tm);

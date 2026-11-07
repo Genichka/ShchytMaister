@@ -120,6 +120,14 @@ TPL.ats_toq5 = { name:"Мережа + генератор: АВР TOMZN TOQ5-125/
   checks(add){ const a=tqA(), on=t=>a&&S.wires.some(w=>w.a===k(a,t)||w.b===k(a,t));
     if(on("AR")&&on("AN")&&on("BR")&&on("BN")) add("ok","Перемички AR/AN і BR/BN на місці","Блок керування бачить обидва джерела. Без перемичок TOQ5 не перемикається сам."); }};
 
+// той самий щит, але з АВР TOMZN TOQ7-125/2 (чорний корпус, перемикання < 50 мс)
+const toq7txt = t => t.replace(/TOQ5/g,"TOQ7").replace(/< 10 мс/g,"< 50 мс");
+TPL.ats_toq7 = { ...TPL.ats_toq5, name:"Мережа + генератор: АВР TOMZN TOQ7-125/2 з ручкою", info:toq7txt(TPL.ats_toq5.info),
+  build(){ TPL.ats_toq5.build(); const a=tqA(); if(a){ a.type="toq7"; T.toq7.init(a); } },
+  demo:{ ...TPL.ats_toq5.demo, status:()=>TPL.ats_toq5.demo.status().map(r=>r[0]==="TOQ5 QA1"?["TOQ7 QA1",...r.slice(1)]:r),
+    script:TPL.ats_toq5.demo.script.map(st=>({...st, say:toq7txt(st.say)})) },
+  checks(add){ TPL.ats_toq5.checks((sev,t,dd,o)=>add(sev,t,toq7txt(dd),o)); } };
+
 TPL.ats_logo = { name:"АВР на Siemens LOGO! + 2 контактори", cat:"АВР на 2 вводи",
   info:`Програма LOGO!: Q1 (мережа) вмикається через ${LOGO_T.T1} с стабільної мережі; після її зникнення через ${LOGO_T.T2} с і ${LOGO_T.T3} с роботи генератора — Q2. Між перемиканнями пауза ${LOGO_T.DEAD} с. Контактори мають електричне блокування через НЗ-контакти 21–22. Живлення LOGO! перемикає реле K1.`,
   build(){ tplStart(ATS_BOARD()); const {qf1,qf2,km1,km2,qf3,qf4}=atsKmPower();

@@ -3,7 +3,7 @@
      inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між апаратами;  out — колодка XT2 і обладнання поза щитом.
    Пункт: {step, a, b, kind, sec, alt}. «xn:*» / «xpe:*» — будь-який вільний отвір шини.
    autoWire() прокладає всю схему одним натиском, а fixRatings() підганяє номінали й перерізи, щоб перевірка пройшла. */
-const SWITCH_T = ["ats","toq5","to219"];
+const SWITCH_T = ["ats","toq5","toq7","to219"];
 const N_OWN = ["rcbo","qfn","afdd"];            // групові апарати з власним полюсом N
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
 function mainsOf(){ return S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group).sort(byPosD); }
@@ -37,7 +37,7 @@ function wirePlan(){
     if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат 2P — для вводу 2":"Поставте модуль АВР, АВР TOQ5 або перемикач I–0–II — без нього вводи нема чим перемикати"}); return out; }
     const L1=K2(m1,"b1"), N1=K2(m1,"b2"), L2=K2(m2,"b1"), N2=K2(m2,"b2"), s1=secFor(protIn(m1)), s2=secFor(protIn(m2));
     if(sw.type==="ats"){ add("jump",L1,K2(sw,"IL"),"L",s1); add("jump",N1,K2(sw,"IN"),"N",s1); add("jump",L2,K2(sw,"IIL"),"L",s2); add("jump",N2,K2(sw,"IIN"),"N",s2); ph=[K2(sw,"L")]; n=K2(sw,"N"); }
-    else if(sw.type==="toq5"){ add("jump",L1,K2(sw,"RA"),"L",s1); add("jump",N1,K2(sw,"NA"),"N",s1); add("jump",L2,K2(sw,"RB"),"L",s2); add("jump",N2,K2(sw,"NB"),"N",s2);
+    else if(sw.type==="toq5"||sw.type==="toq7"){ add("jump",L1,K2(sw,"RA"),"L",s1); add("jump",N1,K2(sw,"NA"),"N",s1); add("jump",L2,K2(sw,"RB"),"L",s2); add("jump",N2,K2(sw,"NB"),"N",s2);
       add("jump",K2(sw,"RA"),K2(sw,"AR"),"L",1.5); add("jump",K2(sw,"NA"),K2(sw,"AN"),"N",1.5); add("jump",K2(sw,"RB"),K2(sw,"BR"),"L",1.5); add("jump",K2(sw,"NB"),K2(sw,"BN"),"N",1.5);
       ph=[K2(sw,"RL")]; n=K2(sw,"NL"); }
     else { add("jump",L1,K2(sw,"2"),"L",s1); add("jump",N1,K2(sw,"6"),"N",s1); add("jump",L2,K2(sw,"4"),"L",s2); add("jump",N2,K2(sw,"8"),"N",s2); ph=[K2(sw,"1")]; n=K2(sw,"5"); } }

@@ -36,8 +36,8 @@ function runChecks(){
   for(const [k,n] of Object.entries(cnt)) if(n>2&&!/^x(n|pe):/.test(k)) add("w",`${termName(k)}: ${n} дроти під одним гвинтом`,"Більше двох дротів під клемою — ненадійний контакт. Використайте шину або клемник.");
   for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до апарата або шини."); }
   // TOQ5: блок керування бачить джерела лише через клеми AR/AN і BR/BN
-  for(const d of S.devices) if(d.type==="toq5"){ const free=t=>!S.wires.some(w=>w.a===K(d,t)||w.b===K(d,t));
-    if(free("AR")||free("AN")) add("w",`${desig(d)}: не підключено клеми керування AR/AN`,"Блок керування TOQ5 бачить мережу лише через AR і AN. З’єднайте їх комплектними перемичками з клемами R і N Source A — інакше апарат не перейде назад на мережу.",{dev:d.id});
+  for(const d of S.devices) if(d.type==="toq5"||d.type==="toq7"){ const TQ=d.type==="toq7"?"TOQ7":"TOQ5"; const free=t=>!S.wires.some(w=>w.a===K(d,t)||w.b===K(d,t));
+    if(free("AR")||free("AN")) add("w",`${desig(d)}: не підключено клеми керування AR/AN`,`Блок керування ${TQ} бачить мережу лише через AR і AN. З’єднайте їх комплектними перемичками з клемами R і N Source A — інакше апарат не перейде назад на мережу.`,{dev:d.id});
     if(free("BR")||free("BN")) add("w",`${desig(d)}: не підключено клеми керування BR/BN`,"Без перемичок від R і N Source B апарат не бачить генератор і не перемкнеться на нього.",{dev:d.id}); }
   const pe=b.inputs.find(i=>i.terms.includes("PE"));
   if(pe&&b.xpe){ if(f0(pe.id+":PE")!==f0("xpe:0")) add("e","Шина PE не з’єднана з вводом PE","Захисний провідник має йти на XPE1 напряму, без апаратів."); else add("ok","Шина PE підключена до вводу напряму"); }
