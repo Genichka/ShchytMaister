@@ -21,7 +21,7 @@ function stepOpts(id,kind){
       ["qm",null,"Автомат захисту двигуна + двигун 3~ 4 кВт",{withMotor:true}]]:[])];
   return null; }
 function showOpts(step){ const kind=boardKind(S.board), opts=stepOpts(step.id,kind); if(!opts) return;
-  S.mode="mount"; S.devFilter={step:step.id,title:step.short||step.t,opts}; S.devOpen=true; S.pick=null; S.pickRating=null; S.pickExtra=null; renderAll(true); }
+  S.mode="mount"; S.allDev=false; S.devFilter={step:step.id,title:step.short||step.t,opts}; S.devOpen=true; S.pick=null; S.pickRating=null; S.pickExtra=null; renderAll(true); }
 function goWire(kind){ S.mode="wire"; S.wireKind=kind; renderAll(true); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); }
 let JCACHE={sig:null,val:false};
 function jumpOK(){ const sig=structSnap(); if(JCACHE.sig===sig) return JCACHE.val;

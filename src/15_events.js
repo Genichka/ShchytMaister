@@ -72,7 +72,8 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(el=q("[data-pick]")){ S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.pickRating=null; S.pickExtra=null; S.selDev=null; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); } renderAll(); return; }
   if(el=q("[data-fpick]")){ const o=S.devFilter.opts[+el.dataset.fpick]; S.pick=o[0]; S.pickRating=o[1]||null; S.pickExtra=o[3]||null; S.selDev=null;
     toast(`${o[2]}: торкніться вільного місця на рейці`); renderAll(); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); return; }
-  if(q("[data-fall]")){ S.devFilter=null; S.devOpen=true; renderAll(); return; }
+  if(q("[data-fall]")){ S.devFilter=null; S.devOpen=true; S.allDev=true; renderAll(); return; }
+  if(q("[data-gback]")){ S.allDev=false; S.pick=null; renderAll(); return; }
   if(el=q("[data-tpl]")){ closeDrawer(); const key=el.dataset.tpl;
     if(key==="__new"){ confirmLeave(()=>openWizard(false)); return; }
     confirmLeave(()=>{ applyTemplate(key); clearCheck(); S.mode=S.tplObj.demo&&S.tplObj.demo.script.length?"test":"mount"; S.devOpen=S.mode==="mount";

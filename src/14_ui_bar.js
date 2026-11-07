@@ -16,7 +16,7 @@ function renderBar(){ const el=$("barIn"); if(!el) return; let h="";
   else if(w) h=wireBar(w);
   else if(d) h=devBar(d);
   else if(f) h=fieldBar(f);
-  else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter?"":mountBar()):S.mode==="wire"?(guideOn?"":wireToolsBar()):testBar()); }
+  else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter&&!S.allDev?"":mountBar()):S.mode==="wire"?(guideOn?"":wireToolsBar()):testBar()); }
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
 // ---- Порожня робоча зона: стартові дії (збережені проєкти й імпорт — у «Меню» та «Проєкт»)
@@ -31,7 +31,7 @@ function mountBar(){ if(S.pick&&T[S.pick]) return pickBar(); const F=S.devFilter
   if(F) return brow(`<span class="bl">${esc(F.title)} — оберіть:</span><button class="chip" data-fall>Усі апарати</button>`)
     +brow(F.opts.map((o,i)=>`<button class="dc" data-fpick="${i}" aria-pressed="${S.pick===o[0]&&(S.pickRating||null)===(o[1]||null)&&JSON.stringify(S.pickExtra||null)===JSON.stringify(o[3]||null)}"><b>${esc(o[2]).replace(/^(TOMZN [A-Z0-9-/]+)/,'<em class="mk">$1</em>')}</b><small>${T[o[0]].w} мод.</small></button>`).join(""),"cards opts");
   const ci=S.cat??0, c=CATS[ci]||CATS[0], ks=c[1]<0?null:DEV_GROUPS[c[1]][1].filter(x=>T[x]);
-  let s=brow((S.guide&&S.guide.on?"":`<button class="btn sm" data-gon>Помічник</button>`)+CATS.map(([l],i)=>chip(`data-cat="${i}"`,i===ci,l)).join("")+`<span class="bl mono">${mods}/${SLOTS*S.board.rails} мод.</span>`);
+  let s=brow((S.guide&&S.guide.on?(guideOn?`<button class="btn sm" data-gback>← До кроку помічника</button>`:""):`<button class="btn sm" data-gon>Помічник</button>`)+CATS.map(([l],i)=>chip(`data-cat="${i}"`,i===ci,l)).join("")+`<span class="bl mono">${mods}/${SLOTS*S.board.rails} мод.</span>`);
   if(c[1]===-2) return s+groupsQuickBar();
   s+=ks?brow(ks.map(x=>`<button class="dc" data-pick="${x}" aria-pressed="${S.pick===x}" title="${esc(T[x].name)}"><b>${esc(T[x].short)}</b><small>${T[x].w} мод.${brandsFor(x).length>1?" · "+(brandsFor(x).length-1)+" вир.":""}</small></button>`).join(""),"cards")
     :brow(FIELD_LIB.map(L=>`<button class="dc" data-fadd="${L.type}"><b>${esc(L.name)}</b><small>+${Object.keys(L.t).length} клем на XT1</small></button>`).join(""),"cards");
@@ -133,9 +133,11 @@ function testBar(){ const dm=S.tplObj&&S.tplObj.demo||{controls:[{type:"src",id:
     return `<button class="switch sm" data-srcon="${c.id}" aria-pressed="${!!s.on}"><span class="knob"></span>${esc(c.label||inp.label)}</button>`+(c.noU?"":`<span class="volt sm"><input type="range" id="u-${c.id}" data-srcu="${c.id}" min="150" max="290" step="1" value="${Math.round(s.U||230)}" aria-label="Напруга"><output class="mono" id="uo-${c.id}">${three?Math.round((s.U||230)*1.732)+" В":Math.round(s.U||230)+" В"}</output></span>`); };
   const oHTML=([c,i])=>c.type==="range"?`<span class="volt sm"><span class="bl">${esc(c.label)}</span><input type="range" id="c-${i}" data-ctl="${i}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.get()}"><output class="mono" id="co-${i}">${c.get()}</output></span>`:ctlHTML(c,i);
   const faults=S.leak.size||S.short.size||S.arc.size;
-  let s=brow(src.map(sHTML).join("")+(dm.script.length?`<button class="btn sm primary" id="demoBtn">${S.demo?"■ Стоп":"▶ Демонстрація"}</button>`:"")+`<button class="btn sm" id="allOn">Увімкнути все</button>${faults?`<button class="btn sm" id="clrFaults">Прибрати аварії</button>`:""}`);
-  if(oth.length) s+=brow(oth.map(oHTML).join(""),"ctlrow");
-  s+=`<div class="br" id="stl"></div><button class="br logline" id="logline" aria-label="Журнал подій"></button>`;
+  // кожен ввід — окремим рядком (перемикач + напруга), щоб на телефоні нічого не ховалось за край
+  let s=src.map(x=>brow(sHTML(x),"srcrow")).join("")
+    +brow((dm.script.length?`<button class="btn sm primary" id="demoBtn">${S.demo?"■ Стоп":"▶ Демонстрація"}</button>`:"")+`<button class="btn sm" id="allOn">Увімкнути все</button>${faults?`<button class="btn sm" id="clrFaults">Прибрати аварії</button>`:""}`,"wrap");
+  if(oth.length) s+=brow(oth.map(oHTML).join(""),"ctlrow wrap");
+  s+=`<div class="br wrap" id="stl"></div><button class="br logline" id="logline" aria-label="Журнал подій"></button>`;
   return s; }
 
 // ---- Результат перевірки: одна помилка за раз

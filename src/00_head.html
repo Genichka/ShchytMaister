@@ -174,8 +174,10 @@ select.btn{padding-right:26px}
 .pst.ok{color:var(--green)} .pst.ok i{background:var(--green)} .pst.no{color:var(--orange)} .pst.no i{background:var(--orange)}
 
 /* ---- Нижня панель (як панель Grafana) */
-.bbar{min-height:0;max-height:44dvh;overflow:hidden;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line)}
+.bbar{min-height:0;max-height:44dvh;overflow-x:hidden;overflow-y:auto;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line)}
 .bar-in{display:flex;flex-direction:column;gap:6px}
+.br.wrap{flex-wrap:wrap;overflow:visible}
+.br.srcrow .volt.sm{flex:1 1 auto;min-width:0} .br.srcrow .volt.sm input[type=range]{width:auto;flex:1 1 60px;min-width:60px} .br.srcrow .switch{flex:none}
 .br{display:flex;align-items:center;gap:6px;min-height:34px;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .br::-webkit-scrollbar{display:none} .br>*{flex:none}
 .bh{min-height:30px} .bh b{flex:1 1 auto!important;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:500;color:var(--strong)}

@@ -173,7 +173,6 @@ function autoControls(){ const c=[], b=S.board;
     if(f.type==="inv") c.push({type:"toggle",label:`${f.name}: інвертор увімкнено`,get:()=>f.en!==false,set:v=>{ f.en=v; }});
     if(/^inv/.test(f.type)) c.push({type:"btn",label:`${f.name}: відремонтувати`,act:()=>{ f.dead=false; f.faultT=0; }}); }
   const sb=S.devices.filter(d=>d.type==="sbp"||d.type==="sbs"); for(const d of sb) c.push({type:"btn",label:`${desig(d)} ${d.type==="sbp"?"Пуск":"Стоп"}`,cls:d.type==="sbp"?"go":"stop",act:()=>livePress(d)});
-  if(b.inputs.some(i=>i.terms.includes("N"))||S.field.some(f=>f.type==="pv")) c.push({type:"btn",label:"Удар блискавки поруч",act:surgeAll});
   return c; }
 function autoStatus(){ const R=S.sim, rows=[];
   for(const i of S.board.inputs) if(i.terms.some(t=>/^L/.test(t))){ const s=S.src[i.id]||{};

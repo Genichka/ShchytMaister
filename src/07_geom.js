@@ -96,7 +96,7 @@ function devSVG(d){
   const cl=capLines(d.group?d.group.name:(d.cap||t.cap||t.short),w);
   cl.lines.forEach((ln,i)=>{ s+=tx(cx,y+cl.y0+i*(cl.fs+1),ln,{fs:cl.fs}); });
   if(S.mode==="test"&&S.sim&&S.sim.I&&S.sim.I[d.id]!==undefined&&(t.prot||t.rcd||t.meter)){ const I=S.sim.I[d.id], tw=Math.min(w-8,46), ov=I>protIn(d)&&t.prot;
-    s+=`<rect x="${cx-tw/2}" y="${y+157}" width="${tw}" height="10.5" rx="2" fill="#16181c"/>`+tx(cx,y+165,fmt(I,I<10?1:0)+" А",{fs:7.4,ff:"var(--mono)",fw:600,fill:ov?"#ff6b5a":I>0.05?"#5fe36b":"#7c828c"}); }
+    s+=`<rect x="${cx-tw/2}" y="${y+155}" width="${tw}" height="9.5" rx="2" fill="#16181c"/>`+tx(cx,y+162.4,fmt(I,I<10?1:0)+" А",{fs:7,ff:"var(--mono)",fw:600,fill:ov?"#ff6b5a":I>0.05?"#5fe36b":"#7c828c"}); }
   if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
   return s+"</g>";
 }
