@@ -22,7 +22,7 @@ function wirePlan(){
   const bots=m=>T[m.type].terms.filter(x=>x.s==="bot"&&x.r!=="N"&&x.r!=="C").map(x=>K2(m,x.k));
   const nT=m=>{ const t=T[m.type].terms.find(x=>x.s==="top"&&x.r==="N"); return t?K2(m,t.k):null; };
   const nB=m=>{ const t=T[m.type].terms.find(x=>x.s==="bot"&&x.r==="N"); return t?K2(m,t.k):null; };
-  const rc4=three?pos("rcd4")[0]:null, rc1=!three?pos("rcd")[0]:null, kv=!three?pos("kv")[0]:null, kvf=three?pos("kvf","kvf2")[0]:null;
+  const rc4=three?pos("rcd4")[0]:null, rc1=!three?pos("rcd")[0]:null, kv=!three?pos("kv","tovpd1")[0]:null, kvf=three?pos("kvf","kvf2")[0]:null;
   const spd=!three?pos("spdac")[0]:null, spd3=three?pos("spd3")[0]:null, sw=two?pos(...SWITCH_T)[0]:null;
   const secMain=Math.max(...mains.map(m=>secFor(protIn(m))));
   // 1. Ввід → ввідний автомат; два вводи — кожен на свій автомат
@@ -88,7 +88,7 @@ function wirePlan(){
 // Номінали й перерізи, з якими перевірка не пройде: ПЗВ і реле слабші за ввідний, автомат групи завеликий для кабелю
 function fixRatings(){ const fix=[], mains=mainsOf(); if(!mains.length) return fix; const mainIn=Math.min(...mains.map(protIn));
   for(const d of S.devices){ const t=T[d.type];
-    if((d.type==="rcd"||d.type==="rcd4"||d.type==="kv")&&inA(d.rating)<mainIn){ const r=t.ratings.find(x=>inA(x)>=mainIn)||t.ratings[t.ratings.length-1];
+    if((d.type==="rcd"||d.type==="rcd4"||d.type==="kv"||d.type==="tovpd1")&&inA(d.rating)<mainIn){ const r=t.ratings.find(x=>inA(x)>=mainIn)||t.ratings[t.ratings.length-1];
       if(r!==d.rating){ fix.push(`${desig(d)}: ${d.rating} → ${r}${t.unit||""}`); d.rating=r; } } }
   for(const g of groupsOf()){ const In=inA(g.rating); if(In>CAB[g.group.sec]){ const s=secFor(In); fix.push(`${desig(g)}: кабель ${fmt(g.group.sec,1)} → ${fmt(s,1)} мм²`); g.group.sec=s; } }
   return fix; }

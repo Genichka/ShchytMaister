@@ -88,18 +88,52 @@ defType("qs",{name:"Перемикач 1-0-2", short:"Перемикач 1-0-2",
       +tx(g.cx-34,g.y+90,"1",{fs:10,fw:700})+tx(g.cx,g.y+80,"0",{fs:9})+tx(g.cx+34,g.y+90,"2",{fs:10,fw:700})+tx(g.cx,g.y+150,d.pos===1?"Мережа напряму":d.pos===2?"Від інвертора":"Вимкнено",{fs:7,fw:600}); }});
 // Перемикач вводів I–0–II, 2P 63 А, 4 модулі (як TOMZN TO219G). I: з’єднано 1–2 і 5–6; «0»: усе розімкнено; II: 1–4 і 5–8.
 // Спільні клеми 1 і 5 (3 і 7 — їх дублі) — на навантаження; 2 і 6 — ввід I (мережа); 4 і 8 — ввід II (генератор).
-defType("to219",{name:"Перемикач I–0–II 2P 63 А (тип TOMZN TO219G)", short:"Перемикач I–0–II", cat:"Комутація", w:4, pre:"QS", maker:"TOMZN",
+defType("to219",{name:"Механічний АВР TOMZN TO219G — перемикач I–0–II 2P 63 А", short:"Мех. АВР TO219G", cat:"Комутація", w:4, pre:"QS", maker:"TOMZN",
   terms:[{k:"1",s:"top",r:"L",l:"1"},{k:"3",s:"top",r:"L",l:"3"},{k:"5",s:"top",r:"N",l:"5"},{k:"7",s:"top",r:"N",l:"7"},
     {k:"2",s:"bot",r:"L",l:"2"},{k:"4",s:"bot",r:"L",l:"4"},{k:"6",s:"bot",r:"N",l:"6"},{k:"8",s:"bot",r:"N",l:"8"}],
   poles:[{a:"2",b:"1",r:"L"},{a:"6",b:"5",r:"N"},{a:"4",b:"1",r:"L"},{a:"8",b:"5",r:"N"}], links:()=>[["1","3"],["5","7"]],
   closed:(d,pi)=>pi<2?d.pos===1:d.pos===2, init:d=>{ if(d.pos===undefined) d.pos=1; }, cap:"Мережа / генератор",
   tap(d){ const seq=[1,0,2,0]; d.seqI=((d.seqI??seq.indexOf(d.pos))+1)%4; d.pos=seq[d.seqI]; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); return true; },
   face(d,g){ const p=d.pos, hy=p===2?g.y+76:p===0?g.y+100:g.y+124, ww=g.w/2-24,
-      win=x=>`<rect x="${x}" y="${g.y+72}" width="${ww}" height="72" rx="3" fill="#dfe1e5" stroke="#b9bcc4"/><rect x="${x+ww/2-3}" y="${g.y+79}" width="6" height="14" rx="2" fill="#c3c6cc"/>`;
+      win=x=>`<rect x="${x}" y="${g.y+72}" width="${ww}" height="72" rx="3" fill="#2a63b8" stroke="#1d4c93"/><rect x="${x+ww/2-3}" y="${g.y+79}" width="6" height="14" rx="2" fill="#3f7fd6"/>`;
     return tx(g.cx,g.y+66,"тип TO219G · 63 A · 400 В",{fs:6.6})+win(g.x+12)+win(g.cx+4)
-      +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${g.x+8}" y="${hy}" width="${g.w-30}" height="20" rx="3" fill="#f4f5f7" stroke="#8e939b"/><rect x="${g.cx-30}" y="${hy+4}" width="44" height="12" rx="2" fill="#e3e5e9" stroke="#b0b4bb"/></g>`
+      +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${g.x+8}" y="${hy}" width="${g.w-30}" height="20" rx="10" fill="#2f80e6" stroke="#1b5aae"/><rect x="${g.x+14}" y="${hy+4}" width="${g.w-42}" height="5" rx="2.5" fill="#6aa8f2" opacity=".7"/></g>`
       +tx(g.x+g.w-6,g.y+90,"II",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+114,"0",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+138,"I",{fs:8,fw:700,a:"end"})
       +tx(g.cx,g.y+157,p===1?"I · 1–2, 5–6 · мережа":p===2?"II · 1–4, 5–8 · генератор":"0 · усе розімкнено",{fs:6.8,fw:600}); }});
+// Реле напруги й струму TOMZN TOVPD1 (2 модулі): червоний індикатор — напруга, зелений — струм навантаження.
+// Зверху N і L — ввід, знизу N і L — вихід (N наскрізний). Як реле напруги: вимикає при U поза 170–250 В і вмикає
+// після затримки. Додатково: струм понад уставку довше 1 с — відключає й чекає натискання ⏻ (захист від перевантаження).
+const kvLogic=T.kv.logic, kvTick=T.kv.tick;
+defType("tovpd1",{...T.kv, name:"Реле напруги й струму TOMZN TOVPD1 (V + A)", short:"Реле U+I TOVPD1", maker:"TOMZN", amm:true, faceFill:"#cdd0d5",
+  ratings:["40","60","63"], def:"60", cap:"Контроль U та I",
+  terms:[{k:"t1",s:"top",r:"N",l:"N"},{k:"t2",s:"top",r:"L",l:"L"},{k:"b1",s:"bot",r:"N",l:"N",m:0},{k:"b2",s:"bot",r:"L",l:"L",m:1}],
+  links:()=>[["t1","b1"]],
+  init:d=>{ if(!d.iset||d.iset>inA(d.rating)) d.iset=inA(d.rating)||60; },
+  logic(d,X){ const s=d.ks||(d.ks={closed:false,delay:KV_DELAY});
+    if(s.oc||s.off){ const U=X.volt(K(d,"t2"),K(d,"t1")); s.U=U; s.pw=U>60; if(s.closed){ s.closed=false; return true; } return false; }
+    return kvLogic(d,X); },
+  tick(d,X,dt){ const s=d.ks; if(!s) return; const I=s.closed?(((S.sim&&S.sim.per[d.id])||[])[0]||0):0; s.I=I;
+    const lim=d.iset||inA(d.rating);
+    if(s.closed&&I>lim){ s.ot=(s.ot||0)+dt; if(s.ot>=1){ s.closed=false; s.oc=true; s.ot=0; s.I=0;
+      logp("e",`${desig(d)} відключив навантаження: струм ${fmt(I)} А більший за уставку ${lim} А. Натисніть ⏻ на реле, щоб увімкнути знову`);
+      if(typeof toast==="function") toast(`${desig(d)}: перевантаження ${fmt(I)} А > ${lim} А`,"e"); } return; }
+    s.ot=0; if(s.oc||s.off) return; kvTick(d,X,dt); },
+  tap(d,el){ const s=d.ks||(d.ks={closed:false,delay:KV_DELAY}); s.delay=KV_DELAY;
+    if(s.oc){ s.oc=false; logp("ok",`${desig(d)}: відключення за струмом скинуто — увімкне через ${KV_DELAY} с, якщо напруга в нормі`); return true; }
+    s.off=!s.off; logp("w",`${desig(d)}: кнопка ⏻ — ${s.off?"навантаження вимкнено вручну":`увімкне через ${KV_DELAY} с, якщо напруга в нормі`}`); return true; },
+  face(d,g){ const s=d.ks||{}, pw=!!s.pw, hiU=pw&&s.U>U_MAX, loU=pw&&s.U<U_MIN, x=g.x, y=g.y, dw=g.w-36;
+    const vt=!pw?"---":s.closed||hiU||loU||s.oc||s.off?String(Math.round(s.U)):"⏱"+Math.ceil(s.delay),
+      at=!pw?"---":s.oc?"OC":s.off?"OFF":fmt(s.I||0,(s.I||0)<10?1:0);
+    const ledL=(yy,l,c)=>tx(x+g.w-17,yy+2.4,l,{fs:5.6,fw:700,a:"end",fill:"#3d4250"})+`<circle cx="${x+g.w-10}" cy="${yy}" r="3.4" fill="${c}" stroke="#555"/>`;
+    const btn=(bx,lab,lev)=>`<g${lev?` data-lever="${d.id}" style="cursor:pointer"`:""}><circle cx="${bx}" cy="${y+141}" r="9" fill="#3d8de6" stroke="#1f63b3" stroke-width="1.2"/>`
+      +(lab==="pw"?`<path d="M${bx-3.4} ${y+138.2} A4.6 4.6 0 1 0 ${bx+3.4} ${y+138.2}" fill="none" stroke="#fff" stroke-width="1.3"/><line x1="${bx}" y1="${y+135.2}" x2="${bx}" y2="${y+141}" stroke="#fff" stroke-width="1.3"/>`
+        :tx(bx,y+143.3,lab,{fs:lab.length>1?5.6:7,fw:700,fill:"#fff"}))+`</g>`;
+    return lcd(x+7,y+62,dw,26,vt,pw,"#ff4a3d")+lcd(x+7,y+92,dw,26,at,pw&&!s.off,s.oc?"#ff4a3d":"#43e05a")
+      +tx(x+dw+4,y+86,"V",{fs:5.6,fw:700,a:"end",fill:"#8a8f99"})+tx(x+dw+4,y+116,"A",{fs:5.6,fw:700,a:"end",fill:"#8a8f99"})
+      +ledL(y+67,">V",hiU?"#ff3b30":"#5a5e66")+ledL(y+80,"<V",loU?"#ff3b30":"#5a5e66")+ledL(y+97,">A",s.oc||(s.ot>0)?"#ff3b30":"#5a5e66")+ledL(y+110,"PWR",pw?"#3fd14e":"#5a5e66")
+      +tx(x+8,y+128,"TOVPD1-"+d.rating,{fs:6.6,fw:700,a:"start",fill:"#22252b"})+tx(x+g.w-8,y+128,`I ≤ ${d.iset||inA(d.rating)} А`,{fs:5.8,a:"end",fill:"#3d4250"})
+      +btn(x+16,"pw",1)+btn(x+40,"SET")+btn(x+g.w-40,"▲")+btn(x+g.w-16,"▼")
+      +tx(g.cx,y+159,"TOMZN ELECTRIC",{fs:5.2,fw:600,fill:"#3d4250"}); }});
 // АВР TOMZN TOQ5-…/2 з поворотною ручкою, 6 модулів (мережа + генератор). Зверху Source A (R, N) — мережа, пріоритет;
 // знизу Source B (R, N) — генератор, і окремі клеми навантаження Load (R, N). Блок керування бачить напругу лише через
 // клеми AR/AN і BR/BN — їх з’єднують із силовими клемами комплектними перемичками. NC–C–NO: сигнальні контакти положення

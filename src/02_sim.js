@@ -195,7 +195,7 @@ function solve(dt=0){
     if(S.tplObj&&S.tplObj.tick) S.tplObj.tick(X,dt); invTick(X,dt); X=evaluate({extra:shortsExtra()}); }
   if(anySource()){ resolveFaults(); X=evaluate({extra:shortsExtra()}); } else if(S.env.arc){ S.env.arc=false; }
   const loads=computeLoads(X), R={X, loads, I:{}, per:{}, liveW:new Set(), g:{}, totalI:0, chatter:!!X.chatter};
-  for(const d of S.devices){ const t=T[d.type]; if(!(t.prot||t.meter||t.rcd)||((t.prot||t.rcd)&&(!d.on||d.trip))) continue;
+  for(const d of S.devices){ const t=T[d.type]; if(!(t.prot||t.meter||t.rcd||t.amm)||((t.prot||t.rcd)&&(!d.on||d.trip))) continue;
     const pc=poleCurrents(d,X,loads); R.I[d.id]=pc.max; R.per[d.id]=pc.per;
     if(dt>0&&t.prot){ const In=protIn(d), I=pc.max; let k=I/In;
       if(t.prot==="mpcb"){ const nz=pc.per.filter(x=>x>0.3*In).length; if(nz>0&&nz<pc.per.length&&pc.per.length===3) k*=1.6; }
