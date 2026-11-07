@@ -135,6 +135,9 @@ select.btn{padding-right:26px}
 .dc:hover{background:var(--panel3);border-color:var(--line2)}
 .dc b{font-size:12.5px;font-weight:500;line-height:1.2;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .dc small{font-size:11px;color:var(--muted)}
+.br.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;overflow:visible}
+.br.opts .dc{width:auto;min-height:48px} .br.opts .dc b{display:block;-webkit-line-clamp:unset;overflow:visible}
+.dc em.mk{font-style:normal;font-weight:700;color:var(--blue)}
 .dc[aria-pressed="true"]{border-color:var(--blue2);background:color-mix(in srgb,var(--blue2) 18%,var(--panel2));box-shadow:inset 0 0 0 1px var(--blue2)}
 .lchip{display:inline-flex;align-items:stretch;overflow:hidden;background:var(--panel2);border:1px solid var(--line2);border-radius:var(--r)}
 .lchip button{min-height:32px;padding:4px 9px;font-size:13px;white-space:nowrap;color:var(--muted);background:none;border:0}
@@ -399,7 +402,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.16.0", date:"2026-11-07", notes:["Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
+const APP = { v:"4.16.1", date:"2026-11-07", notes:["Помічник: варіанти апаратів показано повністю, сіткою — видно й можна вибрати TOMZN TOVPD1, TO219G, TOQ5, TOQ7","Підписи під апаратами більше не обрізаються: довга назва групи стає дрібнішим шрифтом у 2 рядки","Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1326,6 +1329,17 @@ function rpath(pts,r=7){
   const q=p[p.length-1]; return d+" L"+q[0]+" "+q[1];
 }
 const screw = (x,y,r=11) => `<circle class="screw" cx="${x}" cy="${y}" r="${r}"/><path class="screw-x" d="M${x-r*0.55} ${y}h${r*1.1}M${x} ${y-r*0.55}v${r*1.1}"/>`;
+// Підпис під апаратом між кольоровою смугою (до y+193) і нижніми гвинтами (від y+207): один рядок до 7,2 px,
+// два рядки — до 6 px; якщо й так не влазить — дрібніше (до 4,8), обрізаємо лише в крайньому разі
+function capLines(cap,w){ const cw=w-6, words=String(cap).split(/\s+/).filter(Boolean), txt=words.join(" ");
+  const mc=fs=>Math.max(4,Math.floor(cw/(fs*0.56)));
+  for(let fs=7.2;fs>=5.99;fs-=0.4) if(txt.length<=mc(fs)) return {fs:+fs.toFixed(1),lines:txt?[txt]:[],y0:203};
+  let last=null;
+  for(let fs=6;fs>=4.79;fs-=0.4){ const maxc=mc(fs), lines=[]; let cur="";
+    for(const wd of words){ if((cur+" "+wd).trim().length>maxc&&cur){ lines.push(cur); cur=wd; } else cur=(cur+" "+wd).trim(); } if(cur) lines.push(cur);
+    last={fs:+fs.toFixed(1),lines,maxc}; if(lines.length<=2&&lines.every(l=>l.length<=maxc)) break; }
+  const lines=last.lines.slice(0,2).map((l,i)=>l.length>last.maxc||(i===1&&last.lines.length>2)?l.slice(0,last.maxc-1)+"…":l);
+  return {fs:last.fs,lines,y0:lines.length>1?205.5-last.fs-1:203}; }
 function devSVG(d){
   const t=T[d.type], r=d.rail||0, x=G.X0+d.slot*G.MW+1, w=t.w*G.MW-2, y=devTop(r), cx=x+w/2, on=d.on&&!d.trip, heat=S.heat[d.id]||0, H=240;
   let s=`<g data-dev="${d.id}">`;
@@ -1344,9 +1358,8 @@ function devSVG(d){
   const des=desig(d), pw=Math.max(38,des.length*7+12);
   s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});
   const gc=d.group?d.group.color:(d.capColor||"#8f93a2"); s+=`<rect x="${x+2}" y="${y+188}" width="${w-4}" height="5" fill="${gc}"/>`;
-  const cap=d.group?d.group.name:(d.cap||t.cap||t.short), maxc=Math.max(7,Math.floor(w/7)); const lines=[]; let cur="";
-  for(const wd of String(cap).split(/\s+/)){ if((cur+" "+wd).trim().length>maxc&&cur){ lines.push(cur); cur=wd; } else cur=(cur+" "+wd).trim(); } if(cur) lines.push(cur);
-  lines.slice(0,2).forEach((ln,i)=>{ s+=tx(cx,y+203+i*9,ln.length>maxc+2?ln.slice(0,maxc+1)+"…":ln,{fs:7}); });
+  const cl=capLines(d.group?d.group.name:(d.cap||t.cap||t.short),w);
+  cl.lines.forEach((ln,i)=>{ s+=tx(cx,y+cl.y0+i*(cl.fs+1),ln,{fs:cl.fs}); });
   if(S.mode==="test"&&S.sim&&S.sim.I&&S.sim.I[d.id]!==undefined&&(t.prot||t.rcd||t.meter)){ const I=S.sim.I[d.id], tw=Math.min(w-8,46), ov=I>protIn(d)&&t.prot;
     s+=`<rect x="${cx-tw/2}" y="${y+157}" width="${tw}" height="10.5" rx="2" fill="#16181c"/>`+tx(cx,y+165,fmt(I,I<10?1:0)+" А",{fs:7.4,ff:"var(--mono)",fw:600,fill:ov?"#ff6b5a":I>0.05?"#5fe36b":"#7c828c"}); }
   if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
@@ -2148,7 +2161,8 @@ function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def|
     +(t.ratings?brow(`<span class="bl">Номінал</span>`+t.ratings.map(r=>chip(`data-prate="${r}"`,rate===r,r+(t.unit||""),"mono")).join("")):"")
     +brow(`<span class="bl">Скільки</span>`+[1,2,3,4,5,6,8].map(n=>chip(`data-pqty="${n}"`,q===n,"×"+n,"mono")).join("")+`<button class="btn sm" data-pauto>Поставити ×${q} у вільні місця</button>`); }
 function mountBar(){ if(S.pick&&T[S.pick]) return pickBar(); const F=S.devFilter, mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
-  if(F) return brow(`<span class="bl">${esc(F.title)}:</span>`+F.opts.map((o,i)=>`<button class="dc" data-fpick="${i}" aria-pressed="${S.pick===o[0]&&(S.pickRating||null)===(o[1]||null)&&JSON.stringify(S.pickExtra||null)===JSON.stringify(o[3]||null)}"><b>${esc(o[2])}</b><small>${T[o[0]].w} мод.</small></button>`).join("")+`<button class="chip" data-fall>Усі апарати</button>`,"cards");
+  if(F) return brow(`<span class="bl">${esc(F.title)} — оберіть:</span><button class="chip" data-fall>Усі апарати</button>`)
+    +brow(F.opts.map((o,i)=>`<button class="dc" data-fpick="${i}" aria-pressed="${S.pick===o[0]&&(S.pickRating||null)===(o[1]||null)&&JSON.stringify(S.pickExtra||null)===JSON.stringify(o[3]||null)}"><b>${esc(o[2]).replace(/^(TOMZN [A-Z0-9-/]+)/,'<em class="mk">$1</em>')}</b><small>${T[o[0]].w} мод.</small></button>`).join(""),"cards opts");
   const ci=S.cat??0, c=CATS[ci]||CATS[0], ks=c[1]<0?null:DEV_GROUPS[c[1]][1].filter(x=>T[x]);
   let s=brow((S.guide&&S.guide.on?"":`<button class="btn sm" data-gon>Помічник</button>`)+CATS.map(([l],i)=>chip(`data-cat="${i}"`,i===ci,l)).join("")+`<span class="bl mono">${mods}/${SLOTS*S.board.rails} мод.</span>`);
   if(c[1]===-2) return s+groupsQuickBar();
@@ -2773,9 +2787,9 @@ const GOPT = (type,rating,label,gname,gloads,more) => [type,rating,label,Object.
 function stepOpts(id,kind){
   if(id==="main") return kind==="3ph"?[...R("qf3p",["C25","C32","C40"]),...R("qf4p",["C25","C32","C40"])]:R("qf2p",["C25","C32","C40","C50","C63"]);
   if(id==="prot") return kind==="3ph"?[["kvf",null,"Реле контролю фаз (обрив, чергування, напруга)"],["spd3",null,"УЗІП Т2 3P+N — від блискавки"]]
-    :[...R("kv",["40","63"],"Реле напруги"),["tovpd1","60","Реле напруги й струму TOMZN TOVPD1-60 (V + A)"],["spdac",null,"УЗІП Т2 1P+N — від блискавки"]];
-  if(id==="ats") return [["ats",null,"Модуль АВР TOMZN (тип TOQ5)",{variant:"tomzn"}],["toq5","125","АВР TOMZN TOQ5-125/2 з ручкою, 6 модулів"],["toq7","125","АВР TOMZN TOQ7-125/2 з ручкою, 6 модулів"],
-    ["ats",null,"Модуль АВР GEYA (тип G2R)",{variant:"geya"}],["to219",null,"Механічний АВР TOMZN TO219G — перемикач I–0–II, ручний"]];
+    :[...R("kv",["40","63"],"Реле напруги"),["tovpd1","60","TOMZN TOVPD1-60 — реле напруги й струму (V + A)"],["spdac",null,"УЗІП Т2 1P+N — від блискавки"]];
+  if(id==="ats") return [["ats",null,"Модуль АВР TOMZN (тип TOQ5)",{variant:"tomzn"}],["toq5","125","TOMZN TOQ5-125/2 — АВР з ручкою, 6 модулів"],["toq7","125","TOMZN TOQ7-125/2 — АВР з ручкою, чорний, 6 модулів"],
+    ["ats",null,"Модуль АВР GEYA (тип G2R)",{variant:"geya"}],["to219",null,"TOMZN TO219G — механічний АВР I–0–II, ручний"]];
   if(id==="rcd") return kind==="3ph"?R("rcd4",["40","63"]):[...R("rcd",["40","63"]),...R("rcbo",["B16","C16"])];
   if(id==="groups") return [GOPT("qf1p","B10","Автомат 1P B10 — освітлення","Освітлення",[["Освітлення",0.1,1]]),
     GOPT("qf1p","B16","Автомат 1P B16 — розетки","Розетки",[["Холодильник",0.15,1],["Телевізор",0.15,1],["Чайник",2.0,0]]),

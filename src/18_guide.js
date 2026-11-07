@@ -6,9 +6,9 @@ const GOPT = (type,rating,label,gname,gloads,more) => [type,rating,label,Object.
 function stepOpts(id,kind){
   if(id==="main") return kind==="3ph"?[...R("qf3p",["C25","C32","C40"]),...R("qf4p",["C25","C32","C40"])]:R("qf2p",["C25","C32","C40","C50","C63"]);
   if(id==="prot") return kind==="3ph"?[["kvf",null,"Реле контролю фаз (обрив, чергування, напруга)"],["spd3",null,"УЗІП Т2 3P+N — від блискавки"]]
-    :[...R("kv",["40","63"],"Реле напруги"),["tovpd1","60","Реле напруги й струму TOMZN TOVPD1-60 (V + A)"],["spdac",null,"УЗІП Т2 1P+N — від блискавки"]];
-  if(id==="ats") return [["ats",null,"Модуль АВР TOMZN (тип TOQ5)",{variant:"tomzn"}],["toq5","125","АВР TOMZN TOQ5-125/2 з ручкою, 6 модулів"],["toq7","125","АВР TOMZN TOQ7-125/2 з ручкою, 6 модулів"],
-    ["ats",null,"Модуль АВР GEYA (тип G2R)",{variant:"geya"}],["to219",null,"Механічний АВР TOMZN TO219G — перемикач I–0–II, ручний"]];
+    :[...R("kv",["40","63"],"Реле напруги"),["tovpd1","60","TOMZN TOVPD1-60 — реле напруги й струму (V + A)"],["spdac",null,"УЗІП Т2 1P+N — від блискавки"]];
+  if(id==="ats") return [["ats",null,"Модуль АВР TOMZN (тип TOQ5)",{variant:"tomzn"}],["toq5","125","TOMZN TOQ5-125/2 — АВР з ручкою, 6 модулів"],["toq7","125","TOMZN TOQ7-125/2 — АВР з ручкою, чорний, 6 модулів"],
+    ["ats",null,"Модуль АВР GEYA (тип G2R)",{variant:"geya"}],["to219",null,"TOMZN TO219G — механічний АВР I–0–II, ручний"]];
   if(id==="rcd") return kind==="3ph"?R("rcd4",["40","63"]):[...R("rcd",["40","63"]),...R("rcbo",["B16","C16"])];
   if(id==="groups") return [GOPT("qf1p","B10","Автомат 1P B10 — освітлення","Освітлення",[["Освітлення",0.1,1]]),
     GOPT("qf1p","B16","Автомат 1P B16 — розетки","Розетки",[["Холодильник",0.15,1],["Телевізор",0.15,1],["Чайник",2.0,0]]),

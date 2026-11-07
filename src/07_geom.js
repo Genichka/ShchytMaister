@@ -64,6 +64,17 @@ function rpath(pts,r=7){
   const q=p[p.length-1]; return d+" L"+q[0]+" "+q[1];
 }
 const screw = (x,y,r=11) => `<circle class="screw" cx="${x}" cy="${y}" r="${r}"/><path class="screw-x" d="M${x-r*0.55} ${y}h${r*1.1}M${x} ${y-r*0.55}v${r*1.1}"/>`;
+// Підпис під апаратом між кольоровою смугою (до y+193) і нижніми гвинтами (від y+207): один рядок до 7,2 px,
+// два рядки — до 6 px; якщо й так не влазить — дрібніше (до 4,8), обрізаємо лише в крайньому разі
+function capLines(cap,w){ const cw=w-6, words=String(cap).split(/\s+/).filter(Boolean), txt=words.join(" ");
+  const mc=fs=>Math.max(4,Math.floor(cw/(fs*0.56)));
+  for(let fs=7.2;fs>=5.99;fs-=0.4) if(txt.length<=mc(fs)) return {fs:+fs.toFixed(1),lines:txt?[txt]:[],y0:203};
+  let last=null;
+  for(let fs=6;fs>=4.79;fs-=0.4){ const maxc=mc(fs), lines=[]; let cur="";
+    for(const wd of words){ if((cur+" "+wd).trim().length>maxc&&cur){ lines.push(cur); cur=wd; } else cur=(cur+" "+wd).trim(); } if(cur) lines.push(cur);
+    last={fs:+fs.toFixed(1),lines,maxc}; if(lines.length<=2&&lines.every(l=>l.length<=maxc)) break; }
+  const lines=last.lines.slice(0,2).map((l,i)=>l.length>last.maxc||(i===1&&last.lines.length>2)?l.slice(0,last.maxc-1)+"…":l);
+  return {fs:last.fs,lines,y0:lines.length>1?205.5-last.fs-1:203}; }
 function devSVG(d){
   const t=T[d.type], r=d.rail||0, x=G.X0+d.slot*G.MW+1, w=t.w*G.MW-2, y=devTop(r), cx=x+w/2, on=d.on&&!d.trip, heat=S.heat[d.id]||0, H=240;
   let s=`<g data-dev="${d.id}">`;
@@ -82,9 +93,8 @@ function devSVG(d){
   const des=desig(d), pw=Math.max(38,des.length*7+12);
   s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});
   const gc=d.group?d.group.color:(d.capColor||"#8f93a2"); s+=`<rect x="${x+2}" y="${y+188}" width="${w-4}" height="5" fill="${gc}"/>`;
-  const cap=d.group?d.group.name:(d.cap||t.cap||t.short), maxc=Math.max(7,Math.floor(w/7)); const lines=[]; let cur="";
-  for(const wd of String(cap).split(/\s+/)){ if((cur+" "+wd).trim().length>maxc&&cur){ lines.push(cur); cur=wd; } else cur=(cur+" "+wd).trim(); } if(cur) lines.push(cur);
-  lines.slice(0,2).forEach((ln,i)=>{ s+=tx(cx,y+203+i*9,ln.length>maxc+2?ln.slice(0,maxc+1)+"…":ln,{fs:7}); });
+  const cl=capLines(d.group?d.group.name:(d.cap||t.cap||t.short),w);
+  cl.lines.forEach((ln,i)=>{ s+=tx(cx,y+cl.y0+i*(cl.fs+1),ln,{fs:cl.fs}); });
   if(S.mode==="test"&&S.sim&&S.sim.I&&S.sim.I[d.id]!==undefined&&(t.prot||t.rcd||t.meter)){ const I=S.sim.I[d.id], tw=Math.min(w-8,46), ov=I>protIn(d)&&t.prot;
     s+=`<rect x="${cx-tw/2}" y="${y+157}" width="${tw}" height="10.5" rx="2" fill="#16181c"/>`+tx(cx,y+165,fmt(I,I<10?1:0)+" А",{fs:7.4,ff:"var(--mono)",fw:600,fill:ov?"#ff6b5a":I>0.05?"#5fe36b":"#7c828c"}); }
   if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
