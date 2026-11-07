@@ -45,22 +45,23 @@ button{cursor:pointer}
 body.demo-on .app{bottom:38dvh} body.demo-on .bbar{display:none}
 
 /* ---- Шапка */
-.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:8px;min-width:0}
-.brand svg{width:22px;height:22px;flex:none}
-h1{margin:0;font-size:18px;font-weight:500;letter-spacing:0;white-space:nowrap}
+.top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.brand-t{display:flex;align-items:center;gap:8px}
+.brand svg{width:28px;height:28px;flex:none}
+h1{margin:0;font-size:27px;line-height:1.1;font-weight:500;letter-spacing:0;white-space:nowrap}
 .verrow{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .ver{font-size:11.5px;color:var(--muted);border:1px solid var(--line2);border-radius:var(--r);padding:2px 7px;cursor:pointer;white-space:nowrap}
 .ver:hover{color:var(--fg);border-color:var(--muted)}
 .btn.upd{position:relative;min-height:28px;padding:2px 9px;font-size:12.5px}
 .btn.upd .dot{display:none;position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 2px var(--panel)}
 .btn.upd.has{border-color:var(--orange);color:var(--orange)} .btn.upd.has .dot{display:block}
-.proj-btn{position:relative;flex:none;gap:6px;min-height:30px;padding:2px 9px;max-width:34vw;font-size:13px}
+.proj-btn{position:relative;flex:none;justify-self:end;gap:6px;min-height:30px;padding:2px 9px;max-width:34vw;font-size:13px}
 .proj-btn .pico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;flex:none}
 .proj-btn #projName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .proj-btn .pcar{color:var(--muted)}
 .proj-btn .pdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
-.proj-btn.unsaved .pdot{background:var(--orange)} .proj-btn.nodoc .pdot{display:none}
+.proj-btn.unsaved .pdot{background:var(--orange)} .proj-btn.nodoc .pdot{display:none} .proj-btn .plab{display:none}
 
 /* ---- Панель режимів (вкладки Grafana) */
 .tbar{display:flex;gap:2px;overflow-x:auto;background:var(--panel);border-bottom:1px solid var(--line);padding:2px 6px;scrollbar-width:none}
@@ -73,8 +74,15 @@ h1{margin:0;font-size:18px;font-weight:500;letter-spacing:0;white-space:nowrap}
 .tb[aria-selected="true"]::after,.sg[aria-pressed="true"]::after,.dtabs button[aria-selected="true"]::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:2px;border-radius:2px;background:var(--grad)}
 .tb:disabled{opacity:.35;background:none}
 .tb#btnCheck{color:var(--green)}
-.tb.shop{color:#fff;background:var(--red);margin:4px 0 4px 6px;padding:5px 10px 6px}
-.tb.shop:hover{background:color-mix(in srgb,var(--red) 85%,#000)} .tb.shop .sh-s{display:none}
+.tb.red{flex:0 0 auto;width:150px;color:#fff;background:var(--red);margin:4px 0;padding:5px 6px 6px}
+.tb.red:hover{background:color-mix(in srgb,var(--red) 85%,#000)} .tb.red small{white-space:nowrap}
+#menuBtn{margin-right:6px} .tb.shop{margin-left:6px} .tb.shop .sh-s{display:none}
+.wclose{position:absolute;right:8px;top:44px;z-index:6;width:42px;height:40px;justify-content:center;padding:0;font-size:18px;color:var(--red);border-color:color-mix(in srgb,var(--red) 55%,transparent);background:var(--panel2)}
+.wclose:hover{background:color-mix(in srgb,var(--red) 14%,var(--panel2))}
+.scroller.empty{display:flex;align-items:center;justify-content:center;background-color:var(--bg);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px),linear-gradient(color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px);
+  background-size:100px 100px,100px 100px,20px 20px,20px 20px}
+.scroller.empty #svg{max-width:620px}
 .shop{display:flex;flex-direction:column;gap:10px}
 .shop-i{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line2);border-radius:var(--r);background:var(--panel2,rgba(255,255,255,.02))}
 .shop-ph{display:block;width:100%;max-height:200px;object-fit:contain;background:#fff;border-radius:var(--r)}
@@ -91,7 +99,7 @@ h1{margin:0;font-size:18px;font-weight:500;letter-spacing:0;white-space:nowrap}
 .work .hint>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .scroller{min-height:0;height:100%;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
 #svg{display:block;width:100%;height:auto;margin:0 auto;user-select:none;-webkit-user-select:none}
-.fab{position:absolute;right:8px;top:44px;z-index:5;display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--panel2)}
+.fab{position:absolute;right:8px;top:92px;z-index:5;display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--panel2)}
 .fab .btn{min-height:38px;min-width:40px;justify-content:center;padding:4px;border:0;border-radius:0;background:transparent}
 .fab .btn+.btn{border-top:1px solid var(--line)}
 .fab #zFit{font-size:11px}
@@ -313,16 +321,18 @@ select.btn{padding-right:26px}
 
 /* ---- Адаптивність */
 @media (max-width:480px){
-  h1{font-size:16px} .brand{gap:5px}
-  .proj-btn{min-width:34px;padding:2px 7px} .proj-btn #projName,.proj-btn .pcar{display:none}
+  h1{font-size:23px} .brand svg{width:24px;height:24px} .brand-t{gap:6px} .top{padding:5px 8px;gap:6px}
+  .proj-btn{flex-direction:column;gap:1px;min-width:44px;padding:3px 6px;min-height:0} .proj-btn #projName,.proj-btn .pcar{display:none}
+  .proj-btn .plab{display:block;font-size:10px;line-height:1.1;color:var(--muted)}
   .proj-btn .pdot{position:absolute;top:3px;right:3px;width:7px;height:7px}
   .btn.upd{padding:2px 7px;font-size:12px}
-  .tbar{gap:0;padding:2px 4px} .tb{padding:5px 3px 6px} .tb.shop{padding:4px 6px 5px;margin:3px 0 3px 4px}
-  .tb.shop small{white-space:nowrap;font-size:9.5px}
+  .tbar{gap:0;padding:2px 4px} .tb{padding:5px 3px 6px}
+  .tb.red{width:60px;padding:4px 2px 5px;margin:3px 0} #menuBtn{margin-right:4px} .tb.shop{margin-left:4px}
+  .tb.shop .sh-l{display:none} .tb.shop .sh-s{display:inline}
   .tb.nolab small{display:none} .tb small{font-size:10px} .tb svg{width:21px;height:21px} }
-@media (max-width:360px){ .ver{display:none} }
-@media (max-width:429px){ .tb small{font-size:9.5px} .tb svg{width:19px;height:19px} .tb{padding:5px 2px 6px} .tb-sep{display:none}
-  .tb.shop{padding:4px 5px 5px} .tb.shop .sh-l{display:none} .tb.shop .sh-s{display:inline} }
+@media (max-width:330px){ .ver{display:none} }
+@media (max-width:429px){ .tb small{font-size:9.5px} .tb svg{width:19px;height:19px} .tb{padding:5px 2px 6px} .tb-sep{display:none} .tb.red{width:56px} .ver{font-size:10.5px;padding:2px 5px} }
+@media (max-width:370px){ .tb{padding:5px 1px 6px} .tb.red{width:50px} }
 @media (min-width:900px){ .bbar{max-height:40dvh} .br{flex-wrap:wrap;overflow:visible} }
 @media print{
   body{overflow:visible!important;height:auto} .app{position:static} .app,.drawer,.toast,.modal,.demobar,.docs-bar{display:none!important}
@@ -331,16 +341,17 @@ select.btn{padding-right:26px}
 
 <div class="app" id="app">
   <header class="top">
-    <div class="brand">
+    <span class="top-s" aria-hidden="true"></span>
+    <div class="brand"><div class="brand-t">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4 13.5h6.5L9.5 22 20 9.5h-6.6z" fill="#ffb21f" stroke="#e8741a" stroke-width="1.2" stroke-linejoin="round"/></svg>
-      <h1><span class="t1">Panel</span><span class="t2">Craft</span></h1>
+      <h1><span class="t1">Panel</span><span class="t2">Craft</span></h1></div>
       <span class="verrow"><span class="ver mono" id="ver" role="button" tabindex="0" title="Що нового"></span><button class="btn upd" id="updBtn" title="Перевірити оновлення"><span aria-hidden="true">↻</span> Оновити<i class="dot" aria-hidden="true"></i></button></span>
     </div>
-    <button class="btn proj-btn" id="projBtn" aria-label="Проєкт: зберегти, відкрити, створити"><svg class="pico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"/></svg><span class="pdot" aria-hidden="true"></span><span id="projName">Проєкт</span><span class="pcar" aria-hidden="true">▾</span></button>
+    <button class="btn proj-btn" id="projBtn" aria-label="Проєкт: зберегти, відкрити, створити"><svg class="pico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"/></svg><span class="pdot" aria-hidden="true"></span><span id="projName">Проєкт</span><span class="pcar" aria-hidden="true">▾</span><small class="plab">Проєкт</small></button>
   </header>
 
   <nav class="tbar" aria-label="Інструменти">
-    <button class="tb" id="menuBtn" aria-label="Меню"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><small>Меню</small></button>
+    <button class="tb red" id="menuBtn" aria-label="Меню"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><small>Меню</small></button>
     <button class="tb" data-mode="mount" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h5v16H5zM14 4h5v16h-5zM2 10h20"/></svg><small>Апарати</small></button>
     <button class="tb" data-mode="wire" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c4 0 4-12 8-12s4 12 8 12M4 18h0M20 18h0"/></svg><small>Дроти</small></button>
     <button class="tb" id="docsBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h8"/></svg><small>Документи</small></button>
@@ -349,12 +360,13 @@ select.btn{padding-right:26px}
     <button class="tb nolab" id="undoTop" aria-label="Скасувати"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg><small>Назад</small></button>
     <button class="tb nolab" id="redoTop" aria-label="Повторити"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/></svg><small>Вперед</small></button>
     <button class="tb" id="btnCheck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg><small>Перевірка</small></button>
-    <button class="tb shop" id="shopBtn" aria-label="Замовити апарат"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H7"/><circle cx="9.5" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/></svg><small><span class="sh-l">Замовити апарат</span><span class="sh-s">Замовити</span></small></button>
+    <button class="tb red shop" id="shopBtn" aria-label="Замовити апарат"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H7"/><circle cx="9.5" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/></svg><small><span class="sh-l">Замовити апарат</span><span class="sh-s">Замовити</span></small></button>
   </nav>
 
   <main class="work" id="work">
     <div class="hint" id="hint"></div>
     <div class="scroller" id="scroller"><svg id="svg" viewBox="0 0 840 612" role="img" aria-label="Електрощит" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <button class="btn wclose" id="closeBtn" aria-label="Закрити щит" title="Закрити щит">✕</button>
     <div class="fab"><button class="btn" id="zIn" aria-label="Збільшити">+</button><button class="btn mono" id="zFit" aria-label="Масштаб 100%">100%</button><button class="btn" id="zOut" aria-label="Зменшити">−</button><button class="btn" id="zAll" aria-label="Вписати в екран">⤢</button></div>
   </main>
 
@@ -386,7 +398,7 @@ select.btn{padding-right:26px}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.12.0", date:"2026-11-07", notes:["Нова червона кнопка «Замовити апарат»: фото апарата, QR-код і посилання для замовлення","«Документи» тепер одразу після «Дроти» на панелі інструментів"] };
+const APP = { v:"4.13.0", date:"2026-11-07", notes:["Назва застосунку більша й по центру, версія та «Оновити» — під нею","«Меню» — червона кнопка такого ж розміру, як «Замовити апарат»","Кнопка ✕ у правому верхньому куті робочого поля — закрити щит","Кнопка проєктів підписана «Проєкт»","Порожня робоча зона — сітка на все поле"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1274,10 +1286,8 @@ function devSVG(d){
   if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
   return s+"</g>";
 }
-function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 840 520"); let s=`<rect x="0" y="0" width="840" height="520" fill="var(--bg)"/>`;
-  for(let x=0;x<=840;x+=40) s+=`<line x1="${x}" y1="0" x2="${x}" y2="520" stroke="var(--line)" stroke-width="${x%200?0.5:1}"/>`;
-  for(let y=0;y<=520;y+=40) s+=`<line x1="0" y1="${y}" x2="840" y2="${y}" stroke="var(--line)" stroke-width="${y%200?0.5:1}"/>`;
-  s+=`<text x="420" y="230" text-anchor="middle" font-size="26" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="420" y="268" text-anchor="middle" font-size="16" fill="var(--muted)">Створіть новий або відкрийте збережений — кнопки внизу</text>`;
+function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 600 120"); let s="";   // сітку малює CSS (.scroller.empty) — на все поле
+  s+=`<text x="300" y="52" text-anchor="middle" font-size="30" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="300" y="90" text-anchor="middle" font-size="17" fill="var(--muted)">Створіть новий або відкрийте збережений — кнопки внизу</text>`;
   svg.innerHTML=s; }
 function render(){ if(S.noDoc){ renderEmpty(); return; } 
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
@@ -2031,8 +2041,8 @@ function updateLive(){
 function renderAll(full=true){ render(); hint(); renderBar(); if(!full) updateLive();
   document.querySelectorAll(".tb[data-mode]").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
   $("undoTop").disabled=S.noDoc||!(S.hist&&S.hist.length); $("redoTop").disabled=S.noDoc||!(S.fut&&S.fut.length);
-  document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc;
-  $("svg").style.width=(S.zoom*100)+"%"; $("zFit").textContent=Math.round(S.zoom*100)+"%"; }
+  document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc; $("closeBtn").hidden=!!S.noDoc; $("scroller").classList.toggle("empty",!!S.noDoc);
+  $("svg").style.width=(S.noDoc?100:S.zoom*100)+"%"; $("zFit").textContent=Math.round(S.zoom*100)+"%"; }
 function commit(full=true){ if(typeof trackHistory==="function") trackHistory(); save(); solve(0); renderAll(full); }
 /* ===== Нижня панель на один екран: усе в кількох рядках, без вертикальної прокрутки й спливних вікон ===== */
 const CATS = [["Захист",0],["Напруга, УЗІП",1],["Облік",2],["Комутація, АВР",3],["Керування",4],["Двигуни",5],["Розподіл",6],["Розумний дім",7],["СЕС (DC)",8],["Поза щитом",-1]];
@@ -2277,6 +2287,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(q("[data-devdel]")){ const n=desig(d); removeDev(d); toast(`${n} знято з рейки. «Назад» поверне`); return; } }
   if(q("#btnCheck")){ checkNow(); return; }
   if(q("#shopBtn")){ openShop(); return; }
+  if(q("#closeBtn")){ closeBoard(); return; }
   if(q("#zIn")){ S.zoom=Math.min(4,Math.round((S.zoom+(S.zoom>=1?0.5:0.1))*10)/10); renderAll(false); return; }
   if(q("#zOut")){ S.zoom=Math.max(0.3,Math.round((S.zoom-(S.zoom>1?0.5:0.1))*10)/10); renderAll(false); return; }
   if(q("#zFit")){ S.zoom=1; renderAll(false); return; }

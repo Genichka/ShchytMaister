@@ -107,6 +107,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(q("[data-devdel]")){ const n=desig(d); removeDev(d); toast(`${n} знято з рейки. «Назад» поверне`); return; } }
   if(q("#btnCheck")){ checkNow(); return; }
   if(q("#shopBtn")){ openShop(); return; }
+  if(q("#closeBtn")){ closeBoard(); return; }
   if(q("#zIn")){ S.zoom=Math.min(4,Math.round((S.zoom+(S.zoom>=1?0.5:0.1))*10)/10); renderAll(false); return; }
   if(q("#zOut")){ S.zoom=Math.max(0.3,Math.round((S.zoom-(S.zoom>1?0.5:0.1))*10)/10); renderAll(false); return; }
   if(q("#zFit")){ S.zoom=1; renderAll(false); return; }
