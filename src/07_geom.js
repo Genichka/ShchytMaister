@@ -39,8 +39,8 @@ function route(){
   const items=[];
   for(const w of S.wires){ let A=termPos(w.a), B=termPos(w.b); if(!A||!B) continue;
     if(A.c===B.c){ const set=(A.s==="u"||B.s==="u")?"u":"l"; items.push({w,A,B,cross:false,set,span:Math.abs(A.x-B.x)}); }
-    else { if(A.c>B.c) [A,B]=[B,A]; const side=(A.x+B.x)/2<G.W/2?"L":"R", sx=sideX(side,0);
-      items.push({w,A,B,cross:true,side,span:Math.abs(A.x-sx)+Math.abs(B.x-sx)+Math.abs(A.c-B.c)*50}); } }
+    else { let sw=false; if(A.c>B.c){ [A,B]=[B,A]; sw=true; } const side=(A.x+B.x)/2<G.W/2?"L":"R", sx=sideX(side,0);
+      items.push({w,A,B,sw,cross:true,side,span:Math.abs(A.x-sx)+Math.abs(B.x-sx)+Math.abs(A.c-B.c)*50}); } }
   const lanes={};
   const take=(key,a,b)=>{ const lo=Math.min(a,b)-7, hi=Math.max(a,b)+7, L=lanes[key]||(lanes[key]=[]);
     for(let i=0;;i++){ const q=L[i]||(L[i]=[]); if(!q.some(([p,r])=>lo<r&&p<hi)){ q.push([lo,hi]); return i; } } };
@@ -59,7 +59,7 @@ function route(){
     if(!it.cross){ let y=laneY(A.c,it.set,it.lane); if(w.ry!=null) y=clampV(w.ry,chanLim(A.c)); out[w.id]=[[A.x,A.y],[A.x,y],[B.x,y],[B.x,B.y]]; }
     else { let sx=sideX(it.side,it.ls), ya=laneY(A.c,A.s,it.la), yb=laneY(B.c,B.s,it.lb);
       if(w.rx!=null) sx=clampV(w.rx,[20,820]); if(w.rya!=null) ya=clampV(w.rya,chanLim(A.c)); if(w.ryb!=null) yb=clampV(w.ryb,chanLim(B.c));
-      out[w.id]=[[A.x,A.y],[A.x,ya],[sx,ya],[sx,yb],[B.x,yb],[B.x,B.y]]; } }
+      out[w.id]=[[A.x,A.y],[A.x,ya],[sx,ya],[sx,yb],[B.x,yb],[B.x,B.y]]; out[w.id].sw=it.sw; } }   // sw — траса намальована від кінця b до a
   return out;
 }
 function rpath(pts,r=7){
@@ -161,7 +161,8 @@ function render(){ if(S.noDoc){ renderEmpty(); return; }
     else s+=`<path ${dw} class="wire" d="${d}" stroke="${col}" stroke-width="${sw}"/>`;
     const fl=R.flow&&R.flow[w.id];
     if(fl){ const dur=Math.max(0.35,1.5-Math.log10(1+fl.I)*0.7).toFixed(2);   // більший струм — швидший рух
-      s+=`<path class="flow" d="${fl.dir<0?rpath(pts.slice().reverse()):d}" stroke-width="${Math.max(1.5,sw-2.5)}" style="animation-duration:${dur}s"/>`; }
+      const ab=(fl.dir>0)!==!!pts.sw;   // рух від кінця a до b? (траса між каналами могла бути побудована у зворотному порядку)
+      s+=`<path class="flow" data-fw="${w.id}" d="${ab?d:rpath(pts.slice().reverse())}" stroke-width="${Math.max(1.5,sw-2.5)}" style="animation-duration:${dur}s"/>`; }
     else if(R.liveW.has(w.id)) s+=`<path class="flow idle" d="${d}" stroke-width="${Math.max(1.5,sw-2.5)}"/>`;
     for(const [x,y] of [pts[0],pts[pts.length-1]]) s+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--brass)"/>`;
     if(S.selWire===w.id){ const ends=[["a",pts[0]],["b",pts[pts.length-1]]]; for(const [e,[x,y]] of ends) s+=`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="var(--blue)" stroke-width="2.5"${S.moveEnd&&S.moveEnd.end===e?' stroke-dasharray="4 3"':""}/>`; }
