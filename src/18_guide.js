@@ -68,7 +68,7 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), G=groupsOf(), has=(..
       todo:()=>gTodo("out"), done:()=>wireDone("out"), wire:true}]:[]),
     {id:"check", short:"Перевірте схему", t:"Перевірте схему",
       h:"Перевірка шукає коротке замикання, переплутані дроти, групи без ПЗВ і замалі перерізи. Крок зараховується, коли помилок нуль.",
-      done:()=>S.lastCheck&&S.lastCheck.sig===structSnap()&&S.lastCheck.errors===0, act:["Перевірити",()=>checkNow()]},
+      done:()=>S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors===0, act:["Перевірити",()=>checkNow()]},
     {id:"test", short:"Подайте напругу", t:"Випробування: подайте напругу",
       h:"Кнопка «Подати напругу» вмикає всі вводи. Групи мають показати «Під напругою», обладнання — запрацювати.",
       done:()=>!!(S.guide&&S.guide.testOK), act:["Подати напругу",powerOn]},
@@ -93,7 +93,7 @@ function guideHint(){ const g=guideCur(); if(!g) return ""; if(g.cur<0) return "
   const td=g.s.todo?g.s.todo():[]; if(td.length){ const ok=td.filter(x=>x.ok).length, bad=td.find(x=>x.bad);
     return `<b>Крок ${g.cur+1} з ${g.st.length} · ${esc(g.s.short||g.s.t)}</b> · з’єднано ${ok} з ${td.filter(x=>!x.bad).length}. `
       +(bad?`<span style="color:var(--red)">${esc(bad.t)}</span>`:`Торкніться клеми <span class="gn">1</span>, потім <span class="gn">2</span> — їх підсвічено. «Усі перемички (Авто)» прокладе решту дротів сам.`); }
-  if(g.s.id==="check"&&S.lastCheck&&S.lastCheck.sig===structSnap()&&S.lastCheck.errors) return `<b>Крок ${g.cur+1}:</b> перевірка знайшла помилок: ${S.lastCheck.errors}. «Виправити все» перекладе дроти за правильною схемою й підбере номінали.`;
+  if(g.s.id==="check"&&S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors) return `<b>Крок ${g.cur+1}:</b> перевірка знайшла помилок: ${S.lastCheck.errors}. «Виправити все» перекладе дроти за правильною схемою й підбере номінали.`;
   return `<b>Крок ${g.cur+1}:</b> ${esc(g.s.h)}`; }
 const GX = `<button class="bx" data-gx aria-label="Сховати помічника">✕</button>`;
 function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return "";
@@ -106,7 +106,7 @@ function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return 
     return `<div class="br gd">${num}<b class="gt"><span class="gn">1</span> ${esc(kName(it.a))} → <span class="gn">2</span> ${esc(kName(it.b))} <span class="bm">· ${esc(WK[it.kind][0])}</span></b>${GX}</div>`
       +`<div class="br">${all}<button class="btn sm primary" data-gauto title="Програма сама проведе цей один дріт">✓ Покроково (Авто)</button>${S.mode==="wire"?"":`<button class="btn sm" data-gwire title="Перейти в режим «Дроти» і провести дріт самому">✋ Проведу сам</button>`}</div>`
       +`<div class="br"><span class="bl">Автоматично — програма проведе дріт за вас. «Проведу сам» — торкніться клеми 1, потім клеми 2.</span></div>`; }
-  if(s.id==="check"&&S.lastCheck&&S.lastCheck.sig===structSnap()&&S.lastCheck.errors)
+  if(s.id==="check"&&S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors)
     return `<div class="br gd">${num}<b class="gt">Перевірка: помилок ${S.lastCheck.errors}</b>${GX}</div><div class="br"><button class="btn sm primary" data-gall>Виправити все</button><button class="btn sm" data-gact="${g.cur}">Перевірити ще раз</button></div>`;
   if(s.next) return `<div class="br gd">${num}<b class="gt">${esc(s.short||s.t)}</b>${GX}</div>`
     +`<div class="br">${s.act?`<button class="btn sm" data-gact="${g.cur}">＋ ${esc(s.act[0])}</button>`:""}<button class="btn sm primary" data-gnext="${s.id}">${esc(s.next)}</button></div>`;

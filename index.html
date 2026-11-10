@@ -197,6 +197,7 @@ select.btn{padding-right:26px}
 .bbar{min-height:0;max-height:44dvh;overflow-x:hidden;overflow-y:auto;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line)}
 .bar-in{display:flex;flex-direction:column;gap:6px}
 .br.wrap{flex-wrap:wrap;overflow:visible}
+.hint .hok{color:var(--green)} .hlink{background:none;border:0;padding:0 2px;font:inherit;font-weight:600;color:var(--blue);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .br.srcrow .volt.sm{flex:1 1 auto;min-width:0} .br.srcrow .volt.sm input[type=range]{width:auto;flex:1 1 60px;min-width:60px} .br.srcrow .switch{flex:none}
 .br{display:flex;align-items:center;gap:6px;min-height:34px;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .br::-webkit-scrollbar{display:none} .br>*{flex:none}
@@ -329,7 +330,7 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 .term-ok{fill:none;stroke:var(--blue);stroke-width:1.5;stroke-dasharray:3 3;opacity:.8}
 .slot{fill:transparent;stroke:var(--muted);stroke-dasharray:4 4;opacity:.5;cursor:pointer} .slot:hover{opacity:1;stroke:var(--blue)}
 .wire{fill:none;stroke-linecap:round;stroke-linejoin:round}
-.wire-hit{fill:none;stroke:transparent;stroke-width:22;cursor:pointer}
+.wire-hit{fill:none;stroke:transparent;stroke-width:22;cursor:grab}
 .wsel{fill:none;stroke:var(--blue);opacity:.45;stroke-linecap:round;stroke-linejoin:round} .wsel.moving{stroke:var(--orange);opacity:.55}
 .flow{fill:none;stroke:#fff;stroke-linecap:round;stroke-dasharray:2 14;opacity:.75;animation:flow .9s linear infinite}
 .flow.idle{animation:none;opacity:.35;stroke-dasharray:1 7}
@@ -463,7 +464,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.19.1", date:"2026-11-07", notes:["Кнопка проєкту (збереження, відкриття, створення) перенесена з шапки в меню — більше місця на екрані. Каталог апаратів перегруповано за вашим списком: категорії переносяться на кілька рядків, у кожній — підгрупи, зверху пошук по всіх апаратах. Нижня панель за каталогом: головні групи (автомати, диференційний захист, реле, контактори, ПЗІП, шини, клеми, прилади, кнопки…) і підгрупи (1P/2P/3P/4P, ПЗВ/дифавтомати, контроль напруги/фаз, реле часу, АВР…). Щит завжди по центру вільного місця; на корпусі проставлено розміри (ширина й висота, ≈ мм від модуля DIN 17,5 мм). Розділи меню за замовчуванням згорнуті. Нижня панель: запас унизу під жести телефона; згортається вниз — дотик по порожньому місцю щита, ручка зверху панелі або свайп. Панель сама розгортається, коли вибираєш апарат, дріт чи режим","Меню: усі розділи («Щит», «Приклади щитів», «Про застосунок») — випадаючі списки","Кнопки масштабу перенесено зі щита у смугу підказки над ним — вони більше не закривають схему","Перетягування: апарати й групи з нижньої панелі — на рейку, дроти — від клеми до клеми, кінці вибраного дроту — на іншу клему (миша або палець). Хрестик закриття — на самому щитку, масштаб — унизу ліворуч, вкладки «Помічник / Групи / Захист…» — помаранчеві, нижню панель трохи піднято. Прибрано кнопки ← → ↑↓ і ◀ ▶","Нові шаблони «3 фази + інвертор»: мережа 3~ з інвертором 3~ (АВР на контакторах 4P) і мережа 3~ з інвертором 1~ (резервна лінія на фазі L1 через АВР-модуль). Новий апарат — контактор 4P. Інвертор у тесті тепер враховує й трифазні групи","Меню без зайвого: Новий щит, Корпус і ввід (разом із шинами й колодкою XT2), Прокласти всі дроти, Помічник, Приклади щитів (згортаються), QR-код. Збереження, відкриття, експорт та імпорт — у кнопці «Проєкт», документи — у вкладці «Документи»","Тест на телефоні: кожен ввід — окремим рядком, кнопки й стан переносяться, нічого не ховається за край екрана","Прибрано «Удар блискавки поруч» з тесту власного щита","Помічник: «Усі апарати» відкриває весь каталог (з TOMZN), «← До кроку помічника» повертає назад","Струм на автоматах у тесті більше не налазить на позначення QF","Помічник: варіанти апаратів показано повністю, сіткою — видно й можна вибрати TOMZN TOVPD1, TO219G, TOQ5, TOQ7","Підписи під апаратами більше не обрізаються: довга назва групи стає дрібнішим шрифтом у 2 рядки","Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
+const APP = { v:"4.20.0", date:"2026-11-10", notes:["Перевірка без зайвого вікна: якщо все гаразд — коротке повідомлення «✓ Схема правильна», а вгорі «✓ Щит готовий. Далі: ⚡ Тест · 📄 Документи». Перелік «1 з N» показується лише коли є помилки чи попередження","Дроти й перемички можна відводити пальцем або мишею: затисніть дріт посередині й тягніть — траса зміщується, кінці лишаються на клемах. «↺ Авто-траса» в панелі дроту повертає як було, «↺ Вирівняти всі траси й шини» — для всього щита","Шини N, PE і колодку XT2 можна пересувати вздовж ряду (режим «Апарати»), апарати — тягнути й у режимі «Дроти». Охайне перекладання дротів і шин не скидає перевірку","Кнопка проєкту (збереження, відкриття, створення) перенесена з шапки в меню — більше місця на екрані. Каталог апаратів перегруповано за вашим списком: категорії переносяться на кілька рядків, у кожній — підгрупи, зверху пошук по всіх апаратах. Нижня панель за каталогом: головні групи (автомати, диференційний захист, реле, контактори, ПЗІП, шини, клеми, прилади, кнопки…) і підгрупи (1P/2P/3P/4P, ПЗВ/дифавтомати, контроль напруги/фаз, реле часу, АВР…). Щит завжди по центру вільного місця; на корпусі проставлено розміри (ширина й висота, ≈ мм від модуля DIN 17,5 мм). Розділи меню за замовчуванням згорнуті. Нижня панель: запас унизу під жести телефона; згортається вниз — дотик по порожньому місцю щита, ручка зверху панелі або свайп. Панель сама розгортається, коли вибираєш апарат, дріт чи режим","Меню: усі розділи («Щит», «Приклади щитів», «Про застосунок») — випадаючі списки","Кнопки масштабу перенесено зі щита у смугу підказки над ним — вони більше не закривають схему","Перетягування: апарати й групи з нижньої панелі — на рейку, дроти — від клеми до клеми, кінці вибраного дроту — на іншу клему (миша або палець). Хрестик закриття — на самому щитку, масштаб — унизу ліворуч, вкладки «Помічник / Групи / Захист…» — помаранчеві, нижню панель трохи піднято. Прибрано кнопки ← → ↑↓ і ◀ ▶","Нові шаблони «3 фази + інвертор»: мережа 3~ з інвертором 3~ (АВР на контакторах 4P) і мережа 3~ з інвертором 1~ (резервна лінія на фазі L1 через АВР-модуль). Новий апарат — контактор 4P. Інвертор у тесті тепер враховує й трифазні групи","Меню без зайвого: Новий щит, Корпус і ввід (разом із шинами й колодкою XT2), Прокласти всі дроти, Помічник, Приклади щитів (згортаються), QR-код. Збереження, відкриття, експорт та імпорт — у кнопці «Проєкт», документи — у вкладці «Документи»","Тест на телефоні: кожен ввід — окремим рядком, кнопки й стан переносяться, нічого не ховається за край екрана","Прибрано «Удар блискавки поруч» з тесту власного щита","Помічник: «Усі апарати» відкриває весь каталог (з TOMZN), «← До кроку помічника» повертає назад","Струм на автоматах у тесті більше не налазить на позначення QF","Помічник: варіанти апаратів показано повністю, сіткою — видно й можна вибрати TOMZN TOVPD1, TO219G, TOQ5, TOQ7","Підписи під апаратами більше не обрізаються: довга назва групи стає дрібнішим шрифтом у 2 рядки","Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1342,14 +1343,14 @@ const sideX = (side,i) => side==="L" ? 86-(SSP.L||7)*i : 754+(SSP.R||7)*i;
 const SW = {1.5:3,2.5:3.6,4:4.3,6:5,10:6,16:7,25:7.6,35:8.2,50:9};
 function inputX(){ const m={}; let x=120;
   for(const inp of S.board.inputs){ inp.terms.forEach((t,i)=>{ m[inp.id+":"+t]=x+i*36; }); m[inp.id]=x; x+=inp.terms.length*36+(S.board.inputs.length>1?64:34); } return m; }   // між вводами — місце для підпису
-function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, gaps=(m?2:1)*20;
-  let sp=28; if(cnt*sp+gaps>600) sp=(600-gaps)/cnt; const pos={}; let x=124;
+function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, gaps=(m?2:1)*20, bx=b.bx||{};
+  let sp=28; if(cnt*sp+gaps>600) sp=(600-gaps)/cnt; const pos={}; let x=bx.xn!=null?bx.xn:124;
   for(let i=0;i<n;i++){ pos["xn:"+i]=x; x+=sp; } x+=20-sp+sp;
   if(m){ b.xt.forEach(t=>{ pos["xt:"+t.k]=x; x+=sp; }); x+=20; }
-  const shift=Math.max(0,716-(x+(p-1)*sp)); x+=shift; for(let i=0;i<p;i++){ pos["xpe:"+i]=x; x+=sp; }
+  if(bx.xpe!=null) x=Math.max(x,Math.min(bx.xpe,800-(p-1)*sp)); else x+=Math.max(0,716-(x+(p-1)*sp)); for(let i=0;i<p;i++){ pos["xpe:"+i]=x; x+=sp; }
   let tsp=26, tgap=12; const tg=b.tb?groupsOf():[], tn=tg.reduce((a,g)=>a+tbTerms(g).length,0); if(tn){ const AV=740;   // колодка не виходить за рейку/корпус: звужуємо клеми й проміжки між групами
     if(tn*tsp+(tg.length-1)*tgap>AV){ tgap=tg.length>8?4:8; tsp=Math.max(8,Math.min(26,(AV-(tg.length-1)*tgap)/tn)); }
-    let tx2=420-(tn*tsp+(tg.length-1)*tgap)/2+tsp/2; for(const g of tg){ for(const t of tbTerms(g)){ pos[tbK(g,t)]=tx2; tx2+=tsp; } tx2+=tgap; } }
+    const tw=tn*tsp+(tg.length-1)*tgap; let tx2=bx.tb!=null?Math.max(40+tsp/2,Math.min(bx.tb,800-tw+tsp/2)):420-tw/2+tsp/2; for(const g of tg){ for(const t of tbTerms(g)){ pos[tbK(g,t)]=tx2; tx2+=tsp; } tx2+=tgap; } }
   return {pos,sp,tsp}; }
 let GEO=null;
 function geoCache(){ GEO={inx:inputX(), bus:busRow()}; return GEO; }
@@ -1363,6 +1364,9 @@ function termPos(key){
   const d=S.devices.find(x=>x.id===o); if(!d) return null; const t=T[d.type].terms.find(t=>t.k===k); if(!t) return null; const r=d.rail||0;
   return t.s==="top" ? {x:termX(d,t), y:devTop(r)+22, c:r, s:"l"} : {x:termX(d,t), y:devBot(r)-22, c:r+1, s:"u"};
 }
+// межі каналу c (між рейкою c-1 і c): куди можна відвести горизонтальну ділянку дроту пальцем чи мишею
+const chanLim = c => { const R=S.board.rails; return [c===0?60:devBot(c-1)+4, c===R?(S.board.tb&&groupsOf().length?tbY()-20:busY()-14):devTop(c)-4]; };
+const clampV = (v,[a,b]) => Math.max(a,Math.min(b,v));
 function route(){
   const items=[];
   for(const w of S.wires){ let A=termPos(w.a), B=termPos(w.b); if(!A||!B) continue;
@@ -1383,8 +1387,11 @@ function route(){
     LSP[key]=Math.max(2.5,Math.min(7,avail/Math.max(1,n(key)-0.5))); }
   const out={};
   for(const it of items){ const {A,B}=it;
-    if(!it.cross){ const y=laneY(A.c,it.set,it.lane); out[it.w.id]=[[A.x,A.y],[A.x,y],[B.x,y],[B.x,B.y]]; }
-    else { const sx=sideX(it.side,it.ls), ya=laneY(A.c,A.s,it.la), yb=laneY(B.c,B.s,it.lb); out[it.w.id]=[[A.x,A.y],[A.x,ya],[sx,ya],[sx,yb],[B.x,yb],[B.x,B.y]]; } }
+    const w=it.w;
+    if(!it.cross){ let y=laneY(A.c,it.set,it.lane); if(w.ry!=null) y=clampV(w.ry,chanLim(A.c)); out[w.id]=[[A.x,A.y],[A.x,y],[B.x,y],[B.x,B.y]]; }
+    else { let sx=sideX(it.side,it.ls), ya=laneY(A.c,A.s,it.la), yb=laneY(B.c,B.s,it.lb);
+      if(w.rx!=null) sx=clampV(w.rx,[20,820]); if(w.rya!=null) ya=clampV(w.rya,chanLim(A.c)); if(w.ryb!=null) yb=clampV(w.ryb,chanLim(B.c));
+      out[w.id]=[[A.x,A.y],[A.x,ya],[sx,ya],[sx,yb],[B.x,yb],[B.x,B.y]]; } }
   return out;
 }
 function rpath(pts,r=7){
@@ -1476,10 +1483,11 @@ function render(){ if(S.noDoc){ renderEmpty(); return; }
       s+=`<g data-field="${f.id}" style="cursor:pointer">${ft.draw(f,x,fy)}</g>`+(S.selDev===f.id?`<rect x="${x-3}" y="${fy-3}" width="${ft.fw+6}" height="156" rx="10" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`:""); } }
   const P=route();
   for(const w of S.wires){ const pts=P[w.id]; if(!pts) continue; const d=rpath(pts), sw=SW[w.sec]||4, col=wHex(w), pe=wColKey(w)==="pe";
-    if(S.selWire===w.id) s+=`<path class="wsel${S.moveEnd?" moving":""}" d="${d}" stroke-width="${sw+10}"/>`;
-    s+=`<path class="wire" d="${d}" stroke="${wDark(w)?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
-    if(pe) s+=`<path class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
-    else s+=`<path class="wire" d="${d}" stroke="${col}" stroke-width="${sw}"/>`;
+    const dw=`data-w="${w.id}"`;
+    if(S.selWire===w.id) s+=`<path ${dw} class="wsel${S.moveEnd?" moving":""}" d="${d}" stroke-width="${sw+10}"/>`;
+    s+=`<path ${dw} class="wire" d="${d}" stroke="${wDark(w)?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
+    if(pe) s+=`<path ${dw} class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path ${dw} class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
+    else s+=`<path ${dw} class="wire" d="${d}" stroke="${col}" stroke-width="${sw}"/>`;
     const fl=R.flow&&R.flow[w.id];
     if(fl){ const dur=Math.max(0.35,1.5-Math.log10(1+fl.I)*0.7).toFixed(2);   // більший струм — швидший рух
       s+=`<path class="flow" d="${fl.dir<0?rpath(pts.slice().reverse()):d}" stroke-width="${Math.max(1.5,sw-2.5)}" style="animation-duration:${dur}s"/>`; }
@@ -2262,9 +2270,11 @@ function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) re
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
 function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щит або відкрийте приклад; збережені проєкти та імпорт — кнопка «Проєкт» справа вгорі.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
-  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця на рейці${S.pickQty>1?` — поставиться ${S.pickQty} шт. підряд`:""}. ✕ унизу — скасувати.`:"Перетягніть апарат із нижньої панелі на рейку (мишею; пальцем — затисніть і тягніть). Торкніться апарата на рейці — налаштування; затисніть і тягніть — пересунути.";
-  if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: перетягніть кружечок на його кінці на іншу клему або змініть дріт у панелі внизу.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Перетягніть дріт від клеми до клеми (пальцем — затисніть клему й тягніть) або торкніться двох клем по черзі. Торкніться дроту, щоб вибрати його.";
+  if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця на рейці${S.pickQty>1?` — поставиться ${S.pickQty} шт. підряд`:""}. ✕ унизу — скасувати.`:"Перетягніть апарат із нижньої панелі на рейку (мишею; пальцем — затисніть і тягніть). Апарат на рейці, шини N і PE, колодку XT2 — затисніть і тягніть, щоб пересунути; дотик — налаштування.";
+  if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: кружечок на кінці — на іншу клему; середину дроту — тягніть, щоб прокласти інакше.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Новий дріт — тягніть від клеми до клеми. Дріт чи перемичку — затисніть посередині й тягніть, щоб відвести вбік. Апарат — затисніть і тягніть.";
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
+  if(!gh0&&(S.mode==="mount"||S.mode==="wire")&&!S.pick&&!S.selDev&&!S.selWire&&!S.pend&&!S.moveEnd&&checkedOK())
+    h=`<b class="hok">✓ Щит готовий.</b> Далі: <button class="hlink" data-hgo="test">⚡ Тест</button> · <button class="hlink" data-hgo="docs">📄 Документи</button>`;
   if(gh0) h=gh0; $("hint").innerHTML=`<span>${h}</span>`; }
 function ctlHTML(c,i){
   if(c.type==="src"){ const s=S.src[c.id]||{}, inp=S.board.inputs.find(x=>x.id===c.id)||{}, three=(inp.terms||[]).includes("L1");
@@ -2440,13 +2450,15 @@ function wireToolsBar(){ const sw=k=>`<span class="sw" style="background:${k==="
   const bad=!mainsOf().length?{t:"Спершу поставте ввідний автомат 2P (вкладка «Захист»)"}:wirePlan().find(x=>x.bad);
   return brow(`<button class="btn sm primary" data-gall>⚡ Прокласти всі дроти автоматично</button>`+(bad?`<span class="bl" style="color:var(--orange)">${esc(bad.t)}</span>`:`<span class="bl">перемички, шини N і PE, групи — за схемою</span>`))+brow(`<span class="bl">Новий дріт</span>`+Object.keys(WK).map(x=>chip(`data-kind="${x}"`,S.wireKind===x,sw(x)+WK[x][0])).join(""))
     +brow(SECS.map(x=>chip(`data-sec="${x}"`,S.wireSec===x,fmt(x,x%1?1:0),"mono")).join("")+`<span class="bl">мм²</span>`
+      +(S.wires.some(w=>["ry","rya","ryb","rx"].some(k=>w[k]!=null))||S.board.bx?`<button class="btn sm" data-wautoall>↺ Вирівняти всі траси й шини</button>`:"")
       +(S.wires.length?`<button class="btn sm" data-wsel="${S.wires[S.wires.length-1].id}">Вибрати дріт (${S.wires.length})</button><button class="btn sm danger" id="clearWires">${clearArm>Date.now()?"Ще раз — прибрати всі":"Прибрати всі"}</button>`:"")); }
 function wireBar(w){ const me=S.moveEnd&&S.moveEnd.id===w.id?S.moveEnd.end:null, ck=wColKey(w);
   const L=[["ends","Кінці"],["kind","Вид"],["col","Колір"],["sec","Переріз"],["del","Видалити"]], cur=bseg(w.id,L,"ends");
   let s=bhead(`Дріт ${wNo(w)} з ${S.wires.length} · ${esc(wireLabel(w))} <span class="bm">≈ ${wireLenCm(w)} см</span>`,`${bdel("data-wdel")}${bx}`);
   if(me) return s+brow(`<span class="bl warnt">Торкніться нової клеми для ${me==="a"?"початку":"кінця"} дроту</span><button class="btn sm" data-wmove="cancel">Скасувати</button>`)+brow(`<span class="bl">${me==="a"?"Початок":"Кінець"} зараз: ${esc(termName(w[me]))}</span>`);
   s+=segRow(L,cur);
-  if(cur==="ends") s+=brow(["a","b"].map(e=>`<button class="btn sm wend2" data-wmove="${e}"><small>${e==="a"?"Початок":"Кінець"}</small> ${esc(termName(w[e]))} <b>⇄</b></button>`).join(""));
+  if(cur==="ends") s+=brow(["a","b"].map(e=>`<button class="btn sm wend2" data-wmove="${e}"><small>${e==="a"?"Початок":"Кінець"}</small> ${esc(termName(w[e]))} <b>⇄</b></button>`).join("")
+    +(["ry","rya","ryb","rx"].some(k=>w[k]!=null)?`<button class="btn sm" data-wauto>↺ Авто-траса</button>`:""));
   if(cur==="kind") s+=brow(Object.keys(WK).map(x=>chip(`data-skind="${x}"`,w.kind===x,swatch(x)+WK[x][0])).join(""));
   if(cur==="col") s+=brow(chip(`data-scol=""`,!w.col,"За видом")+Object.keys(WCOL).map(c=>chip(`data-scol="${c}"`,w.col===c,swatch(c,true)+WCOL[c][0])).join(""));
   if(cur==="sec") s+=brow(SECS.map(x=>chip(`data-ssec="${x}"`,w.sec===x,fmt(x,x%1?1:0),"mono")).join("")+`<button class="btn sm" data-wall="sec">Усім дротам лінії</button>`);
@@ -2521,8 +2533,11 @@ function demoStop(){ S.demo=null; hideDemoBar(); renderBar(); hint(); }
 function demoStart(){ resetRuntime(); S.demo={i:-1,left:0,paused:false}; showDemoBar(); demoNext(); }
 function demoNext(){ const sc=S.tplObj.demo.script; S.demo.i++; if(S.demo.i>=sc.length){ demoStop(); toast("Демонстрацію завершено","ok"); return; }
   const st=sc[S.demo.i]; try{ st.do(); }catch(e){ console.error(e); } S.demo.left=st.wait; logp("ok","▶ "+st.say); commit(false); updateDemoBar(); }
-function checkNow(){ const C=runChecks(); S.lastCheck={sig:structSnap(),errors:C.filter(c=>c.sev==="e").length};
-  S.chk={list:C,i:0}; S.chkOpen=true; solve(0); renderAll(true); }
+function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length;
+  S.lastCheck={sig:elecSnap(),errors:ne,warns:nw};
+  S.chk={list:C,i:0}; S.chkOpen=!!(ne||nw); solve(0);   // усе гаразд — без вікна з переліком «1 з N», лише повідомлення й підказка «що далі»
+  if(!ne&&!nw) toast(`✓ Схема правильна — щит готовий (перевірок: ${C.length})`,"ok");
+  renderAll(true); }
 function clearCheck(){ S.chk=null; S.chkOpen=false; }
 function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ const g=groupsOf()[0]; if(g){ S.selDev=g.id; S.bsegFor=g.id; S.bseg="load"; } } renderAll(false); }
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
@@ -2557,6 +2572,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("#undoTop")){ undo(); return; }
   if(q("#redoTop")){ redo(); return; }
   if(q("#docsBtn")){ openDocs("sld"); return; }
+  if(el=q("[data-hgo]")){ if(el.dataset.hgo==="docs") openDocs("sld"); else { S.mode=el.dataset.hgo; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; renderAll(); } return; }
   if(q("#zAll")){ S.zoom=fitZoom(); renderAll(false); $("scroller").scrollTo(0,0); return; }
   if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; renderAll(); return; }
   if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }
@@ -2660,11 +2676,12 @@ document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("dra
   function stop(cancel){ if(!D) return; const d=D; D=null; clearTimeout(d.tm); if(d.ghost) d.ghost.remove();
     if(!d.armed) return;
     if(d.moved){ noClickUntil=Date.now()+350; const t=d.t, dev=d.dev;
-      if(!cancel&&t&&t.ok&&(t.r!==(dev.rail||0)||t.slot!==dev.slot)){ dev.rail=t.r; dev.slot=t.slot; S.selDev=dev.id; commit(); return; }
+      if(!cancel&&t&&t.ok&&(t.r!==(dev.rail||0)||t.slot!==dev.slot)){ dev.rail=t.r; dev.slot=t.slot; if(S.mode==="mount") S.selDev=dev.id; commit(); return; }
       if(!cancel&&t&&!t.ok) toast("Там зайнято","w"); renderAll(false); return; }
-    if(d.lifted){ noClickUntil=Date.now()+350; if(!cancel) S.selDev=d.dev.id; renderAll(false); } }   // затиснули й відпустили — просто вибір
+    if(d.lifted){ noClickUntil=Date.now()+350; if(!cancel&&S.mode==="mount") S.selDev=d.dev.id; renderAll(false); } }   // затиснули й відпустили — просто вибір
 
-  svg.addEventListener("pointerdown",e=>{ if(D||S.noDoc||S.mode!=="mount"||S.pick||e.button>0) return;
+  svg.addEventListener("pointerdown",e=>{ if(D||S.noDoc||!(S.mode==="mount"||S.mode==="wire")||S.pick||e.button>0||S.demo) return;
+    if(S.mode==="wire"&&(S.moveEnd||nearTerm(e)||(e.target.closest&&e.target.closest("[data-wire]")))) return;
     const g=e.target.closest("[data-dev]"), dev=g&&S.devices.find(x=>x.id===g.dataset.dev); if(!dev) return;
     const touch=e.pointerType!=="mouse";
     D={dev,g,pid:e.pointerId,touch,p0:pt(e),cx:e.clientX,cy:e.clientY,armed:false,lifted:false,moved:false,t:null};
@@ -2744,6 +2761,7 @@ document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("dra
     if(S.mode==="wire"&&!S.demo){ if(!(e.target===svg||svg.contains(e.target))) return;
       const w=S.selWire&&wireById(S.selWire); let end=null, kind=null, key=null;
       if(w){ const m=svg.getScreenCTM(), p=toSvg(e), R=Math.max(16,30/(m?m.a:1)); for(const en of ["a","b"]){ const q=termPos(w[en]); if(q&&Math.hypot(q.x-p.x,q.y-p.y)<R){ end=en; break; } } }
+      if(!end&&e.target.closest&&e.target.closest("[data-wire]")&&!termWithin(e,16)) return;   // посередині дроту — перетягування траси (наступний блок)
       if(end){ kind="end"; key=w[end]; } else { key=nearTerm(e); if(key) kind="new"; }
       if(!kind) return;
       W={kind,key,end,cur:end?w[end]:null,wid:w?w.id:null,fix:end?w[end==="a"?"b":"a"]:key,pid:e.pointerId,touch:e.pointerType!=="mouse",x0:e.clientX,y0:e.clientY,armed:false,moved:false,cand:null,line:null,dot:null};
@@ -2765,6 +2783,69 @@ document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("dra
   document.addEventListener("touchstart",e=>{ if(e.touches.length>1){ endC(true); endW(true); } },{passive:true});                       // другий палець — це масштаб
   document.addEventListener("contextmenu",e=>{ if(C||W) e.preventDefault(); });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ endC(true); endW(true); } });
+  document.addEventListener("click",e=>{ if(Date.now()<blockUntil){ e.stopPropagation(); e.preventDefault(); } },true);
+})();
+/* ===== Перетягування трас дротів (перемичок) і шин N / PE / колодки XT2 =====
+   Дроти («Дроти»): затиснути дріт посередині й тягти — горизонтальна ділянка ходить угору-вниз у межах свого каналу,
+   бічна вертикальна — ліворуч-праворуч. Кінці лишаються на клемах. «Авто-траса» в панелі дроту повертає як було.
+   Шини («Апарати»): затиснути шину N, PE чи колодку XT2 і тягти вздовж ряду. Миша — одразу, палець — після ~0,25 с. */
+(function(){
+  const sc=$("scroller"), svg=$("svg"), NS="http://www.w3.org/2000/svg", HOLD=250; let Q=null, blockUntil=0;
+  const toSvg=e=>{ const m=svg.getScreenCTM(); if(!m) return {x:0,y:0}; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()); return {x:p.x,y:p.y}; };
+  const busy=v=>{ window.__dragBusy=v; };
+  const vib=()=>{ try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){} };
+  const dSeg=(p,[x0,y0],[x1,y1])=>{ const L=(x1-x0)**2+(y1-y0)**2, t=L?Math.max(0,Math.min(1,((p.x-x0)*(x1-x0)+(p.y-y0)*(y1-y0))/L)):0; return Math.hypot(p.x-x0-t*(x1-x0),p.y-y0-t*(y1-y0)); };
+  // яка ділянка дроту під пальцем і яке поле траси вона змінює
+  function segOf(w,p){ const P=route()[w.id]; if(!P) return null; const cross=P.length===6; let bi=-1, bd=1e9;
+    for(let i=1;i<P.length-2;i++){ const d=dSeg(p,P[i],P[i+1]); if(d<bd){ bd=d; bi=i; } }
+    if(bi<0) return null; const hor=P[bi][1]===P[bi+1][1]; if(hor&&P[bi][0]===P[bi+1][0]&&!cross) return null;   // прямий вертикальний дріт — нема чого відводити
+    const ca=termPos(w.a), cb=termPos(w.b); if(!ca||!cb) return null; const cLo=Math.min(ca.c,cb.c), cHi=Math.max(ca.c,cb.c);
+    const key=cross?({1:"rya",2:"rx",3:"ryb"})[bi]:"ry", lim=key==="rx"?[20,820]:chanLim(key==="ryb"?cHi:cLo);
+    return {P,i:bi,hor,key,lim,v0:hor?P[bi][1]:P[bi][0]}; }
+  // шина під пальцем (лише в «Апаратах»)
+  function busOf(p){ const b=S.board, pos=(GEO||geoCache()).bus.pos, B=busY(), xs=k=>pos[k];
+    if(Math.abs(p.y-B)<=18){
+      if(b.xn){ const a=xs("xn:0")-16, z=(b.xt.length?xs("xt:"+b.xt[b.xt.length-1].k):xs("xn:"+(b.xn-1)))+16; if(p.x>=a&&p.x<=z) return {key:"xn",a,z,y:B}; }
+      if(b.xpe){ const a=xs("xpe:0")-16, z=xs("xpe:"+(b.xpe-1))+16; if(p.x>=a&&p.x<=z) return {key:"xpe",a,z,y:B}; } }
+    if(b.tb&&groupsOf().length&&Math.abs(p.y-tbY())<=18){ const xs2=Object.keys(pos).filter(k=>/^tb:/.test(k)).map(k=>pos[k]); if(xs2.length){ const a=Math.min(...xs2)-22, z=Math.max(...xs2)+22; if(p.x>=a&&p.x<=z) return {key:"tb",a,z,y:tbY()}; } }
+    return null; }
+  function busRange(q){ const b=S.board, pos=GEO.bus.pos, w=q.z-q.a;
+    if(q.key==="xn"){ const pe=b.xpe?pos["xpe:0"]-16:830; return [30,pe-24-w]; }
+    if(q.key==="xpe"){ const n=b.xn?(b.xt.length?pos["xt:"+b.xt[b.xt.length-1].k]:pos["xn:"+(b.xn-1)])+16:20; return [n+24,830-w]; }
+    return [30,830-w]; }
+  function arm(){ if(!Q||Q.armed) return; Q.armed=true; vib(); busy(true); svg.classList.add("segdrag");
+    if(Q.kind==="bus"){ const g=Q.ghost=document.createElementNS(NS,"rect"); g.setAttribute("rx","4"); g.setAttribute("class","dropg"); g.setAttribute("y",Q.bus.y-18); g.setAttribute("height",36); g.setAttribute("width",Q.bus.z-Q.bus.a); g.setAttribute("x",Q.bus.a); svg.appendChild(g); } }
+  function move(e){ const p=toSvg(e);
+    if(Q.kind==="seg"){ const s=Q.seg, v=clampV(s.v0+(s.hor?p.y-Q.p0.y:p.x-Q.p0.x),s.lim), P=s.P.map(q=>q.slice()), i=s.i;
+      if(s.hor){ P[i][1]=P[i+1][1]=v; } else { P[i][0]=P[i+1][0]=v; } Q.v=v; const d=rpath(P);
+      svg.querySelectorAll(`[data-w="${Q.wid}"],[data-wire="${Q.wid}"]`).forEach(el=>el.setAttribute("d",d)); }
+    else { const [lo,hi]=busRange(Q.bus), a=clampV(Q.bus.a+p.x-Q.p0.x,[lo,hi]); Q.dx=a-Q.bus.a; Q.ghost.setAttribute("x",a); }
+    const r=sc.getBoundingClientRect(), E=40, vy=e.clientY<r.top+E?-14:e.clientY>r.bottom-E?14:0, vx=e.clientX<r.left+E?-14:e.clientX>r.right-E?14:0; if(vx||vy){ sc.scrollTop+=vy; sc.scrollLeft+=vx; } }
+  function end(cancel){ if(!Q) return; const q=Q; Q=null; clearTimeout(q.tm); busy(false); svg.classList.remove("segdrag"); if(q.ghost) q.ghost.remove();
+    if(!q.armed) return; blockUntil=Date.now()+400;
+    if(cancel||!q.moved){ renderAll(false); return; }
+    if(q.kind==="seg"){ const w=wireById(q.wid); if(!w||q.v==null){ renderAll(false); return; } w[q.seg.key]=Math.round(q.v); S.selWire=w.id; S.moveEnd=null; commit(false); return; }
+    if(!q.dx){ renderAll(false); return; } const b=S.board, pos=GEO.bus.pos; b.bx=b.bx||{};
+    const first=q.key==="xn"?pos["xn:0"]:q.key==="xpe"?pos["xpe:0"]:Math.min(...Object.keys(pos).filter(k=>/^tb:/.test(k)).map(k=>pos[k]));
+    b.bx[q.key]=Math.round(first+q.dx); toast(q.key==="xn"?"Шину N пересунуто":q.key==="xpe"?"Шину PE пересунуто":"Колодку XT2 пересунуто","ok"); commit(); }
+  document.addEventListener("pointerdown",e=>{ if(Q||e.button>0||S.noDoc||S.demo||!(e.target===svg||svg.contains(e.target))) return;
+    const p=toSvg(e), touch=e.pointerType!=="mouse";
+    if(S.mode==="wire"&&!S.moveEnd){ if(termWithin(e,16)) return; const hit=e.target.closest&&e.target.closest("[data-wire]"); if(!hit) return;
+      const w=wireById(hit.dataset.wire), seg=w&&segOf(w,p); if(!seg) return;
+      Q={kind:"seg",wid:w.id,seg,p0:p,pid:e.pointerId,touch,x0:e.clientX,y0:e.clientY,armed:false,moved:false}; }
+    else if(S.mode==="mount"&&!S.pick){ if(e.target.closest&&e.target.closest("[data-dev]")) return; const bus=busOf(p); if(!bus) return;
+      Q={kind:"bus",key:bus.key,bus,p0:p,pid:e.pointerId,touch,x0:e.clientX,y0:e.clientY,armed:false,moved:false,dx:0}; }
+    else return;
+    if(touch) Q.tm=setTimeout(()=>{ if(Q&&!Q.armed) arm(); },HOLD); });
+  document.addEventListener("pointermove",e=>{ if(!Q||e.pointerId!==Q.pid) return; const dist=Math.hypot(e.clientX-Q.x0,e.clientY-Q.y0);
+    if(!Q.armed){ if(Q.touch){ if(dist>10){ clearTimeout(Q.tm); Q=null; } return; } if(dist<5) return; arm(); }
+    Q.moved=true; move(e); });
+  document.addEventListener("pointerup",e=>{ if(Q&&e.pointerId===Q.pid) end(false); });
+  document.addEventListener("pointercancel",e=>{ if(Q&&e.pointerId===Q.pid) end(true); });
+  document.addEventListener("touchmove",e=>{ if(Q&&Q.armed&&e.cancelable) e.preventDefault(); },{passive:false});
+  document.addEventListener("touchstart",e=>{ if(e.touches.length>1) end(true); },{passive:true});
+  document.addEventListener("contextmenu",e=>{ if(Q) e.preventDefault(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") end(true); });
   document.addEventListener("click",e=>{ if(Date.now()<blockUntil){ e.stopPropagation(); e.preventDefault(); } },true);
 })();
 /* ===== Масштаб щита двома пальцями (і щипком на тачпаді) ===== */
@@ -3140,7 +3221,7 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), G=groupsOf(), has=(..
       todo:()=>gTodo("out"), done:()=>wireDone("out"), wire:true}]:[]),
     {id:"check", short:"Перевірте схему", t:"Перевірте схему",
       h:"Перевірка шукає коротке замикання, переплутані дроти, групи без ПЗВ і замалі перерізи. Крок зараховується, коли помилок нуль.",
-      done:()=>S.lastCheck&&S.lastCheck.sig===structSnap()&&S.lastCheck.errors===0, act:["Перевірити",()=>checkNow()]},
+      done:()=>S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors===0, act:["Перевірити",()=>checkNow()]},
     {id:"test", short:"Подайте напругу", t:"Випробування: подайте напругу",
       h:"Кнопка «Подати напругу» вмикає всі вводи. Групи мають показати «Під напругою», обладнання — запрацювати.",
       done:()=>!!(S.guide&&S.guide.testOK), act:["Подати напругу",powerOn]},
@@ -3165,7 +3246,7 @@ function guideHint(){ const g=guideCur(); if(!g) return ""; if(g.cur<0) return "
   const td=g.s.todo?g.s.todo():[]; if(td.length){ const ok=td.filter(x=>x.ok).length, bad=td.find(x=>x.bad);
     return `<b>Крок ${g.cur+1} з ${g.st.length} · ${esc(g.s.short||g.s.t)}</b> · з’єднано ${ok} з ${td.filter(x=>!x.bad).length}. `
       +(bad?`<span style="color:var(--red)">${esc(bad.t)}</span>`:`Торкніться клеми <span class="gn">1</span>, потім <span class="gn">2</span> — їх підсвічено. «Усі перемички (Авто)» прокладе решту дротів сам.`); }
-  if(g.s.id==="check"&&S.lastCheck&&S.lastCheck.sig===structSnap()&&S.lastCheck.errors) return `<b>Крок ${g.cur+1}:</b> перевірка знайшла помилок: ${S.lastCheck.errors}. «Виправити все» перекладе дроти за правильною схемою й підбере номінали.`;
+  if(g.s.id==="check"&&S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors) return `<b>Крок ${g.cur+1}:</b> перевірка знайшла помилок: ${S.lastCheck.errors}. «Виправити все» перекладе дроти за правильною схемою й підбере номінали.`;
   return `<b>Крок ${g.cur+1}:</b> ${esc(g.s.h)}`; }
 const GX = `<button class="bx" data-gx aria-label="Сховати помічника">✕</button>`;
 function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return "";
@@ -3178,7 +3259,7 @@ function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return 
     return `<div class="br gd">${num}<b class="gt"><span class="gn">1</span> ${esc(kName(it.a))} → <span class="gn">2</span> ${esc(kName(it.b))} <span class="bm">· ${esc(WK[it.kind][0])}</span></b>${GX}</div>`
       +`<div class="br">${all}<button class="btn sm primary" data-gauto title="Програма сама проведе цей один дріт">✓ Покроково (Авто)</button>${S.mode==="wire"?"":`<button class="btn sm" data-gwire title="Перейти в режим «Дроти» і провести дріт самому">✋ Проведу сам</button>`}</div>`
       +`<div class="br"><span class="bl">Автоматично — програма проведе дріт за вас. «Проведу сам» — торкніться клеми 1, потім клеми 2.</span></div>`; }
-  if(s.id==="check"&&S.lastCheck&&S.lastCheck.sig===structSnap()&&S.lastCheck.errors)
+  if(s.id==="check"&&S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors)
     return `<div class="br gd">${num}<b class="gt">Перевірка: помилок ${S.lastCheck.errors}</b>${GX}</div><div class="br"><button class="btn sm primary" data-gall>Виправити все</button><button class="btn sm" data-gact="${g.cur}">Перевірити ще раз</button></div>`;
   if(s.next) return `<div class="br gd">${num}<b class="gt">${esc(s.short||s.t)}</b>${GX}</div>`
     +`<div class="br">${s.act?`<button class="btn sm" data-gact="${g.cur}">＋ ${esc(s.act[0])}</button>`:""}<button class="btn sm primary" data-gnext="${s.id}">${esc(s.next)}</button></div>`;
@@ -3244,6 +3325,9 @@ const closeDlg = () => { $("dlg").hidden=true; };
 // ---- Структурний знімок і «Скасувати»
 const SKEYS=["id","type","rail","slot","rating","group","cap","model","Ir","variant","col","uc","delay","plug","th","noGroup","sid","n","name","map","brand","pre"];
 const pickS = o => { const r={}; for(const key of SKEYS) if(o[key]!==undefined) r[key]=o[key]; return r; };
+// «Електричний» підпис щита: без трас дротів і положення шин — перевірка лишається чинною, якщо дроти лише охайно розклали
+function elecSnap(){ const b={...S.board}; delete b.bx; return JSON.stringify({board:b, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires.map(w=>[w.a,w.b,w.kind,w.sec,w.col||""]), comb:S.comb, plan:S.plan||null}); }
+const checkedOK = () => !!(S.lastCheck&&!S.lastCheck.errors&&!S.lastCheck.warns&&S.lastCheck.sig===elecSnap());
 function structSnap(){ return JSON.stringify({board:S.board, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires, comb:S.comb, plan:S.plan||null}); }
 S.hist=[]; S.lastSnap=null;
 function resetHistory(){ S.hist=[]; S.fut=[]; S.lastSnap=structSnap(); }
@@ -3529,6 +3613,9 @@ function nearTerm(e){ const svg=$("svg"), m=svg.getScreenCTM(); if(!m) return nu
   const hl=new Set(gHL()), fits=k=>S.pend&&kindFits(S.wireKind,termRole(k));
   let best=null, bd=R; for(const k of allTermKeys()){ const q=termPos(k); if(!q) continue; let d=Math.hypot(q.x-p.x,q.y-p.y); if(d>=R) continue;
     if(hl.has(k)) d*=0.35; else if(fits(k)) d*=0.75; if(d<bd){ bd=d; best=k; } } return best; }
+// клема строго під пальцем (у пікселях екрана) — щоб середину дроту біля клеми можна було тягнути, а не почати новий дріт
+function termWithin(e,px){ const svg=$("svg"), m=svg.getScreenCTM(); if(!m) return null; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()), R=px/m.a;
+  let best=null, bd=R; for(const k of allTermKeys()){ const q=termPos(k); if(!q) continue; const d=Math.hypot(q.x-p.x,q.y-p.y); if(d<bd){ bd=d; best=k; } } return best; }
 $("svg").addEventListener("click",e=>{ if(S.mode!=="wire"||S.demo) return; const k=nearTerm(e); if(!k) return; e.stopPropagation(); e.preventDefault(); if(S.moveEnd) moveEnd(k); else termTap(k); },true);
 function moveEnd(key){ const m=S.moveEnd, w=wireById(m.id); if(!w){ S.moveEnd=null; return; }
   const other=m.end==="a"?w.b:w.a;
@@ -3537,6 +3624,7 @@ function moveEnd(key){ const m=S.moveEnd, w=wireById(m.id); if(!w){ S.moveEnd=nu
   if(S.wires.filter(x=>x!==w&&(x.a===key||x.b===key)).length>=2&&!/^x(n|pe):/.test(key)) toast("Під одну клему — не більше двох дротів","w");
   w[m.end]=key; S.moveEnd=null; toast(`Перенесено на ${termName(key)}`,"ok"); commit(false); }
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el; const w=S.selWire&&wireById(S.selWire);
+  if(q("[data-wautoall]")){ for(const x of S.wires) for(const k of ["ry","rya","ryb","rx"]) delete x[k]; delete S.board.bx; toast("Усі траси й шини — знову автоматично","ok"); commit(); return; }
   if(el=q("[data-wsel]")){ selectWire(el.dataset.wsel); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); return; }
   if(!w) return;
   if(el=q("[data-skind]")){ w.kind=el.dataset.skind; commit(false); return; }
@@ -3545,6 +3633,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el; c
   if(q("[data-wall]")){ const L=lineWires(w); L.forEach(x=>x.sec=w.sec); toast(`Переріз ${fmt(w.sec,w.sec%1?1:0)} мм² — для ${L.length} дрот${L.length===1?"у":"ів"} лінії`,"ok"); commit(false); return; }
   if(q("[data-wdel]")){ S.wires=S.wires.filter(x=>x!==w); S.selWire=null; S.moveEnd=null; toast("Дріт видалено. «Скасувати» поверне його"); commit(); return; }
   if(el=q("[data-wmove]")){ const v=el.dataset.wmove; S.moveEnd=v==="cancel"?null:{id:w.id,end:v}; S.pend=null; renderAll(false); return; }
+  if(q("[data-wauto]")){ for(const k of ["ry","rya","ryb","rx"]) delete w[k]; toast("Траса дроту — знову автоматична","ok"); commit(false); return; }
   if(el=q("[data-wnav]")){ const i=S.wires.indexOf(w), n=S.wires.length; selectWire(S.wires[(i+(+el.dataset.wnav)+n)%n].id); return; }
 });
 document.addEventListener("keydown",e=>{ if(S.mode!=="wire"||!S.selWire||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;

@@ -9,6 +9,9 @@ const closeDlg = () => { $("dlg").hidden=true; };
 // ---- Структурний знімок і «Скасувати»
 const SKEYS=["id","type","rail","slot","rating","group","cap","model","Ir","variant","col","uc","delay","plug","th","noGroup","sid","n","name","map","brand","pre"];
 const pickS = o => { const r={}; for(const key of SKEYS) if(o[key]!==undefined) r[key]=o[key]; return r; };
+// «Електричний» підпис щита: без трас дротів і положення шин — перевірка лишається чинною, якщо дроти лише охайно розклали
+function elecSnap(){ const b={...S.board}; delete b.bx; return JSON.stringify({board:b, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires.map(w=>[w.a,w.b,w.kind,w.sec,w.col||""]), comb:S.comb, plan:S.plan||null}); }
+const checkedOK = () => !!(S.lastCheck&&!S.lastCheck.errors&&!S.lastCheck.warns&&S.lastCheck.sig===elecSnap());
 function structSnap(){ return JSON.stringify({board:S.board, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires, comb:S.comb, plan:S.plan||null}); }
 S.hist=[]; S.lastSnap=null;
 function resetHistory(){ S.hist=[]; S.fut=[]; S.lastSnap=structSnap(); }

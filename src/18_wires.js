@@ -18,6 +18,9 @@ function nearTerm(e){ const svg=$("svg"), m=svg.getScreenCTM(); if(!m) return nu
   const hl=new Set(gHL()), fits=k=>S.pend&&kindFits(S.wireKind,termRole(k));
   let best=null, bd=R; for(const k of allTermKeys()){ const q=termPos(k); if(!q) continue; let d=Math.hypot(q.x-p.x,q.y-p.y); if(d>=R) continue;
     if(hl.has(k)) d*=0.35; else if(fits(k)) d*=0.75; if(d<bd){ bd=d; best=k; } } return best; }
+// клема строго під пальцем (у пікселях екрана) — щоб середину дроту біля клеми можна було тягнути, а не почати новий дріт
+function termWithin(e,px){ const svg=$("svg"), m=svg.getScreenCTM(); if(!m) return null; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()), R=px/m.a;
+  let best=null, bd=R; for(const k of allTermKeys()){ const q=termPos(k); if(!q) continue; const d=Math.hypot(q.x-p.x,q.y-p.y); if(d<bd){ bd=d; best=k; } } return best; }
 $("svg").addEventListener("click",e=>{ if(S.mode!=="wire"||S.demo) return; const k=nearTerm(e); if(!k) return; e.stopPropagation(); e.preventDefault(); if(S.moveEnd) moveEnd(k); else termTap(k); },true);
 function moveEnd(key){ const m=S.moveEnd, w=wireById(m.id); if(!w){ S.moveEnd=null; return; }
   const other=m.end==="a"?w.b:w.a;
@@ -26,6 +29,7 @@ function moveEnd(key){ const m=S.moveEnd, w=wireById(m.id); if(!w){ S.moveEnd=nu
   if(S.wires.filter(x=>x!==w&&(x.a===key||x.b===key)).length>=2&&!/^x(n|pe):/.test(key)) toast("Під одну клему — не більше двох дротів","w");
   w[m.end]=key; S.moveEnd=null; toast(`Перенесено на ${termName(key)}`,"ok"); commit(false); }
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el; const w=S.selWire&&wireById(S.selWire);
+  if(q("[data-wautoall]")){ for(const x of S.wires) for(const k of ["ry","rya","ryb","rx"]) delete x[k]; delete S.board.bx; toast("Усі траси й шини — знову автоматично","ok"); commit(); return; }
   if(el=q("[data-wsel]")){ selectWire(el.dataset.wsel); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); return; }
   if(!w) return;
   if(el=q("[data-skind]")){ w.kind=el.dataset.skind; commit(false); return; }
@@ -34,6 +38,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el; c
   if(q("[data-wall]")){ const L=lineWires(w); L.forEach(x=>x.sec=w.sec); toast(`Переріз ${fmt(w.sec,w.sec%1?1:0)} мм² — для ${L.length} дрот${L.length===1?"у":"ів"} лінії`,"ok"); commit(false); return; }
   if(q("[data-wdel]")){ S.wires=S.wires.filter(x=>x!==w); S.selWire=null; S.moveEnd=null; toast("Дріт видалено. «Скасувати» поверне його"); commit(); return; }
   if(el=q("[data-wmove]")){ const v=el.dataset.wmove; S.moveEnd=v==="cancel"?null:{id:w.id,end:v}; S.pend=null; renderAll(false); return; }
+  if(q("[data-wauto]")){ for(const k of ["ry","rya","ryb","rx"]) delete w[k]; toast("Траса дроту — знову автоматична","ok"); commit(false); return; }
   if(el=q("[data-wnav]")){ const i=S.wires.indexOf(w), n=S.wires.length; selectWire(S.wires[(i+(+el.dataset.wnav)+n)%n].id); return; }
 });
 document.addEventListener("keydown",e=>{ if(S.mode!=="wire"||!S.selWire||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;

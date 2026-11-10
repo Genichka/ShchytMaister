@@ -15,11 +15,12 @@
   function stop(cancel){ if(!D) return; const d=D; D=null; clearTimeout(d.tm); if(d.ghost) d.ghost.remove();
     if(!d.armed) return;
     if(d.moved){ noClickUntil=Date.now()+350; const t=d.t, dev=d.dev;
-      if(!cancel&&t&&t.ok&&(t.r!==(dev.rail||0)||t.slot!==dev.slot)){ dev.rail=t.r; dev.slot=t.slot; S.selDev=dev.id; commit(); return; }
+      if(!cancel&&t&&t.ok&&(t.r!==(dev.rail||0)||t.slot!==dev.slot)){ dev.rail=t.r; dev.slot=t.slot; if(S.mode==="mount") S.selDev=dev.id; commit(); return; }
       if(!cancel&&t&&!t.ok) toast("Там зайнято","w"); renderAll(false); return; }
-    if(d.lifted){ noClickUntil=Date.now()+350; if(!cancel) S.selDev=d.dev.id; renderAll(false); } }   // затиснули й відпустили — просто вибір
+    if(d.lifted){ noClickUntil=Date.now()+350; if(!cancel&&S.mode==="mount") S.selDev=d.dev.id; renderAll(false); } }   // затиснули й відпустили — просто вибір
 
-  svg.addEventListener("pointerdown",e=>{ if(D||S.noDoc||S.mode!=="mount"||S.pick||e.button>0) return;
+  svg.addEventListener("pointerdown",e=>{ if(D||S.noDoc||!(S.mode==="mount"||S.mode==="wire")||S.pick||e.button>0||S.demo) return;
+    if(S.mode==="wire"&&(S.moveEnd||nearTerm(e)||(e.target.closest&&e.target.closest("[data-wire]")))) return;
     const g=e.target.closest("[data-dev]"), dev=g&&S.devices.find(x=>x.id===g.dataset.dev); if(!dev) return;
     const touch=e.pointerType!=="mouse";
     D={dev,g,pid:e.pointerId,touch,p0:pt(e),cx:e.clientX,cy:e.clientY,armed:false,lifted:false,moved:false,t:null};
@@ -99,6 +100,7 @@
     if(S.mode==="wire"&&!S.demo){ if(!(e.target===svg||svg.contains(e.target))) return;
       const w=S.selWire&&wireById(S.selWire); let end=null, kind=null, key=null;
       if(w){ const m=svg.getScreenCTM(), p=toSvg(e), R=Math.max(16,30/(m?m.a:1)); for(const en of ["a","b"]){ const q=termPos(w[en]); if(q&&Math.hypot(q.x-p.x,q.y-p.y)<R){ end=en; break; } } }
+      if(!end&&e.target.closest&&e.target.closest("[data-wire]")&&!termWithin(e,16)) return;   // посередині дроту — перетягування траси (наступний блок)
       if(end){ kind="end"; key=w[end]; } else { key=nearTerm(e); if(key) kind="new"; }
       if(!kind) return;
       W={kind,key,end,cur:end?w[end]:null,wid:w?w.id:null,fix:end?w[end==="a"?"b":"a"]:key,pid:e.pointerId,touch:e.pointerType!=="mouse",x0:e.clientX,y0:e.clientY,armed:false,moved:false,cand:null,line:null,dot:null};
@@ -120,5 +122,68 @@
   document.addEventListener("touchstart",e=>{ if(e.touches.length>1){ endC(true); endW(true); } },{passive:true});                       // другий палець — це масштаб
   document.addEventListener("contextmenu",e=>{ if(C||W) e.preventDefault(); });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ endC(true); endW(true); } });
+  document.addEventListener("click",e=>{ if(Date.now()<blockUntil){ e.stopPropagation(); e.preventDefault(); } },true);
+})();
+/* ===== Перетягування трас дротів (перемичок) і шин N / PE / колодки XT2 =====
+   Дроти («Дроти»): затиснути дріт посередині й тягти — горизонтальна ділянка ходить угору-вниз у межах свого каналу,
+   бічна вертикальна — ліворуч-праворуч. Кінці лишаються на клемах. «Авто-траса» в панелі дроту повертає як було.
+   Шини («Апарати»): затиснути шину N, PE чи колодку XT2 і тягти вздовж ряду. Миша — одразу, палець — після ~0,25 с. */
+(function(){
+  const sc=$("scroller"), svg=$("svg"), NS="http://www.w3.org/2000/svg", HOLD=250; let Q=null, blockUntil=0;
+  const toSvg=e=>{ const m=svg.getScreenCTM(); if(!m) return {x:0,y:0}; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()); return {x:p.x,y:p.y}; };
+  const busy=v=>{ window.__dragBusy=v; };
+  const vib=()=>{ try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){} };
+  const dSeg=(p,[x0,y0],[x1,y1])=>{ const L=(x1-x0)**2+(y1-y0)**2, t=L?Math.max(0,Math.min(1,((p.x-x0)*(x1-x0)+(p.y-y0)*(y1-y0))/L)):0; return Math.hypot(p.x-x0-t*(x1-x0),p.y-y0-t*(y1-y0)); };
+  // яка ділянка дроту під пальцем і яке поле траси вона змінює
+  function segOf(w,p){ const P=route()[w.id]; if(!P) return null; const cross=P.length===6; let bi=-1, bd=1e9;
+    for(let i=1;i<P.length-2;i++){ const d=dSeg(p,P[i],P[i+1]); if(d<bd){ bd=d; bi=i; } }
+    if(bi<0) return null; const hor=P[bi][1]===P[bi+1][1]; if(hor&&P[bi][0]===P[bi+1][0]&&!cross) return null;   // прямий вертикальний дріт — нема чого відводити
+    const ca=termPos(w.a), cb=termPos(w.b); if(!ca||!cb) return null; const cLo=Math.min(ca.c,cb.c), cHi=Math.max(ca.c,cb.c);
+    const key=cross?({1:"rya",2:"rx",3:"ryb"})[bi]:"ry", lim=key==="rx"?[20,820]:chanLim(key==="ryb"?cHi:cLo);
+    return {P,i:bi,hor,key,lim,v0:hor?P[bi][1]:P[bi][0]}; }
+  // шина під пальцем (лише в «Апаратах»)
+  function busOf(p){ const b=S.board, pos=(GEO||geoCache()).bus.pos, B=busY(), xs=k=>pos[k];
+    if(Math.abs(p.y-B)<=18){
+      if(b.xn){ const a=xs("xn:0")-16, z=(b.xt.length?xs("xt:"+b.xt[b.xt.length-1].k):xs("xn:"+(b.xn-1)))+16; if(p.x>=a&&p.x<=z) return {key:"xn",a,z,y:B}; }
+      if(b.xpe){ const a=xs("xpe:0")-16, z=xs("xpe:"+(b.xpe-1))+16; if(p.x>=a&&p.x<=z) return {key:"xpe",a,z,y:B}; } }
+    if(b.tb&&groupsOf().length&&Math.abs(p.y-tbY())<=18){ const xs2=Object.keys(pos).filter(k=>/^tb:/.test(k)).map(k=>pos[k]); if(xs2.length){ const a=Math.min(...xs2)-22, z=Math.max(...xs2)+22; if(p.x>=a&&p.x<=z) return {key:"tb",a,z,y:tbY()}; } }
+    return null; }
+  function busRange(q){ const b=S.board, pos=GEO.bus.pos, w=q.z-q.a;
+    if(q.key==="xn"){ const pe=b.xpe?pos["xpe:0"]-16:830; return [30,pe-24-w]; }
+    if(q.key==="xpe"){ const n=b.xn?(b.xt.length?pos["xt:"+b.xt[b.xt.length-1].k]:pos["xn:"+(b.xn-1)])+16:20; return [n+24,830-w]; }
+    return [30,830-w]; }
+  function arm(){ if(!Q||Q.armed) return; Q.armed=true; vib(); busy(true); svg.classList.add("segdrag");
+    if(Q.kind==="bus"){ const g=Q.ghost=document.createElementNS(NS,"rect"); g.setAttribute("rx","4"); g.setAttribute("class","dropg"); g.setAttribute("y",Q.bus.y-18); g.setAttribute("height",36); g.setAttribute("width",Q.bus.z-Q.bus.a); g.setAttribute("x",Q.bus.a); svg.appendChild(g); } }
+  function move(e){ const p=toSvg(e);
+    if(Q.kind==="seg"){ const s=Q.seg, v=clampV(s.v0+(s.hor?p.y-Q.p0.y:p.x-Q.p0.x),s.lim), P=s.P.map(q=>q.slice()), i=s.i;
+      if(s.hor){ P[i][1]=P[i+1][1]=v; } else { P[i][0]=P[i+1][0]=v; } Q.v=v; const d=rpath(P);
+      svg.querySelectorAll(`[data-w="${Q.wid}"],[data-wire="${Q.wid}"]`).forEach(el=>el.setAttribute("d",d)); }
+    else { const [lo,hi]=busRange(Q.bus), a=clampV(Q.bus.a+p.x-Q.p0.x,[lo,hi]); Q.dx=a-Q.bus.a; Q.ghost.setAttribute("x",a); }
+    const r=sc.getBoundingClientRect(), E=40, vy=e.clientY<r.top+E?-14:e.clientY>r.bottom-E?14:0, vx=e.clientX<r.left+E?-14:e.clientX>r.right-E?14:0; if(vx||vy){ sc.scrollTop+=vy; sc.scrollLeft+=vx; } }
+  function end(cancel){ if(!Q) return; const q=Q; Q=null; clearTimeout(q.tm); busy(false); svg.classList.remove("segdrag"); if(q.ghost) q.ghost.remove();
+    if(!q.armed) return; blockUntil=Date.now()+400;
+    if(cancel||!q.moved){ renderAll(false); return; }
+    if(q.kind==="seg"){ const w=wireById(q.wid); if(!w||q.v==null){ renderAll(false); return; } w[q.seg.key]=Math.round(q.v); S.selWire=w.id; S.moveEnd=null; commit(false); return; }
+    if(!q.dx){ renderAll(false); return; } const b=S.board, pos=GEO.bus.pos; b.bx=b.bx||{};
+    const first=q.key==="xn"?pos["xn:0"]:q.key==="xpe"?pos["xpe:0"]:Math.min(...Object.keys(pos).filter(k=>/^tb:/.test(k)).map(k=>pos[k]));
+    b.bx[q.key]=Math.round(first+q.dx); toast(q.key==="xn"?"Шину N пересунуто":q.key==="xpe"?"Шину PE пересунуто":"Колодку XT2 пересунуто","ok"); commit(); }
+  document.addEventListener("pointerdown",e=>{ if(Q||e.button>0||S.noDoc||S.demo||!(e.target===svg||svg.contains(e.target))) return;
+    const p=toSvg(e), touch=e.pointerType!=="mouse";
+    if(S.mode==="wire"&&!S.moveEnd){ if(termWithin(e,16)) return; const hit=e.target.closest&&e.target.closest("[data-wire]"); if(!hit) return;
+      const w=wireById(hit.dataset.wire), seg=w&&segOf(w,p); if(!seg) return;
+      Q={kind:"seg",wid:w.id,seg,p0:p,pid:e.pointerId,touch,x0:e.clientX,y0:e.clientY,armed:false,moved:false}; }
+    else if(S.mode==="mount"&&!S.pick){ if(e.target.closest&&e.target.closest("[data-dev]")) return; const bus=busOf(p); if(!bus) return;
+      Q={kind:"bus",key:bus.key,bus,p0:p,pid:e.pointerId,touch,x0:e.clientX,y0:e.clientY,armed:false,moved:false,dx:0}; }
+    else return;
+    if(touch) Q.tm=setTimeout(()=>{ if(Q&&!Q.armed) arm(); },HOLD); });
+  document.addEventListener("pointermove",e=>{ if(!Q||e.pointerId!==Q.pid) return; const dist=Math.hypot(e.clientX-Q.x0,e.clientY-Q.y0);
+    if(!Q.armed){ if(Q.touch){ if(dist>10){ clearTimeout(Q.tm); Q=null; } return; } if(dist<5) return; arm(); }
+    Q.moved=true; move(e); });
+  document.addEventListener("pointerup",e=>{ if(Q&&e.pointerId===Q.pid) end(false); });
+  document.addEventListener("pointercancel",e=>{ if(Q&&e.pointerId===Q.pid) end(true); });
+  document.addEventListener("touchmove",e=>{ if(Q&&Q.armed&&e.cancelable) e.preventDefault(); },{passive:false});
+  document.addEventListener("touchstart",e=>{ if(e.touches.length>1) end(true); },{passive:true});
+  document.addEventListener("contextmenu",e=>{ if(Q) e.preventDefault(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") end(true); });
   document.addEventListener("click",e=>{ if(Date.now()<blockUntil){ e.stopPropagation(); e.preventDefault(); } },true);
 })();

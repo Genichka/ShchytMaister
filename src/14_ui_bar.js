@@ -142,13 +142,15 @@ function wireToolsBar(){ const sw=k=>`<span class="sw" style="background:${k==="
   const bad=!mainsOf().length?{t:"Спершу поставте ввідний автомат 2P (вкладка «Захист»)"}:wirePlan().find(x=>x.bad);
   return brow(`<button class="btn sm primary" data-gall>⚡ Прокласти всі дроти автоматично</button>`+(bad?`<span class="bl" style="color:var(--orange)">${esc(bad.t)}</span>`:`<span class="bl">перемички, шини N і PE, групи — за схемою</span>`))+brow(`<span class="bl">Новий дріт</span>`+Object.keys(WK).map(x=>chip(`data-kind="${x}"`,S.wireKind===x,sw(x)+WK[x][0])).join(""))
     +brow(SECS.map(x=>chip(`data-sec="${x}"`,S.wireSec===x,fmt(x,x%1?1:0),"mono")).join("")+`<span class="bl">мм²</span>`
+      +(S.wires.some(w=>["ry","rya","ryb","rx"].some(k=>w[k]!=null))||S.board.bx?`<button class="btn sm" data-wautoall>↺ Вирівняти всі траси й шини</button>`:"")
       +(S.wires.length?`<button class="btn sm" data-wsel="${S.wires[S.wires.length-1].id}">Вибрати дріт (${S.wires.length})</button><button class="btn sm danger" id="clearWires">${clearArm>Date.now()?"Ще раз — прибрати всі":"Прибрати всі"}</button>`:"")); }
 function wireBar(w){ const me=S.moveEnd&&S.moveEnd.id===w.id?S.moveEnd.end:null, ck=wColKey(w);
   const L=[["ends","Кінці"],["kind","Вид"],["col","Колір"],["sec","Переріз"],["del","Видалити"]], cur=bseg(w.id,L,"ends");
   let s=bhead(`Дріт ${wNo(w)} з ${S.wires.length} · ${esc(wireLabel(w))} <span class="bm">≈ ${wireLenCm(w)} см</span>`,`${bdel("data-wdel")}${bx}`);
   if(me) return s+brow(`<span class="bl warnt">Торкніться нової клеми для ${me==="a"?"початку":"кінця"} дроту</span><button class="btn sm" data-wmove="cancel">Скасувати</button>`)+brow(`<span class="bl">${me==="a"?"Початок":"Кінець"} зараз: ${esc(termName(w[me]))}</span>`);
   s+=segRow(L,cur);
-  if(cur==="ends") s+=brow(["a","b"].map(e=>`<button class="btn sm wend2" data-wmove="${e}"><small>${e==="a"?"Початок":"Кінець"}</small> ${esc(termName(w[e]))} <b>⇄</b></button>`).join(""));
+  if(cur==="ends") s+=brow(["a","b"].map(e=>`<button class="btn sm wend2" data-wmove="${e}"><small>${e==="a"?"Початок":"Кінець"}</small> ${esc(termName(w[e]))} <b>⇄</b></button>`).join("")
+    +(["ry","rya","ryb","rx"].some(k=>w[k]!=null)?`<button class="btn sm" data-wauto>↺ Авто-траса</button>`:""));
   if(cur==="kind") s+=brow(Object.keys(WK).map(x=>chip(`data-skind="${x}"`,w.kind===x,swatch(x)+WK[x][0])).join(""));
   if(cur==="col") s+=brow(chip(`data-scol=""`,!w.col,"За видом")+Object.keys(WCOL).map(c=>chip(`data-scol="${c}"`,w.col===c,swatch(c,true)+WCOL[c][0])).join(""));
   if(cur==="sec") s+=brow(SECS.map(x=>chip(`data-ssec="${x}"`,w.sec===x,fmt(x,x%1?1:0),"mono")).join("")+`<button class="btn sm" data-wall="sec">Усім дротам лінії</button>`);

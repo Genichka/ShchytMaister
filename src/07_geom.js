@@ -11,14 +11,14 @@ const sideX = (side,i) => side==="L" ? 86-(SSP.L||7)*i : 754+(SSP.R||7)*i;
 const SW = {1.5:3,2.5:3.6,4:4.3,6:5,10:6,16:7,25:7.6,35:8.2,50:9};
 function inputX(){ const m={}; let x=120;
   for(const inp of S.board.inputs){ inp.terms.forEach((t,i)=>{ m[inp.id+":"+t]=x+i*36; }); m[inp.id]=x; x+=inp.terms.length*36+(S.board.inputs.length>1?64:34); } return m; }   // між вводами — місце для підпису
-function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, gaps=(m?2:1)*20;
-  let sp=28; if(cnt*sp+gaps>600) sp=(600-gaps)/cnt; const pos={}; let x=124;
+function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, gaps=(m?2:1)*20, bx=b.bx||{};
+  let sp=28; if(cnt*sp+gaps>600) sp=(600-gaps)/cnt; const pos={}; let x=bx.xn!=null?bx.xn:124;
   for(let i=0;i<n;i++){ pos["xn:"+i]=x; x+=sp; } x+=20-sp+sp;
   if(m){ b.xt.forEach(t=>{ pos["xt:"+t.k]=x; x+=sp; }); x+=20; }
-  const shift=Math.max(0,716-(x+(p-1)*sp)); x+=shift; for(let i=0;i<p;i++){ pos["xpe:"+i]=x; x+=sp; }
+  if(bx.xpe!=null) x=Math.max(x,Math.min(bx.xpe,800-(p-1)*sp)); else x+=Math.max(0,716-(x+(p-1)*sp)); for(let i=0;i<p;i++){ pos["xpe:"+i]=x; x+=sp; }
   let tsp=26, tgap=12; const tg=b.tb?groupsOf():[], tn=tg.reduce((a,g)=>a+tbTerms(g).length,0); if(tn){ const AV=740;   // колодка не виходить за рейку/корпус: звужуємо клеми й проміжки між групами
     if(tn*tsp+(tg.length-1)*tgap>AV){ tgap=tg.length>8?4:8; tsp=Math.max(8,Math.min(26,(AV-(tg.length-1)*tgap)/tn)); }
-    let tx2=420-(tn*tsp+(tg.length-1)*tgap)/2+tsp/2; for(const g of tg){ for(const t of tbTerms(g)){ pos[tbK(g,t)]=tx2; tx2+=tsp; } tx2+=tgap; } }
+    const tw=tn*tsp+(tg.length-1)*tgap; let tx2=bx.tb!=null?Math.max(40+tsp/2,Math.min(bx.tb,800-tw+tsp/2)):420-tw/2+tsp/2; for(const g of tg){ for(const t of tbTerms(g)){ pos[tbK(g,t)]=tx2; tx2+=tsp; } tx2+=tgap; } }
   return {pos,sp,tsp}; }
 let GEO=null;
 function geoCache(){ GEO={inx:inputX(), bus:busRow()}; return GEO; }
@@ -32,6 +32,9 @@ function termPos(key){
   const d=S.devices.find(x=>x.id===o); if(!d) return null; const t=T[d.type].terms.find(t=>t.k===k); if(!t) return null; const r=d.rail||0;
   return t.s==="top" ? {x:termX(d,t), y:devTop(r)+22, c:r, s:"l"} : {x:termX(d,t), y:devBot(r)-22, c:r+1, s:"u"};
 }
+// межі каналу c (між рейкою c-1 і c): куди можна відвести горизонтальну ділянку дроту пальцем чи мишею
+const chanLim = c => { const R=S.board.rails; return [c===0?60:devBot(c-1)+4, c===R?(S.board.tb&&groupsOf().length?tbY()-20:busY()-14):devTop(c)-4]; };
+const clampV = (v,[a,b]) => Math.max(a,Math.min(b,v));
 function route(){
   const items=[];
   for(const w of S.wires){ let A=termPos(w.a), B=termPos(w.b); if(!A||!B) continue;
@@ -52,8 +55,11 @@ function route(){
     LSP[key]=Math.max(2.5,Math.min(7,avail/Math.max(1,n(key)-0.5))); }
   const out={};
   for(const it of items){ const {A,B}=it;
-    if(!it.cross){ const y=laneY(A.c,it.set,it.lane); out[it.w.id]=[[A.x,A.y],[A.x,y],[B.x,y],[B.x,B.y]]; }
-    else { const sx=sideX(it.side,it.ls), ya=laneY(A.c,A.s,it.la), yb=laneY(B.c,B.s,it.lb); out[it.w.id]=[[A.x,A.y],[A.x,ya],[sx,ya],[sx,yb],[B.x,yb],[B.x,B.y]]; } }
+    const w=it.w;
+    if(!it.cross){ let y=laneY(A.c,it.set,it.lane); if(w.ry!=null) y=clampV(w.ry,chanLim(A.c)); out[w.id]=[[A.x,A.y],[A.x,y],[B.x,y],[B.x,B.y]]; }
+    else { let sx=sideX(it.side,it.ls), ya=laneY(A.c,A.s,it.la), yb=laneY(B.c,B.s,it.lb);
+      if(w.rx!=null) sx=clampV(w.rx,[20,820]); if(w.rya!=null) ya=clampV(w.rya,chanLim(A.c)); if(w.ryb!=null) yb=clampV(w.ryb,chanLim(B.c));
+      out[w.id]=[[A.x,A.y],[A.x,ya],[sx,ya],[sx,yb],[B.x,yb],[B.x,B.y]]; } }
   return out;
 }
 function rpath(pts,r=7){
@@ -145,10 +151,11 @@ function render(){ if(S.noDoc){ renderEmpty(); return; }
       s+=`<g data-field="${f.id}" style="cursor:pointer">${ft.draw(f,x,fy)}</g>`+(S.selDev===f.id?`<rect x="${x-3}" y="${fy-3}" width="${ft.fw+6}" height="156" rx="10" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`:""); } }
   const P=route();
   for(const w of S.wires){ const pts=P[w.id]; if(!pts) continue; const d=rpath(pts), sw=SW[w.sec]||4, col=wHex(w), pe=wColKey(w)==="pe";
-    if(S.selWire===w.id) s+=`<path class="wsel${S.moveEnd?" moving":""}" d="${d}" stroke-width="${sw+10}"/>`;
-    s+=`<path class="wire" d="${d}" stroke="${wDark(w)?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
-    if(pe) s+=`<path class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
-    else s+=`<path class="wire" d="${d}" stroke="${col}" stroke-width="${sw}"/>`;
+    const dw=`data-w="${w.id}"`;
+    if(S.selWire===w.id) s+=`<path ${dw} class="wsel${S.moveEnd?" moving":""}" d="${d}" stroke-width="${sw+10}"/>`;
+    s+=`<path ${dw} class="wire" d="${d}" stroke="${wDark(w)?"#8a9099":"var(--encl-in)"}" stroke-width="${sw+2.5}"/>`;
+    if(pe) s+=`<path ${dw} class="wire" d="${d}" stroke="var(--wPEy)" stroke-width="${sw}"/><path ${dw} class="wire" d="${d}" stroke="var(--wPEg)" stroke-width="${sw}" stroke-dasharray="9 9" stroke-linecap="butt"/>`;
+    else s+=`<path ${dw} class="wire" d="${d}" stroke="${col}" stroke-width="${sw}"/>`;
     const fl=R.flow&&R.flow[w.id];
     if(fl){ const dur=Math.max(0.35,1.5-Math.log10(1+fl.I)*0.7).toFixed(2);   // більший струм — швидший рух
       s+=`<path class="flow" d="${fl.dir<0?rpath(pts.slice().reverse()):d}" stroke-width="${Math.max(1.5,sw-2.5)}" style="animation-duration:${dur}s"/>`; }
