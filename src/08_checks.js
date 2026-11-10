@@ -12,28 +12,28 @@ const sbErrors = () => S.log.filter(l=>l.cls==="e").map(l=>l.msg.replace(/^\S+ /
 function powerUp(which){ for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.src[inp.id]={U:230,lost:{}}); s.on=!which||which.includes(inp.id); s.U=230; s.lost={}; if(inp.inv) Object.assign(s,{soc:80,fault:0,low:false,ovl:0}); }
   for(const d of S.devices){ if(T[d.type].prot||T[d.type].rcd){ d.on=true; d.trip=null; } } S.heat={}; }
 function pressBtn(d){ d.pressed=true; runFor(1); d.pressed=false; runFor(1); }
-// ПЗВ, у яких верхня і нижня клеми N з’єднані дротами напряму (нуль в обхід)
+// ПЗВ, у яких верхня і нижня клеми N з’єднані перемичками напряму (нуль в обхід)
 function rcdNBypass(f0){ f0=f0||build({allOpen:true});
   return S.devices.filter(R=>T[R.type].rcd&&nPole(R)>=0).filter(R=>{ const p=T[R.type].poles[nPole(R)]; return f0(R.id+":"+p.a)===f0(R.id+":"+p.b); }); }
 const isPhRole = r => r==="L"||r==="P"||PHK.includes(r);
 
 function runChecks(){
   const Cl=[], add=(sev,t,d="",ref=null)=>Cl.push({sev,t,d,ref}), b=S.board, f0=build({allOpen:true}), G=groupsOf();
-  // 1. Кольори дротів і клеми
+  // 1. Кольори перемичок і клеми
   let roleErr=0; const cnt={}, bad=[];
   for(const w of S.wires){ for(const k of [w.a,w.b]){ cnt[k]=(cnt[k]||0)+1; const r=termRole(k);
       if(r&&!kindFits(w.kind,r)){ roleErr++; bad.push({k,r,w,o:k.split(":")[0]}); } } }
   const swapped=new Set(bad.filter(x=>PHK.includes(x.w.kind)&&x.r==="N"&&bad.some(y=>y.o===x.o&&y.w.kind==="N"&&isPhRole(y.r))).map(x=>x.o));
   for(const o of swapped){ const d=S.devices.find(x=>x.id===o);
-    add("e",`${d?desig(d):termName(o+":L")}: переплутано фазу і нуль`,"Фаза (червоний) має бути на клемі L, нуль (синій) — на клемі N. Торкніться дроту → «Перенести» і поміняйте кінці місцями.",d?{dev:d.id}:null); }
-  for(const x of bad) if(!swapped.has(x.o)) add("e",`Провід ${WK[x.w.kind][0]} на клемі ${x.r==="C"?"керування":x.r}`,`${termName(x.k)}: вид дроту не відповідає призначенню клеми.`,{wire:x.w.id});
+    add("e",`${d?desig(d):termName(o+":L")}: переплутано фазу і нуль`,"Фаза (червоний) має бути на клемі L, нуль (синій) — на клемі N. Торкніться перемички → «Перенести» і поміняйте кінці місцями.",d?{dev:d.id}:null); }
+  for(const x of bad) if(!swapped.has(x.o)) add("e",`Провід ${WK[x.w.kind][0]} на клемі ${x.r==="C"?"керування":x.r}`,`${termName(x.k)}: вид перемички не відповідає призначенню клеми.`,{wire:x.w.id});
   for(const w of S.wires){ if(!w.col) continue; const c=w.col, nm=WCOL[c][0].toLowerCase(), where=`${termName(w.a)} → ${termName(w.b)}`;
     if((PHK.includes(w.kind)||w.kind==="C")&&(c==="blue"||c==="pe")){ roleErr++; add("e",`Фаза в ${nm} ізоляції`,where+": синій колір — лише для N, жовто-зелений — лише для PE.",{wire:w.id}); }
     else if(w.kind==="N"&&c!=="blue") add("w",`Нуль N у ${nm} ізоляції`,where+": нульовий робочий провідник позначають синім.",{wire:w.id});
     else if(w.kind==="PE"&&c!=="pe"){ roleErr++; add("e",`PE у ${nm} ізоляції`,where+": захисний провідник — лише жовто-зелений.",{wire:w.id}); }
     else if(w.kind!=="PE"&&c==="pe"){ roleErr++; add("e","Жовто-зелений провід не на PE",where+": цей колір дозволений лише для захисного провідника.",{wire:w.id}); } }
-  if(!roleErr&&S.wires.length) add("ok","Кольори дротів відповідають клемам","Фаза, нуль (синій), PE (жовто-зелений), керування, DC + і −.");
-  for(const [k,n] of Object.entries(cnt)) if(n>2&&!/^x(n|pe):/.test(k)) add("w",`${termName(k)}: ${n} дроти під одним гвинтом`,"Більше двох дротів під клемою — ненадійний контакт. Використайте шину або клемник.");
+  if(!roleErr&&S.wires.length) add("ok","Кольори перемичок відповідають клемам","Фаза, нуль (синій), PE (жовто-зелений), керування, DC + і −.");
+  for(const [k,n] of Object.entries(cnt)) if(n>2&&!/^x(n|pe):/.test(k)) add("w",`${termName(k)}: ${n} перемички під одним гвинтом`,"Більше двох перемичок під клемою — ненадійний контакт. Використайте шину або клемник.");
   for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до апарата або шини."); }
   // TOQ5: блок керування бачить джерела лише через клеми AR/AN і BR/BN
   for(const d of S.devices) if(d.type==="toq5"||d.type==="toq7"){ const TQ=d.type==="toq7"?"TOQ7":"TOQ5"; const free=t=>!S.wires.some(w=>w.a===K(d,t)||w.b===K(d,t));
@@ -80,7 +80,7 @@ function runChecks(){
   if(!main.length&&G.length) add("e","Немає ввідного автомата одразу після вводу","Ввід має заходити на верхні клеми ввідного автомата.");
   else if(main.length) add("ok",`Ввідн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);
   for(const R of S.devices.filter(d=>d.type==="rcd"||d.type==="rcd4")) if(mainIn&&inA(R.rating)<mainIn) add("e",`${desig(R)} ${R.rating} А слабший за ввідний ${mainIn} А`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за ввідний автомат.",{dev:R.id});
-  for(const K of S.devices.filter(d=>d.type==="kv"||d.type==="tovpd1")) if(mainIn&&inA(K.rating)<mainIn) add("e",`${desig(K)} ${K.rating} А слабше за ввідний ${mainIn} А`,"Через контакт реле напруги йде струм усього щита. Номінал реле — не менший за ввідний автомат: до C40 — реле 40 А, C50–C63 — реле 63 А.",{dev:K.id});
+  for(const K of S.devices.filter(d=>d.type==="kv"||d.type==="tovpd1")) if(mainIn&&inA(K.rating)<mainIn) add("e",`${desig(K)} ${K.rating} А слабше за ввідний ${mainIn} А`,"Через контакт реле напруги йде струм усього щитка. Номінал реле — не менший за ввідний автомат: до C40 — реле 40 А, C50–C63 — реле 63 А.",{dev:K.id});
   const byp=rcdNBypass(f0);
   for(const R of byp) add("e",`${desig(R)}: нуль іде в обхід ПЗВ`,`Верхня і нижня клеми N ${desig(R)} з’єднані напряму (через шину N або перемичку). ПЗВ вимикатиметься від будь-якого приладу. Нуль від ввідного — лише на верхню N ПЗВ, а на шину XN1 — лише з нижньої N.`,{dev:R.id});
   for(const g of G){ const In=inA(g.rating), max=CAB[g.group.sec], I=kwOf(g,true)*1000/(g3(g)?690:230);
@@ -88,7 +88,7 @@ function runChecks(){
     const du=groupDU(g); if(du!==null){ if(du>4) add("w",`${desig(g)} «${g.group.name}»: втрата напруги ${fmt(du,1)} %`,`Лінія ${fmt(groupLen(g),1)} м, ${fmt(g.group.sec,g.group.sec%1?1:0)} мм². Понад 4 % — візьміть кабель від ${fmt(SECS.find(s2=>s2>g.group.sec&&du*g.group.sec/s2<=4)||50,1)} мм² або розділіть групу.`,{dev:g.id}); }
     if(I>1.45*In) add("e",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Понад 1,45 × ${In} А, автомат вибиватиме. Розділіть групу.`,{dev:g.id});
     else if(I>In) add("w",`${desig(g)}: усі прилади разом — ${fmt(I)} А`,`Більше за номінал ${In} А. При одночасній роботі можливе вимкнення.`,{dev:g.id});
-    if(mainIn&&In>=mainIn) add("w",`${desig(g)} ${g.rating} не менший за ввідний`,"Немає селективності: при перевантаженні може вимкнутись увесь щит.",{dev:g.id});
+    if(mainIn&&In>=mainIn) add("w",`${desig(g)} ${g.rating} не менший за ввідний`,"Немає селективності: при перевантаженні може вимкнутись увесь щиток.",{dev:g.id});
     const rr=sandbox(()=>{ powerUp(); runFor(4); const X=makeX(build()), o={rc:0,byp:null};
       for(const R of S.devices.filter(R=>T[R.type].rcd)){ const pt=!makeX(build({openPole:new Set(lPoles(R))})).ph(gL(g)); if(pt) o.rc++;
         const np=nPole(R); if(o.byp||np<0||byp.some(x=>x.id===R.id)||!X.ph(gL(g))||!X.hasN(gN(g))) continue;
@@ -97,7 +97,7 @@ function runChecks(){
     if(rr.byp){ const R=devById(rr.byp.id); add("e",`${desig(g)} «${g.group.name}»: ${rr.byp.pt?"нуль":"фаза"} в обхід ${desig(R)}`,
       rr.byp.pt?"Фаза групи йде через ПЗВ, а нуль — ні. ПЗВ вимкнеться, щойно запрацює прилад. Нуль групи — із шини N, яку живить нижня клема N цього ПЗВ."
                :"Нуль групи йде через ПЗВ, а фаза взята до нього. ПЗВ вимкнеться, щойно запрацює прилад. Фазу групи беріть із нижньої клеми ПЗВ.",{dev:g.id}); }
-    if(!rc) add(/освітл|світл/i.test(g.group.name)||S.board.noRcd?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,S.board.noRcd?"Щит зібрано без ПЗВ: проводку захищено, а людей від ураження — ні. Для розеток і вологих приміщень рекомендовано ПЗВ або диф-автомат 30 мА.":"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА.",{dev:g.id}); }
+    if(!rc) add(/освітл|світл/i.test(g.group.name)||S.board.noRcd?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,S.board.noRcd?"Щиток зібрано без ПЗВ: проводку захищено, а людей від ураження — ні. Для розеток і вологих приміщень рекомендовано ПЗВ або диф-автомат 30 мА.":"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА.",{dev:g.id}); }
   if(mainIn&&b.inputs.length===1){ let low=0;
     for(const w of S.wires){ if(!["L","N"].includes(w.kind)) continue; const g2=build({ideal:true,skip:w.id}), g1=build({ideal:true});
       const aff=G.filter(g=>(g1(gL(g))===g1("in:L")&&g2(gL(g))!==g2("in:L"))||(g1(gN(g))===g1("in:N")&&g2(gN(g))!==g2("in:N")));
@@ -107,7 +107,7 @@ function runChecks(){
   if(G.length&&b.inputs.length===1&&!S.devices.some(d=>["kv","tovpd1","kvf","kvf2","pef"].includes(d.type))&&!S.field.some(f=>f.type==="inv")) add("w","Немає реле напруги","Без нього техніка не захищена від перенапруги.");
   for(const x of (res.tpl||[])) add(x.sev,x.t,x.d);
   for(const d of S.devices){ const used=S.wires.some(w=>w.a.startsWith(d.id+":")||w.b.startsWith(d.id+":"))||(S.comb&&d.type==="qf1p"&&d.slot>=S.comb.from&&d.slot<=S.comb.to);
-    if(!used) add("w",`${desig(d)} не підключений`,"Апарат стоїть на рейці без жодного дроту.",{dev:d.id}); }
-  if(!S.devices.length) add("w","Щит порожній","Додайте апарати в режимі «Апарати».");
+    if(!used) add("w",`${desig(d)} не підключений`,"Апарат стоїть на рейці без жодної перемички.",{dev:d.id}); }
+  if(!S.devices.length) add("w","Щиток порожній","Додайте апарати в режимі «Апарати».");
   const ord={e:0,w:1,ok:2}; Cl.sort((a,c)=>ord[a.sev]-ord[c.sev]); return Cl;
 }

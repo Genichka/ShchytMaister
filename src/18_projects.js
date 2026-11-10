@@ -1,4 +1,4 @@
-/* ===== Проєкти, майстер нового щита, корпус, обладнання, «Скасувати», демо-панель ===== */
+/* ===== Проєкти, майстер нового щитка, корпус, обладнання, «Скасувати», демо-панель ===== */
 // ---- Діалог
 let DLG=[];
 function dialog(title, body, buttons){
@@ -9,7 +9,7 @@ const closeDlg = () => { $("dlg").hidden=true; };
 // ---- Структурний знімок і «Скасувати»
 const SKEYS=["id","type","rail","slot","rating","group","cap","model","Ir","variant","col","uc","delay","plug","th","noGroup","sid","n","name","map","brand","pre"];
 const pickS = o => { const r={}; for(const key of SKEYS) if(o[key]!==undefined) r[key]=o[key]; return r; };
-// «Електричний» підпис щита: без трас дротів і положення шин — перевірка лишається чинною, якщо дроти лише охайно розклали
+// «Електричний» підпис щитка: без трас перемичок і положення шин — перевірка лишається чинною, якщо перемички лише охайно розклали
 function elecSnap(){ const b={...S.board}; delete b.bx; return JSON.stringify({board:b, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires.map(w=>[w.a,w.b,w.kind,w.sec,w.col||""]), comb:S.comb, plan:S.plan||null}); }
 const checkedOK = () => !!(S.lastCheck&&!S.lastCheck.errors&&!S.lastCheck.warns&&S.lastCheck.sig===elecSnap());
 function structSnap(){ return JSON.stringify({board:S.board, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires, comb:S.comb, plan:S.plan||null}); }
@@ -40,13 +40,13 @@ function loadData(d){ S.noDoc=false; Object.assign(S,{tpl:d.tpl||"custom", board
 function openProject(id){ const db=projDB(), p=db.list.find(x=>x.id===id); if(!p) return; loadData(p.data); S.proj={id:p.id,name:p.name}; db.cur=id; projSave(db); afterSwitch(); toast(`Відкрито: «${p.name}»`,"ok"); }
 function afterSwitch(){ GEO=null; Object.assign(S,{pend:null,selWire:null,selDev:null,pick:null,heat:{},log:[]}); if(S.demo) demoStop(); S.leak.clear(); S.short.clear(); S.leakWarned.clear(); S.arc.clear(); S.arcWarned.clear();
   resetHistory(); S.baseSig=structSnap(); clearCheck(); save(); solve(0); renderAll(true); tplLabel(); renderProjBtn(); }
-function renderProjBtn(){ const el=$("projName"); if(!el) return; { const w=$("projBtn")&&$("projBtn").parentElement; if(w) w.hidden=!!S.noDoc; } if(S.noDoc){ el.textContent="Немає щита"; const b0=$("projBtn"); if(b0){ b0.classList.remove("unsaved"); b0.classList.add("nodoc"); b0.title="Немає відкритого щита"; } return; } $("projBtn").classList.remove("nodoc"); const ok=!!(S.proj&&S.proj.id); el.textContent=(S.proj&&S.proj.name)||"Новий щит"; const b=$("projBtn"); if(b){ b.classList.toggle("unsaved",!ok); b.title=ok?"Збережено · відкрити меню проєкту":"Не збережено · відкрити меню проєкту"; } }
+function renderProjBtn(){ const el=$("projName"); if(!el) return; { const w=$("projBtn")&&$("projBtn").parentElement; if(w) w.hidden=!!S.noDoc; } if(S.noDoc){ el.textContent="Немає щитка"; const b0=$("projBtn"); if(b0){ b0.classList.remove("unsaved"); b0.classList.add("nodoc"); b0.title="Немає відкритого щитка"; } return; } $("projBtn").classList.remove("nodoc"); const ok=!!(S.proj&&S.proj.id); el.textContent=(S.proj&&S.proj.name)||"Новий щиток"; const b=$("projBtn"); if(b){ b.classList.toggle("unsaved",!ok); b.title=ok?"Збережено · відкрити меню проєкту":"Не збережено · відкрити меню проєкту"; } }
 const isDirty = () => !S.noDoc && !(S.proj&&S.proj.id) && S.baseSig && structSnap()!==S.baseSig;
 function confirmLeave(next){
   if(!isDirty()){ next(); return; }
-  dialog("Зберегти поточний щит?",`<p>Цей щит змінено, але не збережено як проєкт. Після переходу зміни зникнуть.</p><label class="lbl2" for="dlgName">Назва проєкту</label><input class="inp" id="dlgName" value="${esc((S.proj&&S.proj.name)||"Мій щит")}">`,
-    [{label:"Скасувати"},{label:"Не зберігати",cls:"danger",act:next},{label:"Зберегти",cls:"primary",act:()=>{ newProjectFromCurrent(($("dlgName").value||"").trim()||"Мій щит"); next(); }}]); }
-function exportProject(){ const name=(S.proj&&S.proj.name)||(S.tplObj&&S.tplObj.name)||"Щит";
+  dialog("Зберегти поточний щиток?",`<p>Цей щиток змінено, але не збережено як проєкт. Після переходу зміни зникнуть.</p><label class="lbl2" for="dlgName">Назва проєкту</label><input class="inp" id="dlgName" value="${esc((S.proj&&S.proj.name)||"Мій щиток")}">`,
+    [{label:"Скасувати"},{label:"Не зберігати",cls:"danger",act:next},{label:"Зберегти",cls:"primary",act:()=>{ newProjectFromCurrent(($("dlgName").value||"").trim()||"Мій щиток"); next(); }}]); }
+function exportProject(){ const name=(S.proj&&S.proj.name)||(S.tplObj&&S.tplObj.name)||"Щиток";
   const blob=new Blob([JSON.stringify({app:"PanelCraft",v:APP.v,name,data:curData()},null,1)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name.replace(/[\\/:*?"<>|]+/g,"_")+".panelcraft.json"; document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500); toast("Файл проєкту збережено в «Завантаження»","ok"); }
@@ -63,29 +63,28 @@ const pic = k => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${PIC[k]}
 const fWhen = t => new Date(t).toLocaleString("uk-UA",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 function projStatus(){ const cur=S.proj||{}, p=cur.id&&projDB().list.find(x=>x.id===cur.id);
   return p?{ok:true,txt:`Збережено · зміни зберігаються автоматично · ${fWhen(p.updated)}`}:{ok:false,txt:isDirty()?"Не збережено — є зміни, натисніть «Зберегти»":"Не збережено як проєкт"}; }
-function openProjects(){ const db=projDB(), list=db.list.slice().sort((a,b)=>b.updated-a.updated), cur=S.proj||{}, st=S.noDoc?{ok:true,txt:"Немає відкритого щита"}:projStatus();
-  if(S.noDoc){ dialog("Проєкт",`<div class="pgrid"><button class="pbtn" data-pa="new">${pic("new")}<b>Створити</b><small>новий щит</small></button><button class="pbtn" data-pa="import">${pic("imp")}<b>Імпорт</b><small>з файлу</small></button></div>
-    <div class="lbl2" id="plistH">Збережені проєкти · ${list.length}</div><div class="plist">${list.length?list.map(p=>`<div class="pi"><div class="pi-n"><b>${esc(p.name)}</b><small>${fWhen(p.updated)} · ${(p.data.devices||[]).length} апаратів · ${(p.data.wires||[]).length} дротів</small></div><button class="btn" data-pa="open" data-pid="${p.id}">Відкрити</button><button class="btn danger" data-pa="del" data-pid="${p.id}" aria-label="Видалити ${esc(p.name)}">✕</button></div>`).join(""):`<p class="hint" style="padding:10px">Збережених проєктів ще немає.</p>`}</div>`,[{label:"Готово",cls:"primary"}]); return; }
-  const body=`<div class="pcur"><label class="lbl2" for="pName">Відкритий щит</label><input id="pName" class="inp" value="${esc(cur.name||"Мій щит")}" maxlength="60" aria-label="Назва щита">
+function openProjects(){ const db=projDB(), list=db.list.slice().sort((a,b)=>b.updated-a.updated), cur=S.proj||{}, st=S.noDoc?{ok:true,txt:"Немає відкритого щитка"}:projStatus();
+  if(S.noDoc){ dialog("Відкрити збережений",`<div class="pgrid"><button class="pbtn wide" data-pa="import">${pic("imp")}<b>Імпорт</b><small>з файлу .panelcraft.json</small></button></div>
+    <div class="lbl2" id="plistH">Збережені проєкти · ${list.length}</div><div class="plist">${list.length?list.map(p=>`<div class="pi"><div class="pi-n"><b>${esc(p.name)}</b><small>${fWhen(p.updated)} · ${(p.data.devices||[]).length} апаратів · ${(p.data.wires||[]).length} перемичок</small></div><button class="btn" data-pa="open" data-pid="${p.id}">Відкрити</button><button class="btn danger" data-pa="del" data-pid="${p.id}" aria-label="Видалити ${esc(p.name)}">✕</button></div>`).join(""):`<p class="hint" style="padding:10px">Збережених проєктів ще немає.</p>`}</div>`,[{label:"Готово",cls:"primary"}]); return; }
+  const body=`<div class="pcur"><label class="lbl2" for="pName">Відкритий щиток</label><input id="pName" class="inp" value="${esc(cur.name||"Мій щиток")}" maxlength="60" aria-label="Назва щитка">
       <p class="pst ${st.ok?"ok":"no"}"><i></i>${esc(st.txt)}</p></div>
     <div class="pgrid">
-      <button class="pbtn" data-pa="new">${pic("new")}<b>Створити</b><small>новий щит</small></button>
-      <button class="pbtn" data-pa="openlist">${pic("open")}<b>Відкрити</b><small>збережений</small></button>
+      <button class="pbtn" data-pa="new">${pic("new")}<b>Створити</b><small>новий щиток</small></button>
       <button class="pbtn${st.ok?"":" hot"}" data-pa="save">${pic("save")}<b>Зберегти</b><small>${cur.id?"під цією назвою":"як новий проєкт"}</small></button>
       <button class="pbtn" data-pa="copy">${pic("copy")}<b>Зберегти як…</b><small>копію з новою назвою</small></button>
       <button class="pbtn" data-pa="export">${pic("exp")}<b>Експорт</b><small>у файл .json</small></button>
       <button class="pbtn" data-pa="import">${pic("imp")}<b>Імпорт</b><small>з файлу</small></button>
-      <button class="pbtn wide" data-pa="close">${pic("close")}<b>Закрити щит</b><small>${cur.id?"проєкт лишиться в списку":"незбережені зміни буде втрачено"}</small></button></div>
-    <div class="lbl2" id="plistH">Збережені проєкти · ${list.length}</div><div class="plist">${list.length?list.map(p=>`<div class="pi${p.id===cur.id?" cur":""}"><div class="pi-n"><b>${esc(p.name)}</b><small>${fWhen(p.updated)} · ${(p.data.devices||[]).length} апаратів · ${(p.data.wires||[]).length} дротів</small></div>
-      ${p.id===cur.id?`<span class="pill ok">відкрито</span>`:`<button class="btn" data-pa="open" data-pid="${p.id}">Відкрити</button>`}<button class="btn danger" data-pa="del" data-pid="${p.id}" aria-label="Видалити ${esc(p.name)}">✕</button></div>`).join(""):`<p class="hint" style="padding:10px">Збережених проєктів ще немає. Натисніть «Зберегти», щоб додати поточний щит.</p>`}</div>`;
+      <button class="pbtn" data-pa="close">${pic("close")}<b>Закрити щиток</b><small>${cur.id?"проєкт лишиться в списку":"незбережені зміни буде втрачено"}</small></button></div>
+    <div class="lbl2" id="plistH">Збережені проєкти · ${list.length}</div><div class="plist">${list.length?list.map(p=>`<div class="pi${p.id===cur.id?" cur":""}"><div class="pi-n"><b>${esc(p.name)}</b><small>${fWhen(p.updated)} · ${(p.data.devices||[]).length} апаратів · ${(p.data.wires||[]).length} перемичок</small></div>
+      ${p.id===cur.id?`<span class="pill ok">відкрито</span>`:`<button class="btn" data-pa="open" data-pid="${p.id}">Відкрити</button>`}<button class="btn danger" data-pa="del" data-pid="${p.id}" aria-label="Видалити ${esc(p.name)}">✕</button></div>`).join(""):`<p class="hint" style="padding:10px">Збережених проєктів ще немає. Натисніть «Зберегти», щоб додати поточний щиток.</p>`}</div>`;
   dialog("Проєкт",body,[{label:"Готово",cls:"primary"}]); }
-function saveProject(){ const n=(($("pName")&&$("pName").value)||(S.proj&&S.proj.name)||"Мій щит").trim()||"Мій щит";
+function saveProject(){ const n=(($("pName")&&$("pName").value)||(S.proj&&S.proj.name)||"Мій щиток").trim()||"Мій щиток";
   if(S.proj&&S.proj.id){ S.proj.name=n; storeProject(); renderProjBtn(); toast(`Збережено: «${n}»`,"ok"); } else newProjectFromCurrent(n); }
 function enterNoDoc(){ tplStart({rails:1}); S.tpl="custom"; S.tplObj=TPL.custom; S.noDoc=true; S.proj=null; S.guide=null; S.mode="mount"; S.devFilter=null; S.pick=null;
   if(S.demo) demoStop(); GEO=null; resetHistory(); S.baseSig=structSnap(); clearCheck(); save(); renderAll(true); renderProjBtn(); }
-function closeBoard(){ confirmLeave(()=>{ enterNoDoc(); toast("Щит закрито","ok"); }); }
+function closeBoard(){ confirmLeave(()=>{ enterNoDoc(); toast("Щиток закрито","ok"); }); }
 
-// ---- Майстер нового щита і налаштування корпусу
+// ---- Майстер нового щитка і налаштування корпусу
 let WZ=null;
 const boardKind = b => b.inputs.length>1?(b.inputs[1].inv?"2inv":"2in"):b.inputs[0].terms.includes("L1")?"3ph":b.inputs[0].terms.length===1?"gnd":"1ph";
 const KINDS = [["1ph","1 фаза · 230 В","Квартира, дім, дача. Ввід L, N, PE."],["3ph","3 фази · 400 В","Будинок, майстерня, двигуни. Ввід L1, L2, L3, N, PE."],["2in","2 вводи · мережа + генератор","Резервне живлення через АВР. Ввід 1 — L, N, PE; ввід 2 — L, N."],
@@ -100,26 +99,26 @@ function boardFor(w){ const cur=S.board;
   return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[], tb:!!w.tb, noRcd:!!w.noRcd}; }
 function openWizard(edit){ const b=S.board;
   const iv=(b.inputs.find(i=>i.inv)||{}).inv||{kw:5,kwh:5};
-  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щит",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,tb:!!b.tb,noRcd:!!b.noRcd,guide:false,ikw:iv.kw,ikwh:iv.kwh}
-    :{edit:false,step:0,name:"Мій щит "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,tb:false,guide:true,ikw:5,ikwh:5};
+  WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щиток",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,tb:!!b.tb,noRcd:!!b.noRcd,guide:false,ikw:iv.kw,ikwh:iv.kwh}
+    :{edit:false,step:0,name:"Мій щиток "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,tb:false,guide:true,ikw:5,ikwh:5};
   renderWizard(); $("dlg").hidden=false; }
 function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпус","Шини","Готово"], first=w.edit?1:0, last=4; let b="";
-  if(w.step===0) b=`<label class="lbl2" for="wzName">Як назвати щит?</label><input class="inp" id="wzName" value="${esc(w.name)}" maxlength="60"><p class="hint">Назва з’явиться в «Проєктах», щит зберігатиметься автоматично.</p>`
-    +`<p class="lbl2">Як будемо збирати?</p><button class="wz-opt" data-wg="1" aria-pressed="${!!w.guide}"><b>🧭 З помічником</b><span>Підказує кожен крок: що поставити на рейку, куди підключити дроти, як перевірити</span></button>`
-    +`<button class="wz-opt" data-wg="0" aria-pressed="${!w.guide}"><b>✋ Самостійно</b><span>Апарати й дроти ставиш сам, без підказок; помічник можна ввімкнути пізніше в «Меню»</span></button>`;
-  if(w.step===1) b=(w.kind==="gnd"?`<p class="hint">У цьому щиті лише контур заземлення (DC-бокс), тип вводу не змінюється.</p>`:`<p class="hint">Звідки живиться щит?</p>`+KINDS.map(([k,t,d])=>`<button class="wz-opt" data-wk="${k}" aria-pressed="${w.kind===k}"><b>${t}</b><span>${d}</span></button>`).join("")
+  if(w.step===0) b=`<label class="lbl2" for="wzName">Як назвати щиток?</label><input class="inp" id="wzName" value="${esc(w.name)}" maxlength="60"><p class="hint">Назва з’явиться в «Проєктах», щиток зберігатиметься автоматично.</p>`
+    +`<p class="lbl2">Як будемо збирати?</p><button class="wz-opt" data-wg="1" aria-pressed="${!!w.guide}"><b>🧭 З помічником</b><span>Підказує кожен крок: що поставити на рейку, куди підключити перемички, як перевірити</span></button>`
+    +`<button class="wz-opt" data-wg="0" aria-pressed="${!w.guide}"><b>✋ Самостійно</b><span>Апарати й перемички ставиш сам, без підказок; помічник можна ввімкнути пізніше в «Меню»</span></button>`;
+  if(w.step===1) b=(w.kind==="gnd"?`<p class="hint">У цьому щитку лише контур заземлення (DC-бокс), тип вводу не змінюється.</p>`:`<p class="hint">Звідки живиться щиток?</p>`+KINDS.map(([k,t,d])=>`<button class="wz-opt" data-wk="${k}" aria-pressed="${w.kind===k}"><b>${t}</b><span>${d}</span></button>`).join("")
     +(w.kind==="2inv"?`<div class="wz-inv"><div class="row"><span class="lbl">Інвертор</span>${INV_KW.map(v=>`<button class="chip mono" data-wikw="${v}" aria-pressed="${w.ikw===v}">${fmt(v,v%1?1:0)} кВт</button>`).join("")}</div>
       <div class="row"><span class="lbl">АКБ</span>${INV_KWH.map(v=>`<button class="chip mono" data-wikwh="${v}" aria-pressed="${w.ikwh===v}">${fmt(v,v%1?1:0)} кВт·год</button>`).join("")}</div>
-      <p class="hint">Вихід інвертора заходить на ввід 2, АВР перемикає щит на нього, коли зникає мережа. АКБ заряджається від мережі, поки вона є.</p></div>`:""));
+      <p class="hint">Вихід інвертора заходить на ввід 2, АВР перемикає щиток на нього, коли зникає мережа. АКБ заряджається від мережі, поки вона є.</p></div>`:""));
   if(w.step===2) b=`<p class="hint">Скільки DIN-рейок у корпусі? На кожній — 12 модулів.</p>`+[1,2,3,4].map(r=>`<button class="wz-opt" data-wr="${r}" aria-pressed="${w.rails===r}"><b>ЩРН-${r*12}</b><span>${r} рейк${r===1?"а":"и"} · ${r*12} модулів</span></button>`).join("");
   if(w.step===3) b=`<p class="hint">Скільки отворів на шинах? Кожна група займає по отвору на N і PE.</p>
     <div class="volt"><span class="lbl">Шина N</span><input type="range" id="wzXn" min="0" max="12" value="${w.xn}"><output class="mono" id="wzXnO">${w.xn}</output></div>
     <div class="volt"><span class="lbl">Шина PE</span><input type="range" id="wzXpe" min="2" max="12" value="${w.xpe}"><output class="mono" id="wzXpeO">${w.xpe}</output></div>
     <div class="row"><span class="lbl">ПЗВ</span><button class="chip" data-wrcd="0" aria-pressed="${!w.noRcd}">З ПЗВ (рекомендовано)</button><button class="chip" data-wrcd="1" aria-pressed="${!!w.noRcd}">Без ПЗВ</button></div>
-    <label class="chk"><input type="checkbox" id="wzTb" ${w.tb?"checked":""}> Клемна колодка XT2 для відхідних ліній</label><p class="hint">Кабель кожної групи підключається до колодки внизу щита: L — від автомата, N — від шини N, PE — від шини PE.</p>`;
+    <label class="chk"><input type="checkbox" id="wzTb" ${w.tb?"checked":""}> Клемна колодка XT2 для відхідних ліній</label><p class="hint">Кабель кожної групи підключається до колодки внизу щитка: L — від автомата, N — від шини N, PE — від шини PE.</p>`;
   if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}${w.tb?" · колодка XT2":""}</b></li><li><span>ПЗВ</span><b>${w.noRcd?"без ПЗВ":"з ПЗВ"}</b></li>${w.edit?"":`<li><span>Збирання</span><b>${w.guide?"🧭 з помічником":"✋ самостійно"}</b></li>`}</ul>`;
-  $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щит"}</h2><ol class="wz-steps">${names.slice(first).map((n,j)=>`<li class="${j+first<w.step?"done":j+first===w.step?"cur":""}">${n}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
-    <div class="row dlg-f"><button class="btn" data-wz="cancel">Скасувати</button>${w.step>first?`<button class="btn" data-wz="prev">Назад</button>`:""}${w.step<last?`<button class="btn primary" data-wz="next">Далі</button>`:`<button class="btn primary" data-wz="${w.edit?"apply":"create"}">${w.edit?"Застосувати":"Створити щит"}</button>`}</div>`;
+  $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щиток"}</h2><ol class="wz-steps">${names.slice(first).map((n,j)=>`<li class="${j+first<w.step?"done":j+first===w.step?"cur":""}">${n}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
+    <div class="row dlg-f"><button class="btn" data-wz="cancel">Скасувати</button>${w.step>first?`<button class="btn" data-wz="prev">Назад</button>`:""}${w.step<last?`<button class="btn primary" data-wz="next">Далі</button>`:`<button class="btn primary" data-wz="${w.edit?"apply":"create"}">${w.edit?"Застосувати":"Створити щиток"}</button>`}</div>`;
   const f=$("dlgCard").querySelector("input.inp,.wz-opt[aria-pressed=true],.btn.primary"); if(f) f.focus(); }
 function wizardCreate(){ const w=WZ; tplStart(boardFor(w)); S.tpl="custom"; S.tplObj=TPL.custom; S.env={sun:60,lux:60,soc:70}; S.env0=JSON.parse(JSON.stringify(S.env));
   S.proj={id:null,name:w.name}; S.guide=w.guide?{on:true,skip:[],testOK:false}:null; S.mode="mount"; S.devOpen=!w.guide; closeDlg(); afterSwitch(); newProjectFromCurrent(w.name);
@@ -131,9 +130,9 @@ function wizardApply(){ const w=WZ, nb=boardFor(w);
   const go=()=>{ S.wires=S.wires.filter(x=>!drop.includes(x)); if(!nb.tb) S.wires=S.wires.filter(x=>!/^tb:/.test(x.a)&&!/^tb:/.test(x.b)); Object.assign(S.board,{rails:nb.rails,inputs:nb.inputs,xn:nb.xn,xpe:nb.xpe,tb:nb.tb,noRcd:nb.noRcd});
     const src={}; for(const i of nb.inputs) src[i.id]=S.src[i.id]||{on:false,U:230,lost:{}}; S.src=src; if(S.comb&&(S.comb.rail||0)>=nb.rails) S.comb=null;
     if(S.proj) S.proj.name=w.name; closeDlg(); GEO=null; commit(); renderProjBtn(); toast("Корпус і ввід змінено","ok"); };
-  if(drop.length) dialog("Прибрати дроти?",`<p>${drop.length} дрот(и) підключено до клем, яких після змін не буде. Їх буде прибрано.</p>`,[{label:"Скасувати"},{label:"Прибрати і застосувати",cls:"primary",act:go}]); else go(); }
+  if(drop.length) dialog("Прибрати перемички?",`<p>Перемички (${drop.length}) підключено до клем, яких після змін не буде. Їх буде прибрано.</p>`,[{label:"Скасувати"},{label:"Прибрати і застосувати",cls:"primary",act:go}]); else go(); }
 
-// ---- Обладнання поза щитом (через клемник XT1)
+// ---- Обладнання поза щитком (через клемник XT1)
 const FIELD_LIB=[
   {type:"motor1",name:"Двигун 1~ 1,1 кВт",pre:"M",t:{L:["L","L"],N:["N","N"],PE:["PE","PE"]}},
   {type:"motor3",name:"Двигун 3~ 4 кВт",pre:"M",t:{U:["U","P"],V:["V","P"],W:["W","P"],PE:["PE","PE"]}},
@@ -152,17 +151,17 @@ function addField(type){ const L=FIELD_LIB.find(x=>x.type===type);
   for(const [t,[lbl,role]] of Object.entries(L.t)){ let key=(name+lbl).replace(/[:\s]/g,""); while(S.board.xt.some(x=>x.k===key)) key+="_"; S.board.xt.push({k:key,l:name+" "+lbl,r:role}); map[t]="xt:"+key; }
   const extra={name}; if(type==="pv"){ let s=1; while(S.field.some(f=>f.sid==="pv"+s)) s++; extra.sid="pv"+s; extra.n=10; if(S.env.sun===undefined) S.env.sun=60; }
   if(type==="bat"&&S.env.soc===undefined) S.env.soc=70;
-  S.field.push(mkField(type,map,extra)); GEO=null; S.fldOpen=false; commit(); toast(`${name} додано: його клеми — на клемнику XT1 унизу щита`,"ok"); }
+  S.field.push(mkField(type,map,extra)); GEO=null; S.fldOpen=false; commit(); toast(`${name} додано: його клеми — на клемнику XT1 унизу щитка`,"ok"); }
 function removeField(f){ const keys=Object.values(f.map); S.field=S.field.filter(x=>x!==f); S.board.xt=S.board.xt.filter(x=>!keys.includes("xt:"+x.k));
   S.wires=S.wires.filter(w=>!keys.includes(w.a)&&!keys.includes(w.b)); S.selDev=null; GEO=null; commit(); }
 
-// ---- Керування для власних щитів (будуються з того, що є на щиті)
+// ---- Керування для власних щитків (будуються з того, що є на щитку)
 function surgeAll(){ const f=build({ideal:true}), pe=S.board.inputs.find(i=>i.terms.includes("PE"));
   const ac=S.board.inputs.filter(i=>i.terms.includes("N")&&i.terms.some(t=>/^L/.test(t)));
   if(ac.length){ const ph=ac.flatMap(i=>i.terms.filter(t=>/^L/.test(t)).map(t=>f(i.id+":"+t)));
     const ok=S.devices.filter(d=>(d.type==="spdac"||d.type==="spd3")&&(d.wear||0)<2&&pe&&f(k(d,"pe"))===f(pe.id+":PE")&&ph.includes(f(k(d,d.type==="spd3"?"L1":"L"))));
     if(ok.length){ ok.forEach(d=>{ d.wear=(d.wear||0)+1; }); logp("ok",`Імпульс з мережі: ${ok.map(desig).join(", ")} відвів його на PE`); toast("УЗІП відвів імпульс","ok"); }
-    else { logp("e","Імпульс з мережі пройшов у щит: немає справного УЗІП AC між фазою, N і PE — техніка під загрозою"); toast("Імпульс пройшов у щит без УЗІП","e"); } }
+    else { logp("e","Імпульс з мережі пройшов у щиток: немає справного УЗІП AC між фазою, N і PE — техніка під загрозою"); toast("Імпульс пройшов у щиток без УЗІП","e"); } }
   if(S.field.some(x=>x.type==="pv")&&S.field.some(x=>x.type==="invpv")) surge(); }
 function autoControls(){ const c=[], b=S.board;
   for(const i of b.inputs) if(i.terms.some(t=>/^L/.test(t))){ c.push({type:"src",id:i.id,label:i.inv?"Інвертор (ввід 2)":i.label,noU:i.id==="in2"});
@@ -190,11 +189,11 @@ function autoStatus(){ const R=S.sim, rows=[];
     if(["lamp","boiler","floor"].includes(f.type)) rows.push([f.name,f.on?"працює":"без живлення",f.on?"ok":""]); }
   if(S.field.some(f=>f.type==="bat")) rows.push(["Заряд АКБ",fmt(S.env.soc||0,0)+" %",""]);
   if(S.env.arc) rows.push(["Дуга DC","ГОРИТЬ","e"]); return rows; }
-TPL.custom = { name:"Власний щит", cat:"Конструктор", hidden:true, info:"Ваш щит. Апарати й дроти — у режимах «Апарати» і «Проводка». Тут подайте напругу і випробуйте схему.",
+TPL.custom = { name:"Власний щиток", cat:"Конструктор", hidden:true, info:"Ваш щиток. Апарати й перемички — у режимах «Апарати» і «Перемички». Тут подайте напругу і випробуйте схему.",
   build(){}, demo:{ get controls(){ return autoControls(); }, status:autoStatus, script:[] }};
 for(const key of ["empty","empty3","empty2"]) if(TPL[key]) TPL[key].demo={ get controls(){ return autoControls(); }, status:autoStatus, script:[] };
 
-// ---- Демо-панель (видно і пояснення, і щит)
+// ---- Демо-панель (видно і пояснення, і щиток)
 function showDemoBar(){ $("demobar").hidden=false; document.body.classList.add("demo-on"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); }
 function hideDemoBar(){ $("demobar").hidden=true; document.body.classList.remove("demo-on"); }
 function updateDemoBar(){ if(!S.demo||$("demobar").hidden) return; const sc=S.tplObj.demo.script, st=sc[S.demo.i]; if(!st) return;
@@ -213,13 +212,12 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(el=q("[data-pa]")){ const a=el.dataset.pa, id=el.dataset.pid;
     if(a==="save"){ saveProject(); openProjects(); }
     if(a==="openlistdlg"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); }
-    if(a==="openlist"){ const h=$("plistH"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); }
     if(a==="import") $("pImport").click();
     if(a==="close"){ closeDlg(); closeBoard(); }
     if(a==="new"){ closeDlg(); confirmLeave(()=>openWizard(false)); }
     if(a==="board") openWizard(true);
-    if(a==="copy"){ dialog("Зберегти як…",`<label class="lbl2" for="dlgName">Назва нового проєкту</label><input class="inp" id="dlgName" value="${esc(((S.proj&&S.proj.name)||"Мій щит")+(S.proj&&S.proj.id?" (копія)":""))}" maxlength="60">`,
-      [{label:"Скасувати",act:openProjects},{label:"Зберегти",cls:"primary",act:()=>{ newProjectFromCurrent(($("dlgName").value||"").trim()||"Мій щит"); openProjects(); }}]); }
+    if(a==="copy"){ dialog("Зберегти як…",`<label class="lbl2" for="dlgName">Назва нового проєкту</label><input class="inp" id="dlgName" value="${esc(((S.proj&&S.proj.name)||"Мій щиток")+(S.proj&&S.proj.id?" (копія)":""))}" maxlength="60">`,
+      [{label:"Скасувати",act:openProjects},{label:"Зберегти",cls:"primary",act:()=>{ newProjectFromCurrent(($("dlgName").value||"").trim()||"Мій щиток"); openProjects(); }}]); }
     if(a==="export") exportProject();
     if(a==="guide"){ if(S.guide) S.guide.on=!S.guide.on; else S.guide={on:true,skip:[],testOK:false}; closeDlg(); save(); renderBar(); }
     if(a==="open"){ closeDlg(); confirmLeave(()=>openProject(id)); }
@@ -227,7 +225,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
       else { el.dataset.armed="1"; el.textContent="Видалити?"; setTimeout(()=>{ if(el.isConnected){ delete el.dataset.armed; el.textContent="✕"; } },3000); } }
     return; }
   if(el=q("[data-wz]")){ const a=el.dataset.wz, w=WZ;
-    if(w.step===0){ const n=$("wzName"); if(n) w.name=(n.value||"").trim()||"Мій щит"; }
+    if(w.step===0){ const n=$("wzName"); if(n) w.name=(n.value||"").trim()||"Мій щиток"; }
     if(a==="cancel") closeDlg(); if(a==="prev"){ w.step--; renderWizard(); } if(a==="next"){ w.step++; renderWizard(); }
     if(a==="create") wizardCreate(); if(a==="apply") wizardApply(); return; }
   if(el=q("[data-wg]")){ const n=$("wzName"); if(n) WZ.name=(n.value||"").trim()||WZ.name; WZ.guide=el.dataset.wg==="1"; renderWizard(); return; }

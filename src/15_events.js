@@ -13,12 +13,12 @@ function placeDev(type,r,slot,qty){ const w=T[type].w, n0=qty||S.pickQty||1, put
   if(motor&&S.field.filter(f=>f.type==="motor3").length<S.devices.filter(d=>d.type==="qm").length) addField("motor3"); }
 function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>![w.a,w.b].some(k=>k.startsWith(d.id+":")||k.startsWith("tb:"+d.id+":"))); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
 function termTap(key){
-  if(!S.pend){ const r=termRole(key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,key); toast(`Вид дроту: ${WK[S.wireKind][0]} — за клемою`); }
+  if(!S.pend){ const r=termRole(key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,key); toast(`Вид перемички: ${WK[S.wireKind][0]} — за клемою`); }
     S.pend=key; S.selWire=null; S.moveEnd=null; renderAll(); return; }
   if(S.pend===key){ S.pend=null; renderAll(); return; }
   const a=S.pend, b=key; S.pend=null;
-  if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){ toast("Такий дріт уже є","w"); renderAll(); return; }
-  if(S.wires.filter(w=>w.a===b||w.b===b).length>=2&&!/^x(n|pe):/.test(b)) toast("Під одну клему — не більше двох дротів","w");
+  if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){ toast("Така перемичка вже є","w"); renderAll(); return; }
+  if(S.wires.filter(w=>w.a===b||w.b===b).length>=2&&!/^x(n|pe):/.test(b)) toast("Під одну клему — не більше двох перемичок","w");
   S.wires.push({id:uid("w"),a,b,kind:S.wireKind,sec:S.wireSec}); commit(); }
 function demoStop(){ S.demo=null; hideDemoBar(); renderBar(); hint(); }
 function demoStart(){ resetRuntime(); S.demo={i:-1,left:0,paused:false}; showDemoBar(); demoNext(); }
@@ -28,7 +28,7 @@ function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw
   S.lastCheck={sig:elecSnap(),errors:ne,warns:nw};
   S.chk={list:C,i:0}; S.chkOpen=!!(ne||nw); solve(0);   // усе гаразд — без вікна з переліком «1 з N», лише повідомлення й підказка «що далі»
   renderAll(true);
-  if(!ne&&!nw){ if(typeof save==="function") save(); showFinish(C.length); } }   // логічне завершення: «Щит готовий» → PDF / Visio
+  if(!ne&&!nw){ if(typeof save==="function") save(); showFinish(C.length); } }   // логічне завершення: «Щиток готовий» → PDF / Visio
 function clearCheck(){ S.chk=null; S.chkOpen=false; }
 function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ const g=groupsOf()[0]; if(g){ S.selDev=g.id; S.bsegFor=g.id; S.bseg="load"; } } renderAll(false); }
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
@@ -41,9 +41,9 @@ function openDrawer(tpl){ renderTplMenu(); tplLabel();
   for(const x of document.querySelectorAll("#drawer details.dr-d")) x.open=false;   // за замовчуванням усі розділи згорнуті
   const d=$("tplDet"); if(d) d.open=!!tpl||!!S.noDoc; { const sh=$("shDet"); if(sh&&S.noDoc&&!tpl) sh.open=true; }
   $("drawer").hidden=false; if(tpl&&d) setTimeout(()=>d.scrollIntoView({block:"start"}),30); }
-// Вийти з застосунку. Стан щита зберігається завжди, тож нічого не губиться; якщо система не дає закрити вікно кнопкою — підказуємо як.
+// Вийти з застосунку. Стан щитка зберігається завжди, тож нічого не губиться; якщо система не дає закрити вікно кнопкою — підказуємо як.
 function exitApp(){ save(); closeDrawer(); window.close();
-  setTimeout(()=>{ if(!document.hidden) dialog("Вийти з PanelCraft",`<p>Телефон не дозволив закрити застосунок кнопкою. Закрийте його звичайно: відкрийте список нещодавніх програм і змахніть картку PanelCraft.</p><p>Щит і проєкти збережено — наступного разу все відкриється як було.</p>`,[{label:"Зрозуміло",cls:"primary"}]); },400); }
+  setTimeout(()=>{ if(!document.hidden) dialog("Вийти з PanelCraft",`<p>Телефон не дозволив закрити застосунок кнопкою. Закрийте його звичайно: відкрийте список нещодавніх програм і змахніть картку PanelCraft.</p><p>Щиток і проєкти збережено — наступного разу все відкриється як було.</p>`,[{label:"Зрозуміло",cls:"primary"}]); },400); }
 
 document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(eb=qb("[data-brand]")){ const d=devById(S.selDev); if(d){ const b=eb.dataset.brand; if(b==="eua") delete d.brand; else d.brand=b; S.brand=b; commit(false); } return; }
@@ -67,7 +67,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("#zAll")){ S.zoom=fitZoom(); renderAll(false); $("scroller").scrollTo(0,0); return; }
   if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; S.repl=null; S.moveDev=null; ctxClose(); renderAll(); return; }
   if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }
-  if(el=q("[data-wire]")){ const id=el.dataset.wire; if(S.mode!=="wire"){ S.mode="wire"; S.pend=null; S.pick=null; S.selDev=null; selectWire(id); renderAll(true); toast("Проводка: дріт вибрано — дії в панелі внизу"); return; }
+  if(el=q("[data-wire]")){ const id=el.dataset.wire; if(S.mode!=="wire"){ S.mode="wire"; S.pend=null; S.pick=null; S.selDev=null; selectWire(id); renderAll(true); toast("Перемичку вибрано — дії в панелі внизу"); return; }
     if(S.selWire===id){ S.selWire=null; renderAll(); } else selectWire(id); return; }
   if((S.mode==="mount"||S.mode==="wire")&&(el=q("[data-dev]"))){ const d=S.devices.find(x=>x.id===el.dataset.dev); if(!d) return;
     if(S.mode==="wire"&&nearTerm(e)) return; if(S.moveDev){ toast("Оберіть вільне місце на рейці — або «Скасувати» внизу"); return; }
@@ -150,9 +150,9 @@ document.addEventListener("input",e=>{ const t=e.target;
 setInterval(()=>{ if(window.__dragBusy) return; if(!anySource()&&!S.demo) return; solve(0.5); render(); hint(); updateLive(); },500);
 setInterval(()=>{ if(!S.demo||S.demo.paused) return; S.demo.left-=0.25; if(S.demo.left<=0) demoNext(); },250);
 function renderTplMenu(){ const cats=[...TPL_ORDER,...new Set(Object.values(TPL).map(t=>t.cat))].filter((c,i,a)=>a.indexOf(c)===i);
-  $("tplMenu").innerHTML=`<div class="tm-g"><button class="tm-i tm-new" data-tpl="__new">＋ Новий щит — майстер з покроковим помічником</button></div>`+cats.map(c=>{ const it=Object.entries(TPL).filter(([,t])=>t.cat===c&&!t.hidden); if(!it.length) return "";
+  $("tplMenu").innerHTML=cats.map(c=>{ const it=Object.entries(TPL).filter(([,t])=>t.cat===c&&!t.hidden); if(!it.length) return "";
     return `<div class="tm-g"><div class="tm-h">${esc(c)}</div>`+it.map(([key,t])=>`<button class="tm-i" data-tpl="${key}" aria-current="${S.tpl===key}">${esc(t.name)}</button>`).join("")+`</div>`; }).join(""); }
-function tplLabel(){ const t=TPL[S.tpl]; $("tplName").textContent=S.tpl==="custom"?"Власний щит":t?t.name:"Шаблон"; }
+function tplLabel(){ const t=TPL[S.tpl]; $("tplName").textContent=S.tpl==="custom"?"Власний щиток":t?t.name:"Шаблон"; }
 document.addEventListener("toggle",e=>{ if(e.target.id==="devDD") S.devOpen=e.target.open; },true);
 document.addEventListener("keydown",e=>{ if((e.key==="Delete"||e.key==="Backspace")&&S.selDev&&S.mode!=="wire"&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)&&$("dlg").hidden){ const b=document.querySelector("[data-devdel],[data-fdel]"); if(b){ e.preventDefault(); b.click(); } return; } })
 document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("drawer").hidden) closeDrawer(); else if(!$("docs").hidden) $("docs").hidden=true; });

@@ -11,7 +11,7 @@ const CATALOG = [["⚡ Групи","G"],
   ["Прилади",[["Лічильники",["pm1","pm3"]],["Вольтметри",["vm"]]],"Вимірювальні прилади"],
   ["Кнопки, лампи",[["Кнопки",["sbp","sbs"]],["Сигнальні лампи",["hl"]]],"Кнопки та сигналізація"],
   ["Розумний дім",[["Розумний дім",["ssw","hub","kr2","pm","tr"]]],"Розумний дім"],
-  ["Поза щитом","F"]];
+  ["Поза щитком","F"]];
 (function(){ const have=new Set(CATALOG.flatMap(c=>Array.isArray(c[1])?c[1].flatMap(g=>Array.isArray(g[1])?g[1]:[]):[]));   // що не потрапило до списку — у «Інше»
   const rest=Object.keys(T).filter(k=>!have.has(k)); if(rest.length) CATALOG.splice(CATALOG.length-1,0,["Інше",[["Інше",rest]],"Інше"]); })();
 // номінали (C25, B16, 40 А, 30 мА…) підсвічуємо окремим кольором
@@ -26,7 +26,7 @@ function bseg(id,list,def){ if(S.bsegFor!==id){ S.bsegFor=id; S.bseg=def; } if(!
 
 let guideOn=false;   // помічник показує незавершений крок (ставить guideBar)
 function barSync(){ const sig=[S.selDev,S.selWire,S.pick,S.mode,S.chkOpen,S.noDoc,S.moveEnd?1:0,S.devFilter?1:0,S.allDev?1:0].join("|");
-  if(S.barSig!==sig){ S.barSig=sig; S.barCol=false; }   // вибрали апарат, дріт чи режим — панель сама розгортається
+  if(S.barSig!==sig){ S.barSig=sig; S.barCol=false; }   // вибрали апарат, перемичку чи режим — панель сама розгортається
   const b=$("bar"); if(b) b.classList.toggle("collapsed",!!S.barCol); }
 function renderBar(){ const el=$("barIn"); if(!el) return; barSync(); let h="";
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), f=S.selDev&&S.field.find(x=>x.id===S.selDev), w=S.mode==="wire"&&S.selWire&&wireById(S.selWire);
@@ -40,7 +40,7 @@ function renderBar(){ const el=$("barIn"); if(!el) return; barSync(); let h="";
 
 // ---- Порожня робоча зона: стартові дії (збережені проєкти й імпорт — кнопка «Проєкт»)
 function noDocBar(){
-  return bhead("Немає відкритого щита")+brow(`<button class="btn sm primary" data-pa="new">＋ Створити новий щит</button><button class="btn sm" data-nodoc="tpl">Приклади щитів</button><button class="btn sm" data-nodoc="open">Відкрити збережений</button>`); }
+  return bhead("Немає відкритого щитка")+brow(`<button class="btn sm primary" data-pa="new">＋ Створити новий щиток</button><button class="btn sm" data-nodoc="tpl">Приклади щитків</button><button class="btn sm" data-nodoc="open">Відкрити збережений</button>`); }
 // ---- Апарати: категорії + картки
 function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def||"";
   return bhead(`Ставимо: ${esc(t.short)}${rate?" "+hlr(rate+(t.unit||"")):""} <span class="bm">${t.w} мод.</span>`,`<button class="bx" data-pickx aria-label="Скасувати">✕</button>`)
@@ -83,13 +83,13 @@ function groupsQuickBar(){ const ty=S.gType||"qf1p", G=groupsOf();
   return brow(`<span class="bl">Тип</span>`+GQ_T.map(([k,l])=>chip(`data-gqt="${k}"`,ty===k,l)).join(""))
     +brow(GQ.map(([em,nm,r,sec],i)=>{ const n=G.filter(g=>g.group.name===nm||g.group.name.startsWith(nm+" ")).length, rr=gqRate(ty,r);
       return `<button class="dc" data-gq="${i}"><b>${em} ${esc(nm)}</b><small><em class="rt">${rr}</em> · ${fmt(sec,sec%1?1:0)} мм²${n?` · є ${n}`:""}</small></button>`; }).join(""),"cards")
-    +brow(`<button class="btn sm primary" data-gall>⚡ Прокласти всі дроти</button>`+(gqNeedRcd()?`<button class="btn sm" data-gqrcd>＋ ПЗВ ${boardKind(S.board)==="3ph"?"4P":"2P"} 63 А</button>`:"")
+    +brow(`<button class="btn sm primary" data-gall>⚡ Прокласти всі перемички</button>`+(gqNeedRcd()?`<button class="btn sm" data-gqrcd>＋ ПЗВ ${boardKind(S.board)==="3ph"?"4P":"2P"} 63 А</button>`:"")
       +`<span class="bl">Торкніться групи — автомат одразу стане у вільне місце${G.length?` · груп: ${G.length}`:""}</span>`); }
 const gqNeedRcd = () => !S.board.noRcd&&groupsOf().some(g=>!T[g.type].rcd)&&!S.devices.some(d=>d.type==="rcd"||d.type==="rcd4");
 function gqAt(w){ const last=S.devices.slice().sort((a,c)=>((c.rail||0)-(a.rail||0))||((c.slot+T[c.type].w)-(a.slot+T[a.type].w)))[0];
   return last?nextFree(w,last.rail||0,last.slot+T[last.type].w):nextFree(w,0,0); }
 function quickRcd(){ const type=boardKind(S.board)==="3ph"?"rcd4":"rcd", at=gqAt(T[type].w); if(!at){ toast("На рейках немає вільного місця","w"); return; }
-  const d=mkDev(type,at[0],at[1],"63"); S.devices.push(d); commit(); toast(`${desig(d)} 63 А, 30 мА встановлено — «Прокласти всі дроти» підключить групи через нього`,"ok"); }
+  const d=mkDev(type,at[0],at[1],"63"); S.devices.push(d); commit(); toast(`${desig(d)} 63 А, 30 мА встановлено — «Прокласти всі перемички» підключить групи через нього`,"ok"); }
 function quickGroup(i,atOverride){ const p=GQ[i], type=S.gType||"qf1p", t=T[type], r=gqRate(type,p[2]);
   const at=atOverride||gqAt(t.w);
   if(!at){ toast("На рейках немає вільного місця — додайте рейку: «Меню → Корпус і ввід»","w"); return; }
@@ -136,29 +136,29 @@ function devSet(d){ const t=T[d.type]; let s="";
   if(d.type==="hl") s+=[["#3fbf4a","Зелений"],["#e23b3b","Червоний"],["#ffb21f","Жовтий"]].map(([c,l])=>chip(`data-hlc="${c}"`,d.col===c,l)).join("");
   return s; }
 
-// ---- Обладнання поза щитом
+// ---- Обладнання поза щитком
 function fieldBar(f){ const L=FIELD_LIB.find(x=>x.type===f.type)||{name:FT[f.type].name};
   return bhead(`${esc(f.name||desig(f))} · ${esc(L.name)}`,bdel(`data-fdel="${f.id}"`)+bx)+brow(`<span class="bl">XT1: ${Object.values(f.map).map(k=>esc(termName(k).replace(/^Клема XT1 /,""))).join(", ")}</span>`)
     +brow((f.type==="pv"?[6,8,10,12].map(n=>chip(`data-pvn="${n}"`,f.n===n,n+" панелей")).join("")+`<span class="bl">Voc ≈ ${Math.round((f.n||10)*49.6)} В</span>`:"")+`<button class="btn sm danger" data-fdel="${f.id}">Прибрати обладнання</button>`); }
 
-// ---- Дроти
+// ---- Перемички
 function wireToolsBar(){ const sw=k=>`<span class="sw" style="background:${k==="PE"?"linear-gradient(90deg,var(--wPEy) 50%,var(--wPEg) 50%)":WK[k][1]}"></span>`;
   const bad=!mainsOf().length?{t:"Спершу поставте ввідний автомат 2P (вкладка «Захист»)"}:wirePlan().find(x=>x.bad);
-  return brow(`<button class="btn sm primary" data-gall>⚡ Прокласти всі дроти автоматично</button>`+(bad?`<span class="bl" style="color:var(--orange)">${esc(bad.t)}</span>`:`<span class="bl">перемички, шини N і PE, групи — за схемою</span>`))+brow(`<span class="bl">Новий дріт</span>`+Object.keys(WK).map(x=>chip(`data-kind="${x}"`,S.wireKind===x,sw(x)+WK[x][0])).join(""))
+  return brow(`<button class="btn sm primary" data-gall>⚡ Прокласти всі перемички автоматично</button>`+(bad?`<span class="bl" style="color:var(--orange)">${esc(bad.t)}</span>`:`<span class="bl">перемички, шини N і PE, групи — за схемою</span>`))+brow(`<span class="bl">Нова перемичка</span>`+Object.keys(WK).map(x=>chip(`data-kind="${x}"`,S.wireKind===x,sw(x)+WK[x][0])).join(""))
     +brow(SECS.map(x=>chip(`data-sec="${x}"`,S.wireSec===x,fmt(x,x%1?1:0),"mono")).join("")+`<span class="bl">мм²</span>`
       +(S.wires.some(w=>["ry","rya","ryb","rx"].some(k=>w[k]!=null))||S.board.bx?`<button class="btn sm" data-wautoall>↺ Вирівняти всі траси й шини</button>`:"")
-      +(S.wires.length?`<button class="btn sm" data-wsel="${S.wires[S.wires.length-1].id}">Вибрати дріт (${S.wires.length})</button><button class="btn sm danger" id="clearWires">${clearArm>Date.now()?"Ще раз — прибрати всі":"Прибрати всі"}</button>`:"")); }
+      +(S.wires.length?`<button class="btn sm" data-wsel="${S.wires[S.wires.length-1].id}">Вибрати перемичку (${S.wires.length})</button><button class="btn sm danger" id="clearWires">${clearArm>Date.now()?"Ще раз — прибрати всі":"Прибрати всі"}</button>`:"")); }
 function wireBar(w){ const me=S.moveEnd&&S.moveEnd.id===w.id?S.moveEnd.end:null, ck=wColKey(w);
   const L=[["ends","Кінці"],["kind","Вид"],["col","Колір"],["sec","Переріз"],["del","Видалити"]], cur=bseg(w.id,L,"ends");
-  let s=bhead(`Дріт ${wNo(w)} з ${S.wires.length} · ${esc(wireLabel(w))} <span class="bm">≈ ${wireLenCm(w)} см</span>`,`${bdel("data-wdel")}${bx}`);
-  if(me) return s+brow(`<span class="bl warnt">Торкніться нової клеми для ${me==="a"?"початку":"кінця"} дроту</span><button class="btn sm" data-wmove="cancel">Скасувати</button>`)+brow(`<span class="bl">${me==="a"?"Початок":"Кінець"} зараз: ${esc(termName(w[me]))}</span>`);
+  let s=bhead(`Перемичка ${wNo(w)} з ${S.wires.length} · ${esc(wireLabel(w))} <span class="bm">≈ ${wireLenCm(w)} см</span>`,`${bdel("data-wdel")}${bx}`);
+  if(me) return s+brow(`<span class="bl warnt">Торкніться нової клеми для ${me==="a"?"початку":"кінця"} перемички</span><button class="btn sm" data-wmove="cancel">Скасувати</button>`)+brow(`<span class="bl">${me==="a"?"Початок":"Кінець"} зараз: ${esc(termName(w[me]))}</span>`);
   s+=segRow(L,cur);
   if(cur==="ends") s+=brow(["a","b"].map(e=>`<button class="btn sm wend2" data-wmove="${e}"><small>${e==="a"?"Початок":"Кінець"}</small> ${esc(termName(w[e]))} <b>⇄</b></button>`).join("")
     +(["ry","rya","ryb","rx"].some(k=>w[k]!=null)?`<button class="btn sm" data-wauto>↺ Авто-траса</button>`:""));
   if(cur==="kind") s+=brow(Object.keys(WK).map(x=>chip(`data-skind="${x}"`,w.kind===x,swatch(x)+WK[x][0])).join(""));
   if(cur==="col") s+=brow(chip(`data-scol=""`,!w.col,"За видом")+Object.keys(WCOL).map(c=>chip(`data-scol="${c}"`,w.col===c,swatch(c,true)+WCOL[c][0])).join(""));
-  if(cur==="sec") s+=brow(SECS.map(x=>chip(`data-ssec="${x}"`,w.sec===x,fmt(x,x%1?1:0),"mono")).join("")+`<button class="btn sm" data-wall="sec">Усім дротам лінії</button>`);
-  if(cur==="del") s+=brow(`<button class="btn sm danger" data-wdel>Видалити цей дріт</button><span class="bl">«Назад» угорі поверне його</span>`);
+  if(cur==="sec") s+=brow(SECS.map(x=>chip(`data-ssec="${x}"`,w.sec===x,fmt(x,x%1?1:0),"mono")).join("")+`<button class="btn sm" data-wall="sec">Усім перемичкам лінії</button>`);
+  if(cur==="del") s+=brow(`<button class="btn sm danger" data-wdel>Видалити цю перемичку</button><span class="bl">«Назад» угорі поверне його</span>`);
   if(ck&&((PHK.includes(w.kind)||w.kind==="C")&&(ck==="blue"||ck==="pe")||w.kind==="N"&&ck!=="blue"||w.kind==="PE"&&ck!=="pe"||w.kind!=="PE"&&ck==="pe")) s+=brow(`<span class="bl warnt">Колір не за правилами: синій — лише N, жовто-зелений — лише PE</span>`);
   return s; }
 
@@ -183,9 +183,9 @@ function chkBar(){ const C=S.chk.list, ne=C.filter(c=>c.sev==="e").length, nw=C.
   if(!c) return s;
   s+=brow(`<button class="bx" data-cnav="-1" aria-label="Попередня">◀</button><span class="bl mono">${i+1}/${L.length}</span><button class="bx" data-cnav="1" aria-label="Наступна">▶</button><span class="sev ${c.sev}">${c.sev==="e"?"Помилка":c.sev==="w"?"Увага":"OK"}</span><b class="ct">${esc(c.t)}</b>`);
   s+=`<div class="br cd">${esc(c.d||"")}</div>`;
-  // що робити далі: показати апарат чи дріт на щиті, або вести далі помічником
+  // що робити далі: показати апарат чи перемичку на щитку, або вести далі помічником
   const r=c.ref, gOn=!!(S.guide&&S.guide.on), gp=(ne||c.sev!=="ok")&&guidePending(), next=!ne&&gOn&&guidePending();
-  if((r&&(r.dev||r.wire))||gp||next||ne) s+=brow((r&&(r.dev||r.wire)?`<button class="btn sm" data-cshow>Показати ${r.wire?"дріт":"на щиті"}</button>`:"")
+  if((r&&(r.dev||r.wire))||gp||next||ne) s+=brow((r&&(r.dev||r.wire)?`<button class="btn sm" data-cshow>Показати ${r.wire?"перемичку":"на щитку"}</button>`:"")
     +(next?`<button class="btn sm primary" data-gon>Далі →</button>`:gp?`<button class="btn sm primary" data-gon>${gOn?"До помічника":"Виправити з помічником"}</button>`:"")
     +(ne&&mainsOf().length&&!wirePlan().some(x=>x.bad)?`<button class="btn sm" data-gall>Виправити все</button>`:""));
   return s; }

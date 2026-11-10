@@ -1,4 +1,4 @@
-/* ===== Геометрія щита, трасування дротів, малювання ===== */
+/* ===== Геометрія щитка, трасування перемичок, малювання ===== */
 const G = { W:840, X0:96, MW:54, INY:36 };
 const devTop = r => 208 + r*380, devBot = r => devTop(r)+240;
 const busY = () => devBot(S.board.rails-1)+118, tbY = () => busY()+70, enclB = () => (S.board.tb&&groupsOf().length?tbY()+44:busY()+36), panelH = () => enclB()+10;
@@ -32,7 +32,7 @@ function termPos(key){
   const d=S.devices.find(x=>x.id===o); if(!d) return null; const t=T[d.type].terms.find(t=>t.k===k); if(!t) return null; const r=d.rail||0;
   return t.s==="top" ? {x:termX(d,t), y:devTop(r)+22, c:r, s:"l"} : {x:termX(d,t), y:devBot(r)-22, c:r+1, s:"u"};
 }
-// межі каналу c (між рейкою c-1 і c): куди можна відвести горизонтальну ділянку дроту пальцем чи мишею
+// межі каналу c (між рейкою c-1 і c): куди можна відвести горизонтальну ділянку перемички пальцем чи мишею
 const chanLim = c => { const R=S.board.rails; return [c===0?60:devBot(c-1)+4, c===R?(S.board.tb&&groupsOf().length?tbY()-20:busY()-14):devTop(c)-4]; };
 const clampV = (v,[a,b]) => Math.max(a,Math.min(b,v));
 function route(){
@@ -96,11 +96,10 @@ function devSVG(d){
       const fitL=X-sr-2-lw>=Math.max(x+2,pv!==undefined?pv+sr+2:-1e9), fitR=X+sr+2+lw<=Math.min(x+w-2,nx!==undefined?nx-sr-2:1e9);
       s+=screw(X,y+H-22,sr)+(tm.nl?"":side&&(fitL||fitR)
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-3,tm.l,{fs:6})); } }
-  const bn=brandName(d), shp=shopFor(d), big=shp&&S.mode!=="test", own=t.maker||brandOf(d)!=="eua";   // апарат є в «Замовити» — замість напису EnergyUA QR-код із посиланням
-  if(shp&&!big){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if(own&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
-  else if(!shp||own) s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
+  const bn=brandName(d), shp=shopFor(d), own=t.maker||brandOf(d)!=="eua";   // апарат є в «Замовити» — замість напису EnergyUA маленька наліпка QR; дотик — великий код
+  if(shp){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if(own&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
+  else s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
-  if(big){ const sz=Math.min(w-10,62); s+=qrSticker(shp,cx,y+163-sz-10,sz,true); }
   const des=desig(d), pw=Math.max(38,des.length*7+12);
   s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});
   const gc=d.group?d.group.color:(d.capColor||"#8f93a2"); s+=`<rect x="${x+2}" y="${y+188}" width="${w-4}" height="5" fill="${gc}"/>`;
@@ -112,7 +111,7 @@ function devSVG(d){
   return s+"</g>";
 }
 function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 600 120"); let s="";   // сітку малює CSS (.scroller.empty) — на все поле
-  s+=`<text x="300" y="52" text-anchor="middle" font-size="30" font-weight="600" fill="var(--muted)">Немає відкритого щита</text><text x="300" y="90" text-anchor="middle" font-size="17" fill="var(--muted)">Створіть новий щит або відкрийте приклад — кнопки внизу</text>`;
+  s+=`<text x="300" y="52" text-anchor="middle" font-size="30" font-weight="600" fill="var(--muted)">Немає відкритого щитка</text><text x="300" y="90" text-anchor="middle" font-size="17" fill="var(--muted)">Створіть новий щиток або відкрийте приклад — кнопки внизу</text>`;
   svg.innerHTML=s; }
 function render(){ if(S.noDoc){ renderEmpty(); return; } 
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
@@ -173,11 +172,11 @@ function render(){ if(S.noDoc){ renderEmpty(); return; }
       else if(S.moveEnd){ const mw=wireById(S.moveEnd.id); if(mw&&kindFits(mw.kind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`; }
       else if(S.pend&&kindFits(S.wireKind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`;
       s+=`<circle class="term-hit" data-term="${k}" cx="${p.x}" cy="${p.y}" r="15"/>`; } }
-  s+=`<g class="eclose" data-closeboard role="button" aria-label="Закрити щит"><title>Закрити щит</title><circle cx="826" cy="70" r="14"/><path d="M820 64l12 12M832 64l-12 12"/></g>`;
+  s+=`<g class="eclose" data-closeboard role="button" aria-label="Закрити щиток"><title>Закрити щиток</title><circle cx="826" cy="70" r="14"/><path d="M820 64l12 12M832 64l-12 12"/></g>`;
   svg.innerHTML=s;
 }
 
-// Прокрутити щит так, щоб підсвічені клеми було видно
+// Прокрутити щиток так, щоб підсвічені клеми було видно
 function scrollToKeys(keys){ const sc=$("scroller"), svg=$("svg"), vb=svg.viewBox.baseVal; if(!vb||!vb.width) return; const k=svg.clientWidth/vb.width, ps=keys.map(termPos).filter(Boolean); if(!ps.length) return;
   const y0=Math.min(...ps.map(p=>p.y))*k, y1=Math.max(...ps.map(p=>p.y))*k, x0=(Math.min(...ps.map(p=>p.x))-vb.x)*k, x1=(Math.max(...ps.map(p=>p.x))-vb.x)*k, H=sc.clientHeight, W=sc.clientWidth;
   const ty=y1-y0<H-60?(y0+y1)/2-H/2:y0-40, tx2=x1-x0<W-60?(x0+x1)/2-W/2:x0-30; sc.scrollTo({top:Math.max(0,ty),left:Math.max(0,tx2),behavior:"smooth"}); }

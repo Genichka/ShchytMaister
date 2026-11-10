@@ -1,4 +1,4 @@
-/* ===== Польове обладнання (поза щитом, через клемник XT1) ===== */
+/* ===== Польове обладнання (поза щитком, через клемник XT1) ===== */
 const fbox = (x,y,w,h,title) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="var(--panel2)" stroke="var(--line)"/>`+`<text class="lab" x="${x+8}" y="${y+14}" font-size="9.5">${esc(title)}</text>`;
 const fst = (x,y,s,col) => `<text x="${x}" y="${y}" font-size="9.5" font-family="var(--sans)" font-weight="600" fill="${col||"var(--fg)"}">${esc(s)}</text>`;
 function motorSVG(x,y,st,lbl){ // st: run, dir(+1/-1), hum
@@ -80,6 +80,6 @@ defField("valve",{name:"Кран з електроприводом", fw:150, fh:
     if(p0>0&&d.pos===0) logp("ok","Кран води закрито"); if(p0<100&&d.pos===100) logp("ok","Кран води відкрито"); },
   load(d,X){ const o=X.volt(K(d,"O"),K(d,"N"))>=150, c=X.volt(K(d,"Cl"),K(d,"N"))>=150; return [{a:o?"O":"Cl",b:"N",I:((o&&d.pos<100)||(c&&d.pos>0))?0.03:0}]; },
   draw(d,x,y){ const a=90*(1-d.pos/100);
-    return fbox(x,y,150,150,"Кран 3/4″ · 230 В · 3 дроти")+`<rect x="${x+14}" y="${y+70}" width="122" height="20" fill="#8c949e"/><circle cx="${x+75}" cy="${y+80}" r="22" fill="#c8a14a" stroke="#8a6d20"/>`
+    return fbox(x,y,150,150,"Кран 3/4″ · 230 В · 3 жили")+`<rect x="${x+14}" y="${y+70}" width="122" height="20" fill="#8c949e"/><circle cx="${x+75}" cy="${y+80}" r="22" fill="#c8a14a" stroke="#8a6d20"/>`
       +`<rect x="${x+71}" y="${y+60}" width="8" height="40" fill="#2a2d33" transform="rotate(${a} ${x+75} ${y+80})"/><rect x="${x+55}" y="${y+26}" width="40" height="24" rx="4" fill="#2b2f36"/>`
       +fst(x+10,y+132,d.pos>=100?"Відкрито":d.pos<=0?"Закрито":`Рух… ${Math.round(d.pos)} %`,d.pos<=0?"var(--orange)":"var(--green)"); }});

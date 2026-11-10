@@ -1,6 +1,6 @@
-/* ===== Автопроводка: повна схема з’єднань щита (1 фаза, 3 фази, 2 вводи через АВР) =====
-   wirePlan() перелічує всі потрібні дроти по кроках помічника:
-     inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між апаратами;  out — колодка XT2 і обладнання поза щитом.
+/* ===== Автопрокладання перемичок: повна схема з’єднань щитка (1 фаза, 3 фази, 2 вводи через АВР) =====
+   wirePlan() перелічує всі потрібні перемички по кроках помічника:
+     inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між апаратами;  out — колодка XT2 і обладнання поза щитком.
    Пункт: {step, a, b, kind, sec, alt}. «xn:*» / «xpe:*» — будь-який вільний отвір шини.
    autoWire() прокладає всю схему одним натиском, а fixRatings() підганяє номінали й перерізи, щоб перевірка пройшла. */
 const SWITCH_T = ["ats","toq5","toq7","to219"];
@@ -13,7 +13,7 @@ function wirePlan(){
   const same=(x,a,c)=>(x.a===a&&x.b===c)||(x.a===c&&x.b===a);
   const add=(step,a,c,k,sec,alt)=>{ if(!a||!c||a===c||out.some(x=>same(x,a,c))) return;
     out.push({step,a,b:c,kind:k,sec:sec||2.5,alt}); for(const q of [a,c]) use[q]=(use[q]||0)+1; };
-  // відгалуження (реле фаз, УЗІП): з рівноцінних клем беремо ту, де ще менше двох дротів
+  // відгалуження (реле фаз, УЗІП): з рівноцінних клем беремо ту, де ще менше двох перемичок
   const tap=c=>c.filter(Boolean).find(q=>(use[q]||0)<2)||c.find(Boolean);
   const mains=mainsOf(), feeds=b.inputs.filter(i=>i.terms.some(t=>/^L/.test(t)));
   if(!mains.length||!feeds.length) return out;
@@ -73,7 +73,7 @@ function wirePlan(){
     (g3(g)?["L1","L2","L3"]:["L"]).forEach((t,i)=>add("out",K2(g,"b"+(i+1)),tbK(g,t),g3(g)?t:(phK[g.id]||"L"),sec));
     if(tbTerms(g).includes("N")) add("out",nOf(g),tbK(g,"N"),"N",sec,["xn:0"]);
     add("out","xpe:*",tbK(g,"PE"),"PE",sec); }
-  // 9. Обладнання поза щитом (клеми XT1): двигун 3~ — від автомата двигуна, прилади 230 В — кожен від своєї групи
+  // 9. Обладнання поза щитком (клеми XT1): двигун 3~ — від автомата двигуна, прилади 230 В — кожен від своєї групи
   const used=new Set();
   for(const f of S.field){ const m=f.map;
     if(f.type==="motor3"){ const q=qms.find(x=>!used.has(x.id)), g=q||G.filter(g3).find(x=>!used.has(x.id)); if(!g) continue; used.add(g.id);
@@ -93,7 +93,7 @@ function fixRatings(){ const fix=[], mains=mainsOf(); if(!mains.length) return f
   for(const g of groupsOf()){ const In=inA(g.rating); if(In>CAB[g.group.sec]){ const s=secFor(In); fix.push(`${desig(g)}: кабель ${fmt(g.group.sec,1)} → ${fmt(s,1)} мм²`); g.group.sec=s; } }
   return fix; }
 
-// Прокласти весь щит за схемою. Дроти між апаратами зі схеми, яких у ній немає, прибираються; дроти до інших апаратів лишаються.
+// Прокласти весь щиток за схемою. Перемички між апаратами зі схеми, яких у ній немає, прибираються; перемички до інших апаратів лишаються.
 function autoWire(){ const plan=wirePlan(), bad=plan.find(x=>x.bad);
   if(!mainsOf().length){ toast("Спершу поставте ввідний автомат","w"); return false; }
   if(bad){ toast(bad.t,"w"); return false; }
@@ -104,9 +104,9 @@ function autoWire(){ const plan=wirePlan(), bad=plan.find(x=>x.bad);
   let added=0; for(const it of plan){ const f0=build({allOpen:true}), m=x=>x==="xn:*"?"xn:0":x==="xpe:*"?"xpe:0":x;
     if(f0(m(it.a))===f0(m(it.b))) continue; gConnect(it); added++; }
   S.pend=null; S.selWire=null; S.selDev=null; S.mode="wire"; commit();
-  logp("ok",`Помічник проклав ${added} дрот(ів) за схемою${fix.length?"; виправлено: "+fix.join(", "):""}`);
+  logp("ok",`Помічник проклав перемички (${added}) за схемою${fix.length?"; виправлено: "+fix.join(", "):""}`);
   checkNow();
   const e=S.lastCheck?S.lastCheck.errors:0;
-  toast(e?`Проводку прокладено (${added}), але перевірка знайшла помилок: ${e}`:`Щит зібрано: ${added} дрот(ів)${fix.length?", виправлено номінали":""}. Перевірка пройдена${removed?" · «Назад» поверне попередні дроти":""}`,e?"w":"ok");
+  toast(e?`Перемички прокладено (${added}), але перевірка знайшла помилок: ${e}`:`Щиток зібрано: перемичок — ${added}${fix.length?", виправлено номінали":""}. Перевірка пройдена${removed?" · «Назад» поверне попередні перемички":""}`,e?"w":"ok");
   return !e; }
 document.addEventListener("click",e=>{ if(e.target.closest("[data-gall]")) autoWire(); });

@@ -56,7 +56,7 @@ function build(o={}){
   if(S.comb){ const cov=S.devices.filter(d=>d.type==="qf1p"&&(d.rail||0)===(S.comb.rail||0)&&d.slot>=S.comb.from&&d.slot<=S.comb.to); for(let i=1;i<cov.length;i++) u(cov[0].id+":t1",cov[i].id+":t1"); }
   for(const d of [...S.devices,...S.field]){ const t=tdef(d);
     if(t.links) for(const [a,b] of t.links(d)) u(K(d,a),K(d,b));
-    if(o.allOpen||(o.open&&o.open.has(d.id))) continue;   // allOpen — лише дроти й постійні перемички, усі полюси розімкнені
+    if(o.allOpen||(o.open&&o.open.has(d.id))) continue;   // allOpen — лише перемички (зокрема постійні), усі полюси розімкнені
     (t.poles||[]).forEach((p,pi)=>{ if(o.openPole&&o.openPole.has(d.id+":"+pi)) return; if(o.ideal&&t.prot ? true : poleClosed(d,pi)) u(K(d,p.a),K(d,p.b)); });
     if(t.aux) for(const [a,b] of t.aux(d)) u(K(d,a),K(d,b)); }
   for(const [a,b] of (o.extra||[])) u(a,b);
@@ -167,7 +167,7 @@ function poleCurrents(d,X,loads){
     per.push(I); max=Math.max(max,I); });
   return {max, per};
 }
-// Струм у дротах: який дріт несе струм навантаження, скільки і в який бік (від джерела до навантаження; нуль і «−» — назад)
+// Струм у перемичках: яка перемичка несе струм навантаження, скільки і в який бік (від джерела до навантаження; нуль і «−» — назад)
 function wireFlow(X,loads){ const ex=shortsExtra(), adj=new Map();
   const add=(a,b)=>{ if(!a||!b) return; if(!adj.has(a)) adj.set(a,[]); if(!adj.has(b)) adj.set(b,[]); adj.get(a).push(b); adj.get(b).push(a); };
   for(const w of S.wires) add(w.a,w.b);

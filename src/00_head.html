@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500;600&display=swap">
 <style>
-/* ===== v4.19: компонування, перетягування апаратів і дротів ===== */
+/* ===== v4.19: компонування, перетягування апаратів і перемичок ===== */
 .bbar{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
 #closeBtn{display:none!important}
 .eclose{cursor:pointer}
@@ -50,7 +50,7 @@ button{cursor:pointer}
 .foot{font-size:12px;color:var(--muted)}
 .warnt{color:var(--orange)}
 
-/* ---- Каркас: шапка → режими → щит → нижня панель */
+/* ---- Каркас: шапка → режими → щиток → нижня панель */
 /* каркас прибитий до видимої області: висота = екран, вирізи й статус-бар — відступами всередині, тож нічого не з'їжджає вниз */
 .app{position:fixed;inset:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-columns:100%;
   padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px)}
@@ -113,7 +113,7 @@ h1{margin:0;font-size:27px;line-height:1.1;font-weight:500;letter-spacing:0;whit
 .work .hint>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .scroller{min-height:0;height:100%;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
 #svg{display:block;width:100%;height:auto;margin:0 auto;user-select:none;-webkit-user-select:none}
-/* кнопки масштабу — у смузі підказки над щитом, не на самій схемі */
+/* кнопки масштабу — у смузі підказки над щитком, не на самій схемі */
 .work .hint{padding-right:162px;min-height:40px}
 .fab{position:absolute;right:6px;top:5px;bottom:auto;left:auto;z-index:5;display:flex;flex-direction:row;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--panel2)}
 .fab .btn{min-height:30px;min-width:34px;justify-content:center;padding:2px;border:0;border-radius:0;background:transparent}
@@ -196,6 +196,10 @@ select.btn{padding-right:26px}
 .bbar{min-height:0;max-height:44dvh;overflow-x:hidden;overflow-y:auto;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line)}
 .bar-in{display:flex;flex-direction:column;gap:6px}
 .br.wrap{flex-wrap:wrap;overflow:visible}
+.qrpop{position:fixed;z-index:61;width:228px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.55);padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;animation:ctxIn .12s ease-out}
+.qrpop .qrv{border-radius:6px;display:block} .qrpop b{font-size:14px;line-height:1.25} .qrpop small{font-size:12px;color:var(--muted)} .qp-row{display:flex;gap:8px;margin-top:4px}
+.shopq{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px} .shopq-i{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px;break-inside:avoid}
+.shopq-i .qrv{flex:none} .shopq-i b{display:block;font-size:13px} .shopq-i small{display:block;color:var(--muted);margin:2px 0 4px} .shopq-i a{font-size:11px;word-break:break-all;color:var(--blue)}
 .ctxm{position:fixed;z-index:60;min-width:230px;max-width:min(320px,calc(100vw - 16px));background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.55);padding:6px;display:flex;flex-direction:column;animation:ctxIn .12s ease-out}
 @keyframes ctxIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
 .ctx-h{padding:8px 10px 8px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .ctx-h span{color:var(--text);font-weight:400}
@@ -260,7 +264,7 @@ g.mv{opacity:.45} g.rp>*:first-child{stroke:var(--orange);stroke-width:3}
 .pbtn b{font-size:14px;font-weight:500;color:var(--strong)} .pbtn small{font-size:11.5px;color:var(--muted)}
 .pbtn.wide{grid-column:1 / 3} .pbtn[data-pa="close"] svg{color:var(--red)}
 .pbtn.hot{border-color:var(--blue2);background:color-mix(in srgb,var(--blue2) 16%,var(--panel2))}
-/* майстер нового щита */
+/* майстер нового щитка */
 .wz-steps{display:flex;gap:4px;list-style:none;margin:0;padding:0}
 .wz-steps li{flex:1;padding-top:6px;text-align:center;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-top:2px solid var(--panel3)}
 .wz-steps li.done{border-color:var(--green);color:var(--fg)} .wz-steps li.cur{border-color:var(--blue2);color:var(--strong)}
@@ -334,7 +338,7 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 .dbs{display:inline-block;padding:2px 8px;font-size:11.5px;color:var(--fg);border-color:var(--line2);background:var(--panel2)} .dbs i{font-style:normal;color:var(--muted)}
 .dbs.ok{border-color:color-mix(in srgb,var(--green) 50%,transparent)} .dbs.e{border-color:var(--red);color:var(--red)} .dbs.w{border-color:color-mix(in srgb,var(--orange) 60%,transparent)}
 
-/* ---- Щит (SVG) */
+/* ---- Щиток (SVG) */
 .encl{fill:var(--encl)} .encl-in{fill:var(--encl-in)} .rail{fill:var(--rail)}
 .screw{fill:var(--dev-face);stroke:var(--dev-line)} .screw-x{stroke:var(--dev-ink);stroke-width:1.6}
 .devb{fill:var(--dev);stroke:var(--dev-line)} .devf{fill:var(--dev-face)}
@@ -389,7 +393,7 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 .bbar.collapsed .bar-in{display:none}
 .bbar.collapsed .bar-handle small{display:block}
 .bbar.collapsed .bar-handle small::after{content:"Показати панель ▴"}
-/* центр по вільному місцю: малий масштаб — щит посередині робочої зони */
+/* центр по вільному місцю: малий масштаб — щиток посередині робочої зони */
 .scroller:not(.empty){display:flex}
 .scroller:not(.empty) #svg{margin:auto;flex:none}
 .dim{fill:none;stroke:var(--muted);stroke-width:1.2}
@@ -434,7 +438,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
   <nav class="tbar" aria-label="Інструменти">
     <button class="tb red" id="menuBtn" aria-label="Меню"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><small>Меню</small></button>
     <button class="tb" data-mode="mount" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h5v16H5zM14 4h5v16h-5zM2 10h20"/></svg><small>Апарати</small></button>
-    <button class="tb" data-mode="wire" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c4 0 4-12 8-12s4 12 8 12M4 18h0M20 18h0"/></svg><small>Дроти</small></button>
+    <button class="tb" data-mode="wire" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c4 0 4-12 8-12s4 12 8 12M4 18h0M20 18h0"/></svg><small>Перемички</small></button>
     <button class="tb" id="docsBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h8"/></svg><small>Документи</small></button>
     <button class="tb" data-mode="test" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><small>Тест</small></button>
     <span class="tb-sep" aria-hidden="true"></span>
@@ -447,7 +451,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
   <main class="work" id="work">
     <div class="hint" id="hint"></div>
     <div class="scroller" id="scroller"><svg id="svg" viewBox="0 0 840 612" role="img" aria-label="Електрощит" xmlns="http://www.w3.org/2000/svg"></svg></div>
-    <button class="btn wclose" id="closeBtn" aria-label="Закрити щит" title="Закрити щит">✕</button>
+    <button class="btn wclose" id="closeBtn" aria-label="Закрити щиток" title="Закрити щиток">✕</button>
     <div class="fab"><button class="btn" id="zIn" aria-label="Збільшити">+</button><button class="btn mono" id="zFit" aria-label="Масштаб 100%">100%</button><button class="btn" id="zOut" aria-label="Зменшити">−</button><button class="btn" id="zAll" aria-label="Вписати в екран">⤢</button></div>
   </main>
 
@@ -457,13 +461,10 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
 <aside class="drawer" id="drawer" hidden aria-label="Меню"><div class="drawer-in">
   <div class="dr-h"><b><span class="t1">Panel</span><span class="t2">Craft</span></b><button class="btn" id="drawerX" aria-label="Закрити меню">✕</button></div>
   <div class="dr-g"><button class="btn proj-btn" id="projBtn" aria-label="Проєкт: зберегти, відкрити, створити"><svg class="pico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"/></svg><span class="pdot" aria-hidden="true"></span><span id="projName">Проєкт</span><span class="pcar" aria-hidden="true">▾</span><small class="plab">Проєкт</small></button></div>
-  <details class="dr-g dr-d" id="shDet"><summary class="dr-k">Щит</summary>
-    <button class="dr-i" data-menu="new" data-nodoconly>＋ Новий щит</button>
-    <button class="dr-i" data-menu="projects" data-nodoconly>📂 Відкрити збережений</button>
-    <button class="dr-i" data-menu="board" data-needdoc>⚙️ Корпус, ввід, шини, колодка XT2</button>
-    <button class="dr-i" data-menu="autowire" data-needdoc>⚡ Прокласти всі дроти автоматично</button>
-    <button class="dr-i" data-menu="guide" data-needdoc id="mGuide">🧭 Покроковий помічник</button></details>
-  <details class="dr-g dr-d" id="tplDet"><summary class="dr-k">Приклади щитів <span class="hint" id="tplName"></span></summary><div id="tplMenu" class="tpl-list"></div></details>
+  <details class="dr-g dr-d" id="shDet" data-needdoc><summary class="dr-k">Щиток</summary>
+    <button class="dr-i" data-menu="board">⚙️ Корпус, ввід, шини, колодка XT2</button>
+    <button class="dr-i" data-menu="guide" id="mGuide">🧭 Покроковий помічник</button></details>
+  <details class="dr-g dr-d" id="tplDet"><summary class="dr-k">Приклади щитків <span class="hint" id="tplName"></span></summary><div id="tplMenu" class="tpl-list"></div></details>
   <details class="dr-g dr-d" id="abDet"><summary class="dr-k">Про застосунок</summary><p class="foot">Навчальний симулятор. Номінали кабелів — за поширеною практикою для мідного кабелю в прихованій прокладці. Назви виробників і моделей — довідкові, без логотипів; моделі АВР спрощені.</p>
     <div class="app-qr"><a class="qr" href="https://genichka.github.io/ShchytMaister/" target="_blank" rel="noopener"><svg width="132" height="132" role="img" aria-label="QR-код: https://genichka.github.io/ShchytMaister/" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33"><path fill="#fff" d="M0 0h33v33h-33z"/><path stroke="#111217" d="M2 2.5h7m1 0h3m3 0h1m1 0h1m1 0h3m1 0h7m-29 1h1m5 0h1m1 0h1m2 0h1m1 0h2m1 0h1m5 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m4 0h4m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h4m2 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m5 0h2m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h2m2 0h3m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h1m3 0h1m1 0h1m2 0h1m2 0h1m-21 1h1m1 0h2m1 0h3m1 0h1m4 0h1m1 0h3m3 0h1m2 0h1m1 0h2m-29 1h6m1 0h2m2 0h2m3 0h9m3 0h1m-28 1h3m1 0h2m1 0h1m1 0h2m4 0h2m2 0h1m5 0h2m-28 1h2m2 0h1m2 0h3m3 0h2m3 0h4m2 0h1m3 0h1m-28 1h3m1 0h3m1 0h2m1 0h3m2 0h1m2 0h1m4 0h2m-27 1h2m1 0h1m4 0h2m6 0h1m2 0h1m2 0h1m3 0h3m-29 1h5m1 0h7m3 0h5m3 0h1m1 0h3m-28 1h1m2 0h2m1 0h3m5 0h2m4 0h1m1 0h1m3 0h1m-26 1h1m1 0h5m2 0h1m1 0h2m1 0h1m2 0h3m1 0h3m1 0h1m-27 1h5m1 0h3m5 0h1m1 0h1m2 0h1m2 0h1m1 0h3m-28 1h1m1 0h2m2 0h2m4 0h6m2 0h5m1 0h1m-25 1h1m4 0h1m1 0h1m7 0h3m1 0h2m3 0h1m-26 1h1m1 0h5m1 0h1m1 0h1m1 0h1m1 0h1m2 0h9m-19 1h1m1 0h3m3 0h1m3 0h1m3 0h5m-29 1h7m1 0h1m1 0h1m3 0h1m4 0h2m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m1 0h1m3 0h2m2 0h1m1 0h1m1 0h1m3 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m2 0h4m4 0h1m2 0h5m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m4 0h1m1 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m3 0h2m5 0h1m2 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h1m4 0h1m1 0h2m1 0h1m1 0h1m1 0h1m-28 1h7m1 0h6m4 0h1m1 0h2m5 0h1"/></svg></a>
       <p class="hint">Наведи камеру іншого телефона — PanelCraft відкриється там</p>

@@ -51,7 +51,7 @@ function sldSVG(){ const M=sldModel(), CW=104, LH=112, X0=128, top=26; let col=0
   M.roots.forEach(r=>lay(r,0)); M.orphan.forEach(o=>lay(o,1));
   const leaves=M.nodes.filter(n=>n.col!==undefined), W=Math.max(640,X0+col*CW+20), Y=n=>top+n.dep*LH, yT=top+(maxDepth+1)*LH+10;
   let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${yT+8*22+40}" style="min-width:${Math.max(320,col*76+100)}px;background:#fff" font-family="IBM Plex Sans,Arial,sans-serif">`;
-  s+=`<text x="8" y="16" font-size="12" font-weight="700">Однолінійна схема · ${esc((S.proj&&S.proj.name)||"Щит")} · ЩРН-${S.board.rails*12}</text>`;
+  s+=`<text x="8" y="16" font-size="12" font-weight="700">Однолінійна схема · ${esc((S.proj&&S.proj.name)||"Щиток")} · ЩРН-${S.board.rails*12}</text>`;
   const lbl=(n,x,y)=>{ let a,b2,c="";
     if(n.kind==="in"){ a=n.label; b2=(n.ph===3?"3~ 400 В":"1~ 230 В")+(n.inv?" · інвертор":""); }
     else if(n.kind==="fld"){ a=n.fd.name||FT[n.fd.type].name; b2=""; }
@@ -99,6 +99,9 @@ function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.pu
   for(const [k,m] of Object.entries(cb)) addR("Кабель",k,fmt(Math.ceil(m),0),"м");
   return R; }
 
+const shopSpec = () => { const L=shopUsed(); if(!L.length) return "";
+  return `<h3 style="margin-top:14px">Де замовити</h3><p class="note">Наведіть камеру телефона на код — відкриється сторінка апарата.</p><div class="shopq">`
+    +L.map(e=>`<div class="shopq-i">${qrSVG(e.it.link,104)}<div><b>${esc(e.it.name||"Апарат")}</b><small>На щитку: ${esc(e.ds.join(", "))}</small><a href="${esc(e.it.link)}" target="_blank" rel="noopener">${esc(e.it.link.replace(/^https?:\/\//,""))}</a></div></div>`).join("")+`</div>`; };
 // ---- Вікно документів
 const DOCT = [["sld","Однолінійна схема"],["cab","Кабельний журнал"],["spec","Специфікація"],["lab","Маркування"]];
 function openDocs(t){ S.docTab=t||S.docTab||"sld"; $("docs").hidden=false; renderDocs(); }
@@ -106,14 +109,14 @@ function renderDocs(){ const t=S.docTab;
   $("docTabs").innerHTML=DOCT.map(([k,l])=>`<button data-doct="${k}" aria-selected="${t===k}">${l}</button>`).join("")+(t==="all"?`<button data-doct="all" aria-selected="true">Повний комплект</button>`:"");
   $("docSvg").textContent=t==="sld"?"SVG":t==="lab"||t==="all"?"—":"CSV"; $("docSvg").disabled=t==="lab"||t==="all";
   $("docsB").innerHTML=t==="all"?docAll():docBody(t); }
-function docBody(t){ const nm=esc((S.proj&&S.proj.name)||"Щит");
+function docBody(t){ const nm=esc((S.proj&&S.proj.name)||"Щиток");
   let h="";
   if(t==="sld"){ const noLen=groupsOf().some(g=>!groupLen(g));
     h=`<div class="doc"><div class="sld">${sldSVG()}</div><p class="note">Кабель — ВВГнг(А)-LS, мідь. Iр — за встановленою потужністю групи, cos φ = 1. ΔU — втрата напруги в лінії (ρ = 0,0178 Ом·мм²/м); понад 4 % виділено червоним.${noLen?" Довжини ліній задайте в картці групи.":""}</p></div>`; }
-  if(t==="cab"){ const c=cabData(); h=`<div class="doc"><h3>Кабельний журнал · ${nm}</h3><p class="note">Дроти в щиті (довжина — за трасою на щиті, з запасом 4 см на зачистку)</p>`
+  if(t==="cab"){ const c=cabData(); h=`<div class="doc"><h3>Кабельний журнал · ${nm}</h3><p class="note">Перемички в щитку (довжина — за трасою на щитку, з запасом 4 см на зачистку)</p>`
     +tbl(["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],c.inner,[0,6])
-    +`<h3 style="margin-top:14px">Кабельні лінії від щита</h3>`+tbl(["Автомат","Група","Кабель","Довжина, м","ΔU, %"],c.lines,[3,4])+`</div>`; }
-  if(t==="spec") h=`<div class="doc"><h3>Специфікація обладнання · ${nm}</h3>`+tbl(["Найменування","Тип / модель","Кіл.","Од."],specData(),[2])+`<p class="note">Довжину монтажного проводу взято із запасом 20 %, кабелі — за довжинами ліній.</p></div>`;
+    +`<h3 style="margin-top:14px">Кабельні лінії від щитка</h3>`+tbl(["Автомат","Група","Кабель","Довжина, м","ΔU, %"],c.lines,[3,4])+`</div>`; }
+  if(t==="spec") h=`<div class="doc"><h3>Специфікація обладнання · ${nm}</h3>`+tbl(["Найменування","Тип / модель","Кіл.","Од."],specData(),[2])+`<p class="note">Довжину монтажного проводу взято із запасом 20 %, кабелі — за довжинами ліній.</p>`+shopSpec()+`</div>`;
   if(t==="lab"){ h=`<div class="doc"><h3>Маркування автоматів · ${nm}</h3><p class="note">Друк у масштабі 100 %: ширина клітинки — один модуль 18 мм. Виріжте смужки й наклейте над апаратами.</p><div class="labels">`;
     for(let r=0;r<S.board.rails;r++){ let row=""; for(let i=0;i<SLOTS;){ const d=devAt(r,i); if(d&&d.slot===i){ const w=T[d.type].w;
           row+=`<div class="lab-c" style="width:${w*18}mm"><b>${esc(desig(d))}${d.rating?" "+esc(d.rating):""}</b><span>${esc(d.group?d.group.name:(d.cap||T[d.type].cap||T[d.type].short))}</span>${d.group?`<i style="background:${d.group.color}"></i>`:""}</div>`; i+=w; }
@@ -133,8 +136,8 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
       download(nm+(S.docTab==="cab"?"_kabelnyj_zhurnal.csv":"_specyfikacija.csv"),"﻿"+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(";")).join("\n"),"text/csv"); }
     return; } });
 
-// ---- Повний комплект для PDF: титул (підсумок + вигляд щита), схема, кабельний журнал, специфікація, маркування — кожне з нового аркуша
-function docAll(){ const nm=esc((S.proj&&S.proj.name)||"Щит"), sm=boardSummary();
+// ---- Повний комплект для PDF: титул (підсумок + вигляд щитка), схема, кабельний журнал, специфікація, маркування — кожне з нового аркуша
+function docAll(){ const nm=esc((S.proj&&S.proj.name)||"Щиток"), sm=boardSummary();
   return `<div class="doc dpage"><h2 class="dtitle">${nm}</h2><p class="note">PanelCraft ${esc(APP.v)} · ${new Date().toLocaleDateString("uk-UA")} · перевірку пройдено без зауважень</p>`
     +tbl(["Показник","Значення"],sm.rows,[])+`<div class="bview">${boardSVG()}</div></div>`
     +["sld","cab","spec","lab"].map(t=>`<div class="dpage">${docBody(t)}</div>`).join(""); }

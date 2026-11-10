@@ -31,20 +31,20 @@
     if(!D.moved){ if(dist<6) return; D.moved=true; lift(); }
     const p=pt(e), dx=p.x-D.p0.x, dy=p.y-D.p0.y; D.g.setAttribute("transform",`translate(${dx.toFixed(1)} ${dy.toFixed(1)})`); ghost(D.t=target(D.dev,dx,dy));
     const r=sc.getBoundingClientRect(), E=40, vy=e.clientY<r.top+E?-14:e.clientY>r.bottom-E?14:0, vx=e.clientX<r.left+E?-14:e.clientX>r.right-E?14:0;
-    if(vx||vy){ sc.scrollTop+=vy; sc.scrollLeft+=vx; } });   // біля краю — підкручуємо щит
+    if(vx||vy){ sc.scrollTop+=vy; sc.scrollLeft+=vx; } });   // біля краю — підкручуємо щиток
   addEventListener("pointerup",e=>{ if(D&&e.pointerId===D.pid) stop(false); });
   addEventListener("pointercancel",e=>{ if(D&&e.pointerId===D.pid) stop(true); });
-  sc.addEventListener("touchmove",e=>{ if(D&&D.armed&&e.cancelable) e.preventDefault(); },{passive:false});   // поки тягнемо — щит не прокручується
+  sc.addEventListener("touchmove",e=>{ if(D&&D.armed&&e.cancelable) e.preventDefault(); },{passive:false});   // поки тягнемо — щиток не прокручується
   sc.addEventListener("touchstart",e=>{ if(D&&e.touches.length>1) stop(true); },{passive:true});           // другий палець — це масштаб
   svg.addEventListener("contextmenu",e=>{ if(D&&D.armed) e.preventDefault(); });
   sc.addEventListener("click",e=>{ if(Date.now()<noClickUntil){ e.stopPropagation(); e.preventDefault(); } },true);
 })();
-/* ===== Перетягування: з нижньої панелі на рейку і дроти між клемами (палець і миша) =====
+/* ===== Перетягування: з нижньої панелі на рейку і перемички між клемами (палець і миша) =====
    Миша: просто тягти. Палець: затиснути ~0,25 с і тягти. Пунктирна рамка — куди стане апарат (червона — зайнято). */
 (function(){
   const sc=$("scroller"), svg=$("svg"), NS="http://www.w3.org/2000/svg", HOLD=250;
   let C=null, W=null, blockUntil=0;
-  const busy=()=>{ window.__dragBusy=!!((C&&C.armed)||(W&&W.armed)); };   // поки тягнемо, щит не перемальовується щосекунди
+  const busy=()=>{ window.__dragBusy=!!((C&&C.armed)||(W&&W.armed)); };   // поки тягнемо, щиток не перемальовується щосекунди
   const toSvg=e=>{ const m=svg.getScreenCTM(); if(!m) return {x:0,y:0}; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()); return {x:p.x,y:p.y}; };
   const mkEl=(tag,attrs)=>{ const el=document.createElementNS(NS,tag); for(const k in attrs) el.setAttribute(k,attrs[k]); return el; };
   const vib=()=>{ try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){} };
@@ -79,16 +79,16 @@
     if(!c.tgt){ return; }
     if(c.tgt.ok) c.inf.go(c.tgt.r,c.tgt.slot); else toast("Там зайнято","w"); }
 
-  /* --- 2. дроти: від клеми до клеми і перенесення кінця дроту --- */
+  /* --- 2. перемички: від клеми до клеми і перенесення кінця перемички --- */
   function armW(){ if(!W||W.armed) return; W.armed=true; vib(); busy(); S.pend=null;
     W.line=mkEl("path",{class:"rubber"}); W.dot=mkEl("circle",{class:"term-ok",r:12}); svg.appendChild(W.line); svg.appendChild(W.dot); }
   function endW(cancel){ if(!W) return; const w=W; W=null; clearTimeout(w.tm); busy();
     if(!w.armed) return;
     blockUntil=Date.now()+400; if(w.line) w.line.remove(); if(w.dot) w.dot.remove();
     if(cancel||!w.moved) return;
-    if(!w.cand){ toast("Відпустіть дріт на клемі","w"); return; }
+    if(!w.cand){ toast("Відпустіть перемичку на клемі","w"); return; }
     if(w.kind==="new"){ if(w.cand===w.key) return;
-      const r=termRole(w.key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,w.key); toast(`Вид дроту: ${WK[S.wireKind][0]} — за клемою`); }
+      const r=termRole(w.key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,w.key); toast(`Вид перемички: ${WK[S.wireKind][0]} — за клемою`); }
       S.pend=w.key; termTap(w.cand); return; }
     if(w.cand===w.cur) return;
     S.moveEnd={id:w.wid,end:w.end}; moveEnd(w.cand); if(S.moveEnd){ S.moveEnd=null; renderAll(false); } }
@@ -100,7 +100,7 @@
     if(S.mode==="wire"&&!S.demo){ if(!(e.target===svg||svg.contains(e.target))) return;
       const w=S.selWire&&wireById(S.selWire); let end=null, kind=null, key=null;
       if(w){ const m=svg.getScreenCTM(), p=toSvg(e), R=Math.max(16,30/(m?m.a:1)); for(const en of ["a","b"]){ const q=termPos(w[en]); if(q&&Math.hypot(q.x-p.x,q.y-p.y)<R){ end=en; break; } } }
-      if(!end&&e.target.closest&&e.target.closest("[data-wire]")&&!termWithin(e,16)) return;   // посередині дроту — перетягування траси (наступний блок)
+      if(!end&&e.target.closest&&e.target.closest("[data-wire]")&&!termWithin(e,16)) return;   // посередині перемички — перетягування траси (наступний блок)
       if(end){ kind="end"; key=w[end]; } else { key=nearTerm(e); if(key) kind="new"; }
       if(!kind) return;
       W={kind,key,end,cur:end?w[end]:null,wid:w?w.id:null,fix:end?w[end==="a"?"b":"a"]:key,pid:e.pointerId,touch:e.pointerType!=="mouse",x0:e.clientX,y0:e.clientY,armed:false,moved:false,cand:null,line:null,dot:null};
@@ -124,9 +124,9 @@
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ endC(true); endW(true); } });
   document.addEventListener("click",e=>{ if(Date.now()<blockUntil){ e.stopPropagation(); e.preventDefault(); } },true);
 })();
-/* ===== Перетягування трас дротів (перемичок) і шин N / PE / колодки XT2 =====
-   Дроти («Дроти»): затиснути дріт посередині й тягти — горизонтальна ділянка ходить угору-вниз у межах свого каналу,
-   бічна вертикальна — ліворуч-праворуч. Кінці лишаються на клемах. «Авто-траса» в панелі дроту повертає як було.
+/* ===== Перетягування трас перемичок і шин N / PE / колодки XT2 =====
+   Перемички («Перемички»): затиснути перемичку посередині й тягти — горизонтальна ділянка ходить угору-вниз у межах свого каналу,
+   бічна вертикальна — ліворуч-праворуч. Кінці лишаються на клемах. «Авто-траса» в панелі перемички повертає як було.
    Шини («Апарати»): затиснути шину N, PE чи колодку XT2 і тягти вздовж ряду. Миша — одразу, палець — після ~0,25 с. */
 (function(){
   const sc=$("scroller"), svg=$("svg"), NS="http://www.w3.org/2000/svg", HOLD=250; let Q=null, blockUntil=0;
@@ -134,10 +134,10 @@
   const busy=v=>{ window.__dragBusy=v; };
   const vib=()=>{ try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){} };
   const dSeg=(p,[x0,y0],[x1,y1])=>{ const L=(x1-x0)**2+(y1-y0)**2, t=L?Math.max(0,Math.min(1,((p.x-x0)*(x1-x0)+(p.y-y0)*(y1-y0))/L)):0; return Math.hypot(p.x-x0-t*(x1-x0),p.y-y0-t*(y1-y0)); };
-  // яка ділянка дроту під пальцем і яке поле траси вона змінює
+  // яка ділянка перемички під пальцем і яке поле траси вона змінює
   function segOf(w,p){ const P=route()[w.id]; if(!P) return null; const cross=P.length===6; let bi=-1, bd=1e9;
     for(let i=1;i<P.length-2;i++){ const d=dSeg(p,P[i],P[i+1]); if(d<bd){ bd=d; bi=i; } }
-    if(bi<0) return null; const hor=P[bi][1]===P[bi+1][1]; if(hor&&P[bi][0]===P[bi+1][0]&&!cross) return null;   // прямий вертикальний дріт — нема чого відводити
+    if(bi<0) return null; const hor=P[bi][1]===P[bi+1][1]; if(hor&&P[bi][0]===P[bi+1][0]&&!cross) return null;   // пряма вертикальна перемичка — нема чого відводити
     const ca=termPos(w.a), cb=termPos(w.b); if(!ca||!cb) return null; const cLo=Math.min(ca.c,cb.c), cHi=Math.max(ca.c,cb.c);
     const key=cross?({1:"rya",2:"rx",3:"ryb"})[bi]:"ry", lim=key==="rx"?[20,820]:chanLim(key==="ryb"?cHi:cLo);
     return {P,i:bi,hor,key,lim,v0:hor?P[bi][1]:P[bi][0]}; }

@@ -55,7 +55,7 @@ TPL.motor3 = { name:"Пуск трифазного двигуна (прямий 
       {say:"Вал заклинило: струм до 6 × Iн, QM1 вимикає.", do(){ motor().jam=true; }, wait:4},
       {say:"Кінець демонстрації.", do(){ motor().jam=false; resetQM(); }, wait:1}]},
   checks(add){ sandbox(()=>{ powerUp(); runFor(2); const m=motor(); pressBtn(byDes("SB2")); const r1=m.run, dir=m.dir; pressBtn(byDes("SB1"));
-    if(r1&&!m.run) add("ok",`Пуск і стоп працюють, обертання ${dir>0?"вправо (L1-L2-L3)":"вліво"}`); else add("e","Двигун не запускається або не зупиняється","Перевірте коло керування і силові дроти.");
+    if(r1&&!m.run) add("ok",`Пуск і стоп працюють, обертання ${dir>0?"вправо (L1-L2-L3)":"вліво"}`); else add("e","Двигун не запускається або не зупиняється","Перевірте коло керування і силові перемички.");
     S.src.in.lost.L3=true; pressBtn(byDes("SB2")); runFor(4); if(byDes("QM1").trip) add("ok","Обрив фази: QM1 вимикає двигун"); }); }};
 function swapVW(){ const a=S.wires.find(w=>w.b==="xt:V"||w.a==="xt:V"), b=S.wires.find(w=>w.b==="xt:W"||w.a==="xt:W"); if(!a||!b) return;
   const ea=a.b==="xt:V"?"b":"a", eb=b.b==="xt:W"?"b":"a"; a[ea]="xt:W"; b[eb]="xt:V"; logp("w","Фази на двигуні V і W поміняно місцями"); save(); }

@@ -12,7 +12,7 @@
       <p class="mono upd-v">${isNew?`v${esc(APP.v)} → <b>v${esc(info.v)}</b> від ${fmtD(info.date)}`:`v${esc(info.v)} від ${fmtD(info.date)}`}</p>
       <div class="row" style="justify-content:flex-end">${isNew?`<button class="btn" data-upd="later">Пізніше</button><button class="btn primary" data-upd="go">Оновити зараз</button>`:""}</div>
       <ul>${(info.notes||[]).slice(0,8).map(n=>`<li>${esc(n)}</li>`).join("")}</ul>
-      ${isNew?`<p class="hint">Зібрані щити й проєкти збережуться.</p>`:""}
+      ${isNew?`<p class="hint">Зібрані щитки й проєкти збережуться.</p>`:""}
       <div class="row" style="justify-content:flex-end">${isNew?"":`<button class="btn primary" data-upd="later">Закрити</button>`}</div>`;
     modal.hidden=false; const f=modal.querySelector(".btn.primary"); if(f) f.focus(); }
   async function check(silent){

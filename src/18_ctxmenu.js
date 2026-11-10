@@ -13,7 +13,7 @@ function ctxOpen(d,cx,cy){ ctxClose(); const t=T[d.type], m=document.createEleme
 // де в каталозі лежить тип — щоб заміна одразу показала схожі апарати
 function catOf(type){ for(let i=0;i<CATALOG.length;i++){ const s=CATALOG[i][1]; if(!Array.isArray(s)) continue;
     for(let j=0;j<s.length;j++) if(Array.isArray(s[j][1])&&s[j][1].includes(type)) return [i,j]; } return [1,0]; }
-// Заміна апарата на тому ж місці: id лишається, дроти на клеми, що є й у нового, — теж
+// Заміна апарата на тому ж місці: id лишається, перемички на клеми, що є й у нового, — теж
 function doReplace(id,type){ const i=S.devices.findIndex(x=>x.id===id); if(i<0){ S.repl=null; renderAll(); return; }
   const d=S.devices[i], t=T[type], r=d.rail||0;
   if(type===d.type){ toast("Це той самий апарат — оберіть інший або змініть номінал у «Налаштувати»"); return; }
@@ -26,8 +26,8 @@ function doReplace(id,type){ const i=S.devices.findIndex(x=>x.id===id); if(i<0){
   const keys=new Set(allTermKeys()), mine=k=>k.startsWith(d.id+":")||k.startsWith("tb:"+d.id+":"), n0=S.wires.length;
   S.wires=S.wires.filter(w=>[w.a,w.b].every(k=>!mine(k)||keys.has(k))); const cut=n0-S.wires.length;
   S.repl=null; S.devQ=""; S.selDev=null; commit();
-  toast(`${old} → ${desig(nd)} ${t.short}${nd.rating?" "+nd.rating+(t.unit||""):""}`+(cut?` · знято дротів: ${cut} — «⚡ Прокласти всі дроти» підключить заново`:"")+(lostG?" · група прибрана":""),cut||lostG?"w":"ok"); }
-// Перенесення дотиком: обираєте вільне місце — апарат переїжджає туди разом із дротами
+  toast(`${old} → ${desig(nd)} ${t.short}${nd.rating?" "+nd.rating+(t.unit||""):""}`+(cut?` · знято перемичок: ${cut} — «⚡ Прокласти всі перемички» підключить заново`:"")+(lostG?" · група прибрана":""),cut||lostG?"w":"ok"); }
+// Перенесення дотиком: обираєте вільне місце — апарат переїжджає туди разом із перемичками
 function doMoveTo(r,slot){ const d=S.devices.find(x=>x.id===S.moveDev); S.moveDev=null; S.pick=null; if(!d){ renderAll(); return; }
   if(!freeAt(r,slot,T[d.type].w,d)){ toast("Тут не вміщається — оберіть інше вільне місце","w"); S.moveDev=d.id; S.pick=d.type; renderAll(false); return; }
   moveDevice(d,r,slot); }
@@ -45,11 +45,11 @@ function combBroken(dev,old){ const c=S.comb, cov=combCov(), same=(dev.rail||0)=
   const names=cov.length?`${desig(cov[0])}${cov.length>1?"–"+desig(cov[cov.length-1]):""}`:"—";
   const B=[];
   if(same) B.push({label:`↔ Подовжити гребінку до ${desig(dev)}`,cls:"primary",act:()=>{ c.from=lo; c.to=hi; commit(); toast(`Гребінка: ${hi-lo+1} мод.`+(gaps?` · на вільний зубець — заглушка`:""),"ok"); }});
-  if(near) B.push({label:`〰 Перемичка дротом від ${desig(near)}`,cls:same?"":"primary",act:()=>{ S.wires.push({id:uid("w"),a:near.id+":t1",b:dev.id+":t1",kind:"L",sec}); commit(); toast(`Перемичка ${desig(near)} → ${desig(dev)}, ${fmt(sec,sec%1?1:0)} мм²`,"ok"); }});
+  if(near) B.push({label:`〰 Перемичка від ${desig(near)}`,cls:same?"":"primary",act:()=>{ S.wires.push({id:uid("w"),a:near.id+":t1",b:dev.id+":t1",kind:"L",sec}); commit(); toast(`Перемичка ${desig(near)} → ${desig(dev)}, ${fmt(sec,sec%1?1:0)} мм²`,"ok"); }});
   B.push({label:"↶ Повернути на місце",act:()=>{ if(freeAt(old[0],old[1],T[dev.type].w,dev)){ dev.rail=old[0]; dev.slot=old[1]; commit(); toast(`${desig(dev)} повернуто`,"ok"); } else toast("Старе місце вже зайняте","w"); }});
   B.push({label:"Залишити так",act:()=>toast(`${desig(dev)} без живлення — «Перевірка» це покаже`,"w")});
   dialog("Гребінка розірвалась",`<p><b>${esc(desig(dev))}</b> зійшов з гребінки (вона живить ${esc(names)}). Без живлення ця група не працюватиме.</p>`
-    +`<p class="hint2">${same?`Подовжити — гребінка дотягнеться до ${esc(desig(dev))}${gaps?`; вільних зубців: ${gaps} — закрийте їх заглушками`:""}. `:""}Перемичка — дріт ${fmt(sec,sec%1?1:0)} мм² між клемами 1. Або поверніть автомат назад.</p>`,B); }
+    +`<p class="hint2">${same?`Подовжити — гребінка дотягнеться до ${esc(desig(dev))}${gaps?`; вільних зубців: ${gaps} — закрийте їх заглушками`:""}. `:""}Перемичка — ${fmt(sec,sec%1?1:0)} мм² між клемами 1. Або поверніть автомат назад.</p>`,B); }
 document.addEventListener("click",e=>{ const m=$("ctxm"); if(!m) return; const b=e.target.closest("[data-cx]");
   if(!b){ if(!e.target.closest("#ctxm")) ctxClose(); return; }
   e.stopPropagation(); const d=S.devices.find(x=>x.id===m.dataset.dev); ctxClose(); if(!d) return;
