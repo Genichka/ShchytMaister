@@ -3,7 +3,8 @@
 const KMC_TXT = cs => { const no=cs.filter(c=>c[2]==="NO").length, nc=cs.length-no; return [no?`${no}НВ`:"",nc?`${nc}НЗ`:""].filter(Boolean).join("+"); };
 const KMC_EN  = cs => { const no=cs.filter(c=>c[2]==="NO").length, nc=cs.length-no; return [no?`${no}NO`:"",nc?`${nc}NC`:""].filter(Boolean).join(""); };
 function kmcFace(d,g,cs){ const p=!!d.pulled, tm=T[d.type].terms.filter(q=>q.s==="top");
-  let s=tx(g.cx,g.y+67,mdl(d,`КОНТАКТОР ${cs.length}P ${d.rating} А`),{fs:modelOf(d)&&g.w<80?5.4:g.w<60?5.2:6.6,fw:700})+tx(g.cx,g.y+77,g.w<60?KMC_TXT(cs):`${KMC_TXT(cs)} · котушка 230 В`,{fs:6});
+  const nar=g.w<80, lbl=mdl(d,nar?`КМ ${cs.length}P · ${d.rating} А`:`КОНТАКТОР ${cs.length}P ${d.rating} А`);
+  let s=tx(g.cx,g.y+67,lbl,{fs:nar?Math.min(6.2,(g.w-6)/(lbl.length*0.62)):6.6,fw:700})+tx(g.cx,g.y+77,g.w<60?KMC_TXT(cs):`${KMC_TXT(cs)} · котушка 230 В`,{fs:6});
   s+=`<rect x="${g.cx-15}" y="${g.y+83}" width="30" height="24" rx="3" fill="#2a2d33"/><rect x="${g.cx-11}" y="${g.y+(p?94:87)}" width="22" height="10" rx="2" fill="${p?"#e0352b":"#8e9196"}"/>`;
   cs.forEach((c,i)=>{ const t0=tm.find(q=>q.k===c[0]), X=t0?termX(d,t0):g.cx, cl=c[2]==="NC"?!p:p, col=cl?"#2e9e3e":"#7a7f88", y0=g.y+114;
     s+=`<path d="M${X} ${y0}v6${cl?"v9":`l-5 8`}M${X} ${y0+15}v6" stroke="${col}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
