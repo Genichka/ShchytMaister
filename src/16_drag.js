@@ -15,7 +15,7 @@
   function stop(cancel){ if(!D) return; const d=D; D=null; clearTimeout(d.tm); if(d.ghost) d.ghost.remove();
     if(!d.armed) return;
     if(d.moved){ noClickUntil=Date.now()+350; const t=d.t, dev=d.dev;
-      if(!cancel&&t&&t.ok&&(t.r!==(dev.rail||0)||t.slot!==dev.slot)){ dev.rail=t.r; dev.slot=t.slot; if(S.mode==="mount") S.selDev=dev.id; commit(); return; }
+      if(!cancel&&t&&t.ok&&(t.r!==(dev.rail||0)||t.slot!==dev.slot)){ moveDevice(dev,t.r,t.slot); return; }
       if(!cancel&&t&&!t.ok) toast("Там зайнято","w"); renderAll(false); return; }
     if(d.lifted){ noClickUntil=Date.now()+350; renderAll(false); if(!cancel) ctxOpen(d.dev,d.cx,d.cy); } }   // затиснули й відпустили — меню апарата
 
