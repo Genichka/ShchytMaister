@@ -52,7 +52,7 @@ function runChecks(){
     out.trips=S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip);
     if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; man(2); powerUp([inp.id]); runFor(1);
         const fed=G.filter(g=>S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral).map(g=>g.id); runFor(9);
-        return {inp, fed, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
+        return {inp, fed, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!g.group.nobk&&!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
       S.log=[]; man(1); powerUp(); runFor(8); S.src[b.inputs[0].id].on=false; man(0); runFor(1); man(2); runFor(9); S.src[b.inputs[0].id].on=true; man(0); runFor(1); man(1); runFor(11);
       out.back={err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip)}; }
     if(S.tplObj&&S.tplObj.checks){ out.tpl=[]; S.tplObj.checks((s,t,d)=>out.tpl.push({sev:s,t,d})); }
@@ -67,7 +67,7 @@ function runChecks(){
   if(multi){ for(const a of res.alt){ const bad=a.err.length||a.trips.length||a.g.length;
       if(bad){ for(const e of a.err) add("e",`Лише «${a.inp.label}»: аварія`,e); for(const t of a.trips) add("e",`Лише «${a.inp.label}»: спрацював захист`,t);
         if(a.g.length) add("e",`Лише «${a.inp.label}»: групи без живлення`,a.g.join(", ")+". АВР не перевів навантаження на резерв."); }
-      else add("ok",`Від «${a.inp.label}» живляться всі групи`,"Перевірено з вимкненим основним вводом.");
+      else add("ok",`Від «${a.inp.label}» живляться ${G.some(g=>g.group.nobk)?"всі резервні":"всі"} групи`,"Перевірено з вимкненим основним вводом.");
       if(a.inp.inv){ const fg=G.filter(g=>a.fed.includes(g.id)), kw=a.inp.inv.kw, on=fg.reduce((x,g)=>x+kwOf(g),0), all=fg.reduce((x,g)=>x+kwOf(g,true),0);
         if(on>kw) add("e",`Від інвертора: увімкнено ${fmt(on,1)} кВт при номіналі ${fmt(kw,1)} кВт`,"Без мережі інвертор вимкнеться від перевантаження. На резерв залиште лише потрібне: холодильник, котел, світло, роутер — а бойлер чи плиту живіть лише від мережі (до АВР).");
         else if(all>kw) add("w",`Усі прилади на резерві разом ${fmt(all,1)} кВт — більше за інвертор ${fmt(kw,1)} кВт`,"Від інвертора не вмикайте одночасно чайник, бойлер, праску.");

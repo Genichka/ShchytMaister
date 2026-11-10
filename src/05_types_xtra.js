@@ -4,8 +4,8 @@ const P4 = (pre) => [{k:"t1",s:"top",r:"P",l:"1"},{k:"t2",s:"top",r:"P",l:"3"},{
 const POLES4 = [{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"L"},{a:"t3",b:"b3",r:"L"},{a:"t4",b:"b4",r:"N"}];
 Object.assign(T.qf3p,{group:true, groupOpt:true, gph:3});
 defType("qf4p",{...brk, name:"Автомат 3P+N (4P)", short:"Автомат 4P", cat:"Захист", w:4, pre:"QF", group:true, groupOpt:true, gph:3,
-  terms:P4(), poles:POLES4, ratings:["C16","C25","C32","C40","C50","C63"], def:"C25", face:breakerFace, cap:"Ввід 400 В"});
-defType("rcd4",{name:"ПЗВ 4P 30 мА", short:"ПЗВ 4P", cat:"Захист", w:4, pre:"QD", rcd:true, terms:P4(), poles:POLES4, ratings:["25","40","63"], def:"40", unit:" А", cap:"Захист від ураження",
+  terms:P4(), poles:POLES4, ratings:["C6","C10","C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"], def:"C25", face:breakerFace, cap:"Ввід 400 В"});
+defType("rcd4",{name:"ПЗВ 4P 30 мА", short:"ПЗВ 4P", cat:"Захист", w:4, pre:"QD", rcd:true, terms:P4(), poles:POLES4, ratings:["16","25","32","40","63","80","100"], def:"40", unit:" А", cap:"Захист від ураження",
   face(d,g){ return tx(g.cx,g.y+72,mdl(d,"ПЗВ 4P · ΔI 30 мА"),{fs:7})+tx(g.cx,g.y+90,d.rating+" А",{c:"svt",fs:15})+lever(d,g.cx,g.y+102,72,g.on,"#2f6fdf")+flag(g.cx,g.y+150,g.on)+testBtn(d,g); }});
 // Реле контролю фаз: наявність, напруга, послідовність L1-L2-L3
 defType("kvf",{name:"Реле контролю фаз", short:"Реле контролю фаз", cat:"Захист", w:2, pre:"KV",

@@ -22,22 +22,22 @@ const TIO = [...TLN,{k:"Lo",s:"bot",r:"L",l:"L"},{k:"No",s:"bot",r:"N",l:"N"}], 
 
 defType("qf1p",{...brk, name:"Автомат 1P", short:"Автомат 1P", cat:"Захист", w:1, pre:"QF", group:true,
   terms:T1P, poles:P1P,
-  ratings:["B6","B10","B16","B20","B25","C6","C10","C16","C20","C25","C32","C40"], def:"B16", face:breakerFace});
+  ratings:["B6","B10","B16","B20","B25","B32","B40","B50","B63","C6","C10","C16","C20","C25","C32","C40","C50","C63"], def:"B16", face:breakerFace});
 defType("qf2p",{...brk, name:"Автомат 2P", short:"Автомат 2P", cat:"Захист", w:2, pre:"QF",
-  terms:T2P, poles:PLN, ratings:["C16","C20","C25","C32","C40","C50","C63"], def:"C32", face:breakerFace, cap:"Ввід 230 В"});
+  terms:T2P, poles:PLN, ratings:["C6","C10","C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"], def:"C32", face:breakerFace, cap:"Ввід 230 В"});
 defType("qf3p",{...brk, name:"Автомат 3P", short:"Автомат 3P", cat:"Захист", w:3, pre:"QF",
   terms:[{k:"t1",s:"top",r:"P",l:"1"},{k:"t2",s:"top",r:"P",l:"3"},{k:"t3",s:"top",r:"P",l:"5"},{k:"b1",s:"bot",r:"P",l:"2"},{k:"b2",s:"bot",r:"P",l:"4"},{k:"b3",s:"bot",r:"P",l:"6"}],
-  poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"L"},{a:"t3",b:"b3",r:"L"}], ratings:["C10","C16","C25","C32","C40","C63"], def:"C25", face:breakerFace, cap:"Ввід 400 В"});
+  poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"L"},{a:"t3",b:"b3",r:"L"}], ratings:["C6","C10","C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"], def:"C25", face:breakerFace, cap:"Ввід 400 В"});
 defType("rcd",{name:"ПЗВ 30 мА", short:"ПЗВ (УЗО)", cat:"Захист", w:2, pre:"QD", rcd:true, sheetRatings:true,
-  terms:T1N, poles:PLN, ratings:["25","40","63"], def:"40", unit:" А", cap:"Захист від ураження",
+  terms:T1N, poles:PLN, ratings:["16","25","32","40","63","80","100"], def:"40", unit:" А", cap:"Захист від ураження",
   face(d,g){ return tx(g.cx,g.y+72,mdl(d,"ПЗВ · ΔI 30 мА"),{fs:modelOf(d)?6:7})+tx(g.cx,g.y+90,d.rating+" А",{c:"svt",fs:15})+lever(d,g.cx,g.y+102,44,g.on,"#2f6fdf")+flag(g.cx,g.y+150,g.on)+testBtn(d,g); }});
 const testBtn = (d,g) => `<g data-test="${d.id}" style="cursor:pointer"><circle cx="${g.x+g.w-11}" cy="${g.y+72}" r="8" fill="#f2c400" stroke="#8a6d00"/><text x="${g.x+g.w-11}" y="${g.y+75}" font-size="9" font-weight="700" text-anchor="middle" fill="#222">T</text></g>`;
 defType("rcbo",{...brk, name:"Диф-автомат", short:"Диф-автомат", cat:"Захист", w:2, pre:"QFD", rcd:true, group:true,
-  terms:T1N, poles:PLN, ratings:["B10","B16","C16","C20","C25","C32"], def:"C16",
+  terms:T1N, poles:PLN, ratings:["B6","B10","B16","B20","B25","B32","C6","C10","C16","C20","C25","C32","C40"], def:"C16",
   face(d,g){ return breakerFace(d,g)+tx(g.cx,g.y+98,"30 мА",{fs:7})+testBtn(d,g); }});
 defType("kv",{name:"Реле напруги", short:"Реле напруги", cat:"Захист", w:2, pre:"KV", sheetRatings:true, unit:" А",
   terms:[{k:"t1",s:"top",r:"N",l:"N"},{k:"t2",s:"top",r:"L",l:"L вх"},{k:"b2",s:"bot",r:"L",l:"L вих",m:1}],
-  poles:[{a:"t2",b:"b2",r:"L"}], ratings:["40","63"], def:"40", cap:"Контроль напруги",
+  poles:[{a:"t2",b:"b2",r:"L"}], ratings:["16","25","32","40","63"], def:"40", cap:"Контроль напруги",
   closed:d=>!!(d.ks&&d.ks.closed),
   logic(d,X){ const s=d.ks||(d.ks={closed:false,delay:KV_DELAY}); const U=X.volt(K(d,"t2"),K(d,"t1")); s.U=U; s.pw=U>60;
     const bad=U>U_MAX||U<U_MIN;

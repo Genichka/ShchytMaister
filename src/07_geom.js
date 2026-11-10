@@ -16,8 +16,9 @@ function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, g
   for(let i=0;i<n;i++){ pos["xn:"+i]=x; x+=sp; } x+=20-sp+sp;
   if(m){ b.xt.forEach(t=>{ pos["xt:"+t.k]=x; x+=sp; }); x+=20; }
   const shift=Math.max(0,716-(x+(p-1)*sp)); x+=shift; for(let i=0;i<p;i++){ pos["xpe:"+i]=x; x+=sp; }
-  let tsp=26; const tg=b.tb?groupsOf():[], tn=tg.reduce((a,g)=>a+tbTerms(g).length,0); if(tn){ if(tn*tsp+(tg.length-1)*12>660) tsp=Math.max(16,(660-(tg.length-1)*12)/tn);
-    let tx2=Math.max(110,420-(tn*tsp+(tg.length-1)*12)/2); for(const g of tg){ for(const t of tbTerms(g)){ pos[tbK(g,t)]=tx2; tx2+=tsp; } tx2+=12; } }
+  let tsp=26, tgap=12; const tg=b.tb?groupsOf():[], tn=tg.reduce((a,g)=>a+tbTerms(g).length,0); if(tn){ const AV=740;   // колодка не виходить за рейку/корпус: звужуємо клеми й проміжки між групами
+    if(tn*tsp+(tg.length-1)*tgap>AV){ tgap=tg.length>8?4:8; tsp=Math.max(8,Math.min(26,(AV-(tg.length-1)*tgap)/tn)); }
+    let tx2=420-(tn*tsp+(tg.length-1)*tgap)/2+tsp/2; for(const g of tg){ for(const t of tbTerms(g)){ pos[tbK(g,t)]=tx2; tx2+=tsp; } tx2+=tgap; } }
   return {pos,sp,tsp}; }
 let GEO=null;
 function geoCache(){ GEO={inx:inputX(), bus:busRow()}; return GEO; }
@@ -105,8 +106,12 @@ function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 600 
   svg.innerHTML=s; }
 function render(){ if(S.noDoc){ renderEmpty(); return; } 
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
-  svg.setAttribute("viewBox",`0 0 840 ${H}`);
+  svg.setAttribute("viewBox",`-56 0 952 ${H+36}`);   // поля з боків і знизу — під розмірні лінії
   s+=`<rect class="encl" x="14" y="70" width="812" height="${enclB()-70}" rx="10"/><rect class="encl-in" x="26" y="82" width="788" height="${enclB()-94}" rx="6"/>`;
+  { const eb=enclB(), mm=px=>Math.round(px/G.MW*17.5), ex=-24, ey=eb+24;   // розміри корпуса: модуль DIN 17,5 мм = ширина слота на схемі
+    s+=`<g class="dim"><path d="M14 70H${ex-6}M14 ${eb}H${ex-6}M${ex} 70V${eb}M${ex-4} 76L${ex} 70L${ex+4} 76M${ex-4} ${eb-6}L${ex} ${eb}L${ex+4} ${eb-6}`+
+      `M14 ${eb}V${ey+6}M826 ${eb}V${ey+6}M14 ${ey}H826M20 ${ey-4}L14 ${ey}L20 ${ey+4}M820 ${ey-4}L826 ${ey}L820 ${ey+4}"/></g>`+
+      `<text class="dim-t" x="420" y="${ey-6}">≈ ${mm(812)} мм</text><text class="dim-t" x="${ex-8}" y="${(70+eb)/2}" transform="rotate(-90 ${ex-8} ${(70+eb)/2})">≈ ${mm(eb-70)} мм</text>`; }
   for(const [cx,cy] of [[44,100],[796,100],[44,enclB()-30],[796,enclB()-30]]) s+=`<circle cx="${cx}" cy="${cy}" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5"/>`;
   for(let r=0;r<b.rails;r++) s+=`<rect class="rail" x="40" y="${devTop(r)+64}" width="760" height="46" rx="2" opacity=".55"/><rect class="rail" x="40" y="${devTop(r)+74}" width="760" height="26" opacity=".9"/>`;
   const used=S.devices.reduce((a,d)=>a+T[d.type].w,0);
@@ -120,8 +125,8 @@ function render(){ if(S.noDoc){ renderEmpty(); return; }
   if(b.tb&&groupsOf().length){ const TY=tbY(), ts=GEO.bus.tsp, gs=groupsOf(), all=gs.flatMap(g=>tbTerms(g).map(t=>bp[tbK(g,t)]));
     s+=`<rect class="rail" x="${Math.min(...all)-22}" y="${TY-13}" width="${Math.max(...all)-Math.min(...all)+44}" height="26" rx="2" opacity=".9"/>`+tx(Math.min(...all)-22,TY-18,"XT2 · клемна колодка відхідних ліній",{c:"lab",fs:10,a:"start"});
     for(const g of gs){ const ts2=tbTerms(g), x0=bp[tbK(g,ts2[0])], x1=bp[tbK(g,ts2[ts2.length-1])];
-      for(const t of ts2){ const X=bp[tbK(g,t)], c=t==="N"?"#2f6fdf":t==="PE"?"#f2c400":"#9aa0a6"; s+=`<rect x="${X-ts/2+1}" y="${TY-15}" width="${ts-2}" height="30" rx="2" fill="${c}" stroke="#555" stroke-width=".8"/>`+(t==="PE"?`<rect x="${X-ts/2+1}" y="${TY+4}" width="${ts-2}" height="5" fill="#2e9a3e"/>`:"")+screw(X,TY,ts<22?7:9); }
-      s+=`<rect x="${x0-ts/2+1}" y="${TY+17}" width="${x1-x0+ts-2}" height="4" fill="${g.group.color}"/>`+tx((x0+x1)/2,TY+31,desig(g)+" · "+ts2.join(" "),{c:"lab",fs:7.5}); } }
+      for(const t of ts2){ const X=bp[tbK(g,t)], c=t==="N"?"#2f6fdf":t==="PE"?"#f2c400":"#9aa0a6"; s+=`<rect x="${X-ts/2+1}" y="${TY-15}" width="${ts-2}" height="30" rx="2" fill="${c}" stroke="#555" stroke-width=".8"/>`+(t==="PE"?`<rect x="${X-ts/2+1}" y="${TY+4}" width="${ts-2}" height="5" fill="#2e9a3e"/>`:"")+screw(X,TY,ts<22?Math.max(4,ts*0.38):9); }
+      s+=`<rect x="${x0-ts/2+1}" y="${TY+17}" width="${x1-x0+ts-2}" height="4" fill="${g.group.color}"/>`+tx((x0+x1)/2,TY+31,ts<20?desig(g):desig(g)+" · "+ts2.join(" "),{c:"lab",fs:ts<20?6.5:7.5}); } }
   for(const k of Object.keys(bp)) if(!/^tb:/.test(k)) s+=screw(bp[k],B,sp<26?9:11);
   for(const inp of b.inputs){ const src=S.src[inp.id]||{}, x0=inx[inp.id];
     if(inp.inv){ const live=srcLive(inp,src), st=!src.on?"вимкнено":src.fault>0?"захист":src.low?"АКБ розряджена":"~230 В";
@@ -157,10 +162,11 @@ function render(){ if(S.noDoc){ renderEmpty(); return; }
       else if(S.moveEnd){ const mw=wireById(S.moveEnd.id); if(mw&&kindFits(mw.kind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`; }
       else if(S.pend&&kindFits(S.wireKind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`;
       s+=`<circle class="term-hit" data-term="${k}" cx="${p.x}" cy="${p.y}" r="15"/>`; } }
+  s+=`<g class="eclose" data-closeboard role="button" aria-label="Закрити щит"><title>Закрити щит</title><circle cx="826" cy="70" r="14"/><path d="M820 64l12 12M832 64l-12 12"/></g>`;
   svg.innerHTML=s;
 }
 
 // Прокрутити щит так, щоб підсвічені клеми було видно
 function scrollToKeys(keys){ const sc=$("scroller"), svg=$("svg"), vb=svg.viewBox.baseVal; if(!vb||!vb.width) return; const k=svg.clientWidth/vb.width, ps=keys.map(termPos).filter(Boolean); if(!ps.length) return;
-  const y0=Math.min(...ps.map(p=>p.y))*k, y1=Math.max(...ps.map(p=>p.y))*k, x0=Math.min(...ps.map(p=>p.x))*k, x1=Math.max(...ps.map(p=>p.x))*k, H=sc.clientHeight, W=sc.clientWidth;
+  const y0=Math.min(...ps.map(p=>p.y))*k, y1=Math.max(...ps.map(p=>p.y))*k, x0=(Math.min(...ps.map(p=>p.x))-vb.x)*k, x1=(Math.max(...ps.map(p=>p.x))-vb.x)*k, H=sc.clientHeight, W=sc.clientWidth;
   const ty=y1-y0<H-60?(y0+y1)/2-H/2:y0-40, tx2=x1-x0<W-60?(x0+x1)/2-W/2:x0-30; sc.scrollTo({top:Math.max(0,ty),left:Math.max(0,tx2),behavior:"smooth"}); }

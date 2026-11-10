@@ -37,7 +37,7 @@ function loadData(d){ S.noDoc=false; Object.assign(S,{tpl:d.tpl||"custom", board
 function openProject(id){ const db=projDB(), p=db.list.find(x=>x.id===id); if(!p) return; loadData(p.data); S.proj={id:p.id,name:p.name}; db.cur=id; projSave(db); afterSwitch(); toast(`Відкрито: «${p.name}»`,"ok"); }
 function afterSwitch(){ GEO=null; Object.assign(S,{pend:null,selWire:null,selDev:null,pick:null,heat:{},log:[]}); if(S.demo) demoStop(); S.leak.clear(); S.short.clear(); S.leakWarned.clear(); S.arc.clear(); S.arcWarned.clear();
   resetHistory(); S.baseSig=structSnap(); clearCheck(); save(); solve(0); renderAll(true); tplLabel(); renderProjBtn(); }
-function renderProjBtn(){ const el=$("projName"); if(!el) return; if(S.noDoc){ el.textContent="Немає щита"; const b0=$("projBtn"); if(b0){ b0.classList.remove("unsaved"); b0.classList.add("nodoc"); b0.title="Немає відкритого щита"; } return; } $("projBtn").classList.remove("nodoc"); const ok=!!(S.proj&&S.proj.id); el.textContent=(S.proj&&S.proj.name)||"Новий щит"; const b=$("projBtn"); if(b){ b.classList.toggle("unsaved",!ok); b.title=ok?"Збережено · відкрити меню проєкту":"Не збережено · відкрити меню проєкту"; } }
+function renderProjBtn(){ const el=$("projName"); if(!el) return; { const w=$("projBtn")&&$("projBtn").parentElement; if(w) w.hidden=!!S.noDoc; } if(S.noDoc){ el.textContent="Немає щита"; const b0=$("projBtn"); if(b0){ b0.classList.remove("unsaved"); b0.classList.add("nodoc"); b0.title="Немає відкритого щита"; } return; } $("projBtn").classList.remove("nodoc"); const ok=!!(S.proj&&S.proj.id); el.textContent=(S.proj&&S.proj.name)||"Новий щит"; const b=$("projBtn"); if(b){ b.classList.toggle("unsaved",!ok); b.title=ok?"Збережено · відкрити меню проєкту":"Не збережено · відкрити меню проєкту"; } }
 const isDirty = () => !S.noDoc && !(S.proj&&S.proj.id) && S.baseSig && structSnap()!==S.baseSig;
 function confirmLeave(next){
   if(!isDirty()){ next(); return; }
@@ -90,7 +90,8 @@ const KINDS = [["1ph","1 фаза · 230 В","Квартира, дім, дача
 const INV_KW=[3,3.6,5,6,8], INV_KWH=[2.5,5,10,15];
 const kindTitle = w => w.kind==="2inv"?`2 вводи · мережа + інвертор ${fmt(w.ikw,w.ikw%1?1:0)} кВт, АКБ ${fmt(w.ikwh,w.ikwh%1?1:0)} кВт·год`:(KINDS.find(x=>x[0]===w.kind)||["","DC-бокс"])[1];
 function boardFor(w){ const cur=S.board;
-  const inputs = w.kind==="gnd"?cur.inputs : w.kind==="3ph"?[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}]
+  const keep = w.edit && cur.inputs.length>1 && boardKind(cur)===w.kind;
+  const inputs = keep ? cur.inputs.map(i=>i.inv?Object.assign({},i,{inv:{kw:w.ikw,kwh:w.ikwh}}):i) : w.kind==="gnd"?cur.inputs : w.kind==="3ph"?[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}]
     : w.kind==="2in"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}]
     : w.kind==="2inv"?[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · інвертор",terms:["L","N"],inv:{kw:w.ikw,kwh:w.ikwh}}] : [{id:"in",label:"Ввід",terms:["L","N","PE"]}];
   return {rails:w.rails, inputs, xn:w.xn, xpe:w.xpe, xt:w.edit?cur.xt:[], tb:!!w.tb, noRcd:!!w.noRcd}; }
@@ -203,8 +204,9 @@ function updateDemoStat(){ const el=$("dbStat"); if(!el||$("demobar").hidden||!S
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(el=q("[data-dlg]")){ const x=DLG[+el.dataset.dlg]; closeDlg(); if(x&&x.act) x.act(); return; }
   if(e.target.id==="dlg"){ closeDlg(); return; }
-  if(q("#projBtn")){ openProjects(); return; }
+  if(q("#projBtn")){ closeDrawer(); openProjects(); return; }
   if(q("[data-nodoc='tpl']")){ openDrawer(true); return; }
+  if(q("[data-nodoc='open']")){ openProjects(); return; }
   if(el=q("[data-pa]")){ const a=el.dataset.pa, id=el.dataset.pid;
     if(a==="save"){ saveProject(); openProjects(); }
     if(a==="openlistdlg"){ openProjects(); setTimeout(()=>{ const h=$("plistH"); if(h) h.scrollIntoView({block:"start"}); },50); }

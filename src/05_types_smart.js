@@ -36,7 +36,7 @@ defType("kr2",{name:"Реле крана 2-канальне", short:"Реле к
   face:(d,g)=>smartFace(d,g,"РЕЛЕ КРАНА",d.cmd==="open"?"ВІДКРИТИ":"ЗАКРИТИ",d.cmd==="open")});
 defType("qfdc",{...brk, name:"Автомат DC 2P", short:"Автомат DC", cat:"СЕС", w:2, pre:"QF",
   terms:[{k:"p1",s:"top",r:"DC+",l:"+"},{k:"m1",s:"top",r:"DC-",l:"−"},{k:"p2",s:"bot",r:"DC+",l:"+"},{k:"m2",s:"bot",r:"DC-",l:"−"}],
-  poles:[{a:"p1",b:"p2",r:"L"},{a:"m1",b:"m2",r:"L"}], ratings:["C16","C25","C32","C63","C125"], def:"C16", cap:"DC",
+  poles:[{a:"p1",b:"p2",r:"L"},{a:"m1",b:"m2",r:"L"}], ratings:["C10","C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"], def:"C16", cap:"DC",
   face(d,g){ return tx(g.cx,g.y+70,d.model||"DC 1000 В",{fs:7,fw:700})+breakerFace(d,g); }});
 defType("spdc",{name:"УЗІП DC 1000 В", short:"УЗІП DC", cat:"СЕС", w:2, pre:"FV",
   terms:[{k:"p",s:"top",r:"DC+",l:"+"},{k:"m",s:"top",r:"DC-",l:"−"},{k:"pe",s:"bot",r:"PE",l:"PE"}], cap:"Захист від імпульсів",

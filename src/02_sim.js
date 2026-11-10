@@ -30,7 +30,7 @@ function invTick(X,dt){ let loads=null;
   for(const inp of S.board.inputs){ if(!inp.inv) continue; const s=S.src[inp.id]; if(!s) continue; if(s.soc===undefined) s.soc=80;
     if(s.fault>0){ s.fault=Math.max(0,s.fault-dt); if(!s.fault&&s.on&&!s.low) logp("ok","Інвертор знову ввімкнувся"); }
     const live=srcLive(inp,s); let P=0;
-    if(live){ loads=loads||computeLoads(X); for(const l of loads){ if(!l.a||!(l.I>0)) continue; const p=X.ph(l.a); if(p&&srcOf(p)===inp.id) P+=l.I*(l.U||230)/1000; } }
+    if(live){ loads=loads||computeLoads(X); for(const l of loads){ if(l.abc&&l.Is){ const p3=X.ph(l.abc[0]); if(p3&&srcOf(p3)===inp.id) P+=l.Is.reduce((a,i)=>a+(i||0),0)*(l.U||230)/1000; continue; } if(!l.a||!(l.I>0)) continue; const p=X.ph(l.a); if(p&&srcOf(p)===inp.id) P+=l.I*(l.U||230)/1000; } }
     s.P=P; const kw=inp.inv.kw||5, kwh=inp.inv.kwh||5;
     if(live&&P>kw+0.05){ s.ovl=(s.ovl||0)+dt; if(s.ovl>=2) invFault(inp.id,10,`перевантаження ${fmt(P,1)} кВт при номіналі ${fmt(kw,1)} кВт — вихід вимкнено на 10 с`); } else s.ovl=0;
     const grid=S.board.inputs.some(i=>!i.inv&&srcLive(i,S.src[i.id])&&S.src[i.id].U>=187&&S.src[i.id].U<=253);

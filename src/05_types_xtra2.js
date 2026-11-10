@@ -1,8 +1,8 @@
 /* ===== Нові апарати: автомат 1P+N, AFDD, вимикач навантаження, запобіжник AC, перемикач фаз, вольтметр, УЗІП 3P+N, сходовий таймер ===== */
 defType("qfn",{...brk, name:"Автомат 1P+N (1 модуль)", short:"Автомат 1P+N", cat:"Захист", w:1, pre:"QF", group:true,
-  terms:T1N, poles:PLN, ratings:["B6","B10","B16","B20","C6","C10","C16","C20","C25","C32"], def:"B16", face:breakerFace});
+  terms:T1N, poles:PLN, ratings:["B6","B10","B16","B20","B25","B32","C6","C10","C16","C20","C25","C32","C40"], def:"B16", face:breakerFace});
 defType("afdd",{...brk, name:"AFDD — захист від іскріння + автомат 1P+N", short:"AFDD (іскріння)", cat:"Захист", w:2, pre:"QFA", group:true, afdd:true,
-  terms:T1N, poles:PLN, ratings:["B10","B16","C10","C16","C20","C25"], def:"B16",
+  terms:T1N, poles:PLN, ratings:["B6","B10","B16","B20","B25","B32","C6","C10","C16","C20","C25","C32"], def:"B16",
   face(d,g){ return breakerFace(d,g)+tx(g.x+g.w-14,g.y+98,"AFDD",{fs:6,fw:700})+led(g.x+g.w-14,g.y+110,d.trip&&/іскр/.test(d.trip)?"#ffb21f":"#5a5e66")+tx(g.x+14,g.y+98,"ARC",{fs:6,fw:700}); }});
 defType("sw2",{name:"Вимикач навантаження 2P 40 А", short:"Вимикач 2P", cat:"Комутація", w:2, pre:"QS", sheetRatings:false,
   terms:T2P, poles:PLN, closed:d=>d.on!==false, cap:"Головний вимикач",
