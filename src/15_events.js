@@ -65,22 +65,28 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("#docsBtn")){ openDocs("sld"); return; }
   if(el=q("[data-hgo]")){ if(el.dataset.hgo==="docs") openDocs("sld"); else { S.mode=el.dataset.hgo; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; renderAll(); } return; }
   if(q("#zAll")){ S.zoom=fitZoom(); renderAll(false); $("scroller").scrollTo(0,0); return; }
-  if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; renderAll(); return; }
+  if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; S.repl=null; S.moveDev=null; ctxClose(); renderAll(); return; }
   if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }
   if(el=q("[data-wire]")){ const id=el.dataset.wire; if(S.mode!=="wire"){ S.mode="wire"; S.pend=null; S.pick=null; S.selDev=null; selectWire(id); renderAll(true); toast("Проводка: дріт вибрано — дії в панелі внизу"); return; }
     if(S.selWire===id){ S.selWire=null; renderAll(); } else selectWire(id); return; }
+  if((S.mode==="mount"||S.mode==="wire")&&(el=q("[data-dev]"))){ const d=S.devices.find(x=>x.id===el.dataset.dev); if(!d) return;
+    if(S.mode==="wire"&&nearTerm(e)) return; if(S.moveDev){ toast("Оберіть вільне місце на рейці — або «Скасувати» внизу"); return; }
+    S.pick=null; S.repl=null; ctxOpen(d,e.clientX,e.clientY); return; }
   if(el=q("[data-press]")){ if(S.mode==="wire") return; livePress(devById(el.dataset.press)); return; }
   if(el=q("[data-lever]")){ if(S.mode==="wire") return; const d=devById(el.dataset.lever), t=T[d.type];
     if(t.tap){ if(t.tap(d,el)) commit(false); return; }
     if(t.prot||t.rcd){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; S.heat[d.id]=0; } commit(false); } return; }
   if(el=q("[data-test]")){ const d=devById(el.dataset.test), X=evaluate({extra:shortsExtra()});
     if(d.on&&!d.trip&&X.volt(k(d,"t1"),k(d,"t2"))>=150){ trip(d,"кнопка «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює, лише коли ПЗВ під напругою і ввімкнений","w"); return; }
-  if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть апарат нижче"); return; }
+  if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.moveDev) doMoveTo(r,i); else if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть апарат нижче"); return; }
   if(el=q("[data-pqty]")){ S.pickQty=+el.dataset.pqty; renderAll(false); return; }
   if(el=q("[data-prate]")){ S.pickRating=el.dataset.prate; renderAll(false); return; }
   if(q("[data-pauto]")){ if(S.pick){ const f=nextFree(T[S.pick].w,0,0); if(f) placeDev(S.pick,f[0],f[1]); else toast("Немає вільного місця","w"); } return; }
   if(q("[data-pickx]")){ S.pick=null; S.pickRating=null; S.pickExtra=null; S.pickQty=1; renderAll(); return; }
-  if(el=q("[data-dev]")){ if(S.mode==="wire") return; S.selDev=el.dataset.dev; renderAll(false); return; }
+  if(el=q("[data-dev]")){ S.selDev=el.dataset.dev; renderAll(false); return; }
+  if((el=q("[data-pick]"))&&S.repl){ doReplace(S.repl,el.dataset.pick); return; }
+  if(q("[data-replx]")){ S.repl=null; S.devQ=""; renderAll(); return; }
+  if(q("[data-mvx]")){ S.moveDev=null; S.pick=null; renderAll(); return; }
   if(el=q("[data-pick]")){ S.devQ=""; S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.pickRating=null; S.pickExtra=null; S.selDev=null; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); } renderAll(); return; }
   if(el=q("[data-fpick]")){ const o=S.devFilter.opts[+el.dataset.fpick]; S.pick=o[0]; S.pickRating=o[1]||null; S.pickExtra=o[3]||null; S.selDev=null;
     toast(`${o[2]}: торкніться вільного місця на рейці`); renderAll(); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); return; }

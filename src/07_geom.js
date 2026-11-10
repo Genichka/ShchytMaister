@@ -139,7 +139,7 @@ function render(){ if(S.noDoc){ renderEmpty(); return; }
       s+=tx(x0-16,12,`${inp.label} · ${st} · АКБ ${Math.round(src.soc??80)} %`,{c:"lab",fs:9.5,a:"start",fill:live?"var(--green)":src.on?"var(--red)":undefined}); }
     else s+=tx(x0-16,12,inp.label+(inp.terms.every(t=>t==="PE")?"":" · "+(src.on?"~"+Math.round(src.U*(inp.terms.includes("L1")?1.732:1))+" В":"0 В")),{c:"lab",fs:9.5,a:"start",fill:src.on?"var(--green)":undefined});
     for(const t of inp.terms){ const x=inx[inp.id+":"+t]; s+=`<rect x="${x-16}" y="20" width="32" height="32" rx="3" fill="var(--panel2)" stroke="var(--line)"/>`+screw(x,G.INY)+tx(x,64,t,{c:"lab",fs:8.5}); } }
-  if(S.mode==="mount") for(let r=0;r<b.rails;r++) for(let i=0;i<SLOTS;i++){ if(devAt(r,i)) continue; const fits=!S.pick||freeAt(r,i,T[S.pick].w);
+  if(S.mode==="mount") for(let r=0;r<b.rails;r++) for(let i=0;i<SLOTS;i++){ if(devAt(r,i)) continue; const fits=!S.pick||freeAt(r,i,T[S.pick].w,S.moveDev?S.devices.find(x=>x.id===S.moveDev):undefined);
     s+=`<rect class="slot" data-slot="${r}:${i}" x="${G.X0+i*G.MW+3}" y="${devTop(r)}" width="${G.MW-6}" height="240" rx="4" style="${S.pick&&fits?"stroke:var(--blue);opacity:1":""}${S.pick&&!fits?";opacity:.2":""}"/>`+tx(G.X0+i*G.MW+G.MW/2,devTop(r)+130,String(r*12+i+1),{c:"lab",fs:10}); }
   for(const d of S.devices) s+=devSVG(d);
   if(S.comb){ const cr=S.comb.rail||0, cov=S.devices.filter(d=>d.type==="qf1p"&&(d.rail||0)===cr&&d.slot>=S.comb.from&&d.slot<=S.comb.to).map(d=>G.X0+d.slot*G.MW+G.MW/2), y=devTop(cr);

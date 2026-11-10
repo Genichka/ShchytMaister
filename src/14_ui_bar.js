@@ -46,11 +46,13 @@ function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def|
   return bhead(`Ставимо: ${esc(t.short)}${rate?" "+hlr(rate+(t.unit||"")):""} <span class="bm">${t.w} мод.</span>`,`<button class="bx" data-pickx aria-label="Скасувати">✕</button>`)
     +(t.ratings?brow(`<span class="bl">Номінал</span>`+t.ratings.map(r=>chip(`data-prate="${r}"`,rate===r,r+(t.unit||""),"mono rt")).join("")):"")
     +brow(`<span class="bl">Скільки</span>`+[1,2,3,4,5,6,8].map(n=>chip(`data-pqty="${n}"`,q===n,"×"+n,"mono")).join("")+`<button class="btn sm" data-pauto>Поставити ×${q} у вільні місця</button>`); }
-function mountBar(){ if(S.pick&&T[S.pick]) return pickBar(); const F=S.devFilter, mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
+function mountBar(){ const mv=S.moveDev&&S.devices.find(x=>x.id===S.moveDev);
+  if(mv) return bhead(`✥ Перенесення ${esc(desig(mv))} · ${esc(T[mv.type].short)}`,"")+brow(`<span class="bl">Торкніться вільного місця на рейці — підсвічено синім</span><button class="btn sm" data-mvx>Скасувати</button>`,"wrap");
+  if(S.pick&&T[S.pick]) return pickBar(); const F=S.devFilter, mods=S.devices.reduce((a,d)=>a+T[d.type].w,0);
   if(F) return brow(`<span class="bl">${esc(F.title)} — оберіть:</span><button class="chip" data-fall>Усі апарати</button>`)
     +brow(F.opts.map((o,i)=>`<button class="dc" data-fpick="${i}" aria-pressed="${S.pick===o[0]&&(S.pickRating||null)===(o[1]||null)&&JSON.stringify(S.pickExtra||null)===JSON.stringify(o[3]||null)}"><b>${hlr(o[2]).replace(/^(TOMZN [A-Z0-9-/]+)/,'<em class="mk">$1</em>')}</b><small>${T[o[0]].w} мод.</small></button>`).join(""),"cards opts");
-  const ci=Math.min(S.cat??0,CATALOG.length-1);
-  const s=brow((S.guide&&S.guide.on?(guideOn?`<button class="btn sm" data-gback>← До кроку помічника</button>`:""):`<button class="btn sm assist" data-gon>Помічник</button>`)
+  const ci=Math.min(S.cat??0,CATALOG.length-1), rp=S.repl&&S.devices.find(x=>x.id===S.repl);
+  const s=(rp?brow(`<b class="bl rpl">🔁 Заміна ${esc(desig(rp))} · ${esc(T[rp.type].short)}${rp.rating?" "+esc(rp.rating)+(T[rp.type].unit||""):""} — оберіть новий апарат</b><button class="btn sm" data-replx>Скасувати</button>`,"wrap"):"")+brow((S.guide&&S.guide.on?(guideOn?`<button class="btn sm" data-gback>← До кроку помічника</button>`:""):`<button class="btn sm assist" data-gon>Помічник</button>`)
       +`<input class="dq" id="devQ" type="search" placeholder="🔍 Знайти апарат: автомат, реле, ПЗВ…" value="${esc(S.devQ||"")}" autocomplete="off" aria-label="Пошук апарата">`
       +`<span class="bl mono">${mods}/${SLOTS*S.board.rails} мод.</span>`,"cats cattop")
     +`<div class="br cats wrap" id="devCats">${CATALOG.map(([l,,full],i)=>chip(`data-cat="${i}" title="${esc(full||l)}"`,i===ci&&!(S.devQ||"").trim(),l)).join("")}</div>`;
@@ -60,6 +62,7 @@ function catBody(){ const q=(S.devQ||"").trim().toLowerCase();
   if(q){ const hit=Object.keys(T).filter(k=>[T[k].name,T[k].short,T[k].pre,T[k].maker||""].join(" ").toLowerCase().includes(q));
     return brow(`<span class="bl">Знайдено: ${hit.length}</span>`)+(hit.length?brow(hit.map(devCard).join(""),"cards"):brow(`<span class="bl">Нічого не знайдено — спробуйте інше слово</span>`)); }
   const ci=Math.min(S.cat??0,CATALOG.length-1), c=CATALOG[ci], subs=Array.isArray(c[1])?c[1]:null, si=subs?Math.min(S.sub||0,subs.length-1):0;
+  if(S.repl&&(c[1]==="G"||c[1]==="F")) return brow(`<span class="bl">Для заміни оберіть категорію апаратів вище</span>`);
   if(c[1]==="G") return groupsQuickBar();
   if(c[1]==="F") return brow(FIELD_LIB.map(L=>`<button class="dc" data-fadd="${L.type}"><b>${esc(L.name)}</b><small>+${Object.keys(L.t).length} клем на XT1</small></button>`).join(""),"cards");
   let h=brow(`<b class="bl gname">${esc(c[2]||c[0])}</b>`+(subs.length>1?subs.map(([l],i)=>chip(`data-sub="${i}"`,i===si,l)).join(""):""),"cats subs");

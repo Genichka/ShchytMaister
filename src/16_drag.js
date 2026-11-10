@@ -17,7 +17,7 @@
     if(d.moved){ noClickUntil=Date.now()+350; const t=d.t, dev=d.dev;
       if(!cancel&&t&&t.ok&&(t.r!==(dev.rail||0)||t.slot!==dev.slot)){ dev.rail=t.r; dev.slot=t.slot; if(S.mode==="mount") S.selDev=dev.id; commit(); return; }
       if(!cancel&&t&&!t.ok) toast("Там зайнято","w"); renderAll(false); return; }
-    if(d.lifted){ noClickUntil=Date.now()+350; if(!cancel&&S.mode==="mount") S.selDev=d.dev.id; renderAll(false); } }   // затиснули й відпустили — просто вибір
+    if(d.lifted){ noClickUntil=Date.now()+350; renderAll(false); if(!cancel) ctxOpen(d.dev,d.cx,d.cy); } }   // затиснули й відпустили — меню апарата
 
   svg.addEventListener("pointerdown",e=>{ if(D||S.noDoc||!(S.mode==="mount"||S.mode==="wire")||S.pick||e.button>0||S.demo) return;
     if(S.mode==="wire"&&(S.moveEnd||nearTerm(e)||(e.target.closest&&e.target.closest("[data-wire]")))) return;

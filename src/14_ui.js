@@ -22,7 +22,9 @@ function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча 
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
   if(!gh0&&(S.mode==="mount"||S.mode==="wire")&&!S.pick&&!S.selDev&&!S.selWire&&!S.pend&&!S.moveEnd&&checkedOK())
     h=`<b class="hok">✓ Щит готовий.</b> Далі: <button class="hlink" data-hgo="test">⚡ Тест</button> · <button class="hlink" data-hgo="docs">📄 Документи</button>`;
-  if(gh0) h=gh0; $("hint").innerHTML=`<span>${h}</span>`; }
+  if(S.moveDev) h="✥ Торкніться вільного місця на рейці — апарат переїде туди разом із дротами.";
+  else if(S.repl&&S.mode==="mount") h="🔁 Оберіть унизу новий апарат — він стане на те саме місце, дроти на однакові клеми лишаться.";
+  if(gh0&&!S.moveDev&&!S.repl) h=gh0; $("hint").innerHTML=`<span>${h}</span>`; }
 function ctlHTML(c,i){
   if(c.type==="src"){ const s=S.src[c.id]||{}, inp=S.board.inputs.find(x=>x.id===c.id)||{}, three=(inp.terms||[]).includes("L1");
     return `<div class="mains"><button class="switch" data-srcon="${c.id}" aria-pressed="${!!s.on}"><span class="knob"></span>${esc(c.label||inp.label)}</button>`+
@@ -48,6 +50,7 @@ function updateLive(){
   if(typeof updateDemoStat==="function") updateDemoStat();
 }
 function renderAll(full=true){ render(); hint(); renderBar(); if(!full) updateLive();
+  for(const [id,c] of [[S.moveDev,"mv"],[S.repl,"rp"]]) if(id){ const g=document.querySelector(`[data-dev="${id}"]`); if(g) g.classList.add(c); }
   document.querySelectorAll(".tb[data-mode]").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
   $("undoTop").disabled=S.noDoc||!(S.hist&&S.hist.length); $("redoTop").disabled=S.noDoc||!(S.fut&&S.fut.length);
   document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc; $("closeBtn").hidden=!!S.noDoc; $("scroller").classList.toggle("empty",!!S.noDoc);
