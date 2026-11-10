@@ -63,7 +63,10 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("#undoTop")){ undo(); return; }
   if(q("#redoTop")){ redo(); return; }
   if(q("#docsBtn")){ openDocs("sld"); return; }
-  if(el=q("[data-hgo]")){ if(el.dataset.hgo==="fin") showFinish(runChecks().length); else if(el.dataset.hgo==="docs") openDocs("sld"); else { S.mode=el.dataset.hgo; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; renderAll(); } return; }
+  if(el=q("[data-hgo]")){ if(el.dataset.hgo==="fin") showFinish(runChecks().length); else if(el.dataset.hgo==="docs") openDocs("sld");
+    else if(el.dataset.hgo==="add"){ S.mode="mount"; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; S.repl=null; S.moveDev=null; S.devQ=""; S.devOpen=true; renderAll();
+      toast("Оберіть модуль унизу й торкніться вільного місця на рейці. Потім «〰 Перемички» → «⚡ Прокласти всі перемички» допрокладе лише нові"); }
+    else { S.mode=el.dataset.hgo; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; renderAll(); } return; }
   if(q("#zAll")){ S.zoom=fitZoom(); renderAll(false); $("scroller").scrollTo(0,0); return; }
   if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; S.repl=null; S.moveDev=null; ctxClose(); renderAll(); return; }
   if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }
