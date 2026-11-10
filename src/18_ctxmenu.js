@@ -53,7 +53,7 @@ function combBroken(dev,old){ const c=S.comb, cov=combCov(), same=(dev.rail||0)=
 document.addEventListener("click",e=>{ const m=$("ctxm"); if(!m) return; const b=e.target.closest("[data-cx]");
   if(!b){ if(!e.target.closest("#ctxm")) ctxClose(); return; }
   e.stopPropagation(); const d=S.devices.find(x=>x.id===m.dataset.dev); ctxClose(); if(!d) return;
-  const a=b.dataset.cx; S.pend=null; S.selWire=null; S.moveEnd=null; S.devFilter=null;
+  const a=b.dataset.cx; S.pend=null; S.selWire=null; S.moveEnd=null; S.devFilter=null; S.chkOpen=false;
   if(a==="repl"){ S.repl=d.id; S.mode="mount"; S.selDev=null; S.pick=null; S.moveDev=null; S.devQ=""; [S.cat,S.sub]=catOf(d.type); S.devOpen=true; renderAll(); toast(`Оберіть унизу, чим замінити ${desig(d)}`); return; }
   if(a==="move"){ S.moveDev=d.id; S.pick=d.type; S.pickQty=1; S.repl=null; S.mode="mount"; S.selDev=null; renderAll(); toast(`Торкніться вільного місця на рейці — ${desig(d)} переїде туди`); return; }
   if(a==="set"){ S.selDev=d.id; S.repl=null; S.moveDev=null; S.pick=null; if(S.mode==="wire") S.mode="mount"; renderAll(false); return; }

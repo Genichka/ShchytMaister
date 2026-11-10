@@ -25,8 +25,8 @@ const chip = (attr,on,label,cls) => `<button class="chip${cls?" "+cls:""}" ${att
 function bseg(id,list,def){ if(S.bsegFor!==id){ S.bsegFor=id; S.bseg=def; } if(!list.some(x=>x[0]===S.bseg)) S.bseg=list[0][0]; return S.bseg; }
 
 let guideOn=false;   // помічник показує незавершений крок (ставить guideBar)
-function barSync(){ const sig=[S.selDev,S.selWire,S.pick,S.mode,S.chkOpen,S.noDoc,S.moveEnd?1:0,S.devFilter?1:0,S.allDev?1:0].join("|");
-  if(S.barSig!==sig){ S.barSig=sig; S.barCol=false; }   // вибрали модуль, перемичку чи режим — панель сама розгортається
+function barSync(){ const sig=[S.selDev,S.selWire,S.pick,S.mode,S.chkOpen,S.noDoc,S.repl,S.moveDev,S.moveEnd?1:0,S.devFilter?1:0,S.allDev?1:0].join("|");
+  if(S.barSig!==sig){ S.barSig=sig; S.barCol=false; requestAnimationFrame(()=>{ for(const id of ["bar","barIn"]){ const e=$(id); if(e) e.scrollTop=0; } }); }   // вибрали модуль, перемичку чи режим — панель сама розгортається і показує свій початок
   const b=$("bar"); if(b) b.classList.toggle("collapsed",!!S.barCol); }
 function renderBar(){ const el=$("barIn"); if(!el) return; barSync(); let h="";
   const d=S.selDev&&S.devices.find(x=>x.id===S.selDev), f=S.selDev&&S.field.find(x=>x.id===S.selDev), w=S.mode==="wire"&&S.selWire&&wireById(S.selWire);
@@ -35,7 +35,7 @@ function renderBar(){ const el=$("barIn"); if(!el) return; barSync(); let h="";
   else if(w) h=wireBar(w);
   else if(d) h=devBar(d);
   else if(f) h=fieldBar(f);
-  else { const gb=guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter&&!S.allDev?"":mountBar()):S.mode==="wire"?(guideOn?"":wireToolsBar()):testBar()); }
+  else { const gb=S.repl||S.moveDev?"":guideBar(); h=gb+(S.mode==="mount"?(guideOn&&!S.pick&&!S.devFilter&&!S.allDev&&!S.repl&&!S.moveDev?"":mountBar()):S.mode==="wire"?(guideOn?"":wireToolsBar()):testBar()); }
   el.innerHTML=h; if(S.mode==="test") updateLive(); }
 
 // ---- Порожня робоча зона: стартові дії (збережені проєкти й імпорт — кнопка «Проєкт»)
