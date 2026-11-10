@@ -3,7 +3,7 @@
   const fmtD = s => String(s).split("-").reverse().join(".");
   const cmp = (a,b) => { const x=String(a).split(".").map(Number), y=String(b).split(".").map(Number);
     for(let i=0;i<Math.max(x.length,y.length);i++){ const d=(x[i]||0)-(y[i]||0); if(d) return d; } return 0; };
-  const btn=$("updBtn"), modal=$("upd"); let remote=null;
+  const btn=$("updBtn"), modal=$("upd"), verEl=$("ver"); let remote=null;
   $("ver").textContent=`v${APP.v} · ${fmtD(APP.date)}`;
   async function fetchRemote(){ const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) throw new Error(r.status); return r.json(); }
   function show(mode,info){
@@ -17,8 +17,11 @@
     modal.hidden=false; const f=modal.querySelector(".btn.primary"); if(f) f.focus(); }
   async function check(silent){
     try{ remote=await fetchRemote();
-      if(cmp(remote.v,APP.v)>0){ btn.classList.add("has"); btn.title=`Доступна версія v${remote.v}`; if(!silent) show("new",remote); }
-      else { btn.classList.remove("has"); btn.title="Перевірити оновлення"; if(!silent) toast(`У вас остання версія v${APP.v} від ${fmtD(APP.date)}`,"ok"); } }
+      if(cmp(remote.v,APP.v)>0){   // є новіша версія — версія й «Оновити» блимають, доки не оновитесь
+        btn.classList.add("has"); btn.title=`Доступна версія v${remote.v}`;
+        if(!verEl.classList.contains("newv")&&silent) toast(`Вийшла нова версія v${remote.v} — натисніть «Оновити»`,"ok");
+        verEl.classList.add("newv"); verEl.title=`Доступна нова версія v${remote.v} від ${fmtD(remote.date)} — натисніть, щоб оновити`; if(!silent) show("new",remote); }
+      else { btn.classList.remove("has"); btn.title="Перевірити оновлення"; verEl.classList.remove("newv"); verEl.title="Що нового"; if(!silent) toast(`У вас остання версія v${APP.v} від ${fmtD(APP.date)}`,"ok"); } }
     catch(e){ if(!silent) toast("Не вдалося перевірити оновлення. Перевірте підключення до інтернету.","w"); } }
   const swUpdate = () => new Promise((res,rej)=>{ const ch=new MessageChannel(); ch.port1.onmessage=e=>e.data&&e.data.ok?res():rej(new Error("sw"));
     navigator.serviceWorker.controller.postMessage({type:"update"},[ch.port2]); setTimeout(()=>rej(new Error("timeout")),15000); });
@@ -27,7 +30,7 @@
     const u=new URL(location.href); u.searchParams.set("v",remote.v); location.replace(u.toString()); }
   document.addEventListener("click",e=>{
     if(e.target.closest("#updBtn")){ check(false); return; }
-    if(e.target.closest("#ver")){ show("cur",APP); return; }
+    if(e.target.closest("#ver")){ if(verEl.classList.contains("newv")&&remote) show("new",remote); else show("cur",APP); return; }
     const b=e.target.closest("[data-upd]"); if(b){ modal.hidden=true; if(b.dataset.upd==="go"&&remote) apply(); return; }
     if(e.target===modal) modal.hidden=true; });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!modal.hidden) modal.hidden=true; if((e.key==="Enter"||e.key===" ")&&e.target.id==="ver"){ e.preventDefault(); show("cur",APP); } });
@@ -35,6 +38,9 @@
     if(last&&last!==APP.v) setTimeout(()=>toast(`Оновлено до v${APP.v} від ${fmtD(APP.date)}`,"ok"),600);
     localStorage.setItem("shchyt-ver",APP.v); }catch(e){}
   try{ const u=new URL(location.href); if(u.searchParams.has("v")){ u.searchParams.delete("v"); history.replaceState(null,"",u.toString()); } }catch(e){}
-  setTimeout(()=>check(true),1500); setInterval(()=>check(true),30*60*1000);
+  // перевіряємо при запуску, кожні 10 хв, при поверненні в застосунок і коли з'явився інтернет
+  setTimeout(()=>check(true),1500); setInterval(()=>check(true),10*60*1000);
+  let lastVis=0; document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&Date.now()-lastVis>60000){ lastVis=Date.now(); check(true); } });
+  addEventListener("online",()=>check(true));
   if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)&&!/claude\.ai|claudeusercontent/.test(location.host)) navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
