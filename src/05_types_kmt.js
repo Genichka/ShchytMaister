@@ -53,3 +53,19 @@ defType("ktm",{name:"Реле часу багатофункційне (A · B ·
     if(fn==="D"&&d.coil&&d.out){ d.t+=dt; if(d.t>=d.delay){ d.out=false; logp("ok",`${desig(d)}: функція D — імпульс ${d.delay} с завершено`); } } },
   face(d,g){ const fn=d.fn||"A", run=(fn==="A"&&d.coil&&!d.out)||(fn==="B"&&!d.coil&&d.out)||fn==="C"&&d.coil||(fn==="D"&&d.coil&&d.out);
     return ktDial(d,g,mdl(d,"РЕЛЕ ЧАСУ")+" · "+fn+" · "+d.delay+" с",run?Math.min(1,(d.t||0)/d.delay):d.out?1:0,fn==="B"?"#4aa3ff":"#ffb21f"); }});
+
+// ---- Schneider Electric TeSys D LC1D: контактор 3P (1-2, 3-4, 5-6) + допоміжні 1НВ (13-14) і 1НЗ (21-22), котушка A1–A2 230 В
+const lc1dN = d => "LC1D"+String(d.rating).padStart(2,"0");
+defType("lc1d",{name:"Контактор Schneider TeSys D LC1D (3P + 1НВ + 1НЗ)", short:"TeSys D LC1D", cat:"Керування", w:3, pre:"KM", maker:"Schneider",
+  ratings:["9","12","18","25","32","38"], def:"32", unit:" А", faceFill:"#24272c",
+  terms:[{k:"1",s:"top",r:"P",l:"1"},{k:"3",s:"top",r:"P",l:"3"},{k:"5",s:"top",r:"P",l:"5"},C("13","top","13"),C("21","top","21"),C("A1","top","A1"),
+         {k:"2",s:"bot",r:"P",l:"2"},{k:"4",s:"bot",r:"P",l:"4"},{k:"6",s:"bot",r:"P",l:"6"},C("14","bot","14"),C("22","bot","22"),C("A2","bot","A2")],
+  poles:[{a:"1",b:"2",r:"L"},{a:"3",b:"4",r:"L"},{a:"5",b:"6",r:"L"}], closed:d=>!!d.pulled, aux:d=>d.pulled?[["13","14"]]:[["21","22"]],
+  logic:coilLogic, cap:"Контактор",
+  face(d,g){ const p=!!d.pulled, W="#eef0f2";
+    return `<rect x="${g.x+8}" y="${g.y+62}" width="${g.w-16}" height="20" rx="2" fill="#3dcd58"/>`+tx(g.x+14,g.y+75.5,"TeSys",{fs:8.4,fw:700,a:"start",fill:"#fff"})
+      +tx(g.x+g.w-14,g.y+75.5,"Schneider Electric",{fs:6.2,fw:700,a:"end",fill:"#fff"})
+      +tx(g.cx,g.y+94,`${lc1dN(d)} · ${d.rating} А AC-3`,{fs:6.8,fw:700,fill:W})
+      +`<rect x="${g.cx-22}" y="${g.y+99}" width="44" height="24" rx="3" fill="#111316" stroke="#454a54"/><rect x="${g.cx-16}" y="${g.y+(p?110:103)}" width="32" height="10" rx="2" fill="${p?"#e0352b":"#8e9196"}"/>`
+      +tx(g.cx,g.y+136,`13–14 НВ ${p?"●":"○"} · 21–22 НЗ ${p?"○":"●"}`,{fs:6.2,fill:W})+tx(g.cx,g.y+148,"котушка A1–A2 230 В",{fs:6,fill:"#b9bec6"})
+      +tx(g.cx,g.y+159,p?"I · увімкнено":"O · вимкнено",{fs:6.4,fw:600,fill:p?"#ff7a6e":"#9aa0aa"}); }});

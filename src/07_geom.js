@@ -92,11 +92,12 @@ function devSVG(d){
   const bx=t.terms.filter(q=>q.s==="bot").map(q=>termX(d,q)).sort((a,c)=>a-c), side=bx.every((v,i)=>!i||v-bx[i-1]>=44);
   for(const tm of t.terms){ const X=termX(d,tm);
     if(tm.s==="top") s+=screw(X,y+22,sr)+(tm.nl?"":tx(X,y+42,tm.l,{fs:6.8}));   // nl — підпис малює сам апарат
-    else { const lw=String(tm.l).length*3.9, fitL=X-sr-2-lw>=x+2, fitR=X+sr+2+lw<=x+w-2;   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку
-      s+=screw(X,y+H-22,sr)+(tm.nl?"":(side||Math.abs(X-cx)<w/5)&&(fitL||fitR)
+    else { const lw=String(tm.l).length*3.9, pv=bx.filter(v=>v<X-1).pop(), nx=bx.find(v=>v>X+1);   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку і сусідній гвинт
+      const fitL=X-sr-2-lw>=Math.max(x+2,pv!==undefined?pv+sr+2:-1e9), fitR=X+sr+2+lw<=Math.min(x+w-2,nx!==undefined?nx-sr-2:1e9);
+      s+=screw(X,y+H-22,sr)+(tm.nl?"":side&&(fitL||fitR)
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-3,tm.l,{fs:6})); } }
   const bn=brandName(d), shp=shopFor(d);   // апарат є в «Замовити» — замість напису виробника QR-код із посиланням
-  if(shp){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if(t.maker&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
+  if(shp){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if((t.maker||brandOf(d)!=="eua")&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
   else s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   const des=desig(d), pw=Math.max(38,des.length*7+12);

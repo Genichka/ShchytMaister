@@ -1,8 +1,9 @@
 /* ===== «Замовити апарат»: фото, QR-код і посилання. Дані — shop.json у корені сайту, картинки — папка shop/ ===== */
 let SHOP=null, SHOP_T={};
 // апарати з «Замовити», що є в бібліотеці (поле "type" у shop.json): на щиті на них QR замість напису EnergyUA
-function shopIndex(){ SHOP_T={}; if(Array.isArray(SHOP)) for(const it of SHOP) if(it.type&&/^https?:/i.test(it.link||"")) for(const k of String(it.type).split(/[\s,]+/)) if(k) SHOP_T[k]=it; }
-const shopFor = d => { const it=SHOP_T[d.type]; return it&&(brandOf(d)==="eua"||T[d.type].maker)?it:null; };
+function shopIndex(){ SHOP_T={}; if(Array.isArray(SHOP)) for(const it of SHOP) if(it.type&&/^https?:/i.test(it.link||"")) for(const k of String(it.type).split(/[\s,]+/)) if(k) (SHOP_T[k]=SHOP_T[k]||[]).push(it); }
+// кілька апаратів на один тип — береться той, у якого збігається виробник ("brand" у shop.json), інакше перший (для EnergyUA і фірмових апаратів)
+const shopFor = d => { const L=SHOP_T[d.type]; if(!L) return null; const b=brandOf(d); return L.find(it=>it.brand===b)||(b==="eua"||T[d.type].maker?L[0]:null); };
 function loadShop(){ try{ const c=JSON.parse(localStorage.getItem("pc-shop")||"null"); if(Array.isArray(c)){ SHOP=c; shopIndex(); } }catch(_){}
   fetch("shop.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return; SHOP=Array.isArray(j)?j:((j&&j.items)||[]); shopIndex();
     try{ localStorage.setItem("pc-shop",JSON.stringify(SHOP)); }catch(_){} if(!S.noDoc&&!window.__dragBusy) render(); }).catch(()=>{}); }

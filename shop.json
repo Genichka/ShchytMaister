@@ -44,5 +44,32 @@
     "qr": "shop/ali-ehbrn62-qr.png",
     "link": "https://s.click.aliexpress.com/e/_EHbRN62",
     "note": "3P+N: вольтметр і амперметр на кожну фазу, захист від перенапруги, зниженої напруги й перевантаження"
+  },
+  {
+    "name": "Реле часу GEYA GRT8-D (затримка вимкнення)",
+    "photo": "shop/geya-grt8-d.jpg",
+    "qr": "shop/ali-ejiwotu-qr.png",
+    "link": "https://s.click.aliexpress.com/e/_EjIWOtu",
+    "note": "Відлік затримки вимкнення після зникнення живлення, без допоміжного живлення: 0,1 с – 10 хв (1 с · 10 с · 100 с · 10 хв × 10–100 %); живлення AC/DC 12–240 В, перекидний контакт 15-16-18 на 16 А",
+    "type": "ktb",
+    "brand": "geya"
+  },
+  {
+    "name": "Реле часу TOMZN TORT7-A1 (затримка ввімкнення)",
+    "photo": "shop/tomzn-tort7-a1.jpg",
+    "qr": "shop/ali-euu9y26-qr.png",
+    "link": "https://s.click.aliexpress.com/e/_Euu9y26",
+    "note": "Витримка від 0,1 с до 10 діб двома ручками (діапазон × 10–100 %), положення ON / OFF; живлення 230 В, перекидний контакт 15-16-18 на 16 А",
+    "type": "kt",
+    "brand": "tomzn"
+  },
+  {
+    "name": "Контактор Schneider TeSys D LC1D32",
+    "photo": "shop/schneider-lc1d32.jpg",
+    "qr": "shop/ali-ezhslhg-qr.png",
+    "link": "https://s.click.aliexpress.com/e/_EzhsLhG",
+    "note": "3 полюси 32 А (AC-3), допоміжні контакти 1НВ (13-14) + 1НЗ (21-22), котушка A1–A2; для двигунів, насосів, бойлерів",
+    "type": "lc1d",
+    "brand": "se"
   }
 ]
