@@ -89,7 +89,7 @@ setInterval(()=>{ if(!S.guide||!S.guide.on||S.guide.testOK||S.mode!=="test"||!S.
 // ---- Компактний помічник: рядок у нижній панелі + пояснення в рядку підказки вгорі
 function guideCur(){ if(!S.guide||!S.guide.on) return null; const st=guideSteps(), skip=new Set(S.guide.skip||[]), done=st.map(s=>{ try{ return !!s.done(); }catch(e){ return false; } }); GSTEPS=st;
   const cur=st.findIndex((s,i)=>!done[i]&&!(s.opt&&skip.has(s.id))); return {st,cur,s:st[cur]}; }
-function guideHint(){ const g=guideCur(); if(!g) return ""; if(g.cur<0) return "<b>Помічник:</b> щиток зібрано і випробувано. Збережіть проєкт або зробіть документи.";
+function guideHint(){ const g=guideCur(); if(!g) return ""; if(g.cur<0) return S.mode==="mount"?`<b>Щиток готовий.</b> Новий модуль — оберіть унизу й торкніться вільного місця на рейці.`:`<b>Щиток готовий.</b> Щось забули? <button class="hlink" data-hgo="add">＋ Додати модуль</button>`;
   const td=g.s.todo?g.s.todo():[]; if(td.length){ const ok=td.filter(x=>x.ok).length, bad=td.find(x=>x.bad);
     return `<b>Крок ${g.cur+1} з ${g.st.length} · ${esc(g.s.short||g.s.t)}</b> · з’єднано ${ok} з ${td.filter(x=>!x.bad).length}. `
       +(bad?`<span style="color:var(--red)">${esc(bad.t)}</span>`:`Торкніться клеми <span class="gn">1</span>, потім <span class="gn">2</span> — їх підсвічено. «Усі перемички (Авто)» прокладе решту перемичок сам.`); }
@@ -97,7 +97,8 @@ function guideHint(){ const g=guideCur(); if(!g) return ""; if(g.cur<0) return "
   return `<b>Крок ${g.cur+1}:</b> ${esc(g.s.h)}`; }
 const GX = `<button class="bx" data-gx aria-label="Сховати помічника">✕</button>`;
 function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return "";
-  if(g.cur<0){ S.devFilter=null; return `<div class="br gd"><span class="gk">✓</span><b class="gt">Щиток зібрано і випробувано</b>${GX}</div>`; }
+  if(g.cur<0){ S.devFilter=null; return `<div class="br gd"><span class="gk">✓</span><b class="gt">Щиток зібрано і випробувано</b>${GX}</div>`
+    +brow((S.mode!=="mount"?`<span class="bl">Щось забули?</span><button class="btn" data-hgo="add">＋ Додати модуль</button>`:"")+(S.mode!=="wire"?`<button class="btn" data-hgo="wire">〰 Перемички</button>`:"")+`<button class="btn" data-hgo="fin">💾 PDF / Visio</button>`,"wrap"); }
   const s=g.s, num=`<span class="gk">${g.cur+1}/${g.st.length}</span>`; if(S.devFilter&&S.devFilter.step!==s.id) S.devFilter=null;
   const all=`<button class="btn sm" data-gall title="Програма сама проведе всі перемички щитка одразу">⚡ Усі перемички (Авто)</button>`;
   if(s.wire){ const it=s.todo().find(x=>!x.ok)||null; if(!it) return `<div class="br gd">${num}<b class="gt">${esc(s.short)}</b>${GX}</div>`;
