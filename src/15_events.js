@@ -27,8 +27,8 @@ function demoNext(){ const sc=S.tplObj.demo.script; S.demo.i++; if(S.demo.i>=sc.
 function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length;
   S.lastCheck={sig:elecSnap(),errors:ne,warns:nw};
   S.chk={list:C,i:0}; S.chkOpen=!!(ne||nw); solve(0);   // усе гаразд — без вікна з переліком «1 з N», лише повідомлення й підказка «що далі»
-  if(!ne&&!nw) toast(`✓ Схема правильна — щит готовий (перевірок: ${C.length})`,"ok");
-  renderAll(true); }
+  renderAll(true);
+  if(!ne&&!nw){ if(typeof save==="function") save(); showFinish(C.length); } }   // логічне завершення: «Щит готовий» → PDF / Visio
 function clearCheck(){ S.chk=null; S.chkOpen=false; }
 function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ const g=groupsOf()[0]; if(g){ S.selDev=g.id; S.bsegFor=g.id; S.bseg="load"; } } renderAll(false); }
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
@@ -63,7 +63,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("#undoTop")){ undo(); return; }
   if(q("#redoTop")){ redo(); return; }
   if(q("#docsBtn")){ openDocs("sld"); return; }
-  if(el=q("[data-hgo]")){ if(el.dataset.hgo==="docs") openDocs("sld"); else { S.mode=el.dataset.hgo; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; renderAll(); } return; }
+  if(el=q("[data-hgo]")){ if(el.dataset.hgo==="fin") showFinish(runChecks().length); else if(el.dataset.hgo==="docs") openDocs("sld"); else { S.mode=el.dataset.hgo; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; renderAll(); } return; }
   if(q("#zAll")){ S.zoom=fitZoom(); renderAll(false); $("scroller").scrollTo(0,0); return; }
   if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; S.repl=null; S.moveDev=null; ctxClose(); renderAll(); return; }
   if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }

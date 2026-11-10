@@ -21,7 +21,7 @@ function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча 
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: кружечок на кінці — на іншу клему; середину дроту — тягніть, щоб прокласти інакше.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Новий дріт — тягніть від клеми до клеми. Дріт чи перемичку — затисніть посередині й тягніть, щоб відвести вбік. Апарат — затисніть і тягніть.";
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
   if(!gh0&&(S.mode==="mount"||S.mode==="wire")&&!S.pick&&!S.selDev&&!S.selWire&&!S.pend&&!S.moveEnd&&checkedOK())
-    h=`<b class="hok">✓ Щит готовий.</b> Далі: <button class="hlink" data-hgo="test">⚡ Тест</button> · <button class="hlink" data-hgo="docs">📄 Документи</button>`;
+    h=`<b class="hok">✓ Щит готовий.</b> <button class="hlink" data-hgo="fin">Зберегти PDF / Visio</button> · <button class="hlink" data-hgo="test">⚡ Тест</button>`;
   if(S.moveDev) h="✥ Торкніться вільного місця на рейці — апарат переїде туди разом із дротами.";
   else if(S.repl&&S.mode==="mount") h="🔁 Оберіть унизу новий апарат — він стане на те саме місце, дроти на однакові клеми лишаться.";
   if(gh0&&!S.moveDev&&!S.repl) h=gh0; $("hint").innerHTML=`<span>${h}</span>`; }

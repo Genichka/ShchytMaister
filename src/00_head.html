@@ -202,6 +202,13 @@ select.btn{padding-right:26px}
 .ctxm button:hover,.ctxm button:focus-visible{background:rgba(255,255,255,.07);outline:none} .ctxm button.danger{color:var(--red)}
 g.mv{opacity:.45} g.rp>*:first-child{stroke:var(--orange);stroke-width:3}
 .bl.rpl{color:var(--orange);font-weight:600}
+.fin{display:flex;flex-direction:column} .fin-ok{width:56px;height:56px;border-radius:50%;background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green);display:grid;place-items:center;font-size:30px;font-weight:700;margin:2px auto 6px}
+.fin h2{text-align:center;margin:0} .fin-s{text-align:center;color:var(--muted);margin:6px 0 10px}
+.fin-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px} .fin-sum div{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 8px;min-width:0}
+.fin-sum small{display:block;color:var(--muted);font-size:11px} .fin-sum b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:520px){ .fin-sum{grid-template-columns:1fr 1fr} .fin-g{grid-template-columns:1fr} }
+.pbtn .fi{grid-row:1 / 3;font-size:22px;text-align:center}
+.dpage+.dpage{margin-top:18px} .dtitle{margin:0 0 4px;font-size:20px} .bview svg{display:block;width:100%;height:auto;margin-top:10px}
 .hint .hok{color:var(--green)} .hlink{background:none;border:0;padding:0 2px;font:inherit;font-weight:600;color:var(--blue);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .br.srcrow .volt.sm{flex:1 1 auto;min-width:0} .br.srcrow .volt.sm input[type=range]{width:auto;flex:1 1 60px;min-width:60px} .br.srcrow .switch{flex:none}
 .br{display:flex;align-items:center;gap:6px;min-height:34px;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -367,7 +374,8 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 @media (min-width:900px){ .bbar{max-height:40dvh} .br{flex-wrap:wrap;overflow:visible} }
 @media print{
   body{overflow:visible!important;height:auto} .app{position:static} .app,.drawer,.toast,.modal,.demobar,.docs-bar{display:none!important}
-  .docs{position:static;display:block!important;background:#fff} .docs-b{overflow:visible;padding:0} .doc{max-width:none;padding:0;border-radius:0} }
+  .docs{position:static;display:block!important;background:#fff} .docs-b{overflow:visible;padding:0} .doc{max-width:none;padding:0;border-radius:0}
+  .dpage{break-after:page;page-break-after:always} .dpage:last-child{break-after:auto;page-break-after:auto} .dpage+.dpage{margin-top:0} .bview svg{max-height:23cm} }
 /* ===== v4.19.1: запас унизу під жести телефона + згортання нижньої панелі ===== */
 .bbar{padding-bottom:calc(34px + env(safe-area-inset-bottom,0px))}
 .bar-handle{position:sticky;top:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;min-height:22px;margin:-6px 0 2px;padding:6px 0 4px;background:var(--panel);border:0;color:var(--muted);touch-action:none}

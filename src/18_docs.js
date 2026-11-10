@@ -102,9 +102,11 @@ function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.pu
 // ---- Вікно документів
 const DOCT = [["sld","Однолінійна схема"],["cab","Кабельний журнал"],["spec","Специфікація"],["lab","Маркування"]];
 function openDocs(t){ S.docTab=t||S.docTab||"sld"; $("docs").hidden=false; renderDocs(); }
-function renderDocs(){ const t=S.docTab, nm=esc((S.proj&&S.proj.name)||"Щит");
-  $("docTabs").innerHTML=DOCT.map(([k,l])=>`<button data-doct="${k}" aria-selected="${t===k}">${l}</button>`).join("");
-  $("docSvg").textContent=t==="sld"?"SVG":t==="lab"?"—":"CSV"; $("docSvg").disabled=t==="lab";
+function renderDocs(){ const t=S.docTab;
+  $("docTabs").innerHTML=DOCT.map(([k,l])=>`<button data-doct="${k}" aria-selected="${t===k}">${l}</button>`).join("")+(t==="all"?`<button data-doct="all" aria-selected="true">Повний комплект</button>`:"");
+  $("docSvg").textContent=t==="sld"?"SVG":t==="lab"||t==="all"?"—":"CSV"; $("docSvg").disabled=t==="lab"||t==="all";
+  $("docsB").innerHTML=t==="all"?docAll():docBody(t); }
+function docBody(t){ const nm=esc((S.proj&&S.proj.name)||"Щит");
   let h="";
   if(t==="sld"){ const noLen=groupsOf().some(g=>!groupLen(g));
     h=`<div class="doc"><div class="sld">${sldSVG()}</div><p class="note">Кабель — ВВГнг(А)-LS, мідь. Iр — за встановленою потужністю групи, cos φ = 1. ΔU — втрата напруги в лінії (ρ = 0,0178 Ом·мм²/м); понад 4 % виділено червоним.${noLen?" Довжини ліній задайте в картці групи.":""}</p></div>`; }
@@ -118,15 +120,21 @@ function renderDocs(){ const t=S.docTab, nm=esc((S.proj&&S.proj.name)||"Щит")
         else { row+=`<div class="lab-c" style="width:18mm"></div>`; i++; } }
       h+=`<div class="lab-row">${row}</div>`; }
     h+=`</div></div>`; }
-  $("docsB").innerHTML=h; }
+  return h; }
 function download(name,data,type){ try{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([data],{type})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); toast("Файл збережено: "+name,"ok"); }catch(e){ toast("Не вдалося зберегти файл","e"); } }
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(el=q("[data-doct]")){ S.docTab=el.dataset.doct; renderDocs(); return; }
   if(q("#docsX")){ $("docs").hidden=true; return; }
   if(q("#docPrint")){ window.print(); return; }
-  if(q("#docSvg")){ const nm=((S.proj&&S.proj.name)||"shchyt").replace(/[^\wА-Яа-яІіЇїЄєҐґ-]+/g,"_");
+  if(q("#docSvg")){ const nm=fileBase();
     if(S.docTab==="sld") download(nm+"_odnolinijna.svg",sldSVG(),"image/svg+xml");
     else { const rows=S.docTab==="cab"?[["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],...cabData().inner,[],["Автомат","Група","Кабель","Довжина, м","ΔU, %"],...cabData().lines]
         :[["Найменування","Тип / модель","Кіл.","Од."],...specData()];
       download(nm+(S.docTab==="cab"?"_kabelnyj_zhurnal.csv":"_specyfikacija.csv"),"﻿"+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(";")).join("\n"),"text/csv"); }
     return; } });
+
+// ---- Повний комплект для PDF: титул (підсумок + вигляд щита), схема, кабельний журнал, специфікація, маркування — кожне з нового аркуша
+function docAll(){ const nm=esc((S.proj&&S.proj.name)||"Щит"), sm=boardSummary();
+  return `<div class="doc dpage"><h2 class="dtitle">${nm}</h2><p class="note">PanelCraft ${esc(APP.v)} · ${new Date().toLocaleDateString("uk-UA")} · перевірку пройдено без зауважень</p>`
+    +tbl(["Показник","Значення"],sm.rows,[])+`<div class="bview">${boardSVG()}</div></div>`
+    +["sld","cab","spec","lab"].map(t=>`<div class="dpage">${docBody(t)}</div>`).join(""); }

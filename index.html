@@ -205,6 +205,13 @@ select.btn{padding-right:26px}
 .ctxm button:hover,.ctxm button:focus-visible{background:rgba(255,255,255,.07);outline:none} .ctxm button.danger{color:var(--red)}
 g.mv{opacity:.45} g.rp>*:first-child{stroke:var(--orange);stroke-width:3}
 .bl.rpl{color:var(--orange);font-weight:600}
+.fin{display:flex;flex-direction:column} .fin-ok{width:56px;height:56px;border-radius:50%;background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green);display:grid;place-items:center;font-size:30px;font-weight:700;margin:2px auto 6px}
+.fin h2{text-align:center;margin:0} .fin-s{text-align:center;color:var(--muted);margin:6px 0 10px}
+.fin-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px} .fin-sum div{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 8px;min-width:0}
+.fin-sum small{display:block;color:var(--muted);font-size:11px} .fin-sum b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:520px){ .fin-sum{grid-template-columns:1fr 1fr} .fin-g{grid-template-columns:1fr} }
+.pbtn .fi{grid-row:1 / 3;font-size:22px;text-align:center}
+.dpage+.dpage{margin-top:18px} .dtitle{margin:0 0 4px;font-size:20px} .bview svg{display:block;width:100%;height:auto;margin-top:10px}
 .hint .hok{color:var(--green)} .hlink{background:none;border:0;padding:0 2px;font:inherit;font-weight:600;color:var(--blue);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .br.srcrow .volt.sm{flex:1 1 auto;min-width:0} .br.srcrow .volt.sm input[type=range]{width:auto;flex:1 1 60px;min-width:60px} .br.srcrow .switch{flex:none}
 .br{display:flex;align-items:center;gap:6px;min-height:34px;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -370,7 +377,8 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 @media (min-width:900px){ .bbar{max-height:40dvh} .br{flex-wrap:wrap;overflow:visible} }
 @media print{
   body{overflow:visible!important;height:auto} .app{position:static} .app,.drawer,.toast,.modal,.demobar,.docs-bar{display:none!important}
-  .docs{position:static;display:block!important;background:#fff} .docs-b{overflow:visible;padding:0} .doc{max-width:none;padding:0;border-radius:0} }
+  .docs{position:static;display:block!important;background:#fff} .docs-b{overflow:visible;padding:0} .doc{max-width:none;padding:0;border-radius:0}
+  .dpage{break-after:page;page-break-after:always} .dpage:last-child{break-after:auto;page-break-after:auto} .dpage+.dpage{margin-top:0} .bview svg{max-height:23cm} }
 /* ===== v4.19.1: запас унизу під жести телефона + згортання нижньої панелі ===== */
 .bbar{padding-bottom:calc(34px + env(safe-area-inset-bottom,0px))}
 .bar-handle{position:sticky;top:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;min-height:22px;margin:-6px 0 2px;padding:6px 0 4px;background:var(--panel);border:0;color:var(--muted);touch-action:none}
@@ -472,7 +480,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.21.0", date:"2026-11-10", notes:["Дотик (клік, ПКМ) по апарату відкриває меню: 🔁 Замінити · ✥ Перемістити · ⚙️ Налаштувати · 🗑 Видалити","Замінити — унизу відкривається каталог (одразу на схожих апаратах); новий стає на те саме місце, дроти на однакові клеми лишаються","Перемістити — торкніться вільного місця на рейці, апарат переїде туди разом із дротами","Перевірка без зайвого вікна: якщо все гаразд — коротке повідомлення «✓ Схема правильна», а вгорі «✓ Щит готовий. Далі: ⚡ Тест · 📄 Документи». Перелік «1 з N» показується лише коли є помилки чи попередження","Дроти й перемички можна відводити пальцем або мишею: затисніть дріт посередині й тягніть — траса зміщується, кінці лишаються на клемах. «↺ Авто-траса» в панелі дроту повертає як було, «↺ Вирівняти всі траси й шини» — для всього щита","Шини N, PE і колодку XT2 можна пересувати вздовж ряду (режим «Апарати»), апарати — тягнути й у режимі «Дроти». Охайне перекладання дротів і шин не скидає перевірку","Кнопка проєкту (збереження, відкриття, створення) перенесена з шапки в меню — більше місця на екрані. Каталог апаратів перегруповано за вашим списком: категорії переносяться на кілька рядків, у кожній — підгрупи, зверху пошук по всіх апаратах. Нижня панель за каталогом: головні групи (автомати, диференційний захист, реле, контактори, ПЗІП, шини, клеми, прилади, кнопки…) і підгрупи (1P/2P/3P/4P, ПЗВ/дифавтомати, контроль напруги/фаз, реле часу, АВР…). Щит завжди по центру вільного місця; на корпусі проставлено розміри (ширина й висота, ≈ мм від модуля DIN 17,5 мм). Розділи меню за замовчуванням згорнуті. Нижня панель: запас унизу під жести телефона; згортається вниз — дотик по порожньому місцю щита, ручка зверху панелі або свайп. Панель сама розгортається, коли вибираєш апарат, дріт чи режим","Меню: усі розділи («Щит», «Приклади щитів», «Про застосунок») — випадаючі списки","Кнопки масштабу перенесено зі щита у смугу підказки над ним — вони більше не закривають схему","Перетягування: апарати й групи з нижньої панелі — на рейку, дроти — від клеми до клеми, кінці вибраного дроту — на іншу клему (миша або палець). Хрестик закриття — на самому щитку, масштаб — унизу ліворуч, вкладки «Помічник / Групи / Захист…» — помаранчеві, нижню панель трохи піднято. Прибрано кнопки ← → ↑↓ і ◀ ▶","Нові шаблони «3 фази + інвертор»: мережа 3~ з інвертором 3~ (АВР на контакторах 4P) і мережа 3~ з інвертором 1~ (резервна лінія на фазі L1 через АВР-модуль). Новий апарат — контактор 4P. Інвертор у тесті тепер враховує й трифазні групи","Меню без зайвого: Новий щит, Корпус і ввід (разом із шинами й колодкою XT2), Прокласти всі дроти, Помічник, Приклади щитів (згортаються), QR-код. Збереження, відкриття, експорт та імпорт — у кнопці «Проєкт», документи — у вкладці «Документи»","Тест на телефоні: кожен ввід — окремим рядком, кнопки й стан переносяться, нічого не ховається за край екрана","Прибрано «Удар блискавки поруч» з тесту власного щита","Помічник: «Усі апарати» відкриває весь каталог (з TOMZN), «← До кроку помічника» повертає назад","Струм на автоматах у тесті більше не налазить на позначення QF","Помічник: варіанти апаратів показано повністю, сіткою — видно й можна вибрати TOMZN TOVPD1, TO219G, TOQ5, TOQ7","Підписи під апаратами більше не обрізаються: довга назва групи стає дрібнішим шрифтом у 2 рядки","Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
+const APP = { v:"4.22.0", date:"2026-11-10", notes:["Логічне завершення: після перевірки без зауважень — вікно «✓ Щит готовий» з підсумком (ввід, корпус, апарати, групи) і збереженням: PDF — повний комплект (вигляд щита, однолінійна схема, кабельний журнал, специфікація, наклейки, кожне з нового аркуша), Visio — вигляд щита й однолінійна схема у SVG (у Visio «Файл → Відкрити»)","Дотик (клік, ПКМ) по апарату відкриває меню: 🔁 Замінити · ✥ Перемістити · ⚙️ Налаштувати · 🗑 Видалити","Замінити — унизу відкривається каталог (одразу на схожих апаратах); новий стає на те саме місце, дроти на однакові клеми лишаються","Перемістити — торкніться вільного місця на рейці, апарат переїде туди разом із дротами","Перевірка без зайвого вікна: якщо все гаразд — коротке повідомлення «✓ Схема правильна», а вгорі «✓ Щит готовий. Далі: ⚡ Тест · 📄 Документи». Перелік «1 з N» показується лише коли є помилки чи попередження","Дроти й перемички можна відводити пальцем або мишею: затисніть дріт посередині й тягніть — траса зміщується, кінці лишаються на клемах. «↺ Авто-траса» в панелі дроту повертає як було, «↺ Вирівняти всі траси й шини» — для всього щита","Шини N, PE і колодку XT2 можна пересувати вздовж ряду (режим «Апарати»), апарати — тягнути й у режимі «Дроти». Охайне перекладання дротів і шин не скидає перевірку","Кнопка проєкту (збереження, відкриття, створення) перенесена з шапки в меню — більше місця на екрані. Каталог апаратів перегруповано за вашим списком: категорії переносяться на кілька рядків, у кожній — підгрупи, зверху пошук по всіх апаратах. Нижня панель за каталогом: головні групи (автомати, диференційний захист, реле, контактори, ПЗІП, шини, клеми, прилади, кнопки…) і підгрупи (1P/2P/3P/4P, ПЗВ/дифавтомати, контроль напруги/фаз, реле часу, АВР…). Щит завжди по центру вільного місця; на корпусі проставлено розміри (ширина й висота, ≈ мм від модуля DIN 17,5 мм). Розділи меню за замовчуванням згорнуті. Нижня панель: запас унизу під жести телефона; згортається вниз — дотик по порожньому місцю щита, ручка зверху панелі або свайп. Панель сама розгортається, коли вибираєш апарат, дріт чи режим","Меню: усі розділи («Щит», «Приклади щитів», «Про застосунок») — випадаючі списки","Кнопки масштабу перенесено зі щита у смугу підказки над ним — вони більше не закривають схему","Перетягування: апарати й групи з нижньої панелі — на рейку, дроти — від клеми до клеми, кінці вибраного дроту — на іншу клему (миша або палець). Хрестик закриття — на самому щитку, масштаб — унизу ліворуч, вкладки «Помічник / Групи / Захист…» — помаранчеві, нижню панель трохи піднято. Прибрано кнопки ← → ↑↓ і ◀ ▶","Нові шаблони «3 фази + інвертор»: мережа 3~ з інвертором 3~ (АВР на контакторах 4P) і мережа 3~ з інвертором 1~ (резервна лінія на фазі L1 через АВР-модуль). Новий апарат — контактор 4P. Інвертор у тесті тепер враховує й трифазні групи","Меню без зайвого: Новий щит, Корпус і ввід (разом із шинами й колодкою XT2), Прокласти всі дроти, Помічник, Приклади щитів (згортаються), QR-код. Збереження, відкриття, експорт та імпорт — у кнопці «Проєкт», документи — у вкладці «Документи»","Тест на телефоні: кожен ввід — окремим рядком, кнопки й стан переносяться, нічого не ховається за край екрана","Прибрано «Удар блискавки поруч» з тесту власного щита","Помічник: «Усі апарати» відкриває весь каталог (з TOMZN), «← До кроку помічника» повертає назад","Струм на автоматах у тесті більше не налазить на позначення QF","Помічник: варіанти апаратів показано повністю, сіткою — видно й можна вибрати TOMZN TOVPD1, TO219G, TOQ5, TOQ7","Підписи під апаратами більше не обрізаються: довга назва групи стає дрібнішим шрифтом у 2 рядки","Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -2282,7 +2290,7 @@ function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча 
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для дроту, що переносимо.":S.selWire?"Дріт вибрано: кружечок на кінці — на іншу клему; середину дроту — тягніть, щоб прокласти інакше.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Новий дріт — тягніть від клеми до клеми. Дріт чи перемичку — затисніть посередині й тягніть, щоб відвести вбік. Апарат — затисніть і тягніть.";
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:"Подайте напругу, тисніть кнопки й важелі на апаратах або запустіть демонстрацію.";
   if(!gh0&&(S.mode==="mount"||S.mode==="wire")&&!S.pick&&!S.selDev&&!S.selWire&&!S.pend&&!S.moveEnd&&checkedOK())
-    h=`<b class="hok">✓ Щит готовий.</b> Далі: <button class="hlink" data-hgo="test">⚡ Тест</button> · <button class="hlink" data-hgo="docs">📄 Документи</button>`;
+    h=`<b class="hok">✓ Щит готовий.</b> <button class="hlink" data-hgo="fin">Зберегти PDF / Visio</button> · <button class="hlink" data-hgo="test">⚡ Тест</button>`;
   if(S.moveDev) h="✥ Торкніться вільного місця на рейці — апарат переїде туди разом із дротами.";
   else if(S.repl&&S.mode==="mount") h="🔁 Оберіть унизу новий апарат — він стане на те саме місце, дроти на однакові клеми лишаться.";
   if(gh0&&!S.moveDev&&!S.repl) h=gh0; $("hint").innerHTML=`<span>${h}</span>`; }
@@ -2550,8 +2558,8 @@ function demoNext(){ const sc=S.tplObj.demo.script; S.demo.i++; if(S.demo.i>=sc.
 function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length;
   S.lastCheck={sig:elecSnap(),errors:ne,warns:nw};
   S.chk={list:C,i:0}; S.chkOpen=!!(ne||nw); solve(0);   // усе гаразд — без вікна з переліком «1 з N», лише повідомлення й підказка «що далі»
-  if(!ne&&!nw) toast(`✓ Схема правильна — щит готовий (перевірок: ${C.length})`,"ok");
-  renderAll(true); }
+  renderAll(true);
+  if(!ne&&!nw){ if(typeof save==="function") save(); showFinish(C.length); } }   // логічне завершення: «Щит готовий» → PDF / Visio
 function clearCheck(){ S.chk=null; S.chkOpen=false; }
 function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ const g=groupsOf()[0]; if(g){ S.selDev=g.id; S.bsegFor=g.id; S.bseg="load"; } } renderAll(false); }
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
@@ -2586,7 +2594,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("#undoTop")){ undo(); return; }
   if(q("#redoTop")){ redo(); return; }
   if(q("#docsBtn")){ openDocs("sld"); return; }
-  if(el=q("[data-hgo]")){ if(el.dataset.hgo==="docs") openDocs("sld"); else { S.mode=el.dataset.hgo; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; renderAll(); } return; }
+  if(el=q("[data-hgo]")){ if(el.dataset.hgo==="fin") showFinish(runChecks().length); else if(el.dataset.hgo==="docs") openDocs("sld"); else { S.mode=el.dataset.hgo; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; renderAll(); } return; }
   if(q("#zAll")){ S.zoom=fitZoom(); renderAll(false); $("scroller").scrollTo(0,0); return; }
   if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; S.repl=null; S.moveDev=null; ctxClose(); renderAll(); return; }
   if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }
@@ -3188,9 +3196,11 @@ function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.pu
 // ---- Вікно документів
 const DOCT = [["sld","Однолінійна схема"],["cab","Кабельний журнал"],["spec","Специфікація"],["lab","Маркування"]];
 function openDocs(t){ S.docTab=t||S.docTab||"sld"; $("docs").hidden=false; renderDocs(); }
-function renderDocs(){ const t=S.docTab, nm=esc((S.proj&&S.proj.name)||"Щит");
-  $("docTabs").innerHTML=DOCT.map(([k,l])=>`<button data-doct="${k}" aria-selected="${t===k}">${l}</button>`).join("");
-  $("docSvg").textContent=t==="sld"?"SVG":t==="lab"?"—":"CSV"; $("docSvg").disabled=t==="lab";
+function renderDocs(){ const t=S.docTab;
+  $("docTabs").innerHTML=DOCT.map(([k,l])=>`<button data-doct="${k}" aria-selected="${t===k}">${l}</button>`).join("")+(t==="all"?`<button data-doct="all" aria-selected="true">Повний комплект</button>`:"");
+  $("docSvg").textContent=t==="sld"?"SVG":t==="lab"||t==="all"?"—":"CSV"; $("docSvg").disabled=t==="lab"||t==="all";
+  $("docsB").innerHTML=t==="all"?docAll():docBody(t); }
+function docBody(t){ const nm=esc((S.proj&&S.proj.name)||"Щит");
   let h="";
   if(t==="sld"){ const noLen=groupsOf().some(g=>!groupLen(g));
     h=`<div class="doc"><div class="sld">${sldSVG()}</div><p class="note">Кабель — ВВГнг(А)-LS, мідь. Iр — за встановленою потужністю групи, cos φ = 1. ΔU — втрата напруги в лінії (ρ = 0,0178 Ом·мм²/м); понад 4 % виділено червоним.${noLen?" Довжини ліній задайте в картці групи.":""}</p></div>`; }
@@ -3204,18 +3214,69 @@ function renderDocs(){ const t=S.docTab, nm=esc((S.proj&&S.proj.name)||"Щит")
         else { row+=`<div class="lab-c" style="width:18mm"></div>`; i++; } }
       h+=`<div class="lab-row">${row}</div>`; }
     h+=`</div></div>`; }
-  $("docsB").innerHTML=h; }
+  return h; }
 function download(name,data,type){ try{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([data],{type})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); toast("Файл збережено: "+name,"ok"); }catch(e){ toast("Не вдалося зберегти файл","e"); } }
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(el=q("[data-doct]")){ S.docTab=el.dataset.doct; renderDocs(); return; }
   if(q("#docsX")){ $("docs").hidden=true; return; }
   if(q("#docPrint")){ window.print(); return; }
-  if(q("#docSvg")){ const nm=((S.proj&&S.proj.name)||"shchyt").replace(/[^\wА-Яа-яІіЇїЄєҐґ-]+/g,"_");
+  if(q("#docSvg")){ const nm=fileBase();
     if(S.docTab==="sld") download(nm+"_odnolinijna.svg",sldSVG(),"image/svg+xml");
     else { const rows=S.docTab==="cab"?[["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],...cabData().inner,[],["Автомат","Група","Кабель","Довжина, м","ΔU, %"],...cabData().lines]
         :[["Найменування","Тип / модель","Кіл.","Од."],...specData()];
       download(nm+(S.docTab==="cab"?"_kabelnyj_zhurnal.csv":"_specyfikacija.csv"),"﻿"+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(";")).join("\n"),"text/csv"); }
     return; } });
+
+// ---- Повний комплект для PDF: титул (підсумок + вигляд щита), схема, кабельний журнал, специфікація, маркування — кожне з нового аркуша
+function docAll(){ const nm=esc((S.proj&&S.proj.name)||"Щит"), sm=boardSummary();
+  return `<div class="doc dpage"><h2 class="dtitle">${nm}</h2><p class="note">PanelCraft ${esc(APP.v)} · ${new Date().toLocaleDateString("uk-UA")} · перевірку пройдено без зауважень</p>`
+    +tbl(["Показник","Значення"],sm.rows,[])+`<div class="bview">${boardSVG()}</div></div>`
+    +["sld","cab","spec","lab"].map(t=>`<div class="dpage">${docBody(t)}</div>`).join(""); }
+// ---- Логічне завершення: перевірка без зауважень → «Щит готовий» з підсумком і збереженням у PDF або Visio
+// назва файлу латиницею (деякі браузери інакше зберігають як «download»)
+const TRL={а:"a",б:"b",в:"v",г:"h",ґ:"g",д:"d",е:"e",є:"ie",ж:"zh",з:"z",и:"y",і:"i",ї:"i",й:"i",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"kh",ц:"ts",ч:"ch",ш:"sh",щ:"shch",ь:"",ю:"iu",я:"ia","’":"","'":""};
+const fileBase = () => [...((S.proj&&S.proj.name)||"shchyt").toLowerCase()].map(c=>TRL[c]??c).join("").replace(/[^a-z0-9-]+/g,"_").replace(/^_+|_+$/g,"")||"shchyt";
+function boardSummary(){ const b=S.board, G0=groupsOf(), mods=S.devices.reduce((a,d)=>a+T[d.type].w,0), mm=px=>Math.round(px/G.MW*17.5);
+  const kind={"1ph":"1 фаза","3ph":"3 фази","2in":"мережа + генератор","2inv":"мережа + інвертор","3inv":"3 фази + інвертор"}[boardKind(b)]||boardKind(b);
+  const rows=[["Ввід",kind],["Корпус",`≈ ${mm(812)} × ${mm(enclB()-70)} мм · ${b.rails} рейк${b.rails===1?"а":b.rails<5?"и":""} · зайнято ${mods} з ${SLOTS*b.rails} мод.`],
+    ["Апаратів",String(S.devices.length)],["Груп (ліній)",G0.length?G0.length+": "+G0.map(g=>`${desig(g)} ${g.rating} «${g.group.name}»`).join(", "):"—"],
+    ["Дротів у щиті",String(S.wires.length)]];
+  return {rows,kinds:kind,mods,groups:G0.length}; }
+// Вигляд щита окремим SVG з вбудованими стилями — відкривається у Visio (Файл → Відкрити), Inkscape, браузері
+function boardSVG(){ const keep={mode:S.mode,pick:S.pick,selDev:S.selDev,selWire:S.selWire,pend:S.pend,moveDev:S.moveDev,repl:S.repl,moveEnd:S.moveEnd};
+  S.mode="doc"; S.pick=S.selDev=S.selWire=S.pend=S.moveDev=S.repl=S.moveEnd=null; render();
+  const src=$("svg"), cl=src.cloneNode(true), a=src.querySelectorAll("*"), b=cl.querySelectorAll("*"), drop=[];
+  const P=["fill","stroke","stroke-width","stroke-dasharray","stroke-linecap","stroke-linejoin","opacity","fill-opacity","stroke-opacity","font-family","font-size","font-weight","font-style","text-anchor","dominant-baseline","letter-spacing","paint-order"];
+  for(let i=0;i<a.length;i++){ const o=a[i], cs=getComputedStyle(o);
+    if(cs.display==="none"||o.classList.contains("wire-hit")||o.hasAttribute("data-slot")||o.closest("[data-closeboard]")){ drop.push(b[i]); continue; }
+    let st=""; for(const p of P){ const v=cs.getPropertyValue(p); if(v&&v!=="normal"&&v!=="auto") st+=`${p}:${v};`; }
+    const n=b[i]; n.setAttribute("style",st); n.removeAttribute("class"); for(const at of [...n.attributes]) if(at.name.startsWith("data-")) n.removeAttribute(at.name); }
+  for(const n of drop) n.remove();
+  Object.assign(S,keep); render();
+  const vb=(cl.getAttribute("viewBox")||"0 0 952 800").split(/\s+/).map(Number), bg=getComputedStyle(document.body).backgroundColor||"#111217";
+  cl.setAttribute("xmlns","http://www.w3.org/2000/svg"); cl.setAttribute("width",vb[2]); cl.setAttribute("height",vb[3]); cl.removeAttribute("id"); cl.removeAttribute("style");
+  let s=solidSVG(new XMLSerializer().serializeToString(cl));
+  return s.replace(/(<svg[^>]*>)/,`$1<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="${bg}"/>`); }
+// sldSVG — може містити змінні CSS: підставляємо значення, щоб файл був самодостатній
+const solidSVG = s => s.replace(/var\(--([\w-]+)\)/g,(m,v)=>(getComputedStyle(document.documentElement).getPropertyValue("--"+v).trim()||"#888").replace(/"/g,"'"));
+function printAll(){ closeDlg(); S.docTab="all"; openDocs("all"); setTimeout(()=>window.print(),350); }
+function saveVisio(which){ const nm=fileBase();
+  if(which==="board") download(nm+"_shchyt.svg",'<?xml version="1.0" encoding="UTF-8"?>\n'+boardSVG(),"image/svg+xml");
+  else download(nm+"_odnolinijna.svg",'<?xml version="1.0" encoding="UTF-8"?>\n'+solidSVG(sldSVG()),"image/svg+xml"); }
+function showFinish(nChecks){ const sm=boardSummary(), nm=esc((S.proj&&S.proj.name)||"Щит");
+  $("dlgCard").innerHTML=`<div class="fin"><div class="fin-ok">✓</div><h2 id="dlgTitle">Щит готовий</h2>
+    <p class="fin-s">«${nm}» — перевірок пройдено: ${nChecks}, зауважень немає. Проєкт збережено.</p>
+    <div class="fin-sum">${sm.rows.slice(0,4).map(([k,v])=>`<div><small>${esc(k)}</small><b>${esc(k==="Груп (ліній)"?String(sm.groups):v)}</b></div>`).join("")}</div>
+    <p class="lbl2">Зберегти документацію</p>
+    <div class="pgrid fin-g"><button class="pbtn" data-fin="pdf"><span class="fi">📄</span><b>PDF — повний комплект</b><small>щит, схема, кабельний журнал, специфікація, наклейки</small></button>
+      <button class="pbtn" data-fin="vboard"><span class="fi">📐</span><b>Visio — вигляд щита</b><small>SVG: у Visio «Файл → Відкрити»</small></button>
+      <button class="pbtn" data-fin="vsld"><span class="fi">📐</span><b>Visio — однолінійна схема</b><small>SVG, редагується у Visio</small></button>
+      <button class="pbtn" data-fin="test"><span class="fi">⚡</span><b>Тест під напругою</b><small>подати живлення й перевірити захист</small></button></div>
+    <div class="row dlg-f"><button class="btn" data-fin="close">Закрити</button></div></div>`;
+  DLG=[]; $("dlg").hidden=false; const f=$("dlgCard").querySelector('[data-fin="pdf"]'); if(f) f.focus(); }
+document.addEventListener("click",e=>{ const el=e.target.closest("[data-fin]"); if(!el) return; const a=el.dataset.fin;
+  if(a==="pdf"){ printAll(); return; } if(a==="vboard"){ saveVisio("board"); return; } if(a==="vsld"){ saveVisio("sld"); return; }
+  closeDlg(); if(a==="test"){ S.mode="test"; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; renderAll(); } });
 /* ===== Покроковий помічник складання щита =====
    Апарати ставляться з коротких списків (лише те, що помічник уміє підключити сам), проводка — «1 → 2» з підсвіченими клемами
    або «Підключити все» (autoWire у 18_autowire.js). Групам одразу дається назва й типові прилади. */
