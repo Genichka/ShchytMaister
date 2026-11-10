@@ -121,6 +121,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(el=q("[data-qpos]")){ d.pos=+el.dataset.qpos; delete d.seqI; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); commit(false); return; }
     if(el=q("[data-atsv]")){ d.variant=el.dataset.atsv; commit(false); return; }
     if(el=q("[data-tqpos]")){ if(!d.manual){ toast("Ручка працює лише в режимі Manual","w"); return; } d.pos=el.dataset.tqpos; logp("w",`${desig(d)}: ручкою переведено на Source ${d.pos}`); commit(false); return; }
+    if(el=q("[data-ktfn]")){ d.fn=el.dataset.ktfn; d.t=0; d.out=false; logp("w",`${desig(d)}: функція ${d.fn} — ${KTM_FN[d.fn]}`); commit(false); return; }
     if(el=q("[data-iset]")){ d.iset=+el.dataset.iset; logp("w",`${desig(d)}: уставка струму ${d.iset} А`); commit(false); return; }
     if(el=q("[data-cmd]")){ d.cmd=el.dataset.cmd==="1"; commit(false); return; }
     if(el=q("[data-hlc]")){ d.col=el.dataset.hlc; commit(false); return; }

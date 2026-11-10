@@ -1,5 +1,12 @@
 /* ===== «Замовити апарат»: фото, QR-код і посилання. Дані — shop.json у корені сайту, картинки — папка shop/ ===== */
-let SHOP=null;
+let SHOP=null, SHOP_T={};
+// апарати з «Замовити», що є в бібліотеці (поле "type" у shop.json): на щиті на них QR замість напису EnergyUA
+function shopIndex(){ SHOP_T={}; if(Array.isArray(SHOP)) for(const it of SHOP) if(it.type&&/^https?:/i.test(it.link||"")) for(const k of String(it.type).split(/[\s,]+/)) if(k) SHOP_T[k]=it; }
+const shopFor = d => { const it=SHOP_T[d.type]; return it&&(brandOf(d)==="eua"||T[d.type].maker)?it:null; };
+function loadShop(){ try{ const c=JSON.parse(localStorage.getItem("pc-shop")||"null"); if(Array.isArray(c)){ SHOP=c; shopIndex(); } }catch(_){}
+  fetch("shop.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return; SHOP=Array.isArray(j)?j:((j&&j.items)||[]); shopIndex();
+    try{ localStorage.setItem("pc-shop",JSON.stringify(SHOP)); }catch(_){} if(!S.noDoc&&!window.__dragBusy) render(); }).catch(()=>{}); }
+setTimeout(loadShop,400);
 const shopUrl = u => (u && /^(https?:\/\/|shop\/)/i.test(String(u).trim())) ? String(u).trim() : "";
 function shopCards(list){
   if(list===null) return `<p class="shop-empty">Завантаження…</p>`;
@@ -13,6 +20,9 @@ function shopShow(list){ dialog("Замовити апарат",`<p class="hint"
 function openShop(){
   shopShow(SHOP);
   fetch("shop.json?t="+Date.now(),{cache:"no-store"}).then(r=>{ if(!r.ok) throw 0; return r.json(); })
-    .then(j=>{ SHOP=Array.isArray(j)?j:((j&&j.items)||[]); })
+    .then(j=>{ SHOP=Array.isArray(j)?j:((j&&j.items)||[]); shopIndex(); })
     .catch(()=>{ if(SHOP===null) SHOP="off"; })
     .then(()=>{ const t=$("dlgTitle"); if(!$("dlg").hidden&&t&&t.textContent==="Замовити апарат") shopShow(SHOP); if(SHOP==="off") SHOP=null; }); }
+// дотик по QR на апараті — картка цього апарата з фото, QR і кнопкою «Замовити»
+document.addEventListener("click",e=>{ const g=e.target.closest("[data-shopq]"); if(!g) return; e.stopPropagation(); e.preventDefault();
+  const it=Array.isArray(SHOP)&&SHOP.find(x=>x.link===g.dataset.shopq); if(it) shopShow([it]); },true);

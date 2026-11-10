@@ -1,44 +1,48 @@
 [
- {
-  "name": "Перемикач I-0-II TOMZN 63 А",
-  "photo": "shop/tomzn-to-g.jpg",
-  "qr": "shop/tomzn-to-g-qr.png",
-  "link": "https://s.click.aliexpress.com/e/_EGE4ngA",
-  "note": "Ручний перемикач «мережа ↔ генератор»: TO119G (1P), TO219G (2P), TO319G (3P), TO419G (4P)"
- },
- {
-  "name": "Реле напруги й струму TOMZN TOVPD1-60",
-  "photo": "shop/tomzn-tovpd1.jpg",
-  "qr": "shop/tomzn-tovpd1-qr.png",
-  "link": "https://s.click.aliexpress.com/e/_EIdx886",
-  "note": "Захист від перенапруги, зниженої напруги й перевантаження за струмом; дисплей напруги й струму, налаштування кнопками"
- },
- {
-  "name": "АВР TOMZN TOQ7 2P 63/100/125 А",
-  "photo": "shop/tomzn-toq7.jpg",
-  "qr": "shop/ali-eyv0abc-qr.png",
-  "link": "https://s.click.aliexpress.com/e/_EyV0AbC",
-  "note": "Автоматичний перемикач «мережа ↔ генератор» на DIN-рейку, 220 В; ручний і автоматичний режим"
- },
- {
-  "name": "Шлюз Tuya Zigbee + Bluetooth",
-  "photo": "shop/tuya-zigbee-hub.jpg",
-  "qr": "shop/ali-eziakly-qr.png",
-  "link": "https://s.click.aliexpress.com/e/_EziaKLY",
-  "note": "Хаб розумного будинку: керування з Smart Life, сценарії, працює з Alexa"
- },
- {
-  "name": "Трифазне реле напруги TOMZN TOVPD3-II 63 А",
-  "photo": "shop/tomzn-tovpd3-ii.jpg",
-  "qr": "shop/ali-ewmruii-qr.png",
-  "link": "https://s.click.aliexpress.com/e/_EwMRUiI",
-  "note": "Захист від перенапруги й зниженої напруги 380 В з автоматичним відновленням; дисплей напруги кожної фази"
- },
- {
-  "name": "Трифазне реле напруги й струму TOMZN TOVPD3 63/100 А",
-  "photo": "shop/tomzn-tovpd3-va.jpg",
-  "qr": "shop/ali-ehbrn62-qr.png",
-  "link": "https://s.click.aliexpress.com/e/_EHbRN62",
-  "note": "3P+N: вольтметр і амперметр на кожну фазу, захист від перенапруги, зниженої напруги й перевантаження"
- }
+  {
+    "name": "Перемикач I-0-II TOMZN 63 А",
+    "photo": "shop/tomzn-to-g.jpg",
+    "qr": "shop/tomzn-to-g-qr.png",
+    "link": "https://s.click.aliexpress.com/e/_EGE4ngA",
+    "note": "Ручний перемикач «мережа ↔ генератор»: TO119G (1P), TO219G (2P), TO319G (3P), TO419G (4P)",
+    "type": "to219"
+  },
+  {
+    "name": "Реле напруги й струму TOMZN TOVPD1-60",
+    "photo": "shop/tomzn-tovpd1.jpg",
+    "qr": "shop/tomzn-tovpd1-qr.png",
+    "link": "https://s.click.aliexpress.com/e/_EIdx886",
+    "note": "Захист від перенапруги, зниженої напруги й перевантаження за струмом; дисплей напруги й струму, налаштування кнопками",
+    "type": "tovpd1"
+  },
+  {
+    "name": "АВР TOMZN TOQ7 2P 63/100/125 А",
+    "photo": "shop/tomzn-toq7.jpg",
+    "qr": "shop/ali-eyv0abc-qr.png",
+    "link": "https://s.click.aliexpress.com/e/_EyV0AbC",
+    "note": "Автоматичний перемикач «мережа ↔ генератор» на DIN-рейку, 220 В; ручний і автоматичний режим",
+    "type": "toq7"
+  },
+  {
+    "name": "Шлюз Tuya Zigbee + Bluetooth",
+    "photo": "shop/tuya-zigbee-hub.jpg",
+    "qr": "shop/ali-eziakly-qr.png",
+    "link": "https://s.click.aliexpress.com/e/_EziaKLY",
+    "note": "Хаб розумного будинку: керування з Smart Life, сценарії, працює з Alexa",
+    "type": "hub"
+  },
+  {
+    "name": "Трифазне реле напруги TOMZN TOVPD3-II 63 А",
+    "photo": "shop/tomzn-tovpd3-ii.jpg",
+    "qr": "shop/ali-ewmruii-qr.png",
+    "link": "https://s.click.aliexpress.com/e/_EwMRUiI",
+    "note": "Захист від перенапруги й зниженої напруги 380 В з автоматичним відновленням; дисплей напруги кожної фази"
+  },
+  {
+    "name": "Трифазне реле напруги й струму TOMZN TOVPD3 63/100 А",
+    "photo": "shop/tomzn-tovpd3-va.jpg",
+    "qr": "shop/ali-ehbrn62-qr.png",
+    "link": "https://s.click.aliexpress.com/e/_EHbRN62",
+    "note": "3P+N: вольтметр і амперметр на кожну фазу, захист від перенапруги, зниженої напруги й перевантаження"
+  }
 ]

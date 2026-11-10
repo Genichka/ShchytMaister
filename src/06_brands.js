@@ -4,7 +4,10 @@ const BR = {
   abb:{n:"ABB", tint:"#8d98a3"}, se:{n:"Schneider Electric", s:"Schneider", tint:"#ffffff"}, hager:{n:"Hager", tint:"#7f8a96"},
   legrand:{n:"Legrand", tint:"#ffffff"}, eaton:{n:"Eaton", tint:"#a7adb3"}, siemens:{n:"Siemens", tint:"#6f7c88"}, iek:{n:"IEK", tint:"#c9ccd0"},
   zubr:{n:"ZUBR", tint:"#d7dadd"}, digitop:{n:"Digitop", tint:"#e2e4e6"}, novatek:{n:"Новатек-Електро", s:"Новатек", tint:"#d9dde1"},
-  nik:{n:"NIK", tint:"#d4d7da"}, eastron:{n:"Eastron", tint:"#c4c9ce"}, finder:{n:"Finder", tint:"#9aa3ab"} };
+  nik:{n:"NIK", tint:"#d4d7da"}, eastron:{n:"Eastron", tint:"#c4c9ce"}, finder:{n:"Finder", tint:"#9aa3ab"},
+  geya:{n:"GEYA", tint:"#e8eaed"}, tomzn:{n:"TOMZN", tint:"#eef0f3"} };
+// модульні контактори NO / NC: GEYA GYHC, TOMZN TOCT1
+const kmcM = (p,cfg) => ({ geya:d=>`GYHC-${d.rating} ${p}P ${cfg}`, tomzn:d=>`TOCT1-${d.rating} ${p}P ${cfg}` });
 const cv = d => (String(d.rating).match(/^[BCD]/)||["C"])[0], In2 = d => String(Math.round(inA(d.rating))).padStart(2,"0");
 const mcb = p => ({ abb:d=>`S20${p} ${d.rating}`, se:d=>`iC60N ${p}P ${d.rating}`, hager:d=>`M${cv(d)}N${p}${In2(d)}`, legrand:d=>`DX³ ${p}P ${d.rating}`,
   eaton:d=>`PL6-${d.rating}/${p}`, siemens:d=>`5SL6${p}${In2(d)}-${cv(d)==="B"?6:7}`, iek:d=>`ВА47-29 ${p}P ${d.rating}`});
@@ -23,7 +26,10 @@ const MODELS = {
   km2a:{ abb:()=>"ESB20-20N", se:()=>"iCT 25A 2NO", hager:()=>"ESC225", eaton:()=>"Z-SCH230/25-20", iek:()=>"КМ20-20"},
   kimp:{ abb:()=>"E290-16", se:()=>"iTL 16A", finder:()=>"26.01", hager:()=>"EPN510"},
   stair:{ abb:()=>"E232", se:()=>"MIN", finder:()=>"14.01"},
-  kt:{ finder:()=>"80.01", abb:()=>"CT-ERD"},
+  kt:{ finder:()=>"80.01", abb:()=>"CT-ERD", geya:()=>"GRT8-A1", tomzn:()=>"TORT7-A1"},
+  ktb:{ geya:()=>"GRT8-B1", tomzn:()=>"TORT7-B1"}, ktm:{ geya:()=>"GRT8-M1", finder:()=>"80.01"},
+  kmc1no:kmcM(1,"1NO"), kmc1nc:kmcM(1,"1NC"), kmc2no:kmcM(2,"2NO"), kmc11:kmcM(2,"1NO1NC"), kmc2nc:kmcM(2,"2NC"),
+  kmc4no:kmcM(4,"4NO"), kmc31:kmcM(4,"3NO1NC"), kmc22:kmcM(4,"2NO2NC"), kmc4nc:kmcM(4,"4NC"),
   sw2:{ abb:()=>"SD202/40", se:()=>"iSW 2P 40A", legrand:()=>"DX³-IS 2P 40A", iek:()=>"ВН-32 2P 40А"},
   pef:{ novatek:()=>"ПЕФ-301"}, kvf:{ novatek:()=>"РНПП-311", finder:()=>"70.31"},
   fuac:{ abb:d=>`E91/32 · ${d.rating}`, se:d=>`DF101 · ${d.rating}`, iek:d=>`ПВ1 · ${d.rating}`} };

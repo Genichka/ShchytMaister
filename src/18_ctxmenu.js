@@ -4,7 +4,8 @@ function ctxOpen(d,cx,cy){ ctxClose(); const t=T[d.type], m=document.createEleme
   m.id="ctxm"; m.className="ctxm"; m.setAttribute("role","menu"); m.dataset.dev=d.id;
   m.innerHTML=`<div class="ctx-h">${esc(desig(d))} · ${esc(t.short)}${d.rating?" "+esc(d.rating)+(t.unit||""):""}${d.group?` <span>«${esc(d.group.name)}»</span>`:""}</div>`
     +`<button role="menuitem" data-cx="repl"><i>🔁</i>Замінити</button><button role="menuitem" data-cx="move"><i>✥</i>Перемістити</button>`
-    +`<button role="menuitem" data-cx="set"><i>⚙️</i>Налаштувати<small>номінал, підпис, виробник</small></button><button role="menuitem" class="danger" data-cx="del"><i>🗑</i>Видалити</button>`;
+    +`<button role="menuitem" data-cx="set"><i>⚙️</i>Налаштувати<small>номінал, підпис, виробник</small></button>`
+    +(shopFor(d)?`<button role="menuitem" data-cx="shop"><i>🛒</i>Замовити цей апарат</button>`:"")+`<button role="menuitem" class="danger" data-cx="del"><i>🗑</i>Видалити</button>`;
   document.body.appendChild(m);
   const r=m.getBoundingClientRect(), W=innerWidth, H=innerHeight; let x=cx+6, y=cy+6;
   if(x+r.width>W-8) x=Math.max(8,cx-r.width-6); if(y+r.height>H-8) y=Math.max(8,cy-r.height-6);
@@ -56,6 +57,7 @@ document.addEventListener("click",e=>{ const m=$("ctxm"); if(!m) return; const b
   if(a==="repl"){ S.repl=d.id; S.mode="mount"; S.selDev=null; S.pick=null; S.moveDev=null; S.devQ=""; [S.cat,S.sub]=catOf(d.type); S.devOpen=true; renderAll(); toast(`Оберіть унизу, чим замінити ${desig(d)}`); return; }
   if(a==="move"){ S.moveDev=d.id; S.pick=d.type; S.pickQty=1; S.repl=null; S.mode="mount"; S.selDev=null; renderAll(); toast(`Торкніться вільного місця на рейці — ${desig(d)} переїде туди`); return; }
   if(a==="set"){ S.selDev=d.id; S.repl=null; S.moveDev=null; S.pick=null; if(S.mode==="wire") S.mode="mount"; renderAll(false); return; }
+  if(a==="shop"){ const it=shopFor(d); if(it) shopShow([it]); return; }
   if(a==="del"){ const n=desig(d); removeDev(d); S.selDev=null; toast(`${n} видалено. «Назад» ↶ поверне`); } },true);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("ctxm")) ctxClose(); });
 $("scroller").addEventListener("scroll",()=>ctxClose(),{passive:true});

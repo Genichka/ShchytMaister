@@ -483,7 +483,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.22.2", date:"2026-11-10", notes:["Коли виходить нова версія, табличка з версією й кнопка «Оновити» блимають помаранчевим, доки не оновитесь; дотик по табличці відкриває оновлення. Перевірка — при запуску, кожні 10 хв і при поверненні в застосунок","Гребінка: якщо пересунутий автомат зійшов з гребінки — вікно з варіантами: подовжити гребінку (вільні зубці — заглушки), перемичка дротом від сусіднього автомата, повернути на місце або залишити","Логічне завершення: після перевірки без зауважень — вікно «✓ Щит готовий» з підсумком (ввід, корпус, апарати, групи) і збереженням: PDF — повний комплект (вигляд щита, однолінійна схема, кабельний журнал, специфікація, наклейки, кожне з нового аркуша), Visio — вигляд щита й однолінійна схема у SVG (у Visio «Файл → Відкрити»)","Дотик (клік, ПКМ) по апарату відкриває меню: 🔁 Замінити · ✥ Перемістити · ⚙️ Налаштувати · 🗑 Видалити","Замінити — унизу відкривається каталог (одразу на схожих апаратах); новий стає на те саме місце, дроти на однакові клеми лишаються","Перемістити — торкніться вільного місця на рейці, апарат переїде туди разом із дротами","Перевірка без зайвого вікна: якщо все гаразд — коротке повідомлення «✓ Схема правильна», а вгорі «✓ Щит готовий. Далі: ⚡ Тест · 📄 Документи». Перелік «1 з N» показується лише коли є помилки чи попередження","Дроти й перемички можна відводити пальцем або мишею: затисніть дріт посередині й тягніть — траса зміщується, кінці лишаються на клемах. «↺ Авто-траса» в панелі дроту повертає як було, «↺ Вирівняти всі траси й шини» — для всього щита","Шини N, PE і колодку XT2 можна пересувати вздовж ряду (режим «Апарати»), апарати — тягнути й у режимі «Дроти». Охайне перекладання дротів і шин не скидає перевірку","Кнопка проєкту (збереження, відкриття, створення) перенесена з шапки в меню — більше місця на екрані. Каталог апаратів перегруповано за вашим списком: категорії переносяться на кілька рядків, у кожній — підгрупи, зверху пошук по всіх апаратах. Нижня панель за каталогом: головні групи (автомати, диференційний захист, реле, контактори, ПЗІП, шини, клеми, прилади, кнопки…) і підгрупи (1P/2P/3P/4P, ПЗВ/дифавтомати, контроль напруги/фаз, реле часу, АВР…). Щит завжди по центру вільного місця; на корпусі проставлено розміри (ширина й висота, ≈ мм від модуля DIN 17,5 мм). Розділи меню за замовчуванням згорнуті. Нижня панель: запас унизу під жести телефона; згортається вниз — дотик по порожньому місцю щита, ручка зверху панелі або свайп. Панель сама розгортається, коли вибираєш апарат, дріт чи режим","Меню: усі розділи («Щит», «Приклади щитів», «Про застосунок») — випадаючі списки","Кнопки масштабу перенесено зі щита у смугу підказки над ним — вони більше не закривають схему","Перетягування: апарати й групи з нижньої панелі — на рейку, дроти — від клеми до клеми, кінці вибраного дроту — на іншу клему (миша або палець). Хрестик закриття — на самому щитку, масштаб — унизу ліворуч, вкладки «Помічник / Групи / Захист…» — помаранчеві, нижню панель трохи піднято. Прибрано кнопки ← → ↑↓ і ◀ ▶","Нові шаблони «3 фази + інвертор»: мережа 3~ з інвертором 3~ (АВР на контакторах 4P) і мережа 3~ з інвертором 1~ (резервна лінія на фазі L1 через АВР-модуль). Новий апарат — контактор 4P. Інвертор у тесті тепер враховує й трифазні групи","Меню без зайвого: Новий щит, Корпус і ввід (разом із шинами й колодкою XT2), Прокласти всі дроти, Помічник, Приклади щитів (згортаються), QR-код. Збереження, відкриття, експорт та імпорт — у кнопці «Проєкт», документи — у вкладці «Документи»","Тест на телефоні: кожен ввід — окремим рядком, кнопки й стан переносяться, нічого не ховається за край екрана","Прибрано «Удар блискавки поруч» з тесту власного щита","Помічник: «Усі апарати» відкриває весь каталог (з TOMZN), «← До кроку помічника» повертає назад","Струм на автоматах у тесті більше не налазить на позначення QF","Помічник: варіанти апаратів показано повністю, сіткою — видно й можна вибрати TOMZN TOVPD1, TO219G, TOQ5, TOQ7","Підписи під апаратами більше не обрізаються: довга назва групи стає дрібнішим шрифтом у 2 рядки","Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
+const APP = { v:"4.23.0", date:"2026-11-10", notes:["Бібліотека: модульні контактори з різними контактами — 1НВ, 1НЗ, 2НВ, 1НВ+1НЗ, 2НЗ, 4НВ, 3НВ+1НЗ, 2НВ+2НЗ, 4НЗ (GEYA GYHC, TOMZN TOCT1); на корпусі видно, які контакти замкнені","Реле часу: затримка вимкнення (GEYA GRT8-B1, TOMZN TORT7-B1) і багатофункційне A · B · C · D (GEYA GRT8-M1); звичайне реле часу — GEYA GRT8-A1, TOMZN TORT7-A1","Апарати з «Замовити» на щиті позначено QR-кодом замість напису EnergyUA; дотик по QR або «🛒 Замовити цей апарат» у меню апарата відкриває його картку","Коли виходить нова версія, табличка з версією й кнопка «Оновити» блимають помаранчевим, доки не оновитесь; дотик по табличці відкриває оновлення. Перевірка — при запуску, кожні 10 хв і при поверненні в застосунок","Гребінка: якщо пересунутий автомат зійшов з гребінки — вікно з варіантами: подовжити гребінку (вільні зубці — заглушки), перемичка дротом від сусіднього автомата, повернути на місце або залишити","Логічне завершення: після перевірки без зауважень — вікно «✓ Щит готовий» з підсумком (ввід, корпус, апарати, групи) і збереженням: PDF — повний комплект (вигляд щита, однолінійна схема, кабельний журнал, специфікація, наклейки, кожне з нового аркуша), Visio — вигляд щита й однолінійна схема у SVG (у Visio «Файл → Відкрити»)","Дотик (клік, ПКМ) по апарату відкриває меню: 🔁 Замінити · ✥ Перемістити · ⚙️ Налаштувати · 🗑 Видалити","Замінити — унизу відкривається каталог (одразу на схожих апаратах); новий стає на те саме місце, дроти на однакові клеми лишаються","Перемістити — торкніться вільного місця на рейці, апарат переїде туди разом із дротами","Перевірка без зайвого вікна: якщо все гаразд — коротке повідомлення «✓ Схема правильна», а вгорі «✓ Щит готовий. Далі: ⚡ Тест · 📄 Документи». Перелік «1 з N» показується лише коли є помилки чи попередження","Дроти й перемички можна відводити пальцем або мишею: затисніть дріт посередині й тягніть — траса зміщується, кінці лишаються на клемах. «↺ Авто-траса» в панелі дроту повертає як було, «↺ Вирівняти всі траси й шини» — для всього щита","Шини N, PE і колодку XT2 можна пересувати вздовж ряду (режим «Апарати»), апарати — тягнути й у режимі «Дроти». Охайне перекладання дротів і шин не скидає перевірку","Кнопка проєкту (збереження, відкриття, створення) перенесена з шапки в меню — більше місця на екрані. Каталог апаратів перегруповано за вашим списком: категорії переносяться на кілька рядків, у кожній — підгрупи, зверху пошук по всіх апаратах. Нижня панель за каталогом: головні групи (автомати, диференційний захист, реле, контактори, ПЗІП, шини, клеми, прилади, кнопки…) і підгрупи (1P/2P/3P/4P, ПЗВ/дифавтомати, контроль напруги/фаз, реле часу, АВР…). Щит завжди по центру вільного місця; на корпусі проставлено розміри (ширина й висота, ≈ мм від модуля DIN 17,5 мм). Розділи меню за замовчуванням згорнуті. Нижня панель: запас унизу під жести телефона; згортається вниз — дотик по порожньому місцю щита, ручка зверху панелі або свайп. Панель сама розгортається, коли вибираєш апарат, дріт чи режим","Меню: усі розділи («Щит», «Приклади щитів», «Про застосунок») — випадаючі списки","Кнопки масштабу перенесено зі щита у смугу підказки над ним — вони більше не закривають схему","Перетягування: апарати й групи з нижньої панелі — на рейку, дроти — від клеми до клеми, кінці вибраного дроту — на іншу клему (миша або палець). Хрестик закриття — на самому щитку, масштаб — унизу ліворуч, вкладки «Помічник / Групи / Захист…» — помаранчеві, нижню панель трохи піднято. Прибрано кнопки ← → ↑↓ і ◀ ▶","Нові шаблони «3 фази + інвертор»: мережа 3~ з інвертором 3~ (АВР на контакторах 4P) і мережа 3~ з інвертором 1~ (резервна лінія на фазі L1 через АВР-модуль). Новий апарат — контактор 4P. Інвертор у тесті тепер враховує й трифазні групи","Меню без зайвого: Новий щит, Корпус і ввід (разом із шинами й колодкою XT2), Прокласти всі дроти, Помічник, Приклади щитів (згортаються), QR-код. Збереження, відкриття, експорт та імпорт — у кнопці «Проєкт», документи — у вкладці «Документи»","Тест на телефоні: кожен ввід — окремим рядком, кнопки й стан переносяться, нічого не ховається за край екрана","Прибрано «Удар блискавки поруч» з тесту власного щита","Помічник: «Усі апарати» відкриває весь каталог (з TOMZN), «← До кроку помічника» повертає назад","Струм на автоматах у тесті більше не налазить на позначення QF","Помічник: варіанти апаратів показано повністю, сіткою — видно й можна вибрати TOMZN TOVPD1, TO219G, TOQ5, TOQ7","Підписи під апаратами більше не обрізаються: довга назва групи стає дрібнішим шрифтом у 2 рядки","Апарати → нова вкладка «⚡ Групи»: групові автомати одним дотиком — освітлення, розетки, кухня, пральна, бойлер, котел, кондиціонер, тепла підлога, плита, вулиця; тип — 1P, 1P+N або диф-автомат","«⚡ Прокласти всі дроти автоматично» — у режимі «Дроти», у вкладці «Групи» і в «Меню → Щит»; якщо чогось бракує, підказує, що поставити","Новий апарат: реле напруги й струму TOMZN TOVPD1 (40/60/63 А) — два індикатори V і A, відключення за напругою й за струмом (уставка 16–63 А), кнопка ⏻","Перемикач TO219G тепер «Механічний АВР TOMZN TO219G» із синьою ручкою, як на корпусі","Майстер нового щита: вибір «з помічником» чи «самостійно» — на першому кроці, поруч із назвою","Меню: назви розділів виділено кольором — помаранчеві розділи, сині підрозділи прикладів","Порожня робоча зона: лишились тільки «Створити новий щит» і «Приклади щитів» — збережені проєкти й імпорт є в меню","Новий апарат: АВР TOMZN TOQ7 2P (63/100/125 А) у чорному корпусі — у каталозі «Комутація, АВР», у помічнику й у шаблоні «Мережа + генератор: АВР TOMZN TOQ7-125/2»","Майстер нового щита: на останньому кроці вибір — збирати з помічником чи самостійно"] };
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // апарати на DIN-рейці
@@ -1067,6 +1067,60 @@ defType("toq7",{...T.toq5, name:"АВР TOMZN TOQ7 2P з ручкою (мере�
       +`<rect x="${g.x+290}" y="${g.y+104}" width="16" height="32" rx="4" fill="#0d0e11" stroke="#454a54"/><rect x="${g.x+292}" y="${d.manual?g.y+106:g.y+120}" width="12" height="14" rx="3" fill="#e0352b"/></g>`
       +tx(g.x+232,g.y+128,d.manual?"РУЧНИЙ":"АВТО",{fs:7,fw:700,fill:d.manual?"#ffa04d":"#5fd38a"});
     return s; }});
+/* ===== Модульні контактори з різними контактами (НВ / НЗ) і реле часу GEYA / TOMZN ===== */
+// Контакт: [вхід, вихід, "NO"|"NC", роль]. НВ (NO) замкнений, коли котушка A1–A2 під напругою; НЗ (NC) — навпаки
+const KMC_TXT = cs => { const no=cs.filter(c=>c[2]==="NO").length, nc=cs.length-no; return [no?`${no}НВ`:"",nc?`${nc}НЗ`:""].filter(Boolean).join("+"); };
+const KMC_EN  = cs => { const no=cs.filter(c=>c[2]==="NO").length, nc=cs.length-no; return [no?`${no}NO`:"",nc?`${nc}NC`:""].filter(Boolean).join(""); };
+function kmcFace(d,g,cs){ const p=!!d.pulled, tm=T[d.type].terms.filter(q=>q.s==="top");
+  let s=tx(g.cx,g.y+67,mdl(d,`КОНТАКТОР ${cs.length}P ${d.rating} А`),{fs:modelOf(d)&&g.w<80?5.4:g.w<60?5.2:6.6,fw:700})+tx(g.cx,g.y+77,g.w<60?KMC_TXT(cs):`${KMC_TXT(cs)} · котушка 230 В`,{fs:6});
+  s+=`<rect x="${g.cx-15}" y="${g.y+83}" width="30" height="24" rx="3" fill="#2a2d33"/><rect x="${g.cx-11}" y="${g.y+(p?94:87)}" width="22" height="10" rx="2" fill="${p?"#e0352b":"#8e9196"}"/>`;
+  cs.forEach((c,i)=>{ const t0=tm.find(q=>q.k===c[0]), X=t0?termX(d,t0):g.cx, cl=c[2]==="NC"?!p:p, col=cl?"#2e9e3e":"#7a7f88", y0=g.y+114;
+    s+=`<path d="M${X} ${y0}v6${cl?"v9":`l-5 8`}M${X} ${y0+15}v6" stroke="${col}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
+      +(c[2]==="NC"?`<path d="M${X-4} ${y0+6}h8" stroke="${col}" stroke-width="1.2"/>`:"")+tx(X,y0+31,c[2]==="NC"?"НЗ":"НВ",{fs:5.6,fw:600,fill:col}); });
+  return s+led(g.x+10,g.y+92,p?"#3fbf4a":"#9aa0aa"); }
+function kmcDef(key,cs,w,def){ const pn=cs.length, roles=pn===1?["L"]:pn===2?["L","N"]:["P","P","P","N"];
+  defType(key,{name:`Контактор модульний ${pn}P · ${KMC_TXT(cs)} (${KMC_EN(cs)})`, short:`Контактор ${pn}P ${KMC_TXT(cs)}`, cat:"Керування", w, pre:"KM",
+    ratings:["25","40","63"], def, unit:" А",
+    terms:[C("A1","top","A1"),...cs.map((c,i)=>({k:c[0],s:"top",r:roles[i],l:c[0]})),C("A2","bot","A2"),...cs.map((c,i)=>({k:c[1],s:"bot",r:roles[i],l:c[1]}))],
+    poles:cs.map((c,i)=>({a:c[0],b:c[1],r:roles[i]==="N"?"N":"L"})), closed:(d,pi)=>cs[pi][2]==="NC"?!d.pulled:!!d.pulled,
+    logic:coilLogic, cap:cs.every(c=>c[2]==="NC")?"Відключення навантаження":"Контактор", face:(d,g)=>kmcFace(d,g,cs)}); }
+kmcDef("kmc1no",[["1","2","NO"]],1,"25");
+kmcDef("kmc1nc",[["11","12","NC"]],1,"25");
+kmcDef("kmc2no",[["1","2","NO"],["3","4","NO"]],2,"40");
+kmcDef("kmc11",[["1","2","NO"],["11","12","NC"]],2,"40");
+kmcDef("kmc2nc",[["11","12","NC"],["21","22","NC"]],2,"40");
+kmcDef("kmc4no",[["1","2","NO"],["3","4","NO"],["5","6","NO"],["7","8","NO"]],3,"63");
+kmcDef("kmc31",[["1","2","NO"],["3","4","NO"],["5","6","NO"],["11","12","NC"]],3,"63");
+kmcDef("kmc22",[["1","2","NO"],["3","4","NO"],["11","12","NC"],["21","22","NC"]],3,"63");
+kmcDef("kmc4nc",[["11","12","NC"],["21","22","NC"],["31","32","NC"],["41","42","NC"]],3,"63");
+
+// ---- Реле часу: затримка вимкнення (GEYA GRT8-B1, TOMZN TORT7-B1) і багатофункційне (GEYA GRT8-M1)
+const KT_TERMS=[C("A1","top","A1"),C("15","top","15"),C("A2","bot","A2"),C("16","bot","16"),C("18","bot","18")];
+function ktDial(d,g,label,p,col){ const r=17, a=p*2*Math.PI, x2=g.cx+r*Math.sin(a), y2=g.y+100-r*Math.cos(a);
+  return tx(g.cx,g.y+66,label,{fs:6.4,fw:700})+`<circle cx="${g.cx}" cy="${g.y+100}" r="${r}" fill="#2a2d33"/>`
+    +(p>0&&p<1?`<path d="M${g.cx} ${g.y+100} L${g.cx} ${g.y+100-r} A${r} ${r} 0 ${p>0.5?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z" fill="${col}"/>`:p>=1?`<circle cx="${g.cx}" cy="${g.y+100}" r="${r}" fill="${col}"/>`:"")
+    +led(g.x+14,g.y+136,d.coil?"#3fbf4a":"#5a5e66")+led(g.x+g.w-14,g.y+136,d.out?"#ffd23f":"#5a5e66")+tx(g.cx,g.y+150,d.out?"15–18":"15–16",{fs:7,ff:"var(--mono)"}); }
+defType("ktb",{name:"Реле часу — затримка вимкнення", short:"Реле часу (вимк.)", cat:"Керування", w:2, pre:"KT", terms:KT_TERMS,
+  aux:d=>d.out?[["15","18"]]:[["15","16"]], init:d=>{ d.delay=d.delay||5; d.t=0; }, cap:"Затримка вимкнення",
+  logic(d,X){ const c=coilOn(d,X,"A1","A2"); d.coil=c; if(c){ d.t=0; if(!d.out){ d.out=true; return true; } } return false; },
+  tick(d,X,dt){ if(!d.coil&&d.out){ d.t+=dt; if(d.t>=d.delay){ d.out=false; d.t=0; logp("ok",`${desig(d)}: живлення зникло ${d.delay} с тому — контакт 15–18 розімкнено`); } } },
+  face(d,g){ return ktDial(d,g,mdl(d,"РЕЛЕ ЧАСУ")+" · ↓ "+d.delay+" с",!d.coil&&d.out?Math.min(1,(d.t||0)/d.delay):0,"#4aa3ff"); }});
+// Багатофункційне: A — затримка ввімкнення, B — затримка вимкнення, C — цикл (T увімк. / T вимк.), D — імпульс на T після подачі живлення
+const KTM_FN={A:"затримка ввімкнення",B:"затримка вимкнення",C:"цикл: T увімк. / T вимк.",D:"імпульс T після подачі"};
+defType("ktm",{name:"Реле часу багатофункційне (A · B · C · D)", short:"Реле часу багатофункц.", cat:"Керування", w:2, pre:"KT", terms:KT_TERMS,
+  aux:d=>d.out?[["15","18"]]:[["15","16"]], init:d=>{ d.delay=d.delay||5; d.t=0; d.fn=d.fn||"A"; }, cap:"Витримка часу",
+  logic(d,X){ const c=coilOn(d,X,"A1","A2"), was=d.coil; d.coil=c; let ch=false;
+    if(c&&!was){ d.t=0; if(d.fn==="B"||d.fn==="D"){ if(!d.out){ d.out=true; ch=true; } } }
+    if(!c&&was){ d.t=0; if(d.fn!=="B"&&d.out){ d.out=false; ch=true; } }
+    if(c&&d.fn==="B"&&!d.out){ d.out=true; ch=true; }
+    return ch; },
+  tick(d,X,dt){ const fn=d.fn||"A";
+    if(fn==="A"&&d.coil&&!d.out){ d.t+=dt; if(d.t>=d.delay){ d.out=true; logp("ok",`${desig(d)}: функція A — ${d.delay} с минуло, 15–18 замкнено`); } }
+    if(fn==="B"&&!d.coil&&d.out){ d.t+=dt; if(d.t>=d.delay){ d.out=false; d.t=0; logp("ok",`${desig(d)}: функція B — ${d.delay} с після зникнення живлення, 15–18 розімкнено`); } }
+    if(fn==="C"&&d.coil){ d.t+=dt; if(d.t>=d.delay){ d.t=0; d.out=!d.out; } }
+    if(fn==="D"&&d.coil&&d.out){ d.t+=dt; if(d.t>=d.delay){ d.out=false; logp("ok",`${desig(d)}: функція D — імпульс ${d.delay} с завершено`); } } },
+  face(d,g){ const fn=d.fn||"A", run=(fn==="A"&&d.coil&&!d.out)||(fn==="B"&&!d.coil&&d.out)||fn==="C"&&d.coil||(fn==="D"&&d.coil&&d.out);
+    return ktDial(d,g,mdl(d,"РЕЛЕ ЧАСУ")+" · "+fn+" · "+d.delay+" с",run?Math.min(1,(d.t||0)/d.delay):d.out?1:0,fn==="B"?"#4aa3ff":"#ffb21f"); }});
 /* ===== Розумний будинок і DC-апарати ===== */
 const online = (d,X) => X.volt(K(d,"L"),K(d,"N"))>=150;
 const onlineLogic = (d,X) => { const o=online(d,X); if(o!==!!d.online){ d.online=o; return true; } return false; };
@@ -1235,7 +1289,10 @@ const BR = {
   abb:{n:"ABB", tint:"#8d98a3"}, se:{n:"Schneider Electric", s:"Schneider", tint:"#ffffff"}, hager:{n:"Hager", tint:"#7f8a96"},
   legrand:{n:"Legrand", tint:"#ffffff"}, eaton:{n:"Eaton", tint:"#a7adb3"}, siemens:{n:"Siemens", tint:"#6f7c88"}, iek:{n:"IEK", tint:"#c9ccd0"},
   zubr:{n:"ZUBR", tint:"#d7dadd"}, digitop:{n:"Digitop", tint:"#e2e4e6"}, novatek:{n:"Новатек-Електро", s:"Новатек", tint:"#d9dde1"},
-  nik:{n:"NIK", tint:"#d4d7da"}, eastron:{n:"Eastron", tint:"#c4c9ce"}, finder:{n:"Finder", tint:"#9aa3ab"} };
+  nik:{n:"NIK", tint:"#d4d7da"}, eastron:{n:"Eastron", tint:"#c4c9ce"}, finder:{n:"Finder", tint:"#9aa3ab"},
+  geya:{n:"GEYA", tint:"#e8eaed"}, tomzn:{n:"TOMZN", tint:"#eef0f3"} };
+// модульні контактори NO / NC: GEYA GYHC, TOMZN TOCT1
+const kmcM = (p,cfg) => ({ geya:d=>`GYHC-${d.rating} ${p}P ${cfg}`, tomzn:d=>`TOCT1-${d.rating} ${p}P ${cfg}` });
 const cv = d => (String(d.rating).match(/^[BCD]/)||["C"])[0], In2 = d => String(Math.round(inA(d.rating))).padStart(2,"0");
 const mcb = p => ({ abb:d=>`S20${p} ${d.rating}`, se:d=>`iC60N ${p}P ${d.rating}`, hager:d=>`M${cv(d)}N${p}${In2(d)}`, legrand:d=>`DX³ ${p}P ${d.rating}`,
   eaton:d=>`PL6-${d.rating}/${p}`, siemens:d=>`5SL6${p}${In2(d)}-${cv(d)==="B"?6:7}`, iek:d=>`ВА47-29 ${p}P ${d.rating}`});
@@ -1254,7 +1311,10 @@ const MODELS = {
   km2a:{ abb:()=>"ESB20-20N", se:()=>"iCT 25A 2NO", hager:()=>"ESC225", eaton:()=>"Z-SCH230/25-20", iek:()=>"КМ20-20"},
   kimp:{ abb:()=>"E290-16", se:()=>"iTL 16A", finder:()=>"26.01", hager:()=>"EPN510"},
   stair:{ abb:()=>"E232", se:()=>"MIN", finder:()=>"14.01"},
-  kt:{ finder:()=>"80.01", abb:()=>"CT-ERD"},
+  kt:{ finder:()=>"80.01", abb:()=>"CT-ERD", geya:()=>"GRT8-A1", tomzn:()=>"TORT7-A1"},
+  ktb:{ geya:()=>"GRT8-B1", tomzn:()=>"TORT7-B1"}, ktm:{ geya:()=>"GRT8-M1", finder:()=>"80.01"},
+  kmc1no:kmcM(1,"1NO"), kmc1nc:kmcM(1,"1NC"), kmc2no:kmcM(2,"2NO"), kmc11:kmcM(2,"1NO1NC"), kmc2nc:kmcM(2,"2NC"),
+  kmc4no:kmcM(4,"4NO"), kmc31:kmcM(4,"3NO1NC"), kmc22:kmcM(4,"2NO2NC"), kmc4nc:kmcM(4,"4NC"),
   sw2:{ abb:()=>"SD202/40", se:()=>"iSW 2P 40A", legrand:()=>"DX³-IS 2P 40A", iek:()=>"ВН-32 2P 40А"},
   pef:{ novatek:()=>"ПЕФ-301"}, kvf:{ novatek:()=>"РНПП-311", finder:()=>"70.31"},
   fuac:{ abb:d=>`E91/32 · ${d.rating}`, se:d=>`DF101 · ${d.rating}`, iek:d=>`ПВ1 · ${d.rating}`} };
@@ -1446,7 +1506,9 @@ function devSVG(d){
     else { const lw=String(tm.l).length*3.9, fitL=X-sr-2-lw>=x+2, fitR=X+sr+2+lw<=x+w-2;   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку
       s+=screw(X,y+H-22,sr)+(tm.nl?"":(side||Math.abs(X-cx)<w/5)&&(fitL||fitR)
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-36,tm.l,{fs:6.8})); } }
-  const bn=brandName(d); s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
+  const bn=brandName(d), shp=shopFor(d);   // апарат є в «Замовити» — замість напису виробника QR-код із посиланням
+  if(shp){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if(t.maker&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
+  else s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   const des=desig(d), pw=Math.max(38,des.length*7+12);
   s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});
@@ -2275,7 +2337,7 @@ const $ = id => document.getElementById(id);
 let toastT=null;
 function toast(msg,cls=""){ if(S.quiet) return; const t=$("toast"); t.textContent=msg; t.className="toast "+cls; t.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,2600); }
 const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","tovpd1","kvf","kvf2","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","ats","toq5","toq7","to219","qs","km2a","km3a","km4a"]],
-  ["Керування",["sbp","sbs","hl","rel","kt","kimp","stair","photo","logo"]],["Двигуни",["qm"]],["Розподіл",["xtb","sock"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
+  ["Керування",["sbp","sbs","hl","rel","kt","ktb","ktm","kimp","stair","photo","logo","kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc"]],["Двигуни",["qm"]],["Розподіл",["xtb","sock"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
 const TPL_ORDER = ["Конструктор","Квартира і будинок","АВР на 2 вводи","3 фази + інвертор","Сонячна станція","Двигуни"];
 let clearArm=0;
 function applyTemplate(name){ const t=TPL[name]||TPL.flat; t.build(); S.tpl=TPL[name]?name:"flat"; S.tplObj=t; S.env0=JSON.parse(JSON.stringify(S.env||{})); S.proj={id:null,name:t.name}; S.guide=null; S.lastCheck=null;
@@ -2333,8 +2395,8 @@ function commit(full=true){ if(typeof trackHistory==="function") trackHistory();
 const CATALOG = [["⚡ Групи","G"],
   ["Автомати",[["1P",["qf1p","qfn"]],["2P",["qf2p"]],["3P",["qf3p"]],["4P",["qf4p"]],["Автомати двигунів",["qm"]],["Модульні запобіжники",["fuac","fudc"]],["Автомати DC (СЕС)",["qfdc"]]],"Автоматичні вимикачі"],
   ["ПЗВ, дифавтомати",[["ПЗВ (УЗО)",["rcd","rcd4"]],["Дифавтомати (RCBO)",["rcbo"]],["AFDD",["afdd"]]],"Диференційний захист"],
-  ["Реле",[["Контроль напруги",["kv","tovpd1"]],["Контроль фаз",["kvf","kvf2","pef"]],["Реле часу",["kt","stair"]],["Імпульсні реле",["kimp"]],["Фотореле",["photo"]],["Програмовані",["logo"]]],"Реле та автоматика"],
-  ["Контактори",[["Модульні контактори",["km2a","km3a","km4a"]],["Проміжні реле",["rel"]],["Вимикачі, перемикачі",["sw2","qs"]],["АВР",["ats","to219","toq5","toq7"]]],"Контактори, пускачі, комутація"],
+  ["Реле",[["Контроль напруги",["kv","tovpd1"]],["Контроль фаз",["kvf","kvf2","pef"]],["Реле часу",["kt","ktb","ktm","stair"]],["Імпульсні реле",["kimp"]],["Фотореле",["photo"]],["Програмовані",["logo"]]],"Реле та автоматика"],
+  ["Контактори",[["Модульні контактори",["km2a","km3a","km4a"]],["Контактори NO / NC",["kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc"]],["Проміжні реле",["rel"]],["Вимикачі, перемикачі",["sw2","qs"]],["АВР",["ats","to219","toq5","toq7"]]],"Контактори, пускачі, комутація"],
   ["ПЗІП",[["ПЗІП AC",["spdac","spd3"]],["ПЗІП DC",["spdc"]]],"Захист від перенапруг"],
   ["Шини",[["Гребінчасті шини 1P","C"]],"Розподільчі шини"],
   ["Клеми",[["Прохідні клеми",["xtb"]],["Розетка на DIN",["sock"]]],"Клеми та з’єднання"],
@@ -2452,7 +2514,8 @@ function devBar(d){ const t=T[d.type], g=d.group, m=modelOf(d), bl=brandsFor(d.t
   return s; }
 function devSet(d){ const t=T[d.type]; let s="";
   if(t.group&&t.groupOpt) s+=chip("data-gtoggle",!!d.group,d.group?"Група споживачів (3 фази)":"Зробити групою");
-  if(d.type==="kt") s+=[1,3,5,10,20,30].map(v=>chip(`data-delay="${v}"`,d.delay===v,v+" с")).join("");
+  if(d.type==="kt"||d.type==="ktb"||d.type==="ktm") s+=[1,3,5,10,20,30].map(v=>chip(`data-delay="${v}"`,d.delay===v,v+" с")).join("");
+  if(d.type==="ktm") s+=`<span class="bl">Функція</span>`+Object.entries(KTM_FN).map(([k,l])=>chip(`data-ktfn="${k}" title="${esc(l)}"`,(d.fn||"A")===k,`${k} · ${l}`)).join("");
   if(d.type==="stair") s+=[10,30,60,120].map(v=>chip(`data-delay="${v}"`,d.delay===v,v+" с")).join("");
   if(d.type==="sock") s+=chip("data-plug",!!d.plug,d.plug?"Інструмент 1,2 кВт увімкнено":"Увімкнути інструмент 1,2 кВт");
   if(d.type==="xtb") s+=[["grey","Сірий · L"],["blue","Синій · N"],["pe","Жовто-зелений · PE"]].map(([c,l])=>chip(`data-xcol="${c}"`,d.col===c,l)).join("");
@@ -2655,6 +2718,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(el=q("[data-qpos]")){ d.pos=+el.dataset.qpos; delete d.seqI; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); commit(false); return; }
     if(el=q("[data-atsv]")){ d.variant=el.dataset.atsv; commit(false); return; }
     if(el=q("[data-tqpos]")){ if(!d.manual){ toast("Ручка працює лише в режимі Manual","w"); return; } d.pos=el.dataset.tqpos; logp("w",`${desig(d)}: ручкою переведено на Source ${d.pos}`); commit(false); return; }
+    if(el=q("[data-ktfn]")){ d.fn=el.dataset.ktfn; d.t=0; d.out=false; logp("w",`${desig(d)}: функція ${d.fn} — ${KTM_FN[d.fn]}`); commit(false); return; }
     if(el=q("[data-iset]")){ d.iset=+el.dataset.iset; logp("w",`${desig(d)}: уставка струму ${d.iset} А`); commit(false); return; }
     if(el=q("[data-cmd]")){ d.cmd=el.dataset.cmd==="1"; commit(false); return; }
     if(el=q("[data-hlc]")){ d.col=el.dataset.hlc; commit(false); return; }
@@ -3062,7 +3126,8 @@ function ctxOpen(d,cx,cy){ ctxClose(); const t=T[d.type], m=document.createEleme
   m.id="ctxm"; m.className="ctxm"; m.setAttribute("role","menu"); m.dataset.dev=d.id;
   m.innerHTML=`<div class="ctx-h">${esc(desig(d))} · ${esc(t.short)}${d.rating?" "+esc(d.rating)+(t.unit||""):""}${d.group?` <span>«${esc(d.group.name)}»</span>`:""}</div>`
     +`<button role="menuitem" data-cx="repl"><i>🔁</i>Замінити</button><button role="menuitem" data-cx="move"><i>✥</i>Перемістити</button>`
-    +`<button role="menuitem" data-cx="set"><i>⚙️</i>Налаштувати<small>номінал, підпис, виробник</small></button><button role="menuitem" class="danger" data-cx="del"><i>🗑</i>Видалити</button>`;
+    +`<button role="menuitem" data-cx="set"><i>⚙️</i>Налаштувати<small>номінал, підпис, виробник</small></button>`
+    +(shopFor(d)?`<button role="menuitem" data-cx="shop"><i>🛒</i>Замовити цей апарат</button>`:"")+`<button role="menuitem" class="danger" data-cx="del"><i>🗑</i>Видалити</button>`;
   document.body.appendChild(m);
   const r=m.getBoundingClientRect(), W=innerWidth, H=innerHeight; let x=cx+6, y=cy+6;
   if(x+r.width>W-8) x=Math.max(8,cx-r.width-6); if(y+r.height>H-8) y=Math.max(8,cy-r.height-6);
@@ -3114,6 +3179,7 @@ document.addEventListener("click",e=>{ const m=$("ctxm"); if(!m) return; const b
   if(a==="repl"){ S.repl=d.id; S.mode="mount"; S.selDev=null; S.pick=null; S.moveDev=null; S.devQ=""; [S.cat,S.sub]=catOf(d.type); S.devOpen=true; renderAll(); toast(`Оберіть унизу, чим замінити ${desig(d)}`); return; }
   if(a==="move"){ S.moveDev=d.id; S.pick=d.type; S.pickQty=1; S.repl=null; S.mode="mount"; S.selDev=null; renderAll(); toast(`Торкніться вільного місця на рейці — ${desig(d)} переїде туди`); return; }
   if(a==="set"){ S.selDev=d.id; S.repl=null; S.moveDev=null; S.pick=null; if(S.mode==="wire") S.mode="mount"; renderAll(false); return; }
+  if(a==="shop"){ const it=shopFor(d); if(it) shopShow([it]); return; }
   if(a==="del"){ const n=desig(d); removeDev(d); S.selDev=null; toast(`${n} видалено. «Назад» ↶ поверне`); } },true);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("ctxm")) ctxClose(); });
 $("scroller").addEventListener("scroll",()=>ctxClose(),{passive:true});
@@ -3729,8 +3795,73 @@ document.addEventListener("input",e=>{ const t=e.target;
   if(t.id==="wzTb"){ WZ.tb=t.checked; } if(t.id==="wzXn"){ WZ.xn=+t.value; $("wzXnO").textContent=t.value; } if(t.id==="wzXpe"){ WZ.xpe=+t.value; $("wzXpeO").textContent=t.value; } });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("dlg").hidden) closeDlg(); if(e.key==="Enter"&&e.target.id==="wzName"){ e.preventDefault(); $("dlgCard").querySelector("[data-wz=next]")?.click(); } });
 document.addEventListener("toggle",e=>{ if(e.target.id==="fldDD") S.fldOpen=e.target.open; },true);
+/* ===== QR-код без бібліотек: байтовий режим, рівень M (або L, якщо не вміщається), версії 1–10 =====
+   За алгоритмом специфікації ISO/IEC 18004 (у викладі Nayuki). Повертає матрицю й SVG-шлях у модулях. */
+const qrCode = (()=>{
+  const ECC={L:[7,10,15,20,26,18,20,24,30,18],M:[10,16,26,18,24,16,18,22,22,26]}, NB={L:[1,1,1,1,1,2,2,2,2,4],M:[1,1,1,2,2,4,4,4,5,5]}, FMT={L:1,M:0};
+  const raw=v=>{ let r=(16*v+128)*v+64; if(v>=2){ const na=Math.floor(v/7)+2; r-=(25*na-10)*na-55; if(v>=7) r-=36; } return r; };
+  const dataCW=(v,e)=>Math.floor(raw(v)/8)-ECC[e][v-1]*NB[e][v-1];
+  const mul=(x,y)=>{ let z=0; for(let i=7;i>=0;i--){ z=(z<<1)^((z>>>7)*0x11D); z^=((y>>>i)&1)*x; } return z; };
+  function rsDiv(n){ const r=new Array(n-1).fill(0).concat([1]); let root=1; for(let i=0;i<n;i++){ for(let j=0;j<r.length;j++){ r[j]=mul(r[j],root); if(j+1<r.length) r[j]^=r[j+1]; } root=mul(root,2); } return r; }
+  function rsRem(data,div){ const r=div.map(()=>0); for(const b of data){ const f=b^r.shift(); r.push(0); div.forEach((c,i)=>r[i]^=mul(c,f)); } return r; }
+  function alignPos(v){ if(v===1) return []; const n=Math.floor(v/7)+2, step=Math.ceil((v*4+4)/(n*2-2))*2, r=[6]; for(let p=v*4+10;r.length<n;p-=step) r.splice(1,0,p); return r; }
+  function encode(text){ const bytes=[...new TextEncoder().encode(String(text))]; let ver=0, ecl="M";
+    for(const e of ["M","L"]){ for(let v=1;v<=10;v++){ if(4+(v<10?8:16)+bytes.length*8<=dataCW(v,e)*8){ ver=v; break; } } if(ver){ ecl=e; break; } }
+    if(!ver) return null;
+    const bits=[], put=(val,n)=>{ for(let i=n-1;i>=0;i--) bits.push((val>>>i)&1); };
+    put(4,4); put(bytes.length,ver<10?8:16); for(const b of bytes) put(b,8);
+    const cap=dataCW(ver,ecl)*8; put(0,Math.min(4,cap-bits.length)); put(0,(8-bits.length%8)%8);
+    for(let pad=0xEC;bits.length<cap;pad^=0xEC^0x11) put(pad,8);
+    const data=[]; for(let i=0;i<bits.length;i+=8) data.push(parseInt(bits.slice(i,i+8).join(""),2));
+    // блоки й корекція помилок
+    const nb=NB[ecl][ver-1], el=ECC[ecl][ver-1], rc=Math.floor(raw(ver)/8), ns=nb-rc%nb, sl=Math.floor(rc/nb), dv=rsDiv(el), blocks=[];
+    for(let i=0,k=0;i<nb;i++){ const dat=data.slice(k,k+sl-el+(i<ns?0:1)); k+=dat.length; const ec=rsRem(dat,dv); if(i<ns) dat.push(0); blocks.push(dat.concat(ec)); }
+    const cw=[]; for(let i=0;i<blocks[0].length;i++) blocks.forEach((b,j)=>{ if(i!==sl-el||j>=ns) cw.push(b[i]); });
+    // матриця: службові візерунки
+    const n=ver*4+17, M=[...Array(n)].map(()=>Array(n).fill(false)), F=[...Array(n)].map(()=>Array(n).fill(false));
+    const set=(x,y,dk)=>{ M[y][x]=dk; F[y][x]=true; };
+    for(let i=0;i<n;i++){ set(6,i,i%2===0); set(i,6,i%2===0); }
+    for(const [fx,fy] of [[3,3],[n-4,3],[3,n-4]]) for(let dy=-4;dy<=4;dy++) for(let dx=-4;dx<=4;dx++){ const x=fx+dx, y=fy+dy; if(x>=0&&x<n&&y>=0&&y<n){ const dist=Math.max(Math.abs(dx),Math.abs(dy)); set(x,y,dist!==2&&dist!==4); } }
+    const ap=alignPos(ver), na=ap.length;
+    for(let i=0;i<na;i++) for(let j=0;j<na;j++){ if((i===0&&j===0)||(i===0&&j===na-1)||(i===na-1&&j===0)) continue; for(let dy=-2;dy<=2;dy++) for(let dx=-2;dx<=2;dx++) set(ap[i]+dx,ap[j]+dy,Math.max(Math.abs(dx),Math.abs(dy))!==1); }
+    const fmt=mask=>{ const d=FMT[ecl]<<3|mask; let r=d; for(let i=0;i<10;i++) r=(r<<1)^((r>>>9)*0x537); const b=(d<<10|r)^0x5412, g=i=>((b>>>i)&1)===1;
+      for(let i=0;i<=5;i++) set(8,i,g(i)); set(8,7,g(6)); set(8,8,g(7)); set(7,8,g(8)); for(let i=9;i<15;i++) set(14-i,8,g(i));
+      for(let i=0;i<8;i++) set(n-1-i,8,g(i)); for(let i=8;i<15;i++) set(8,n-15+i,g(i)); set(8,n-8,true); };
+    fmt(0);
+    if(ver>=7){ let r=ver; for(let i=0;i<12;i++) r=(r<<1)^((r>>>11)*0x1F25); const b=ver<<12|r; for(let i=0;i<18;i++){ const bt=((b>>>i)&1)===1, a=n-11+i%3, c=Math.floor(i/3); set(a,c,bt); set(c,a,bt); } }
+    // дані зигзагом
+    let bi=0; for(let right=n-1;right>=1;right-=2){ if(right===6) right=5;
+      for(let vert=0;vert<n;vert++) for(let j=0;j<2;j++){ const x=right-j, up=((right+1)&2)===0, y=up?n-1-vert:vert;
+        if(!F[y][x]&&bi<cw.length*8){ M[y][x]=((cw[bi>>>3]>>>(7-(bi&7)))&1)===1; bi++; } } }
+    // маска з найменшим штрафом
+    const MK=[(x,y)=>(x+y)%2===0,(x,y)=>y%2===0,(x,y)=>x%3===0,(x,y)=>(x+y)%3===0,(x,y)=>(Math.floor(x/3)+Math.floor(y/2))%2===0,(x,y)=>x*y%2+x*y%3===0,(x,y)=>(x*y%2+x*y%3)%2===0,(x,y)=>((x+y)%2+x*y%3)%2===0];
+    const apply=m=>{ for(let y=0;y<n;y++) for(let x=0;x<n;x++) if(!F[y][x]&&MK[m](x,y)) M[y][x]=!M[y][x]; };
+    const pen=()=>{ let p=0, dark=0; const P1=[1,0,1,1,1,0,1,0,0,0,0], P2=[0,0,0,0,1,0,1,1,1,0,1];
+      for(let k=0;k<2;k++) for(let a=0;a<n;a++){ const L=[]; for(let b=0;b<n;b++) L.push(k?M[b][a]:M[a][b]);
+        let run=1; for(let b=1;b<=n;b++){ if(b<n&&L[b]===L[b-1]) run++; else { if(run>=5) p+=run-2; run=1; } }
+        for(let b=0;b+11<=n;b++){ const w=L.slice(b,b+11).map(Number); if(w.every((v,i)=>v===P1[i])||w.every((v,i)=>v===P2[i])) p+=40; } }
+      for(let y=0;y<n-1;y++) for(let x=0;x<n-1;x++){ const c=M[y][x]; if(c===M[y][x+1]&&c===M[y+1][x]&&c===M[y+1][x+1]) p+=3; }
+      for(const r of M) for(const c of r) if(c) dark++; p+=Math.floor(Math.abs(dark*20-n*n*10)/(n*n))*10; return p; };
+    let best=0, bp=1e9; for(let m=0;m<8;m++){ apply(m); fmt(m); const p=pen(); if(p<bp){ bp=p; best=m; } apply(m); }
+    apply(best); fmt(best);
+    let d=""; for(let y=0;y<n;y++) for(let x=0;x<n;x++) if(M[y][x]) d+=`M${x} ${y}h1v1h-1z`;
+    return {n,m:M,d,ver,ecl}; }
+  const cache=new Map();
+  return text=>{ if(!cache.has(text)) cache.set(text,encode(text)); return cache.get(text); };
+})();
+// QR-«наліпка» на апараті: білий квадрат із запасом 1 модуль
+function qrSticker(it,cx,top,sz){ const q=qrCode(it.link); if(!q) return ""; const m=sz/(q.n+2), x0=cx-sz/2;
+  return `<g class="devqr" data-shopq="${esc(it.link)}" style="cursor:pointer"><title>Замовити: ${esc(it.name||"апарат")}</title><rect x="${x0}" y="${top}" width="${sz}" height="${sz}" rx="1" fill="#fff"/>`
+    +`<path transform="translate(${(x0+m).toFixed(2)} ${(top+m).toFixed(2)}) scale(${m.toFixed(4)})" d="${q.d}" fill="#111" shape-rendering="crispEdges"/></g>`; }
 /* ===== «Замовити апарат»: фото, QR-код і посилання. Дані — shop.json у корені сайту, картинки — папка shop/ ===== */
-let SHOP=null;
+let SHOP=null, SHOP_T={};
+// апарати з «Замовити», що є в бібліотеці (поле "type" у shop.json): на щиті на них QR замість напису EnergyUA
+function shopIndex(){ SHOP_T={}; if(Array.isArray(SHOP)) for(const it of SHOP) if(it.type&&/^https?:/i.test(it.link||"")) for(const k of String(it.type).split(/[\s,]+/)) if(k) SHOP_T[k]=it; }
+const shopFor = d => { const it=SHOP_T[d.type]; return it&&(brandOf(d)==="eua"||T[d.type].maker)?it:null; };
+function loadShop(){ try{ const c=JSON.parse(localStorage.getItem("pc-shop")||"null"); if(Array.isArray(c)){ SHOP=c; shopIndex(); } }catch(_){}
+  fetch("shop.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return; SHOP=Array.isArray(j)?j:((j&&j.items)||[]); shopIndex();
+    try{ localStorage.setItem("pc-shop",JSON.stringify(SHOP)); }catch(_){} if(!S.noDoc&&!window.__dragBusy) render(); }).catch(()=>{}); }
+setTimeout(loadShop,400);
 const shopUrl = u => (u && /^(https?:\/\/|shop\/)/i.test(String(u).trim())) ? String(u).trim() : "";
 function shopCards(list){
   if(list===null) return `<p class="shop-empty">Завантаження…</p>`;
@@ -3744,9 +3875,12 @@ function shopShow(list){ dialog("Замовити апарат",`<p class="hint"
 function openShop(){
   shopShow(SHOP);
   fetch("shop.json?t="+Date.now(),{cache:"no-store"}).then(r=>{ if(!r.ok) throw 0; return r.json(); })
-    .then(j=>{ SHOP=Array.isArray(j)?j:((j&&j.items)||[]); })
+    .then(j=>{ SHOP=Array.isArray(j)?j:((j&&j.items)||[]); shopIndex(); })
     .catch(()=>{ if(SHOP===null) SHOP="off"; })
     .then(()=>{ const t=$("dlgTitle"); if(!$("dlg").hidden&&t&&t.textContent==="Замовити апарат") shopShow(SHOP); if(SHOP==="off") SHOP=null; }); }
+// дотик по QR на апараті — картка цього апарата з фото, QR і кнопкою «Замовити»
+document.addEventListener("click",e=>{ const g=e.target.closest("[data-shopq]"); if(!g) return; e.stopPropagation(); e.preventDefault();
+  const it=Array.isArray(SHOP)&&SHOP.find(x=>x.link===g.dataset.shopq); if(it) shopShow([it]); },true);
 /* ===== Керування дротами: вид, колір ізоляції, переріз, перенесення кінців, видалення ===== */
 const WCOL = { red:["Червоний","#e0352b"], brown:["Коричневий","#8b5a2b"], black:["Чорний","#26282c"], grey:["Сірий","#9aa0a6"],
   blue:["Синій","#2f6fdf"], pe:["Жовто-зелений",null], orange:["Помаранчевий","#f08c2e"], white:["Білий","#eef0f2"] };
