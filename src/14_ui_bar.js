@@ -91,7 +91,7 @@ function gqAt(w){ const last=S.devices.slice().sort((a,c)=>((c.rail||0)-(a.rail|
 function quickRcd(){ const type=boardKind(S.board)==="3ph"?"rcd4":"rcd", at=gqAt(T[type].w); if(!at){ toast("На рейках немає вільного місця","w"); return; }
   const d=mkDev(type,at[0],at[1],"63"); S.devices.push(d); commit(); toast(`${desig(d)} 63 А, 30 мА встановлено — «Прокласти всі перемички» підключить групи через нього`,"ok"); }
 function quickGroup(i,atOverride){ const p=GQ[i], type=S.gType||"qf1p", t=T[type], r=gqRate(type,p[2]);
-  const at=atOverride||gqAt(t.w);
+  const st=S.slotTo; S.slotTo=null; const at=atOverride||(st&&freeAt(st[0],st[1],t.w)?st:null)||gqAt(t.w); if(st) S.allDev=false;
   if(!at){ toast("На рейках немає вільного місця — додайте рейку: «Меню → Корпус і ввід»","w"); return; }
   const G=groupsOf(), same=G.filter(g=>g.group.name===p[1]||g.group.name.startsWith(p[1]+" ")).length, nm=same?`${p[1]} ${same+1}`:p[1];
   const ex={group:mkGroup(G.length,nm,p[3],p[4])}; if(S.brand&&S.brand!=="eua"&&MODELS[type]&&MODELS[type][S.brand]) ex.brand=S.brand;

@@ -11,6 +11,10 @@ function placeDev(type,r,slot,qty){ const w=T[type].w, n0=qty||S.pickQty||1, put
   if(!put.length) return; S.pick=null; S.pickRating=null; S.pickExtra=null; S.pickQty=1;   // поставили — режим розстановки закривається сам
   toast(put.length>1?`Поставлено ${put.length} × ${T[type].short} ${put[0].rating||""}: ${put.map(desig).join(", ")}`:`${desig(put[0])} ${put[0].rating?put[0].rating+(T[type].unit||"")+" ":""}встановлено`,"ok"); commit();
   if(motor&&S.field.filter(f=>f.type==="motor3").length<S.devices.filter(d=>d.type==="qm").length) addField("motor3"); }
+// модуль вибрано після дотику по вільному місцю — ставимо одразу туди
+function pickToSlot(){ const t=S.slotTo; S.slotTo=null; if(!t||!S.pick) return false;
+  if(!freeAt(t[0],t[1],T[S.pick].w)){ toast(`${T[S.pick].short} займає ${T[S.pick].w} мод. — на місці ${t[0]*12+t[1]+1} не вміщається. Торкніться іншого вільного місця`,"w"); return false; }
+  S.allDev=false; S.devOpen=false; placeDev(S.pick,t[0],t[1]); return true; }
 function removeDev(d){ S.devices=S.devices.filter(x=>x!==d); S.wires=S.wires.filter(w=>![w.a,w.b].some(k=>k.startsWith(d.id+":")||k.startsWith("tb:"+d.id+":"))); S.leak.delete(d.id); S.short.delete(d.id); S.selDev=null; commit(); }
 function termTap(key){
   if(!S.pend){ const r=termRole(key); if(r&&!kindFits(S.wireKind,r)){ S.wireKind=autoKind(r,key); toast(`Вид перемички: ${WK[S.wireKind][0]} — за клемою`); }
@@ -68,7 +72,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
       toast("Оберіть модуль унизу й торкніться вільного місця на рейці. Потім «〰 Перемички» → «⚡ Прокласти всі перемички» допрокладе лише нові"); }
     else { S.mode=el.dataset.hgo; S.pend=null; S.pick=null; S.selWire=null; S.selDev=null; S.moveEnd=null; renderAll(); } return; }
   if(q("#zAll")){ S.zoom=fitZoom(); renderAll(false); $("scroller").scrollTo(0,0); return; }
-  if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.selWire=null; S.moveEnd=null; S.repl=null; S.moveDev=null; ctxClose(); renderAll(); return; }
+  if(el=q(".tb[data-mode]")){ S.mode=el.dataset.mode; S.pend=null; S.pick=null; S.slotTo=null; S.selWire=null; S.moveEnd=null; S.repl=null; S.moveDev=null; ctxClose(); renderAll(); return; }
   if(el=q("[data-term]")){ if(S.moveEnd) moveEnd(el.dataset.term); else termTap(el.dataset.term); return; }
   if(el=q("[data-wire]")){ const id=el.dataset.wire; if(S.mode!=="wire"){ S.mode="wire"; S.pend=null; S.pick=null; S.selDev=null; selectWire(id); renderAll(true); toast("Перемичку вибрано — дії в панелі внизу"); return; }
     if(S.selWire===id){ S.selWire=null; renderAll(); } else selectWire(id); return; }
@@ -81,7 +85,8 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(t.prot||t.rcd){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; S.heat[d.id]=0; } commit(false); } return; }
   if(el=q("[data-test]")){ const d=devById(el.dataset.test), X=evaluate({extra:shortsExtra()});
     if(d.on&&!d.trip&&X.volt(k(d,"t1"),k(d,"t2"))>=150){ trip(d,"кнопка «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює, лише коли ПЗВ під напругою і ввімкнений","w"); return; }
-  if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.moveDev) doMoveTo(r,i); else if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть модуль нижче"); return; }
+  if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.moveDev) doMoveTo(r,i); else if(S.pick) placeDev(S.pick,r,i);
+    else { S.slotTo=[r,i]; S.allDev=true; S.devOpen=true; S.devQ=""; S.selDev=null; S.chkOpen=false; renderAll(); toast(`Оберіть модуль унизу — він стане на місце ${r*12+i+1}`); } return; }
   if(el=q("[data-pqty]")){ S.pickQty=+el.dataset.pqty; renderAll(false); return; }
   if(el=q("[data-prate]")){ S.pickRating=el.dataset.prate; renderAll(false); return; }
   if(q("[data-pauto]")){ if(S.pick){ const f=nextFree(T[S.pick].w,0,0); if(f) placeDev(S.pick,f[0],f[1]); else toast("Немає вільного місця","w"); } return; }
@@ -90,11 +95,11 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if((el=q("[data-pick]"))&&S.repl){ doReplace(S.repl,el.dataset.pick); return; }
   if(q("[data-replx]")){ S.repl=null; S.devQ=""; renderAll(); return; }
   if(q("[data-mvx]")){ S.moveDev=null; S.pick=null; renderAll(); return; }
-  if(el=q("[data-pick]")){ S.devQ=""; S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.pickRating=null; S.pickExtra=null; S.selDev=null; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); } renderAll(); return; }
-  if(el=q("[data-fpick]")){ const o=S.devFilter.opts[+el.dataset.fpick]; S.pick=o[0]; S.pickRating=o[1]||null; S.pickExtra=o[3]||null; S.selDev=null;
+  if(el=q("[data-pick]")){ S.devQ=""; S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.pickRating=null; S.pickExtra=null; S.selDev=null; if(S.pick&&pickToSlot()) return; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); } renderAll(); return; }
+  if(el=q("[data-fpick]")){ const o=S.devFilter.opts[+el.dataset.fpick]; S.pick=o[0]; S.pickRating=o[1]||null; S.pickExtra=o[3]||null; S.selDev=null; if(pickToSlot()) return;
     toast(`${o[2]}: торкніться вільного місця на рейці`); renderAll(); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); return; }
   if(q("[data-fall]")){ S.devFilter=null; S.devOpen=true; S.allDev=true; renderAll(); return; }
-  if(q("[data-gback]")){ S.allDev=false; S.pick=null; renderAll(); return; }
+  if(q("[data-gback]")){ S.allDev=false; S.pick=null; S.slotTo=null; renderAll(); return; }
   if(el=q("[data-tpl]")){ closeDrawer(); const key=el.dataset.tpl;
     if(key==="__new"){ confirmLeave(()=>openWizard(false)); return; }
     confirmLeave(()=>{ applyTemplate(key); clearCheck(); S.mode=S.tplObj.demo&&S.tplObj.demo.script.length?"test":"mount"; S.devOpen=S.mode==="mount";
