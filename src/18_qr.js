@@ -52,9 +52,9 @@ const qrCode = (()=>{
   const cache=new Map();
   return text=>{ if(!cache.has(text)) cache.set(text,encode(text)); return cache.get(text); };
 })();
-// QR-наліпка на апараті — маленька, як заводська; дотик відкриває великий код (qrPop)
+// QR-наліпка на модулі — маленька, як заводська; дотик відкриває великий код (qrPop)
 function qrSticker(it,cx,top,sz){ const q=qrCode(it.link); if(!q) return ""; const m=sz/(q.n+2), x0=cx-sz/2;
-  return `<g class="devqr" data-shopq="${esc(it.link)}" style="cursor:pointer"><title>${esc(it.name||"Апарат")} — торкніться, щоб збільшити QR і замовити</title>`
+  return `<g class="devqr" data-shopq="${esc(it.link)}" style="cursor:pointer"><title>${esc(it.name||"Модуль")} — торкніться, щоб збільшити QR і замовити</title>`
     +`<rect x="${x0}" y="${top}" width="${sz}" height="${sz}" rx="1" fill="#fff"/>`
     +`<path transform="translate(${(x0+m).toFixed(3)} ${(top+m).toFixed(3)}) scale(${m.toFixed(4)})" d="${q.d}" fill="#000" shape-rendering="crispEdges"/></g>`; }
 // великий чіткий QR (векторний) для вікна й документів: тиха зона 2 модулі

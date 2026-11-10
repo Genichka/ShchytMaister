@@ -34,13 +34,13 @@ function runChecks(){
     else if(w.kind!=="PE"&&c==="pe"){ roleErr++; add("e","Жовто-зелений провід не на PE",where+": цей колір дозволений лише для захисного провідника.",{wire:w.id}); } }
   if(!roleErr&&S.wires.length) add("ok","Кольори перемичок відповідають клемам","Фаза, нуль (синій), PE (жовто-зелений), керування, DC + і −.");
   for(const [k,n] of Object.entries(cnt)) if(n>2&&!/^x(n|pe):/.test(k)) add("w",`${termName(k)}: ${n} перемички під одним гвинтом`,"Більше двох перемичок під клемою — ненадійний контакт. Використайте шину або клемник.");
-  for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до апарата або шини."); }
+  for(const inp of b.inputs) for(const t of inp.terms){ if(!S.wires.some(w=>w.a===inp.id+":"+t||w.b===inp.id+":"+t)) add(t==="PE"?"e":"w",`Не підключено: ${inp.label} ${t}`,"Підведіть провід від вводу до модуля або шини."); }
   // TOQ5: блок керування бачить джерела лише через клеми AR/AN і BR/BN
   for(const d of S.devices) if(d.type==="toq5"||d.type==="toq7"){ const TQ=d.type==="toq7"?"TOQ7":"TOQ5"; const free=t=>!S.wires.some(w=>w.a===K(d,t)||w.b===K(d,t));
-    if(free("AR")||free("AN")) add("w",`${desig(d)}: не підключено клеми керування AR/AN`,`Блок керування ${TQ} бачить мережу лише через AR і AN. З’єднайте їх комплектними перемичками з клемами R і N Source A — інакше апарат не перейде назад на мережу.`,{dev:d.id});
-    if(free("BR")||free("BN")) add("w",`${desig(d)}: не підключено клеми керування BR/BN`,"Без перемичок від R і N Source B апарат не бачить генератор і не перемкнеться на нього.",{dev:d.id}); }
+    if(free("AR")||free("AN")) add("w",`${desig(d)}: не підключено клеми керування AR/AN`,`Блок керування ${TQ} бачить мережу лише через AR і AN. З’єднайте їх комплектними перемичками з клемами R і N Source A — інакше модуль не перейде назад на мережу.`,{dev:d.id});
+    if(free("BR")||free("BN")) add("w",`${desig(d)}: не підключено клеми керування BR/BN`,"Без перемичок від R і N Source B модуль не бачить генератор і не перемкнеться на нього.",{dev:d.id}); }
   const pe=b.inputs.find(i=>i.terms.includes("PE"));
-  if(pe&&b.xpe){ if(f0(pe.id+":PE")!==f0("xpe:0")) add("e","Шина PE не з’єднана з вводом PE","Захисний провідник має йти на XPE1 напряму, без апаратів."); else add("ok","Шина PE підключена до вводу напряму"); }
+  if(pe&&b.xpe){ if(f0(pe.id+":PE")!==f0("xpe:0")) add("e","Шина PE не з’єднана з вводом PE","Захисний провідник має йти на XPE1 напряму, без модулів."); else add("ok","Шина PE підключена до вводу напряму"); }
   for(const iv of b.inputs.filter(i=>i.inv)){ const gi=b.inputs.find(i=>!i.inv&&i.terms.includes("N"));
     const fp=build({ideal:true,open:new Set(S.devices.filter(d=>!T[d.type].prot).map(d=>d.id))});   // автомати замкнені, комутація (АВР, контактори) розімкнена
     if(gi&&iv.terms.includes("N")&&fp(gi.id+":N")===fp(iv.id+":N")) add("w","Нуль інвертора з’єднано з нулем мережі напряму","АВР має перемикати і фазу, і нуль (2P). Багато інверторів у резервному режимі з’єднують N з PE всередині — спільний нуль з мережею дає хибні спрацювання ПЗВ.");
@@ -107,7 +107,7 @@ function runChecks(){
   if(G.length&&b.inputs.length===1&&!S.devices.some(d=>["kv","tovpd1","kvf","kvf2","pef"].includes(d.type))&&!S.field.some(f=>f.type==="inv")) add("w","Немає реле напруги","Без нього техніка не захищена від перенапруги.");
   for(const x of (res.tpl||[])) add(x.sev,x.t,x.d);
   for(const d of S.devices){ const used=S.wires.some(w=>w.a.startsWith(d.id+":")||w.b.startsWith(d.id+":"))||(S.comb&&d.type==="qf1p"&&d.slot>=S.comb.from&&d.slot<=S.comb.to);
-    if(!used) add("w",`${desig(d)} не підключений`,"Апарат стоїть на рейці без жодної перемички.",{dev:d.id}); }
-  if(!S.devices.length) add("w","Щиток порожній","Додайте апарати в режимі «Апарати».");
+    if(!used) add("w",`${desig(d)} не підключений`,"Модуль стоїть на рейці без жодної перемички.",{dev:d.id}); }
+  if(!S.devices.length) add("w","Щиток порожній","Додайте модулі в режимі «Модулі».");
   const ord={e:0,w:1,ok:2}; Cl.sort((a,c)=>ord[a.sev]-ord[c.sev]); return Cl;
 }

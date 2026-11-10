@@ -1,10 +1,10 @@
 /* ===== Автопрокладання перемичок: повна схема з’єднань щитка (1 фаза, 3 фази, 2 вводи через АВР) =====
    wirePlan() перелічує всі потрібні перемички по кроках помічника:
-     inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між апаратами;  out — колодка XT2 і обладнання поза щитком.
+     inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між модулями;  out — колодка XT2 і обладнання поза щитком.
    Пункт: {step, a, b, kind, sec, alt}. «xn:*» / «xpe:*» — будь-який вільний отвір шини.
    autoWire() прокладає всю схему одним натиском, а fixRatings() підганяє номінали й перерізи, щоб перевірка пройшла. */
 const SWITCH_T = ["ats","toq5","toq7","to219"];
-const N_OWN = ["rcbo","qfn","afdd"];            // групові апарати з власним полюсом N
+const N_OWN = ["rcbo","qfn","afdd"];            // групові модулі з власним полюсом N
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
 function mainsOf(){ return S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group).sort(byPosD); }
 function wirePlan(){
@@ -50,7 +50,7 @@ function wirePlan(){
   if(rc4){ ["t1","t2","t3"].forEach((t,i)=>add("jump",ph[i],K2(rc4,t),PHW[i],secMain)); add("jump",n,K2(rc4,"t4"),"N",secMain);
     next=["t1","t2","t3"].map(t=>K2(rc4,t)); ph=["b1","b2","b3"].map(t=>K2(rc4,t)); nPost=K2(rc4,"b4"); }
   else if(rc1){ add("jump",ph[0],K2(rc1,"t1"),"L",secMain); add("jump",n,K2(rc1,"t2"),"N",secMain); next=[K2(rc1,"t1")]; ph=[K2(rc1,"b1")]; nPost=K2(rc1,"b2"); }
-  // 5. Групи: трифазні апарати шлейфом по L1–L3, однофазні — по черзі на L1, L2, L3 (рівномірне навантаження)
+  // 5. Групи: трифазні модулі шлейфом по L1–L3, однофазні — по черзі на L1, L2, L3 (рівномірне навантаження)
   const G=groupsOf(), qms=pos("qm"), single=G.filter(g=>!g3(g)), multi=[...G.filter(g3),...(three?qms:[])].sort(byPosD), phK={};
   let prev3=ph.slice();
   if(three) for(const d of multi){ const tt=d.type==="qm"?["1","3","5"]:["t1","t2","t3"];
@@ -93,7 +93,7 @@ function fixRatings(){ const fix=[], mains=mainsOf(); if(!mains.length) return f
   for(const g of groupsOf()){ const In=inA(g.rating); if(In>CAB[g.group.sec]){ const s=secFor(In); fix.push(`${desig(g)}: кабель ${fmt(g.group.sec,1)} → ${fmt(s,1)} мм²`); g.group.sec=s; } }
   return fix; }
 
-// Прокласти весь щиток за схемою. Перемички між апаратами зі схеми, яких у ній немає, прибираються; перемички до інших апаратів лишаються.
+// Прокласти весь щиток за схемою. Перемички між модулями зі схеми, яких у ній немає, прибираються; перемички до інших модулів лишаються.
 function autoWire(){ const plan=wirePlan(), bad=plan.find(x=>x.bad);
   if(!mainsOf().length){ toast("Спершу поставте ввідний автомат","w"); return false; }
   if(bad){ toast(bad.t,"w"); return false; }

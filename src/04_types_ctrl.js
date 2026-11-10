@@ -1,4 +1,4 @@
-/* ===== Апарати керування: контактори, реле, кнопки, лампи, МПЗ, LOGO!, АВР, перемикач ===== */
+/* ===== Модулі керування: контактори, реле, кнопки, лампи, МПЗ, LOGO!, АВР, перемикач ===== */
 const coilOn = (d,X,a,b) => X.volt(K(d,a),K(d,b))>=150;
 function coilLogic(d,X){ const p=coilOn(d,X,"A1","A2"); if(p!==!!d.pulled){ d.pulled=p; return true; } return false; }
 const C = (k,s,l,r="C") => ({k,s,l,r});
@@ -77,7 +77,7 @@ defType("ats",{name:"Модуль АВР 2P 63 А", short:"АВР-модуль",
   logic(d,X){ const okI=X.volt(K(d,"IL"),K(d,"IN"))>=187, okII=X.volt(K(d,"IIL"),K(d,"IIN"))>=187; d.ok=[okI,okII];
     if(d.manual) return false; const t=okI?"I":okII?"II":d.pos;
     if(t!==d.pos){ d.pos=t; logp(t==="I"?"ok":"w",`${desig(d)}: навантаження переведено на ввід ${t} (${t==="I"?"мережа":"резерв"}), < ${d.variant==="geya"?50:8} мс`); return true; } return false; },
-  tap(d){ if(!d.manual){ toast("АВР в автоматичному режимі. Перемкніть «Ручний» у налаштуваннях апарата","w"); return false; } d.pos=d.pos==="I"?"II":"I"; return true; },
+  tap(d){ if(!d.manual){ toast("АВР в автоматичному режимі. Перемкніть «Ручний» у налаштуваннях модуля","w"); return false; } d.pos=d.pos==="I"?"II":"I"; return true; },
   face(d,g){ const ang=d.pos==="I"?-40:d.pos==="II"?40:0, ok=d.ok||[false,false];
     return tx(g.cx,g.y+64,d.variant==="geya"?"GEYA · тип G2R-63 2P":"TOMZN · тип TOQ5-63/2P",{fs:7,fw:700})+tx(g.cx,g.y+75,d.manual?"РУЧНИЙ":"АВТО",{fs:7,fw:700,fill:d.manual?"#c25e00":"#1b855e"})
       +`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+112}" r="24" fill="#2a2d33"/><g transform="rotate(${ang} ${g.cx} ${g.y+112})"><rect x="${g.cx-5}" y="${g.y+88}" width="10" height="30" rx="4" fill="#e0352b"/></g></g>`

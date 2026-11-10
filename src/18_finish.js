@@ -5,7 +5,7 @@ const fileBase = () => [...((S.proj&&S.proj.name)||"shchyt").toLowerCase()].map(
 function boardSummary(){ const b=S.board, G0=groupsOf(), mods=S.devices.reduce((a,d)=>a+T[d.type].w,0), mm=px=>Math.round(px/G.MW*17.5);
   const kind={"1ph":"1 фаза","3ph":"3 фази","2in":"мережа + генератор","2inv":"мережа + інвертор","3inv":"3 фази + інвертор"}[boardKind(b)]||boardKind(b);
   const rows=[["Ввід",kind],["Корпус",`≈ ${mm(812)} × ${mm(enclB()-70)} мм · ${b.rails} рейк${b.rails===1?"а":b.rails<5?"и":""} · зайнято ${mods} з ${SLOTS*b.rails} мод.`],
-    ["Апаратів",String(S.devices.length)],["Груп (ліній)",G0.length?G0.length+": "+G0.map(g=>`${desig(g)} ${g.rating} «${g.group.name}»`).join(", "):"—"],
+    ["Модулів",String(S.devices.length)],["Груп (ліній)",G0.length?G0.length+": "+G0.map(g=>`${desig(g)} ${g.rating} «${g.group.name}»`).join(", "):"—"],
     ["Перемичок у щитку",String(S.wires.length)]];
   return {rows,kinds:kind,mods,groups:G0.length}; }
 // Вигляд щитка окремим SVG з вбудованими стилями — відкривається у Visio (Файл → Відкрити), Inkscape, браузері

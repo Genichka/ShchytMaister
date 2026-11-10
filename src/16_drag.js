@@ -1,5 +1,5 @@
-/* ===== Перетягування апаратів по рейках (палець і миша) =====
-   Палець: затиснути апарат ~0,3 с і тягти; вибраний апарат тягнеться одразу.
+/* ===== Перетягування модулів по рейках (палець і миша) =====
+   Палець: затиснути модуль ~0,3 с і тягти; вибраний модуль тягнеться одразу.
    Миша: просто тягти. Пунктирна рамка показує, куди він стане (червона — місце зайняте). */
 (function(){
   const sc=$("scroller"), svg=$("svg"), HOLD=300, NS="http://www.w3.org/2000/svg"; let D=null, noClickUntil=0;
@@ -17,7 +17,7 @@
     if(d.moved){ noClickUntil=Date.now()+350; const t=d.t, dev=d.dev;
       if(!cancel&&t&&t.ok&&(t.r!==(dev.rail||0)||t.slot!==dev.slot)){ moveDevice(dev,t.r,t.slot); return; }
       if(!cancel&&t&&!t.ok) toast("Там зайнято","w"); renderAll(false); return; }
-    if(d.lifted){ noClickUntil=Date.now()+350; renderAll(false); if(!cancel) ctxOpen(d.dev,d.cx,d.cy); } }   // затиснули й відпустили — меню апарата
+    if(d.lifted){ noClickUntil=Date.now()+350; renderAll(false); if(!cancel) ctxOpen(d.dev,d.cx,d.cy); } }   // затиснули й відпустили — меню модуля
 
   svg.addEventListener("pointerdown",e=>{ if(D||S.noDoc||!(S.mode==="mount"||S.mode==="wire")||S.pick||e.button>0||S.demo) return;
     if(S.mode==="wire"&&(S.moveEnd||nearTerm(e)||(e.target.closest&&e.target.closest("[data-wire]")))) return;
@@ -40,7 +40,7 @@
   sc.addEventListener("click",e=>{ if(Date.now()<noClickUntil){ e.stopPropagation(); e.preventDefault(); } },true);
 })();
 /* ===== Перетягування: з нижньої панелі на рейку і перемички між клемами (палець і миша) =====
-   Миша: просто тягти. Палець: затиснути ~0,25 с і тягти. Пунктирна рамка — куди стане апарат (червона — зайнято). */
+   Миша: просто тягти. Палець: затиснути ~0,25 с і тягти. Пунктирна рамка — куди стане модуль (червона — зайнято). */
 (function(){
   const sc=$("scroller"), svg=$("svg"), NS="http://www.w3.org/2000/svg", HOLD=250;
   let C=null, W=null, blockUntil=0;
@@ -127,7 +127,7 @@
 /* ===== Перетягування трас перемичок і шин N / PE / колодки XT2 =====
    Перемички («Перемички»): затиснути перемичку посередині й тягти — горизонтальна ділянка ходить угору-вниз у межах свого каналу,
    бічна вертикальна — ліворуч-праворуч. Кінці лишаються на клемах. «Авто-траса» в панелі перемички повертає як було.
-   Шини («Апарати»): затиснути шину N, PE чи колодку XT2 і тягти вздовж ряду. Миша — одразу, палець — після ~0,25 с. */
+   Шини («Модулі»): затиснути шину N, PE чи колодку XT2 і тягти вздовж ряду. Миша — одразу, палець — після ~0,25 с. */
 (function(){
   const sc=$("scroller"), svg=$("svg"), NS="http://www.w3.org/2000/svg", HOLD=250; let Q=null, blockUntil=0;
   const toSvg=e=>{ const m=svg.getScreenCTM(); if(!m) return {x:0,y:0}; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()); return {x:p.x,y:p.y}; };
@@ -141,7 +141,7 @@
     const ca=termPos(w.a), cb=termPos(w.b); if(!ca||!cb) return null; const cLo=Math.min(ca.c,cb.c), cHi=Math.max(ca.c,cb.c);
     const key=cross?({1:"rya",2:"rx",3:"ryb"})[bi]:"ry", lim=key==="rx"?[20,820]:chanLim(key==="ryb"?cHi:cLo);
     return {P,i:bi,hor,key,lim,v0:hor?P[bi][1]:P[bi][0]}; }
-  // шина під пальцем (лише в «Апаратах»)
+  // шина під пальцем (лише в «Модулях»)
   function busOf(p){ const b=S.board, pos=(GEO||geoCache()).bus.pos, B=busY(), xs=k=>pos[k];
     if(Math.abs(p.y-B)<=18){
       if(b.xn){ const a=xs("xn:0")-16, z=(b.xt.length?xs("xt:"+b.xt[b.xt.length-1].k):xs("xn:"+(b.xn-1)))+16; if(p.x>=a&&p.x<=z) return {key:"xn",a,z,y:B}; }

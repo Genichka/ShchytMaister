@@ -1,4 +1,4 @@
-/* ===== Рушій v2: мережі, потенціали, логіка апаратів, аварії, струми ===== */
+/* ===== Рушій v2: мережі, потенціали, логіка модулів, аварії, струми ===== */
 const isPh = p => /\.(L|L1|L2|L3)$/.test(p);
 const isDC = p => /^(pv\d*|bat)[+-]$/.test(p);
 const pvDev = sid => S.field.find(f=>f.type==="pv"&&(f.sid||"pv")===sid);
@@ -129,7 +129,7 @@ function resolveFaults(){
       let acted=false;
       for(const p of c.pots){ if(isPh(p)&&invInp(srcOf(p))&&srcLive(invInp(srcOf(p)),S.src[srcOf(p)])){ invFault(srcOf(p),10,`${FAULT[c.kind]} на виході — внутрішній захист вимкнув вихід на 10 с`); acted=true; continue; }
         if(isPh(p)&&S.src[srcOf(p)]&&S.src[srcOf(p)].on){ S.src[srcOf(p)].on=false; acted=true;
-          logp("e",`${FAULT[c.kind]} до захисних апаратів: спрацював захист джерела «${(S.board.inputs.find(i=>i.id===srcOf(p))||{}).label}», його вимкнено`); } }
+          logp("e",`${FAULT[c.kind]} до захисних модулів: спрацював захист джерела «${(S.board.inputs.find(i=>i.id===srcOf(p))||{}).label}», його вимкнено`); } }
       for(const d of S.field){ const t=FT[d.type]; if(t.onFault&&t.onFault(d,c)) acted=true; }
       if(typeof toast==="function") toast("Аварія: "+FAULT[c.kind],"e");
       if(acted) continue; return;

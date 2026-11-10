@@ -71,7 +71,7 @@ function rpath(pts,r=7){
   const q=p[p.length-1]; return d+" L"+q[0]+" "+q[1];
 }
 const screw = (x,y,r=11) => `<circle class="screw" cx="${x}" cy="${y}" r="${r}"/><path class="screw-x" d="M${x-r*0.55} ${y}h${r*1.1}M${x} ${y-r*0.55}v${r*1.1}"/>`;
-// Підпис під апаратом між кольоровою смугою (до y+193) і нижніми гвинтами (від y+207): один рядок до 7,2 px,
+// Підпис під модулем між кольоровою смугою (до y+193) і нижніми гвинтами (від y+207): один рядок до 7,2 px,
 // два рядки — до 6 px; якщо й так не влазить — дрібніше (до 4,8), обрізаємо лише в крайньому разі
 function capLines(cap,w){ const cw=w-6, words=String(cap).split(/\s+/).filter(Boolean), txt=words.join(" ");
   const mc=fs=>Math.max(4,Math.floor(cw/(fs*0.56)));
@@ -91,12 +91,12 @@ function devSVG(d){
   const sr=t.terms.filter(q=>q.s==="top").length>w/27?9:11;
   const bx=t.terms.filter(q=>q.s==="bot").map(q=>termX(d,q)).sort((a,c)=>a-c), side=bx.every((v,i)=>!i||v-bx[i-1]>=44);
   for(const tm of t.terms){ const X=termX(d,tm);
-    if(tm.s==="top") s+=screw(X,y+22,sr)+(tm.nl?"":tx(X,y+42,tm.l,{fs:6.8}));   // nl — підпис малює сам апарат
+    if(tm.s==="top") s+=screw(X,y+22,sr)+(tm.nl?"":tx(X,y+42,tm.l,{fs:6.8}));   // nl — підпис малює сам модуль
     else { const lw=String(tm.l).length*3.9, pv=bx.filter(v=>v<X-1).pop(), nx=bx.find(v=>v>X+1);   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку і сусідній гвинт
       const fitL=X-sr-2-lw>=Math.max(x+2,pv!==undefined?pv+sr+2:-1e9), fitR=X+sr+2+lw<=Math.min(x+w-2,nx!==undefined?nx-sr-2:1e9);
       s+=screw(X,y+H-22,sr)+(tm.nl?"":side&&(fitL||fitR)
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-3,tm.l,{fs:6})); } }
-  const bn=brandName(d), shp=shopFor(d), own=t.maker||brandOf(d)!=="eua";   // апарат є в «Замовити» — замість напису EnergyUA маленька наліпка QR; дотик — великий код
+  const bn=brandName(d), shp=shopFor(d), own=t.maker||brandOf(d)!=="eua";   // модуль є в «Замовити» — замість напису EnergyUA маленька наліпка QR; дотик — великий код
   if(shp){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if(own&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
   else s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});

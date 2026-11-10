@@ -1,4 +1,4 @@
-/* ===== Допоміжні елементи малювання + базові апарати ===== */
+/* ===== Допоміжні елементи малювання + базові модулі ===== */
 const tx = (x,y,s,o={}) => `<text class="${o.c||"svs"}" x="${x}" y="${y}" font-size="${o.fs||7.5}" text-anchor="${o.a||"middle"}"${o.fw?` font-weight="${o.fw}"`:""}${o.fill?` style="fill:${o.fill}"`:""}${o.ff?` font-family="${o.ff}"`:""}>${esc(s)}</text>`;
 function lever(d,cx,y,lw,on,col){
   let s=`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${cx-lw/2-4}" y="${y-4}" width="${lw+8}" height="48" rx="3" fill="#2a2d33"/>`;
@@ -12,7 +12,7 @@ function breakerFace(d,g){ const m=typeof modelOf==="function"?modelOf(d):""; le
 const brk = {prot:"breaker", sheetRatings:true};
 // Змінні картриджі УЗІП: n штук, колір індикатора c
 const cartridges = (g,n,c) => { const cw=g.w/n, p=n>2?8:14; return [...Array(n).keys()].map(i=>`<rect x="${g.x+p+i*cw}" y="${g.y+92}" width="${cw-2*p}" height="36" rx="2" fill="#2a2d33"/><rect x="${g.x+p+4+i*cw}" y="${g.y+100}" width="${cw-2*p-8}" height="14" fill="${c}"/>`).join(""); };
-// Спільні набори клем і полюсів (однакові в кількох апаратах)
+// Спільні набори клем і полюсів (однакові в кількох модулях)
 const T1P = [{k:"t1",s:"top",r:"L",l:"1"},{k:"b1",s:"bot",r:"L",l:"2"}], P1P = [{a:"t1",b:"b1",r:"L"}];
 const T2P = [{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"3"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"4"}];
 const T1N = [{k:"t1",s:"top",r:"L",l:"1"},{k:"t2",s:"top",r:"N",l:"N"},{k:"b1",s:"bot",r:"L",l:"2"},{k:"b2",s:"bot",r:"N",l:"N"}];
@@ -28,7 +28,7 @@ defType("qf2p",{...brk, name:"Автомат 2P", short:"Автомат 2P", cat
 defType("qf3p",{...brk, name:"Автомат 3P", short:"Автомат 3P", cat:"Захист", w:3, pre:"QF",
   terms:[{k:"t1",s:"top",r:"P",l:"1"},{k:"t2",s:"top",r:"P",l:"3"},{k:"t3",s:"top",r:"P",l:"5"},{k:"b1",s:"bot",r:"P",l:"2"},{k:"b2",s:"bot",r:"P",l:"4"},{k:"b3",s:"bot",r:"P",l:"6"}],
   poles:[{a:"t1",b:"b1",r:"L"},{a:"t2",b:"b2",r:"L"},{a:"t3",b:"b3",r:"L"}], ratings:["C6","C10","C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"], def:"C25", face:breakerFace, cap:"Ввід 400 В"});
-defType("rcd",{name:"ПЗВ 30 мА", short:"ПЗВ (УЗО)", cat:"Захист", w:2, pre:"QD", rcd:true, sheetRatings:true,
+defType("rcd",{name:"ПЗВ 30 мА", short:"ПЗВ 2P", cat:"Захист", w:2, pre:"QD", rcd:true, sheetRatings:true,
   terms:T1N, poles:PLN, ratings:["16","25","32","40","63","80","100"], def:"40", unit:" А", cap:"Захист від ураження",
   face(d,g){ return tx(g.cx,g.y+72,mdl(d,"ПЗВ · ΔI 30 мА"),{fs:modelOf(d)?6:7})+tx(g.cx,g.y+90,d.rating+" А",{c:"svt",fs:15})+lever(d,g.cx,g.y+102,44,g.on,"#2f6fdf")+flag(g.cx,g.y+150,g.on)+testBtn(d,g); }});
 const testBtn = (d,g) => `<g data-test="${d.id}" style="cursor:pointer"><circle cx="${g.x+g.w-11}" cy="${g.y+72}" r="8" fill="#f2c400" stroke="#8a6d00"/><text x="${g.x+g.w-11}" y="${g.y+75}" font-size="9" font-weight="700" text-anchor="middle" fill="#222">T</text></g>`;

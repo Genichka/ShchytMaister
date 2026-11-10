@@ -1,5 +1,5 @@
 /* ===== Події, демонстрація, таймери, старт ===== */
-// Ставить qty однакових апаратів підряд, починаючи з вибраного місця (або з першого вільного); вибір лишається активним
+// Ставить qty однакових модулів підряд, починаючи з вибраного місця (або з першого вільного); вибір лишається активним
 function nextFree(w,r,slot){ for(let rr=r;rr<S.board.rails;rr++) for(let i=(rr===r?slot:0);i<SLOTS;i++) if(freeAt(rr,i,w)) return [rr,i];
   for(let rr=0;rr<S.board.rails;rr++) for(let i=0;i<SLOTS;i++) if(freeAt(rr,i,w)) return [rr,i]; return null; }
 function placeDev(type,r,slot,qty){ const w=T[type].w, n0=qty||S.pickQty||1, put=[]; let motor=false;
@@ -48,7 +48,7 @@ function exitApp(){ save(); closeDrawer(); window.close();
 document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(eb=qb("[data-brand]")){ const d=devById(S.selDev); if(d){ const b=eb.dataset.brand; if(b==="eua") delete d.brand; else d.brand=b; S.brand=b; commit(false); } return; }
   if(qb("[data-brandall]")){ const d=devById(S.selDev), b=d?brandOf(d):"eua"; let n=0; for(const x of S.devices) if(b==="eua"||(MODELS[x.type]&&MODELS[x.type][b])){ if(b==="eua") delete x.brand; else x.brand=b; n++; }
-    S.brand=b; toast(`${BR[b].s||BR[b].n}: ${n} апарат(ів)`,"ok"); commit(false); return; }
+    S.brand=b; toast(`${BR[b].s||BR[b].n}: ${n} модуль(ів)`,"ok"); commit(false); return; }
   const q=s=>e.target.closest(s); let el;
   if(q("#menuBtn")){ openDrawer(false); return; }
   if(q("#drawerX")||e.target.id==="drawer"){ closeDrawer(); return; }
@@ -78,7 +78,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(t.prot||t.rcd){ if(d.on&&!d.trip) d.on=false; else { d.on=true; d.trip=null; S.heat[d.id]=0; } commit(false); } return; }
   if(el=q("[data-test]")){ const d=devById(el.dataset.test), X=evaluate({extra:shortsExtra()});
     if(d.on&&!d.trip&&X.volt(k(d,"t1"),k(d,"t2"))>=150){ trip(d,"кнопка «Тест» — ПЗВ справний"); commit(false); } else toast("Тест працює, лише коли ПЗВ під напругою і ввімкнений","w"); return; }
-  if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.moveDev) doMoveTo(r,i); else if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть апарат нижче"); return; }
+  if(el=q("[data-slot]")){ const [r,i]=el.dataset.slot.split(":").map(Number); if(S.moveDev) doMoveTo(r,i); else if(S.pick) placeDev(S.pick,r,i); else toast("Спершу оберіть модуль нижче"); return; }
   if(el=q("[data-pqty]")){ S.pickQty=+el.dataset.pqty; renderAll(false); return; }
   if(el=q("[data-prate]")){ S.pickRating=el.dataset.prate; renderAll(false); return; }
   if(q("[data-pauto]")){ if(S.pick){ const f=nextFree(T[S.pick].w,0,0); if(f) placeDev(S.pick,f[0],f[1]); else toast("Немає вільного місця","w"); } return; }

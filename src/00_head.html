@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500;600&display=swap">
 <style>
-/* ===== v4.19: компонування, перетягування апаратів і перемичок ===== */
+/* ===== v4.19: компонування, перетягування модулів і перемичок ===== */
 .bbar{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
 #closeBtn{display:none!important}
 .eclose{cursor:pointer}
@@ -420,7 +420,7 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 /* логотип крупніше */
 h1{font-size:36px} .brand svg{width:36px;height:36px}
 @media (max-width:480px){ h1{font-size:28px} .brand svg{width:28px;height:28px} }
-/* номінали апаратів — окремим кольором */
+/* номінали модулів — окремим кольором */
 em.rt{font-style:normal;font-weight:700;color:var(--brass)}
 .chip.rt:not([aria-pressed="true"]){color:var(--brass);font-weight:600}
 </style>
@@ -437,7 +437,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
 
   <nav class="tbar" aria-label="Інструменти">
     <button class="tb red" id="menuBtn" aria-label="Меню"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><small>Меню</small></button>
-    <button class="tb" data-mode="mount" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h5v16H5zM14 4h5v16h-5zM2 10h20"/></svg><small>Апарати</small></button>
+    <button class="tb" data-mode="mount" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h5v16H5zM14 4h5v16h-5zM2 10h20"/></svg><small>Модулі</small></button>
     <button class="tb" data-mode="wire" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c4 0 4-12 8-12s4 12 8 12M4 18h0M20 18h0"/></svg><small>Перемички</small></button>
     <button class="tb" id="docsBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h8"/></svg><small>Документи</small></button>
     <button class="tb" data-mode="test" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><small>Тест</small></button>
@@ -445,7 +445,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
     <button class="tb nolab" id="undoTop" aria-label="Скасувати"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg><small>Назад</small></button>
     <button class="tb nolab" id="redoTop" aria-label="Повторити"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/></svg><small>Вперед</small></button>
     <button class="tb" id="btnCheck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg><small>Перевірка</small></button>
-    <button class="tb red shop" id="shopBtn" aria-label="Замовити апарат"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H7"/><circle cx="9.5" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/></svg><small><span class="sh-l">Замовити апарат</span><span class="sh-s">Замовити</span></small></button>
+    <button class="tb red shop" id="shopBtn" aria-label="Замовити модуль"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H7"/><circle cx="9.5" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/></svg><small><span class="sh-l">Замовити модуль</span><span class="sh-s">Замовити</span></small></button>
   </nav>
 
   <main class="work" id="work">

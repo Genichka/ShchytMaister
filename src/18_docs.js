@@ -8,7 +8,7 @@ function groupDU(g){ const L=groupLen(g); if(!L) return null; const I=groupI(g),
 const ferrule = s => `НШВИ ${fmt(s,s%1?1:0)}-${s>=6?12:s>=4?10:8}`;
 function wireLenCm(w){ const P=route()[w.id]; if(!P) return 0; let L=0; for(let i=1;i<P.length;i++) L+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]); return Math.round(L*0.0324+4); }  // 54 од. = модуль 17,5 мм; +4 см на зачистку
 
-// ---- Топологія для однолінійної схеми: дерево від вводів через апарати з полюсами L
+// ---- Топологія для однолінійної схеми: дерево від вводів через модулі з полюсами L
 function sldModel(){ const f=build({allOpen:true}), b=S.board, nodes=[], byId={};
   const add=n=>{ nodes.push(n); byId[n.id]=n; n.kids=[]; n.extra=[]; n.side=[]; return n; };
   for(const i of b.inputs) if(i.terms.some(t=>/^L/.test(t))) add({id:i.id, kind:"in", label:i.label, ph:i.terms.includes("L1")?3:1, out:i.terms.filter(t=>/^L/.test(t)).map(t=>f(i.id+":"+t)), inv:!!i.inv});
@@ -18,7 +18,7 @@ function sldModel(){ const f=build({allOpen:true}), b=S.board, nodes=[], byId={}
   for(const n of nodes) if(n.kind==="dev"){ const par=[];
     for(const net of n.inn) for(const m of nodes) if(m!==n&&m.out.includes(net)&&!par.includes(m)) par.push(m);
     n.par=par; }
-  // поле: двигуни, лампи, бойлери — листки від апарата, з виходом якого з’єднана їхня перша клема
+  // поле: двигуни, лампи, бойлери — листки від модуля, з виходом якого з’єднана їхня перша клема
   for(const fd of S.field){ const ft=FT[fd.type], k0=fd.map[ft.terms[0]]; if(!k0||/^(pv|bat|invpv|inv)/.test(fd.type)) continue;
     const net=f(k0), m=nodes.find(x=>x.out.includes(net)); if(!m) continue; const n=add({id:fd.id, kind:"fld", fd, ph:ft.terms.includes("U")?3:1, inn:[net], out:[]}); n.par=[m]; }
   // бічні: УЗІП, вольтметр, розетка DIN, реле контролю фаз
@@ -67,7 +67,7 @@ function sldSVG(){ const M=sldModel(), CW=104, LH=112, X0=128, top=26; let col=0
     for(const e of n.extra){ const ye=Y(e)-10; s+=`<path d="M${n.x} ${y+44} V${ye} H${e.x+6} V${Y(e)+2}" fill="none" stroke="#111" stroke-width="1.4" stroke-dasharray="5 3"/>`; }
     if(n.col!==undefined&&n.kind!=="in"&&!n.extra.length) s+=`<line x1="${n.x}" y1="${y+44}" x2="${n.x}" y2="${yT}" stroke="#111" stroke-width="1.2"/><path d="M${n.x-4} ${yT-8} L${n.x} ${yT} L${n.x+4} ${yT-8}" fill="none" stroke="#111" stroke-width="1.2"/>`; }
   // таблиця під схемою
-  const rows=[["Позначення",n=>n.kind==="dev"?desig(n.d):n.kind==="fld"?(n.fd.name||"M"):""],["Апарат",n=>n.kind==="dev"?(n.d.rating||""):""],["Кабель",n=>n.kind==="dev"&&n.d.group?cableName(n.d).replace("ВВГнг(А)-LS ",""):""],
+  const rows=[["Позначення",n=>n.kind==="dev"?desig(n.d):n.kind==="fld"?(n.fd.name||"M"):""],["Модуль",n=>n.kind==="dev"?(n.d.rating||""):""],["Кабель",n=>n.kind==="dev"&&n.d.group?cableName(n.d).replace("ВВГнг(А)-LS ",""):""],
     ["Довжина, м",n=>n.kind==="dev"&&n.d.group&&groupLen(n.d)?fmt(groupLen(n.d),1):""],["Pвст, кВт",n=>n.kind==="dev"&&n.d.group?fmt(kwOf(n.d,true),2):n.kind==="fld"?fmt(FT[n.fd.type].kw||((FT[n.fd.type].In||0)*0.23),1):""],
     ["Iр, А",n=>n.kind==="dev"&&n.d.group?fmt(groupI(n.d),1):""],["ΔU, %",n=>{ if(n.kind!=="dev"||!n.d.group) return ""; const u=groupDU(n.d); return u===null?"":fmt(u,1); }],
     ["Споживач",n=>n.kind==="dev"&&n.d.group?n.d.group.name:n.kind==="fld"?FT[n.fd.type].name:""]];
@@ -100,8 +100,8 @@ function specData(){ const R=[], cnt=new Map(), addR=(name,model,qty,unit)=>R.pu
   return R; }
 
 const shopSpec = () => { const L=shopUsed(); if(!L.length) return "";
-  return `<h3 style="margin-top:14px">Де замовити</h3><p class="note">Наведіть камеру телефона на код — відкриється сторінка апарата.</p><div class="shopq">`
-    +L.map(e=>`<div class="shopq-i">${qrSVG(e.it.link,104)}<div><b>${esc(e.it.name||"Апарат")}</b><small>На щитку: ${esc(e.ds.join(", "))}</small><a href="${esc(e.it.link)}" target="_blank" rel="noopener">${esc(e.it.link.replace(/^https?:\/\//,""))}</a></div></div>`).join("")+`</div>`; };
+  return `<h3 style="margin-top:14px">Де замовити</h3><p class="note">Наведіть камеру телефона на код — відкриється сторінка модуля.</p><div class="shopq">`
+    +L.map(e=>`<div class="shopq-i">${qrSVG(e.it.link,104)}<div><b>${esc(e.it.name||"Модуль")}</b><small>На щитку: ${esc(e.ds.join(", "))}</small><a href="${esc(e.it.link)}" target="_blank" rel="noopener">${esc(e.it.link.replace(/^https?:\/\//,""))}</a></div></div>`).join("")+`</div>`; };
 // ---- Вікно документів
 const DOCT = [["sld","Однолінійна схема"],["cab","Кабельний журнал"],["spec","Специфікація"],["lab","Маркування"]];
 function openDocs(t){ S.docTab=t||S.docTab||"sld"; $("docs").hidden=false; renderDocs(); }
@@ -117,7 +117,7 @@ function docBody(t){ const nm=esc((S.proj&&S.proj.name)||"Щиток");
     +tbl(["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],c.inner,[0,6])
     +`<h3 style="margin-top:14px">Кабельні лінії від щитка</h3>`+tbl(["Автомат","Група","Кабель","Довжина, м","ΔU, %"],c.lines,[3,4])+`</div>`; }
   if(t==="spec") h=`<div class="doc"><h3>Специфікація обладнання · ${nm}</h3>`+tbl(["Найменування","Тип / модель","Кіл.","Од."],specData(),[2])+`<p class="note">Довжину монтажного проводу взято із запасом 20 %, кабелі — за довжинами ліній.</p>`+shopSpec()+`</div>`;
-  if(t==="lab"){ h=`<div class="doc"><h3>Маркування автоматів · ${nm}</h3><p class="note">Друк у масштабі 100 %: ширина клітинки — один модуль 18 мм. Виріжте смужки й наклейте над апаратами.</p><div class="labels">`;
+  if(t==="lab"){ h=`<div class="doc"><h3>Маркування автоматів · ${nm}</h3><p class="note">Друк у масштабі 100 %: ширина клітинки — один модуль 18 мм. Виріжте смужки й наклейте над модулями.</p><div class="labels">`;
     for(let r=0;r<S.board.rails;r++){ let row=""; for(let i=0;i<SLOTS;){ const d=devAt(r,i); if(d&&d.slot===i){ const w=T[d.type].w;
           row+=`<div class="lab-c" style="width:${w*18}mm"><b>${esc(desig(d))}${d.rating?" "+esc(d.rating):""}</b><span>${esc(d.group?d.group.name:(d.cap||T[d.type].cap||T[d.type].short))}</span>${d.group?`<i style="background:${d.group.color}"></i>`:""}</div>`; i+=w; }
         else { row+=`<div class="lab-c" style="width:18mm"></div>`; i++; } }

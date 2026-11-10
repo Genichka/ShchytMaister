@@ -1,4 +1,4 @@
-/* ===== Розумний будинок і DC-апарати ===== */
+/* ===== Розумний будинок і DC-модулі ===== */
 const online = (d,X) => X.volt(K(d,"L"),K(d,"N"))>=150;
 const onlineLogic = (d,X) => { const o=online(d,X); if(o!==!!d.online){ d.online=o; return true; } return false; };
 const smartFace = (d,g,title,state,stOn) => tx(g.cx,g.y+64,title,{fs:g.w>60?7:6.2,fw:700})+`<rect x="${g.cx-(g.w>60?30:18)}" y="${g.y+76}" width="${g.w>60?60:36}" height="22" rx="3" fill="#16181c"/>`

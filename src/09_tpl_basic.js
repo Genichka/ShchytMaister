@@ -5,7 +5,7 @@ function tplStart(board){ S.noDoc=false; S.board=Object.assign(DEFAULT_BOARD(), 
 const D = (type,rail,slot,rating,extra) => { const d=mkDev(type,rail,slot,rating,extra); S.devices.push(d); return d; };
 const F = (type,map,extra) => { const f=mkField(type,map,extra); S.field.push(f); return f; };
 const W = (a,b,kind,sec) => { S.wires.push({id:uid("w"),a,b,kind,sec}); };
-// Ввід «in» на ввідний апарат (клеми t1/t2) і PE на шину
+// Ввід «in» на ввідний модуль (клеми t1/t2) і PE на шину
 const wireIn = (qf,sec=10,pe="xpe:0",inp="in") => { W(inp+":L",k(qf,"t1"),"L",sec); W(inp+":N",k(qf,"t2"),"N",sec); if(pe) W(inp+":PE",pe,"PE",sec); };
 const k = (d,t) => d.id+":"+t;
 const G1 = (rail,slot,rating,i,name,sec,loads) => D("qf1p",rail,slot,rating,{group:mkGroup(i,name,sec,loads)});
@@ -34,7 +34,7 @@ TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 
       {say:"Прибираємо аварію і знову вмикаємо QD1.", do(){ S.leak.clear(); S.leakWarned.clear(); const q=byDes("QD1"); q.on=true; q.trip=null; }, wait:3},
       {say:"Коротке замикання на кухні: спрацьовує лише QF3, решта квартири працює.", do(){ S.short.add(byDes("QF3").id); }, wait:3},
       {say:"Готово. Прибираємо КЗ і вмикаємо QF3.", do(){ S.short.clear(); const q=byDes("QF3"); q.on=true; q.trip=null; }, wait:1}]}};
-TPL.empty = { name:"Порожній щиток · 1 фаза · 2 рейки", cat:"Конструктор", info:"Збирайте власну схему: оберіть апарат у списку «Додати апарат», торкніться вільного місця на рейці й прокладіть перемички в режимі «Перемички».",
+TPL.empty = { name:"Порожній щиток · 1 фаза · 2 рейки", cat:"Конструктор", info:"Збирайте власну схему: оберіть модуль у списку «Додати модуль», торкніться вільного місця на рейці й прокладіть перемички в режимі «Перемички».",
   build(){ tplStart({rails:2}); }, demo:{controls:[{type:"src",id:"in"}], script:[]}};
 TPL.empty3 = { name:"Порожній щиток · 3 фази + двигун", cat:"Конструктор", info:"Трифазний ввід і двигун 4 кВт, уже підключений до клемника XT1 (U, V, W, PE). Зберіть схему пуску: автомат захисту двигуна, контактор, кнопки «Пуск» і «Стоп».",
   build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}], xt:[{k:"U",l:"U",r:"P"},{k:"V",l:"V",r:"P"},{k:"W",l:"W",r:"P"},{k:"PE",l:"PE",r:"PE"}]});

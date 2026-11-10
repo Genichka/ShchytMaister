@@ -10,7 +10,7 @@ const swatch = (kindOrCol,isCol) => { const pe=isCol?kindOrCol==="pe":kindOrCol=
   const bg=pe?"linear-gradient(90deg,var(--wPEy) 50%,var(--wPEg) 50%)":(isCol?WCOL[kindOrCol][1]:WK[kindOrCol][1]); return `<span class="sw" style="background:${bg}"></span>`; };
 function wireLabel(w){ return `${WK[w.kind][0]} · ${fmt(w.sec,w.sec%1?1:0)} мм²${w.col?" · "+WCOL[w.col][0].toLowerCase():""}`; }
 function selectWire(id){ S.selWire=id; S.moveEnd=null; S.pend=null; S.selDev=null; renderAll(false); }
-function lineWires(w){ // перемички того ж виду, з’єднані без апаратів (одна «лінія»)
+function lineWires(w){ // перемички того ж виду, з’єднані без модулів (одна «лінія»)
   const f=build({allOpen:true}), r=f(w.a); return S.wires.filter(x=>x.kind===w.kind&&f(x.a)===r); }
 // Пальцем не треба влучати в крихітний гвинт: у режимі «Перемички» дотик бере найближчу клему в радіусі ~26 px
 // Підсвічені помічником клеми «1 → 2» мають перевагу, без помічника — клеми, що підходять до перемички.
