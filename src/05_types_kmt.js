@@ -69,3 +69,15 @@ defType("lc1d",{name:"Контактор Schneider TeSys D LC1D (3P + 1НВ + 1�
       +`<rect x="${g.cx-22}" y="${g.y+99}" width="44" height="24" rx="3" fill="#111316" stroke="#454a54"/><rect x="${g.cx-16}" y="${g.y+(p?110:103)}" width="32" height="10" rx="2" fill="${p?"#e0352b":"#8e9196"}"/>`
       +tx(g.cx,g.y+136,`13–14 НВ ${p?"●":"○"} · 21–22 НЗ ${p?"○":"●"}`,{fs:6.2,fill:W})+tx(g.cx,g.y+148,"котушка A1–A2 230 В",{fs:6,fill:"#b9bec6"})
       +tx(g.cx,g.y+159,p?"I · увімкнено":"O · вимкнено",{fs:6.4,fw:600,fill:p?"#ff7a6e":"#9aa0aa"}); }});
+
+// ---- Таймер добовий (програмний): TOMZN AHC15A, GEYA THC15A — замикає L → Lвих за розкладом (нічний тариф 23:00–07:00)
+const hIn = (h,a,b) => a<=b ? h>=a&&h<b : h>=a||h<b, hh = h => String(Math.floor(h)%24).padStart(2,"0")+":"+String(Math.round((h%1)*60)%60).padStart(2,"0");
+const TMR_MODE = {auto:"АВТО — за розкладом", on:"УВІМК — постійно", off:"ВИМК — постійно"};
+defType("tmr",{name:"Таймер добовий (програмний)", short:"Таймер добовий", cat:"Керування", w:1, pre:"KT",
+  terms:[...TLN,{k:"Lo",s:"bot",r:"L",l:"Lвих"}], poles:PIO, closed:d=>!!d.rel, cap:"За розкладом",
+  init:d=>{ d.on1=d.on1??23; d.off1=d.off1??7; d.mode=d.mode||"auto"; },
+  logic(d,X){ const pw=X.volt(K(d,"L"),K(d,"N"))>=150, r=pw&&(d.mode==="on"||d.mode==="auto"&&hIn(S.env.hour??12,d.on1,d.off1)); d.pw=pw;
+    if(r!==!!d.rel){ d.rel=r; if(pw) logp(r?"ok":"w",`${desig(d)}: ${hh(S.env.hour??12)} — вихід ${r?"увімкнено":"вимкнено"}${d.mode==="auto"?` (розклад ${hh(d.on1)}–${hh(d.off1)})`:""}`); return true; } return false; },
+  load:(d,X)=>[{a:"L",b:"N",I:d.pw?0.004:0}],
+  face(d,g){ return tx(g.cx,g.y+64,mdl(d,"ТАЙМЕР"),{fs:5.4,fw:700})+lcd(g.x+4,g.y+70,g.w-8,30,[d.pw?hh(S.env.hour??12):"--:--",({auto:"AUTO",on:"ON",off:"OFF"})[d.mode]],d.pw)
+      +tx(g.cx,g.y+112,`${String(d.on1).padStart(2,"0")}–${String(d.off1).padStart(2,"0")}`,{fs:6.4,ff:"var(--mono)"})+led(g.cx,g.y+126,d.rel?"#ffd23f":"#5a5e66")+tx(g.cx,g.y+142,d.rel?"увімк.":"вимк.",{fs:6.2}); }});

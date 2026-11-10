@@ -170,6 +170,7 @@ function autoControls(){ const c=[], b=S.board;
     c.push({type:"toggle",label:"Обрив фази L3",get:()=>!!(s().lost||{}).L3,set:v=>{ (s().lost||(s().lost={})).L3=v; }});
     c.push({type:"toggle",label:"Переплутано L2 і L3 на вводі",get:()=>!!s().swap,set:v=>{ s().swap=v; }}); }
   if(S.field.some(f=>f.type==="pv")) c.push({type:"range",label:"Сонце, %",min:0,max:100,step:5,get:()=>S.env.sun??60,set:v=>{ S.env.sun=v; }});
+  if(S.devices.some(d=>d.type==="tmr")) c.push({type:"range",label:"Година доби",min:0,max:23.5,step:0.5,get:()=>S.env.hour??12,set:v=>{ S.env.hour=v; }});
   if(S.devices.some(d=>d.type==="photo")) c.push({type:"range",label:"Освітленість, %",min:0,max:100,step:5,get:()=>S.env.lux??60,set:v=>{ S.env.lux=v; }});
   for(const f of S.field){ if(f.type==="motor1") c.push({type:"toggle",label:`${f.name}: конденсатор справний`,get:()=>f.cap!==false,set:v=>{ f.cap=v; }});
     if(/^motor/.test(f.type)) c.push({type:"toggle",label:`${f.name}: вал заклинило`,get:()=>!!f.jam,set:v=>{ f.jam=v; }});

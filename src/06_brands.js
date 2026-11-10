@@ -27,6 +27,7 @@ const MODELS = {
   kimp:{ abb:()=>"E290-16", se:()=>"iTL 16A", finder:()=>"26.01", hager:()=>"EPN510"},
   stair:{ abb:()=>"E232", se:()=>"MIN", finder:()=>"14.01"},
   kt:{ finder:()=>"80.01", abb:()=>"CT-ERD", geya:()=>"GRT8-A1", tomzn:()=>"TORT7-A1"},
+  tmr:{ tomzn:()=>"AHC15A", geya:()=>"THC15A" },
   ktb:{ geya:()=>"GRT8-D", tomzn:()=>"TORT7-B1"}, ktm:{ geya:()=>"GRT8-M1", finder:()=>"80.01"},
   kmc1no:kmcM(1,"1NO"), kmc1nc:kmcM(1,"1NC"), kmc2no:kmcM(2,"2NO"), kmc11:kmcM(2,"1NO1NC"), kmc2nc:kmcM(2,"2NC"),
   kmc4no:kmcM(4,"4NO"), kmc31:kmcM(4,"3NO1NC"), kmc22:kmcM(4,"2NO2NC"), kmc4nc:kmcM(4,"4NC"),
