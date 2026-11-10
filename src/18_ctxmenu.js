@@ -16,7 +16,7 @@ function catOf(type){ for(let i=0;i<CATALOG.length;i++){ const s=CATALOG[i][1]; 
 // Заміна модуля на тому ж місці: id лишається, перемички на клеми, що є й у нового, — теж
 function doReplace(id,type){ const i=S.devices.findIndex(x=>x.id===id); if(i<0){ S.repl=null; renderAll(); return; }
   const d=S.devices[i], t=T[type], r=d.rail||0;
-  if(type===d.type){ toast("Це той самий модуль — оберіть інший або змініть номінал у «Налаштувати»"); return; }
+  if(type===d.type){ toast(t.ratings?"Це той самий модуль — інший номінал виберіть у рядку «Лише номінал» вище":"Це той самий модуль — оберіть інший"); return; }
   let slot=d.slot; if(!freeAt(r,slot,t.w,d)){ slot=null; for(let s=d.slot-1;s>=Math.max(0,d.slot-t.w+1);s--) if(freeAt(r,s,t.w,d)){ slot=s; break; } }
   if(slot==null){ toast(`${t.short} займає ${t.w} мод. — поруч немає місця. Звільніть місце або спершу перемістіть ${desig(d)}`,"w"); return; }
   const ex={}; if(d.group&&t.group) ex.group=d.group; else if(t.group&&!t.groupOpt) ex.group=mkGroup(groupsOf().length,d.group?d.group.name:"Група "+(groupsOf().length+1),2.5,[]); else ex.noGroup=true;
