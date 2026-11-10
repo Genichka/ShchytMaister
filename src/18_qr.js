@@ -47,12 +47,14 @@ const qrCode = (()=>{
       for(const r of M) for(const c of r) if(c) dark++; p+=Math.floor(Math.abs(dark*20-n*n*10)/(n*n))*10; return p; };
     let best=0, bp=1e9; for(let m=0;m<8;m++){ apply(m); fmt(m); const p=pen(); if(p<bp){ bp=p; best=m; } apply(m); }
     apply(best); fmt(best);
-    let d=""; for(let y=0;y<n;y++) for(let x=0;x<n;x++) if(M[y][x]) d+=`M${x} ${y}h1v1h-1z`;
+    let d=""; for(let y=0;y<n;y++) for(let x=0;x<n;){ if(!M[y][x]){ x++; continue; } let e=x; while(e<n&&M[y][e]) e++; d+=`M${x} ${y}h${e-x}v1h${x-e}z`; x=e; }
     return {n,m:M,d,ver,ecl}; }
   const cache=new Map();
   return text=>{ if(!cache.has(text)) cache.set(text,encode(text)); return cache.get(text); };
 })();
-// QR-«наліпка» на апараті: білий квадрат із запасом 1 модуль
-function qrSticker(it,cx,top,sz){ const q=qrCode(it.link); if(!q) return ""; const m=sz/(q.n+2), x0=cx-sz/2;
-  return `<g class="devqr" data-shopq="${esc(it.link)}" style="cursor:pointer"><title>Замовити: ${esc(it.name||"апарат")}</title><rect x="${x0}" y="${top}" width="${sz}" height="${sz}" rx="1" fill="#fff"/>`
-    +`<path transform="translate(${(x0+m).toFixed(2)} ${(top+m).toFixed(2)}) scale(${m.toFixed(4)})" d="${q.d}" fill="#111" shape-rendering="crispEdges"/></g>`; }
+// QR-«наліпка» на апараті: білий квадрат із тихою зоною 2 модулі (сканер не плутає з корпусом), cap — підпис «Замовити» під кодом
+function qrSticker(it,cx,top,sz,cap){ const q=qrCode(it.link); if(!q) return ""; const qz=cap?2:1, m=sz/(q.n+2*qz), x0=cx-sz/2, ch=cap?10:0;
+  return `<g class="devqr" data-shopq="${esc(it.link)}" style="cursor:pointer"><title>Замовити: ${esc(it.name||"апарат")}</title>`
+    +`<rect x="${x0}" y="${top}" width="${sz}" height="${sz+ch}" rx="${cap?2.5:1}" fill="#fff"${cap?` stroke="#b9bfc8" stroke-width=".7"`:""}/>`
+    +`<path transform="translate(${(x0+qz*m).toFixed(3)} ${(top+qz*m).toFixed(3)}) scale(${m.toFixed(4)})" d="${q.d}" fill="#000" shape-rendering="crispEdges"/>`
+    +(cap?tx(cx,top+sz+5.8,"🛒 Замовити",{fs:Math.min(6.6,sz/7),fw:700,fill:"#c0261c"}):"")+`</g>`; }
