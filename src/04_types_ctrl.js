@@ -113,11 +113,16 @@ defType("to119",{name:"Перемикач I–0–II TOMZN TO119G 1P 40 / 63 А"
   poles:[{a:"2",b:"1",r:"L"},{a:"4",b:"1",r:"L"}],
   closed:(d,pi)=>pi===0?d.pos===1:d.pos===2, init:d=>{ if(d.pos===undefined) d.pos=1; }, cap:"Перемикач I–0–II",
   tap(d){ const seq=[1,0,2,0]; d.seqI=((d.seqI??seq.indexOf(d.pos))+1)%4; d.pos=seq[d.seqI]; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); return true; },
-  face(d,g){ const p=d.pos, hy=p===1?g.y+74:p===0?g.y+98:g.y+122, lw=g.w-22;
+  // Як на фото: синя клавіша у віконці; I — виступ клавіші вгорі (тіло нижче), 0 — виступ посередині, II — внизу (тіло вище).
+  face(d,g){ const p=d.pos, x=g.x+5, w=g.w-21, top=g.y+68, bot=g.y+148,
+      lip=p===1?top-2:p===0?g.y+100:bot-14, b0=p===1?lip+12:top+2, b1=p===1?bot-2:lip;
     return tx(g.cx,g.y+62,`TO119G ${d.rating||63}A`,{fs:5.4,fw:700})
-      +`<rect x="${g.x+6}" y="${g.y+70}" width="${lw}" height="76" rx="3" fill="#2a63b8" stroke="#1d4c93"/>`
-      +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${g.x+3}" y="${hy}" width="${lw+6}" height="22" rx="5" fill="#2f80e6" stroke="#1b5aae"/><rect x="${g.x+8}" y="${hy+4}" width="${lw-4}" height="5" rx="2.5" fill="#6aa8f2" opacity=".7"/></g>`
-      +tx(g.x+g.w-4,g.y+88,"I",{fs:7,fw:700,a:"end"})+tx(g.x+g.w-4,g.y+111,"0",{fs:7,fw:700,a:"end"})+tx(g.x+g.w-4,g.y+135,"II",{fs:7,fw:700,a:"end"})
+      +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${x}" y="${top}" width="${w}" height="${bot-top}" rx="3" fill="#f1f3f6" stroke="#c8cdd5"/>`
+      +`<rect x="${x+2}" y="${b0}" width="${w-4}" height="${b1-b0}" rx="2" fill="#2b67c9" stroke="#1d4c93"/>`
+      +`<rect x="${x+6}" y="${b0+5}" width="${w-12}" height="${Math.max(0,b1-b0-10)}" rx="3" fill="#2a5fb8" stroke="#3d79d8" stroke-width=".8"/>`
+      +`<line x1="${x+w/2}" y1="${b0+9}" x2="${x+w/2}" y2="${Math.max(b0+9,b1-9)}" stroke="#7ea9ea" stroke-width="1"/>`
+      +`<rect x="${x-3}" y="${lip}" width="${w+6}" height="14" rx="3" fill="#2f80e6" stroke="#1b5aae"/><rect x="${x+1}" y="${lip+3}" width="${w-2}" height="3" rx="1.5" fill="#7fb4f4" opacity=".8"/></g>`
+      +tx(g.x+g.w-4,g.y+80,"I",{fs:7,fw:700,a:"end"})+tx(g.x+g.w-4,g.y+111,"0",{fs:7,fw:700,a:"end"})+tx(g.x+g.w-4,g.y+144,"II",{fs:7,fw:700,a:"end"})
       +tx(g.cx,g.y+157,p===1?"I · 1–2":p===2?"II · 1–4":"0",{fs:6.4,fw:600}); }});
 // Реле напруги й струму TOMZN TOVPD1 (2 модулі): червоний індикатор — напруга, зелений — струм навантаження.
 // Зверху N і L — ввід, знизу N і L — вихід (N наскрізний). Як реле напруги: вимикає при U поза 170–250 В і вмикає
