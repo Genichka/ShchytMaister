@@ -105,6 +105,20 @@ defType("to219",{name:"Механічний АВР TOMZN TO219G — переми
       +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${g.x+8}" y="${hy}" width="${g.w-30}" height="20" rx="10" fill="#2f80e6" stroke="#1b5aae"/><rect x="${g.x+14}" y="${hy+4}" width="${g.w-42}" height="5" rx="2.5" fill="#6aa8f2" opacity=".7"/></g>`
       +tx(g.x+g.w-6,g.y+90,"II",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+114,"0",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+138,"I",{fs:8,fw:700,a:"end"})
       +tx(g.cx,g.y+157,p===1?"I · 1–2, 5–6 · мережа":p===2?"II · 1–4, 5–8 · генератор":"0 · усе розімкнено",{fs:6.8,fw:600}); }});
+// Перемикач I–0–II 1P 40 / 63 А, 1 модуль (як TOMZN TO119G). Зверху клема 1 (спільна), місце «3» — заглушка;
+// знизу 2 — положення I, 4 — положення II. Важіль угорі — I, посередині — 0, унизу — II. Нуль не комутує.
+defType("to119",{name:"Перемикач I–0–II TOMZN TO119G 1P 40 / 63 А", short:"Перемикач TO119G", cat:"Комутація", w:1, pre:"QS", maker:"TOMZN",
+  ratings:["40","63"], def:"63",
+  terms:[{k:"1",s:"top",r:"L",l:"1",m:-0.25},{k:"2",s:"bot",r:"L",l:"2"},{k:"4",s:"bot",r:"L",l:"4"}],
+  poles:[{a:"2",b:"1",r:"L"},{a:"4",b:"1",r:"L"}],
+  closed:(d,pi)=>pi===0?d.pos===1:d.pos===2, init:d=>{ if(d.pos===undefined) d.pos=1; }, cap:"Перемикач I–0–II",
+  tap(d){ const seq=[1,0,2,0]; d.seqI=((d.seqI??seq.indexOf(d.pos))+1)%4; d.pos=seq[d.seqI]; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); return true; },
+  face(d,g){ const p=d.pos, hy=p===1?g.y+74:p===0?g.y+98:g.y+122, lw=g.w-22;
+    return tx(g.cx,g.y+62,`TO119G ${d.rating||63}A`,{fs:5.4,fw:700})
+      +`<rect x="${g.x+6}" y="${g.y+70}" width="${lw}" height="76" rx="3" fill="#2a63b8" stroke="#1d4c93"/>`
+      +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${g.x+3}" y="${hy}" width="${lw+6}" height="22" rx="5" fill="#2f80e6" stroke="#1b5aae"/><rect x="${g.x+8}" y="${hy+4}" width="${lw-4}" height="5" rx="2.5" fill="#6aa8f2" opacity=".7"/></g>`
+      +tx(g.x+g.w-4,g.y+88,"I",{fs:7,fw:700,a:"end"})+tx(g.x+g.w-4,g.y+111,"0",{fs:7,fw:700,a:"end"})+tx(g.x+g.w-4,g.y+135,"II",{fs:7,fw:700,a:"end"})
+      +tx(g.cx,g.y+157,p===1?"I · 1–2":p===2?"II · 1–4":"0",{fs:6.4,fw:600}); }});
 // Реле напруги й струму TOMZN TOVPD1 (2 модулі): червоний індикатор — напруга, зелений — струм навантаження.
 // Зверху N і L — ввід, знизу N і L — вихід (N наскрізний). Як реле напруги: вимикає при U поза 170–250 В і вмикає
 // після затримки. Додатково: струм понад уставку довше 1 с — відключає й чекає натискання ⏻ (захист від перевантаження).
