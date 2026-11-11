@@ -3,7 +3,7 @@
      inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між модулями;  out — колодка XT2 і обладнання поза щитком.
    Пункт: {step, a, b, kind, sec, alt}. «xn:*» / «xpe:*» — будь-який вільний отвір шини.
    autoWire() прокладає всю схему одним натиском, а fixRatings() підганяє номінали й перерізи, щоб перевірка пройшла. */
-const SWITCH_T = ["ats","toq5","toq7","to219"];
+const SWITCH_T = ["ats","toq5","toq7","to219","to119"];
 const N_OWN = ["rcbo","qfn","afdd"];            // групові модулі з власним полюсом N
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
 function mainsOf(){ return S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group).sort(byPosD); }
@@ -32,14 +32,15 @@ function wirePlan(){
       else { const q=ph[t==="L"?0:+t.slice(1)-1]; if(q) add("inwire",inp.id+":"+t,q,t==="L"?"L":t,sec); } } });
   const pe=b.inputs.find(i=>i.terms.includes("PE")); if(pe&&b.xpe) add("bus",pe.id+":PE","xpe:*","PE",secMain);
   // 2. Після ввідного: для двох вводів — через АВР
-  let ph, n;
+  let ph, n, n2j=null;                              // n2j — нуль вводу 2 для TO119G (1P перемикає лише фазу)
   if(two){ const m1=mains[0], m2=mains[1];
-    if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат 2P — для вводу 2":"Поставте АВР: модуль АВР, TOQ5/TOQ7 або механічний АВР TO219G — без нього вводи нема чим перемикати"}); return out; }
+    if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат 2P — для вводу 2":"Поставте АВР: модуль АВР, TOQ5/TOQ7 або перемикач I–0–II TO219G / TO119G — без нього вводи нема чим перемикати"}); return out; }
     const L1=K2(m1,"b1"), N1=K2(m1,"b2"), L2=K2(m2,"b1"), N2=K2(m2,"b2"), s1=secFor(protIn(m1)), s2=secFor(protIn(m2));
     if(sw.type==="ats"){ add("jump",L1,K2(sw,"IL"),"L",s1); add("jump",N1,K2(sw,"IN"),"N",s1); add("jump",L2,K2(sw,"IIL"),"L",s2); add("jump",N2,K2(sw,"IIN"),"N",s2); ph=[K2(sw,"L")]; n=K2(sw,"N"); }
     else if(sw.type==="toq5"||sw.type==="toq7"){ add("jump",L1,K2(sw,"RA"),"L",s1); add("jump",N1,K2(sw,"NA"),"N",s1); add("jump",L2,K2(sw,"RB"),"L",s2); add("jump",N2,K2(sw,"NB"),"N",s2);
       add("jump",K2(sw,"RA"),K2(sw,"AR"),"L",1.5); add("jump",K2(sw,"NA"),K2(sw,"AN"),"N",1.5); add("jump",K2(sw,"RB"),K2(sw,"BR"),"L",1.5); add("jump",K2(sw,"NB"),K2(sw,"BN"),"N",1.5);
       ph=[K2(sw,"RL")]; n=K2(sw,"NL"); }
+    else if(sw.type==="to119"){ add("jump",L1,K2(sw,"2"),"L",s1); add("jump",L2,K2(sw,"4"),"L",s2); ph=[K2(sw,"1")]; n=N1; n2j=[N2,s2]; }
     else { add("jump",L1,K2(sw,"2"),"L",s1); add("jump",N1,K2(sw,"6"),"N",s1); add("jump",L2,K2(sw,"4"),"L",s2); add("jump",N2,K2(sw,"8"),"N",s2); ph=[K2(sw,"1")]; n=K2(sw,"5"); } }
   else { ph=bots(m0); n=nB(m0)||(feeds[0].id+":N"); }
   const ph0=ph.slice(), n0=n;                       // точки до реле й ПЗВ — для відгалужень
@@ -50,6 +51,8 @@ function wirePlan(){
   if(rc4){ ["t1","t2","t3"].forEach((t,i)=>add("jump",ph[i],K2(rc4,t),PHW[i],secMain)); add("jump",n,K2(rc4,"t4"),"N",secMain);
     next=["t1","t2","t3"].map(t=>K2(rc4,t)); ph=["b1","b2","b3"].map(t=>K2(rc4,t)); nPost=K2(rc4,"b4"); }
   else if(rc1){ add("jump",ph[0],K2(rc1,"t1"),"L",secMain); add("jump",n,K2(rc1,"t2"),"N",secMain); next=[K2(rc1,"t1")]; ph=[K2(rc1,"b1")]; nPost=K2(rc1,"b2"); }
+  // TO119G: нуль вводу 2 — до нуля вводу 1 перед ПЗВ (на шину N після ПЗВ не можна — ПЗВ спрацює від небалансу)
+  if(n2j) add("jump",n2j[0],rc1?K2(rc1,"t2"):"xn:*","N",n2j[1]);
   // 5. Групи: трифазні модулі шлейфом по L1–L3, однофазні — по черзі на L1, L2, L3 (рівномірне навантаження)
   const G=groupsOf(), qms=pos("qm"), single=G.filter(g=>!g3(g)), multi=[...G.filter(g3),...(three?qms:[])].sort(byPosD), phK={};
   let prev3=ph.slice();
