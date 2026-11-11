@@ -25,6 +25,15 @@
     "type": "tovpd1"
   },
   {
+    "name": "АВР GEYA G2R-63 2P / 4P, 25 / 40 / 63 А",
+    "photo": "shop/geya-g2r-63.jpg",
+    "qr": "shop/ali-1005012261511577-qr.png",
+    "link": "https://www.aliexpress.com/item/1005012261511577.html",
+    "note": "Автоматичний перемикач «мережа ↔ резерв» з контролем напруги: пріоритет вводу I, перемикання < 50 мс, Auto / Manual; 2P — 50,5 мм (3 модулі)",
+    "type": "g2r",
+    "brand": "geya"
+  },
+  {
     "name": "АВР TOMZN TOQ7 2P 63/100/125 А",
     "photo": "shop/tomzn-toq7.jpg",
     "qr": "shop/ali-eyv0abc-qr.png",

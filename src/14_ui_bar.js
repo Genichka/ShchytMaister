@@ -5,7 +5,7 @@ const CATALOG = [["⚡ Групи","G"],
   ["ПЗВ, дифавтомати",[["ПЗВ",["rcd","rcd4"]],["Дифавтомати (RCBO)",["rcbo"]],["AFDD",["afdd"]]],"Диференційний захист"],
   ["Реле",[["Контроль напруги",["kv","tovpd1"]],["Контроль фаз",["kvf","kvf2","pef"]],["Реле часу",["kt","ktb","ktm","tmr","stair"]],["Імпульсні реле",["kimp"]],["Фотореле",["photo"]],["Програмовані",["logo"]]],"Реле та автоматика"],
   ["Контактори",[["Модульні контактори",["km2a","km3a","km4a","lc1d"]],["Контактори NO / NC",["kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc"]],["Проміжні реле",["rel"]],["Вимикачі",["sw2"]]],"Контактори, пускачі, вимикачі"],
-  ["АВР",[["Автоматичні",["ats","toq5","toq7"]],["Ручні I–0–II",["to219","to119","qs"]]],"АВР і перемикачі вводів"],
+  ["АВР",[["Автоматичні",["g2r","ats","toq5","toq7"]],["Ручні I–0–II",["to219","to119","qs"]]],"АВР і перемикачі вводів"],
   ["ПЗІП",[["ПЗІП AC",["spdac","spd3"]],["ПЗІП DC",["spdc"]]],"Захист від перенапруг"],
   ["Шини",[["Гребінчасті шини 1P","C"]],"Розподільчі шини"],
   ["Клеми",[["Прохідні клеми",["xtb"]],["Розетка на DIN",["sock"]]],"Клеми та з’єднання"],
@@ -135,6 +135,7 @@ function devSet(d){ const t=T[d.type]; let s="";
   if(d.type==="tovpd1") s+=`<span class="bl">Відключення за струмом</span>`+[16,25,32,40,50,60,63].filter(v=>v<=inA(d.rating)).map(v=>chip(`data-iset="${v}"`,d.iset===v,v+" А","mono")).join("");
   if(d.type==="to219"||d.type==="to119"||d.type==="qs") s+=`<span class="bl">Положення</span>`+[[1,"I"],[0,"0"],[2,"II"]].map(([v,l])=>chip(`data-qpos="${v}"`,d.pos===v,l,"mono")).join("");
   if(d.type==="ats") s+=chip(`data-atsm="0"`,!d.manual,"Автоматичний")+chip(`data-atsm="1"`,!!d.manual,"Ручний")+chip(`data-atsv="tomzn"`,d.variant==="tomzn","TOMZN")+chip(`data-atsv="geya"`,d.variant==="geya","GEYA");
+  if(d.type==="g2r") s+=chip(`data-atsm="0"`,!d.manual,"Auto — автоматичний")+chip(`data-atsm="1"`,!!d.manual,"Manual — ручний")+(d.manual?`<span class="bl">Ручка</span>`+["I","II"].map(v=>chip(`data-g2rpos="${v}"`,d.pos===v,v==="I"?"I · основне":"II · резерв","mono")).join(""):"");
   if(d.type==="toq5"||d.type==="toq7") s+=chip(`data-atsm="0"`,!d.manual,"Auto — автоматичний")+chip(`data-atsm="1"`,!!d.manual,"Manual — ручний")+`<span class="bl">Ручка</span>`+["A","B"].map(v=>chip(`data-tqpos="${v}"`,d.pos===v,v==="A"?"A · мережа":"B · генератор","mono")).join("");
   if(d.type==="ssw") s+=chip(`data-cmd="1"`,!!d.cmd,"Увімкнути з застосунку")+chip(`data-cmd="0"`,!d.cmd,"Вимкнути");
   if(d.type==="hl") s+=[["#3fbf4a","Зелений"],["#e23b3b","Червоний"],["#ffb21f","Жовтий"]].map(([c,l])=>chip(`data-hlc="${c}"`,d.col===c,l)).join("");

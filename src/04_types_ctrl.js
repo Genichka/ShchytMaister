@@ -83,6 +83,40 @@ defType("ats",{name:"Модуль АВР 2P 63 А", short:"АВР-модуль",
       +`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+112}" r="24" fill="#2a2d33"/><g transform="rotate(${ang} ${g.cx} ${g.y+112})"><rect x="${g.cx-5}" y="${g.y+88}" width="10" height="30" rx="4" fill="#e0352b"/></g></g>`
       +tx(g.cx-36,g.y+92,"I",{fs:10,fw:700})+tx(g.cx+36,g.y+92,"II",{fs:10,fw:700})+led(g.x+14,g.y+150,ok[0]?"#3fbf4a":"#9aa0aa")+led(g.x+g.w-14,g.y+150,ok[1]?"#3fbf4a":"#9aa0aa")
       +tx(g.x+26,g.y+153,"I",{fs:7,a:"start"})+tx(g.x+g.w-26,g.y+153,"II",{fs:7,a:"end"}); }});
+// АВР GEYA G2R-63 2P з контролем напруги — 3 модулі (50,5 мм). Зверху (I) N1 A1 — основне живлення, (II) N2 A2 — резерв;
+// знизу LOAD N A. Пріоритет вводу I, перемикання < 50 мс. Ввід вважається нормальним при 187–242 В (85–110 % від 220 В);
+// коли ввід I знову в нормі, АВР чекає 30 с і лише тоді повертає навантаження. Auto / Manual — повзунок на лицьовій панелі.
+const G2R_OK = u => u>=187&&u<=242;
+defType("g2r",{name:"АВР GEYA G2R-63 2P з контролем напруги", short:"АВР GEYA G2R-63", cat:"Комутація", w:3, pre:"QA", maker:"GEYA",
+  ratings:["25","40","63"], def:"63", unit:" А",
+  terms:[{k:"IN",s:"top",r:"N",l:"N1"},{k:"IL",s:"top",r:"L",l:"A1"},{k:"IIN",s:"top",r:"N",l:"N2"},{k:"IIL",s:"top",r:"L",l:"A2"},{k:"N",s:"bot",r:"N",l:"N"},{k:"L",s:"bot",r:"L",l:"A"}],
+  poles:[{a:"IL",b:"L",r:"L"},{a:"IN",b:"N",r:"N"},{a:"IIL",b:"L",r:"L"},{a:"IIN",b:"N",r:"N"}],
+  closed:(d,pi)=>pi<2?d.pos==="I":d.pos==="II", init:d=>{ d.pos=d.pos||"I"; d.manual=!!d.manual; }, cap:"Перемикання вводів",
+  logic(d,X){ const u1=X.volt(K(d,"IL"),K(d,"IN")), u2=X.volt(K(d,"IIL"),K(d,"IIN")); d.u=[u1,u2]; d.ok=[G2R_OK(u1),G2R_OK(u2)];
+    if(d.manual) return false;
+    const backI=d.ok[0]&&(d.pos==="I"||(d.wI||0)>=30), t=backI?"I":d.ok[1]?"II":d.pos;
+    if(t!==d.pos){ d.pos=t; d.wI=0;
+      logp(t==="I"?"ok":"w",t==="I"?`${desig(d)}: напруга на вводі I в нормі 30 с — навантаження повернуто на ввід I (мережа)`
+        :`${desig(d)}: на вводі I ${u1<1?"немає напруги":`${Math.round(u1)} В — поза 187–242 В`}, навантаження переведено на ввід II (резерв), < 50 мс`); return true; }
+    return false; },
+  tick(d,X,dt){ if(!d.manual&&d.ok&&d.ok[0]&&d.pos!=="I") d.wI=(d.wI||0)+dt; else d.wI=0; },
+  tap(d){ if(!d.manual){ toast("АВР у режимі Auto. Перемкніть «Manual» у налаштуваннях модуля, щоб перемикати ручкою","w"); return false; } d.pos=d.pos==="I"?"II":"I"; return true; },
+  face(d,g){ const ok=d.ok||[false,false], x=g.x, w=g.w, man=!!d.manual, src=d.pos==="I"?ok[0]:ok[1];
+    const lamp=(cx,cy,lab,c,lit)=>`<circle cx="${cx}" cy="${cy}" r="5" fill="${lit?c:"#dfe2e6"}" stroke="${c}" stroke-width="1.6"/>`+tx(cx+9,cy+2.3,lab,{fs:6.2,fw:700,a:"start",fill:"#3d4250"});
+    const wx=x+w*0.47, ww=w*0.53-12, ky=d.pos==="II"?g.y+80:g.y+116, kx=wx+ww*0.32, kw=ww*0.6;
+    const sy=man?g.y+124:g.y+114;
+    return tx(x+10,g.y+64,"G2R-63",{fs:8.5,fw:800,a:"start",fill:"#1f2329"})+tx(x+w-8,g.y+64,`${d.rating||63} A · 230 В`,{fs:6,fw:700,a:"end"})
+      +lamp(x+16,g.y+80,"IU","#2fa84f",ok[0])+lamp(x+16,g.y+97,"IIU","#e0352b",ok[1])
+      +tx(x+16,g.y+109,"Auto",{fs:5.4,fw:700,a:"start",fill:"#3d4250"})
+      +`<rect x="${x+16}" y="${g.y+112}" width="12" height="22" rx="2" fill="#2a2d33"/><rect x="${x+18}" y="${sy}" width="8" height="8" rx="1.5" fill="#cfd3d8"/>`
+      +tx(x+16,g.y+142,"Manual",{fs:5.4,fw:700,a:"start",fill:"#3d4250"})
+      +lamp(x+16,g.y+152,"Load ON","#2fa84f",src)
+      +`<rect x="${wx}" y="${g.y+72}" width="${ww}" height="72" rx="3" fill="#f3f4f6" stroke="#c4c9d0"/>`
+      +tx(wx+6,g.y+84,"II",{fs:7,fw:700,a:"start"})+tx(wx+6,g.y+140,"I",{fs:7,fw:700,a:"start"})
+      +`<circle cx="${wx+8}" cy="${g.y+100}" r="3" fill="${d.pos==="II"&&src?"#e0352b":"#e6c9c9"}"/><circle cx="${wx+8}" cy="${g.y+114}" r="3" fill="${d.pos==="I"&&src?"#2fa84f":"#c9e0cf"}"/>`
+      +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${kx}" y="${ky}" width="${kw}" height="24" rx="7" fill="#cfd3d8" stroke="#9aa0aa"/>`
+      +[0,1,2].map(i=>`<circle cx="${kx+kw*0.3+i*kw*0.2}" cy="${ky+12}" r="2.6" fill="#8a9099"/>`).join("")+`</g>`
+      +tx(wx+ww/2,g.y+157,`${d.pos} · ${d.pos==="I"?"основне":"резерв"} · ${man?"Manual":"Auto"}`,{fs:6,fw:600}); }});
 defType("qs",{name:"Перемикач 1-0-2", short:"Перемикач 1-0-2", cat:"Комутація", w:3, pre:"QS",
   terms:[{k:"1L",s:"top",r:"L",l:"1 L"},{k:"1N",s:"top",r:"N",l:"1 N"},{k:"2L",s:"top",r:"L",l:"2 L"},{k:"2N",s:"top",r:"N",l:"2 N"},{k:"L",s:"bot",r:"L",l:"L"},{k:"N",s:"bot",r:"N",l:"N"}],
   poles:[{a:"1L",b:"L",r:"L"},{a:"1N",b:"N",r:"N"},{a:"2L",b:"L",r:"L"},{a:"2N",b:"N",r:"N"}],

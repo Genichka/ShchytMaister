@@ -129,6 +129,7 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
     if(el=q("[data-mrail]")){ const nr=(d.rail||0)+(+el.dataset.mrail); if(freeAt(nr,d.slot,T[d.type].w,d)){ d.rail=nr; commit(); } else toast("На іншій рейці це місце зайняте","w"); return; }
     if(el=q("[data-atsm]")){ d.manual=el.dataset.atsm==="1"; commit(false); return; }
     if(el=q("[data-qpos]")){ d.pos=+el.dataset.qpos; delete d.seqI; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); commit(false); return; }
+    if(el=q("[data-g2rpos]")){ d.pos=el.dataset.g2rpos; logp("w",`${desig(d)}: ручкою на ввід ${d.pos}`); commit(false); return; }
     if(el=q("[data-atsv]")){ d.variant=el.dataset.atsv; commit(false); return; }
     if(el=q("[data-tqpos]")){ if(!d.manual){ toast("Ручка працює лише в режимі Manual","w"); return; } d.pos=el.dataset.tqpos; logp("w",`${desig(d)}: ручкою переведено на Source ${d.pos}`); commit(false); return; }
     if(el=q("[data-tmrp]")){ [d.on1,d.off1]=el.dataset.tmrp.split("-").map(Number); logp("w",`${desig(d)}: розклад ${hh(d.on1)}–${hh(d.off1)}`); commit(false); return; }

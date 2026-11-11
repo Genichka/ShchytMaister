@@ -3,7 +3,7 @@
      inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між модулями;  out — колодка XT2 і обладнання поза щитком.
    Пункт: {step, a, b, kind, sec, alt}. «xn:*» / «xpe:*» — будь-який вільний отвір шини.
    autoWire() прокладає всю схему одним натиском, а fixRatings() підганяє номінали й перерізи, щоб перевірка пройшла. */
-const SWITCH_T = ["ats","toq5","toq7","to219","to119"];
+const SWITCH_T = ["g2r","ats","toq5","toq7","to219","to119"];
 const N_OWN = ["rcbo","qfn","afdd"];            // групові модулі з власним полюсом N
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
 function mainsOf(){ return S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group).sort(byPosD); }
@@ -34,9 +34,9 @@ function wirePlan(){
   // 2. Після ввідного: для двох вводів — через АВР
   let ph, n, n2j=null;                              // n2j — нуль вводу 2 для TO119G (1P перемикає лише фазу)
   if(two){ const m1=mains[0], m2=mains[1];
-    if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат 2P — для вводу 2":"Поставте АВР: модуль АВР, TOQ5/TOQ7 або перемикач I–0–II TO219G / TO119G — без нього вводи нема чим перемикати"}); return out; }
+    if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат 2P — для вводу 2":"Поставте АВР: GEYA G2R-63, модуль АВР, TOQ5/TOQ7 або перемикач I–0–II TO219G / TO119G — без нього вводи нема чим перемикати"}); return out; }
     const L1=K2(m1,"b1"), N1=K2(m1,"b2"), L2=K2(m2,"b1"), N2=K2(m2,"b2"), s1=secFor(protIn(m1)), s2=secFor(protIn(m2));
-    if(sw.type==="ats"){ add("jump",L1,K2(sw,"IL"),"L",s1); add("jump",N1,K2(sw,"IN"),"N",s1); add("jump",L2,K2(sw,"IIL"),"L",s2); add("jump",N2,K2(sw,"IIN"),"N",s2); ph=[K2(sw,"L")]; n=K2(sw,"N"); }
+    if(sw.type==="ats"||sw.type==="g2r"){ add("jump",L1,K2(sw,"IL"),"L",s1); add("jump",N1,K2(sw,"IN"),"N",s1); add("jump",L2,K2(sw,"IIL"),"L",s2); add("jump",N2,K2(sw,"IIN"),"N",s2); ph=[K2(sw,"L")]; n=K2(sw,"N"); }
     else if(sw.type==="toq5"||sw.type==="toq7"){ add("jump",L1,K2(sw,"RA"),"L",s1); add("jump",N1,K2(sw,"NA"),"N",s1); add("jump",L2,K2(sw,"RB"),"L",s2); add("jump",N2,K2(sw,"NB"),"N",s2);
       add("jump",K2(sw,"RA"),K2(sw,"AR"),"L",1.5); add("jump",K2(sw,"NA"),K2(sw,"AN"),"N",1.5); add("jump",K2(sw,"RB"),K2(sw,"BR"),"L",1.5); add("jump",K2(sw,"NB"),K2(sw,"BN"),"N",1.5);
       ph=[K2(sw,"RL")]; n=K2(sw,"NL"); }

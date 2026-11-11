@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 let toastT=null;
 function toast(msg,cls=""){ if(S.quiet) return; const t=$("toast"); t.textContent=msg; t.className="toast "+cls; t.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,2600); }
-const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","tovpd1","kvf","kvf2","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","ats","toq5","toq7","to219","to119","qs","km2a","km3a","km4a"]],
+const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","tovpd1","kvf","kvf2","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","g2r","ats","toq5","toq7","to219","to119","qs","km2a","km3a","km4a"]],
   ["Керування",["sbp","sbs","hl","rel","kt","ktb","ktm","tmr","kimp","stair","photo","logo","kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc","lc1d"]],["Двигуни",["qm"]],["Розподіл",["xtb","sock"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
 const TPL_ORDER = ["Конструктор","Квартира і будинок","АВР на 2 вводи","3 фази + інвертор","Сонячна станція","Двигуни"];
 let clearArm=0;
