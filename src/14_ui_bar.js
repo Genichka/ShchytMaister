@@ -57,9 +57,9 @@ function mountBar(){ const mv=S.moveDev&&S.devices.find(x=>x.id===S.moveDev);
       +(T[rp.type].ratings?brow(`<span class="bl">Лише номінал:</span>`+T[rp.type].ratings.map(r=>chip(`data-rrate="${r}"`,rp.rating===r,`${r}${T[rp.type].unit||""}`,"mono")).join(""),"wrap"):""):"")+brow((S.guide&&S.guide.on?(guideOn?`<button class="btn sm" data-gback>← До кроку помічника</button>`:""):`<button class="btn sm assist" data-gon>Помічник</button>`)
       +`<input class="dq" id="devQ" type="search" placeholder="🔍 Знайти модуль: автомат, реле, ПЗВ…" value="${esc(S.devQ||"")}" autocomplete="off" aria-label="Пошук модуля">`
       +`<span class="bl mono">${mods}/${SLOTS*S.board.rails} мод.</span>`,"cats cattop")
-    +`<div class="br cats wrap" id="devCats">${CATALOG.map(([l,,full],i)=>chip(`data-cat="${i}" title="${esc(full||l)}"`,i===ci&&!(S.devQ||"").trim(),l)).join("")}</div>`;
+    +`<div class="br cats wrap" id="devCats">${CATALOG.map((c,i)=>{ const [l,,full]=c; return chip(`data-cat="${i}" title="${esc(full||l)}"`,i===ci&&!(S.devQ||"").trim(),l+(catHasNew(c)?NEW_DOT:"")); }).join("")}</div>`;
   return s+`<div id="devRes">${catBody()}</div>`; }
-const devCard = x => `<button class="dc" data-pick="${x}" aria-pressed="${S.pick===x}" title="${esc(T[x].name)}"><b>${esc(T[x].short)}</b><small>${T[x].w} мод.${brandsFor(x).length>1?" · "+(brandsFor(x).length-1)+" вир.":""}</small></button>`;
+const devCard = x => { const nw=isNewDev(x); return `<button class="dc${nw?" nd":""}" data-pick="${x}" aria-pressed="${S.pick===x}" title="${esc(T[x].name)}${nw?" — новий модуль":""}"><b>${esc(T[x].short)}</b><small>${nw?`<em class="ndt">нове</em> · `:""}${T[x].w} мод.${brandsFor(x).length>1?" · "+(brandsFor(x).length-1)+" вир.":""}</small></button>` };
 function catBody(){ const q=(S.devQ||"").trim().toLowerCase();
   if(q){ const hit=Object.keys(T).filter(k=>[T[k].name,T[k].short,T[k].pre,T[k].maker||""].join(" ").toLowerCase().includes(q));
     return brow(`<span class="bl">Знайдено: ${hit.length}</span>`)+(hit.length?brow(hit.map(devCard).join(""),"cards"):brow(`<span class="bl">Нічого не знайдено — спробуйте інше слово</span>`)); }
@@ -67,7 +67,7 @@ function catBody(){ const q=(S.devQ||"").trim().toLowerCase();
   if(S.repl&&(c[1]==="G"||c[1]==="F")) return brow(`<span class="bl">Для заміни оберіть категорію модулів вище</span>`);
   if(c[1]==="G") return groupsQuickBar();
   if(c[1]==="F") return brow(FIELD_LIB.map(L=>`<button class="dc" data-fadd="${L.type}"><b>${esc(L.name)}</b><small>+${Object.keys(L.t).length} клем на XT1</small></button>`).join(""),"cards");
-  let h=brow(`<b class="bl gname">${esc(c[2]||c[0])}</b>`+(subs.length>1?subs.map(([l],i)=>chip(`data-sub="${i}"`,i===si,l)).join(""):""),"cats subs");
+  let h=brow(`<b class="bl gname">${esc(c[2]||c[0])}</b>`+(subs.length>1?subs.map((sb,i)=>chip(`data-sub="${i}"`,i===si,sb[0]+(subHasNew(sb)?NEW_DOT:""))).join(""):""),"cats subs");
   const sg=subs[si][1];
   if(sg==="C") return h+brow(`<button class="dc" id="combBtn"><b>${S.comb?"Зняти гребінку":"Гребінка 1P"}</b><small>об’єднує автомати 1P на рейці</small></button>`,"cards");
   return h+brow(sg.filter(x=>T[x]).map(devCard).join(""),"cards"); }

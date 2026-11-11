@@ -6,12 +6,14 @@
   const btn=$("updBtn"), modal=$("upd"), verEl=$("ver"); let remote=null;
   $("ver").textContent=`v${APP.v} · ${fmtD(APP.date)}`;
   async function fetchRemote(){ const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) throw new Error(r.status); return r.json(); }
+  const hlDev = (n,dev) => (dev||[]).reduce((h,x)=>h.split(esc(x)).join(`<b class="newdev">${esc(x)}</b>`), esc(n));
   function show(mode,info){
     const isNew=mode==="new";
     $("updCard").innerHTML=`<h2 id="updTitle">${isNew?"Доступна нова версія":"Що нового"}</h2>
       <p class="mono upd-v">${isNew?`v${esc(APP.v)} → <b>v${esc(info.v)}</b> від ${fmtD(info.date)}`:`v${esc(info.v)} від ${fmtD(info.date)}`}</p>
       <div class="row" style="justify-content:flex-end">${isNew?`<button class="btn" data-upd="later">Пізніше</button><button class="btn primary" data-upd="go">Оновити зараз</button>`:""}</div>
-      <ul>${(info.notes||[]).slice(0,8).map(n=>`<li>${esc(n)}</li>`).join("")}</ul>
+      ${(info.dev||[]).length?`<p class="upd-new">Нові модулі: ${info.dev.map(x=>`<b class="newdev">${esc(x)}</b>`).join(", ")}</p>`:""}
+      <ul>${(info.notes||[]).slice(0,8).map(n=>`<li>${hlDev(n,info.dev)}</li>`).join("")}</ul>
       ${isNew?`<p class="hint">Зібрані щитки й проєкти збережуться.</p>`:""}
       <div class="row" style="justify-content:flex-end">${isNew?"":`<button class="btn primary" data-upd="later">Закрити</button>`}</div>`;
     modal.hidden=false; const f=modal.querySelector(".btn.primary"); if(f) f.focus(); }
@@ -35,7 +37,7 @@
     if(e.target===modal) modal.hidden=true; });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!modal.hidden) modal.hidden=true; if((e.key==="Enter"||e.key===" ")&&e.target.id==="ver"){ e.preventDefault(); show("cur",APP); } });
   try{ const last=localStorage.getItem("shchyt-ver");
-    if(last&&last!==APP.v) setTimeout(()=>toast(`Оновлено до v${APP.v} від ${fmtD(APP.date)}`,"ok"),600);
+    if(last&&last!==APP.v) setTimeout(()=>toast(`Оновлено до v${APP.v} від ${fmtD(APP.date)}${NEW_DEV.size?" · нові модулі в каталозі — червоним":""}`,"ok"),600);
     localStorage.setItem("shchyt-ver",APP.v); }catch(e){}
   try{ const u=new URL(location.href); if(u.searchParams.has("v")){ u.searchParams.delete("v"); history.replaceState(null,"",u.toString()); } }catch(e){}
   // перевіряємо при запуску, кожні 10 хв, при поверненні в застосунок і коли з'явився інтернет

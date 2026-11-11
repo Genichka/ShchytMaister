@@ -92,12 +92,12 @@ document.addEventListener("click",e=>{ const qb=s=>e.target.closest(s); let eb;
   if(q("[data-pauto]")){ if(S.pick){ const f=nextFree(T[S.pick].w,0,0); if(f) placeDev(S.pick,f[0],f[1]); else toast("Немає вільного місця","w"); } return; }
   if(q("[data-pickx]")){ S.pick=null; S.pickRating=null; S.pickExtra=null; S.pickQty=1; renderAll(); return; }
   if(el=q("[data-dev]")){ S.selDev=el.dataset.dev; renderAll(false); return; }
-  if((el=q("[data-pick]"))&&S.repl){ doReplace(S.repl,el.dataset.pick); return; }
+  if((el=q("[data-pick]"))&&S.repl){ seenDev(el.dataset.pick); doReplace(S.repl,el.dataset.pick); return; }
   if((el=q("[data-rrate]"))&&S.repl){ const d=S.devices.find(x=>x.id===S.repl), t=d&&T[d.type]; S.repl=null; if(!d) return renderAll();   // заміна на той самий модуль іншого номіналу
     const was=d.rating; d.rating=el.dataset.rrate; if(d.type==="qm") d.Ir=mprHi(d.rating); commit(); toast(was===d.rating?`${desig(d)}: номінал без змін`:`${desig(d)}: ${t.short} ${was}${t.unit||""} → ${d.rating}${t.unit||""}`,"ok"); return; }
   if(q("[data-replx]")){ S.repl=null; S.devQ=""; renderAll(); return; }
   if(q("[data-mvx]")){ S.moveDev=null; S.pick=null; renderAll(); return; }
-  if(el=q("[data-pick]")){ S.devQ=""; S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.pickRating=null; S.pickExtra=null; S.selDev=null; if(S.pick&&pickToSlot()) return; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); } renderAll(); return; }
+  if(el=q("[data-pick]")){ seenDev(el.dataset.pick); S.devQ=""; S.pick=S.pick===el.dataset.pick?null:el.dataset.pick; S.pickRating=null; S.pickExtra=null; S.selDev=null; if(S.pick&&pickToSlot()) return; if(S.pick){ S.devOpen=false; toast("Торкніться вільного місця на рейці"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); } renderAll(); return; }
   if(el=q("[data-fpick]")){ const o=S.devFilter.opts[+el.dataset.fpick]; S.pick=o[0]; S.pickRating=o[1]||null; S.pickExtra=o[3]||null; S.selDev=null; if(pickToSlot()) return;
     toast(`${o[2]}: торкніться вільного місця на рейці`); renderAll(); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); return; }
   if(q("[data-fall]")){ S.devFilter=null; S.devOpen=true; S.allDev=true; renderAll(); return; }

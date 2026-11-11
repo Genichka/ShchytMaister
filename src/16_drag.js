@@ -55,7 +55,7 @@
   const TILE=".dc[data-pick],.dc[data-fpick],.dc[data-gq]";
   function tileInfo(el){
     if(el.dataset.pick){ const type=el.dataset.pick; if(!T[type]) return null;
-      return {w:T[type].w, go:(r,s)=>{ S.pick=type; S.pickRating=null; S.pickExtra=null; S.pickQty=1; S.selDev=null; placeDev(type,r,s,1); }}; }
+      return {w:T[type].w, go:(r,s)=>{ seenDev(type); S.pick=type; S.pickRating=null; S.pickExtra=null; S.pickQty=1; S.selDev=null; placeDev(type,r,s,1); }}; }
     if(el.dataset.fpick!==undefined){ const o=S.devFilter&&S.devFilter.opts[+el.dataset.fpick]; if(!o||!T[o[0]]) return null;
       return {w:T[o[0]].w, go:(r,s)=>{ S.pick=o[0]; S.pickRating=o[1]||null; S.pickExtra=o[3]||null; S.pickQty=1; S.selDev=null; placeDev(o[0],r,s,1); }}; }
     if(el.dataset.gq!==undefined){ const i=+el.dataset.gq, type=S.gType||"qf1p"; if(!T[type]) return null;
