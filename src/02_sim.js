@@ -124,7 +124,7 @@ function resolveFaults(){
       if(c.kind==="LPE") cand=rcdDevs().filter(test);
       if(c.kind==="FEED"){ const iv=c.pots.filter(isPh).map(srcOf).find(invInp);
         if(iv){ invFault(iv,30,"на вихід інвертора потрапила напруга іншого джерела (зустрічне ввімкнення) — аварійне вимкнення на 30 с. Справжній інвертор від цього може згоріти"); continue; } }
-      if(!cand.length) cand=S.devices.filter(d=>T[d.type].prot&&d.on&&!d.trip).filter(test);
+      if(!cand.length) cand=S.devices.filter(d=>T[d.type].prot&&T[d.type].prot!=="ovl"&&d.on&&!d.trip).filter(test);   // теплове реле КЗ не вимикає
       if(cand.length){ cand.sort((a,b)=>(protIn(a)-protIn(b))||(affected(a,X,loads)-affected(b,X,loads))); trip(cand[0],FAULT[c.kind]); continue; }
       let acted=false;
       for(const p of c.pots){ if(isPh(p)&&invInp(srcOf(p))&&srcLive(invInp(srcOf(p)),S.src[srcOf(p)])){ invFault(srcOf(p),10,`${FAULT[c.kind]} на виході — внутрішній захист вимкнув вихід на 10 с`); acted=true; continue; }
@@ -198,9 +198,9 @@ function solve(dt=0){
   for(const d of S.devices){ const t=T[d.type]; if(!(t.prot||t.meter||t.rcd||t.amm)||((t.prot||t.rcd)&&(!d.on||d.trip))) continue;
     const pc=poleCurrents(d,X,loads); R.I[d.id]=pc.max; R.per[d.id]=pc.per;
     if(dt>0&&t.prot){ const In=protIn(d), I=pc.max; let k=I/In;
-      if(t.prot==="mpcb"){ const nz=pc.per.filter(x=>x>0.3*In).length; if(nz>0&&nz<pc.per.length&&pc.per.length===3) k*=1.6; }
+      if(t.prot==="mpcb"||t.prot==="ovl"){ const nz=pc.per.filter(x=>x>0.3*In).length; if(nz>0&&nz<pc.per.length&&pc.per.length===3) k*=1.6; }
       if(k>1.13){ S.heat[d.id]=(S.heat[d.id]||0)+dt*Math.min(0.5,(k*k-1)/6);
-        if(S.heat[d.id]>=1){ trip(d,t.prot==="fuse"?`вставка згоріла: ${fmt(I)} А при номіналі ${fmt(In,0)} А`:`перевантаження ${fmt(I)} А при ${t.prot==="mpcb"?"уставці":"номіналі"} ${fmt(In,In%1?1:0)} А`); return solve(0); } }
+        if(S.heat[d.id]>=1){ trip(d,t.prot==="fuse"?`вставка згоріла: ${fmt(I)} А при номіналі ${fmt(In,0)} А`:t.prot==="ovl"?`перевантаження ${fmt(I)} А при уставці ${fmt(In,In%1?1:0)} А — розімкнено 95–96, двигун зупинено`:`перевантаження ${fmt(I)} А при ${t.prot==="mpcb"?"уставці":"номіналі"} ${fmt(In,In%1?1:0)} А`); return solve(0); } }
       else S.heat[d.id]=Math.max(0,(S.heat[d.id]||0)-dt*0.3); } }
   for(const d of groupsOf()){ const l=loads.find(x=>x.own===d.id&&x.grp);
     R.g[d.id]={phase:gPh(d,X), neutral:g3(d)?true:X.hasN(gN(d)), U:l.U, I:l.I, kw:kwOf(d)}; R.totalI+=l.I; }

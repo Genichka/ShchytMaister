@@ -33,7 +33,7 @@ function btnDef(kind){ const start=kind==="sbp";
     aux:d=>start?(d.pressed?[["13","14"]]:[]):(d.pressed?[]:[["11","12"]]), cap:start?"Пуск":"Стоп", press:true,
     face(d,g){ const c=start?"#2e9a3e":"#d6332a";
       return `<g data-press="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+100}" r="${d.pressed?14:17}" fill="${c}" stroke="#1a1c20" stroke-width="2"/>`
-        +`<circle cx="${g.cx}" cy="${g.y+100}" r="${d.pressed?9:12}" fill="none" stroke="#fff" stroke-opacity=".35"/></g>`+tx(g.cx,g.y+72,start?"ПУСК":"СТОП",{fs:7.5,fw:700})+tx(g.cx,g.y+134,start?"НВ":"НЗ",{fs:7}); }}; }
+        +`<circle cx="${g.cx}" cy="${g.y+100}" r="${d.pressed?9:12}" fill="none" stroke="#fff" stroke-opacity=".35"/></g>`+tx(g.cx,g.y+72,d.lbl||(start?"ПУСК":"СТОП"),{fs:(d.lbl||"").length>5?6.2:7.5,fw:700})+tx(g.cx,g.y+134,start?"НВ":"НЗ",{fs:7}); }}; }
 defType("sbp",btnDef("sbp")); defType("sbs",btnDef("sbs"));
 defType("hl",{name:"Лампа сигнальна", short:"Лампа", cat:"Керування", w:1, pre:"HL", terms:[C("X1","top","X1"),C("X2","bot","X2")], cap:"Робота",
   init:d=>{ d.col=d.col||"#3fbf4a"; }, load:(d,X)=>{ const U=X.volt(K(d,"X1"),K(d,"X2")); return [{a:"X1",b:"X2",I:U>100?0.01:0}]; },
@@ -50,6 +50,21 @@ defType("qm",{name:"Автомат захисту двигуна", short:"Авт
     return tx(g.cx,g.y+68,"Ir "+fmt(d.Ir,1)+" А",{c:"svt",fs:12})+tx(g.cx,g.y+80,d.rating,{fs:6.5})
       +`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+110}" r="20" fill="#2a2d33"/><g transform="rotate(${a} ${g.cx} ${g.y+110})"><rect x="${g.cx-5}" y="${g.y+90}" width="10" height="40" rx="4" fill="${on?"#e0352b":"#8e9196"}"/></g></g>`
       +tx(g.cx-26,g.y+114,"O",{fs:8,fw:700})+tx(g.cx,g.y+144,"I",{fs:8,fw:700})+(d.trip?tx(g.cx,g.y+156,"TRIP",{fs:7,fw:700,fill:"#c0261c"}):""); }});
+// Реле теплове 3P (як РТИ / LRD на DIN): силові полюси 1–2, 3–4, 5–6 завжди замкнені — реле лише міряє струм.
+// Перевантаження (≈ клас 10, як у автомата двигуна; обрив фази — швидше) розмикає 95–96 (НЗ) і замикає 97–98 (НВ).
+// Повернути — кнопкою Reset (дотик по синій кнопці або «Увімкнути» в налаштуваннях). КЗ реле не вимикає — це робота автомата.
+defType("kk",{name:"Реле теплове 3P (95–96 НЗ, 97–98 НВ)", short:"Реле теплове", cat:"Захист", w:3, pre:"KK", prot:"ovl",
+  terms:[{k:"1",s:"top",r:"P",l:"1"},{k:"3",s:"top",r:"P",l:"3"},{k:"5",s:"top",r:"P",l:"5"},C("95","top","95"),C("97","top","97"),
+         {k:"2",s:"bot",r:"P",l:"2"},{k:"4",s:"bot",r:"P",l:"4"},{k:"6",s:"bot",r:"P",l:"6"},C("96","bot","96"),C("98","bot","98")],
+  poles:[{a:"1",b:"2",r:"L"},{a:"3",b:"4",r:"L"},{a:"5",b:"6",r:"L"}], closed:()=>true,
+  aux:d=>d.on&&!d.trip?[["95","96"]]:[["97","98"]],
+  ratings:MPR, def:"6–10 А", init:d=>{ if(!d.Ir) d.Ir=mprHi(d.rating||"6–10 А"); if(d.on===undefined) d.on=true; }, cap:"Захист від перевантаження",
+  face(d,g){ const ok=d.on&&!d.trip;
+    return tx(g.cx,g.y+66,"РЕЛЕ ТЕПЛОВЕ",{fs:6.6,fw:700})+tx(g.cx,g.y+80,"Ir "+fmt(d.Ir,1)+" А",{c:"svt",fs:11})+tx(g.cx,g.y+90,d.rating,{fs:6})
+      +`<circle cx="${g.x+30}" cy="${g.y+112}" r="12" fill="#e9ebee" stroke="#8e9196"/><line x1="${g.x+30}" y1="${g.y+112}" x2="${g.x+38}" y2="${g.y+104}" stroke="#2a2d33" stroke-width="2.4" stroke-linecap="round"/>`
+      +`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.x+g.w-32}" cy="${g.y+112}" r="11" fill="#2f6fd1" stroke="#1d4c93" stroke-width="1.5"/>`+tx(g.x+g.w-32,g.y+115,"R",{fs:8,fw:800,fill:"#fff"})+`</g>`
+      +`<rect x="${g.cx-9}" y="${g.y+104}" width="18" height="16" rx="2" fill="${ok?"#2a2d33":"#e0352b"}"/>`
+      +tx(g.cx,g.y+136,ok?"95–96 ● · 97–98 ○":"95–96 ○ · 97–98 ●",{fs:6.2,ff:"var(--mono)"})+(d.trip?tx(g.cx,g.y+150,"СПРАЦЮВАЛО",{fs:7,fw:700,fill:"#c0261c"}):tx(g.cx,g.y+150,"Reset — R",{fs:6,fill:"#5a5e66"})); }});
 // Siemens LOGO! 230RCE — програма АВР з таймерами
 const LOGO_T = {T1:3, T2:1, T3:2, DEAD:1};
 defType("logo",{name:"Siemens LOGO! 230RCE", short:"LOGO! 230RCE", cat:"Керування", w:4, pre:"A",

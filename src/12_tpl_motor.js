@@ -59,3 +59,61 @@ TPL.motor3 = { name:"Пуск трифазного двигуна (прямий 
     S.src.in.lost.L3=true; pressBtn(byDes("SB2")); runFor(4); if(byDes("QM1").trip) add("ok","Обрив фази: QM1 вимикає двигун"); }); }};
 function swapVW(){ const a=S.wires.find(w=>w.b==="xt:V"||w.a==="xt:V"), b=S.wires.find(w=>w.b==="xt:W"||w.a==="xt:W"); if(!a||!b) return;
   const ea=a.b==="xt:V"?"b":"a", eb=b.b==="xt:W"?"b":"a"; a[ea]="xt:W"; b[eb]="xt:V"; logp("w","Фази на двигуні V і W поміняно місцями"); save(); }
+
+// Реверс трифазного двигуна: KM1 — вправо, KM2 — вліво (міняє місцями L1 і L3), теплове реле KK1, кнопки й блокування.
+// Схема як на поширеній картинці (Q1, Q2, KM1, KM2, F1, S1–S3), але з виправленою помилкою; «Схема з помилкою» відтворює оригінал.
+function revBug(v){ const km2=byDes("KM2"), kk=byDes("KK1"); if(!km2||!kk) return; const own=[km2.id+":2",km2.id+":4",km2.id+":6"];
+  S.wires=S.wires.filter(w=>!own.includes(w.a)&&!own.includes(w.b));
+  const to=v?["xt:U","xt:V","xt:W"]:[k(kk,"5"),k(kk,"3"),k(kk,"1")]; ["2","4","6"].forEach((t,i)=>W(k(km2,t),to[i],"L"+(i+1),2.5));
+  logp(v?"e":"ok",v?"Схема як на картинці: KM2 → U, V, W напряму — повз KK1 і в тому самому порядку фаз":"Схему виправлено: KM2 → KK1 5, 3, 1 — L1 і L3 поміняно, струм іде через KK1"); save(); }
+const revBugOn = () => { const km2=byDes("KM2"); return !!km2&&S.wires.some(w=>(w.a===km2.id+":2"&&w.b==="xt:U")||(w.b===km2.id+":2"&&w.a==="xt:U")); };
+const resetKK = () => { const q=byDes("KK1"); if(!q) return; q.on=true; q.trip=null; S.heat[q.id]=0; logp("ok","KK1: Reset"); };
+TPL.motor3rev = { name:"Реверс трифазного двигуна (вправо / вліво, теплове реле)", cat:"Двигуни",
+  info:"Двигун 4 кВт, 400 В, з реверсом. Силове коло: QF1 → KM1 (вправо) і KM2 (вліво) → теплове реле KK1 → двигун. KM2 міняє місцями фази L1 і L3, тому двигун обертається у зворотний бік, а струм в обох напрямках іде через KK1. Коло керування 230 В від L3 через QF2: 95–96 KK1 → «Стоп» SB1 → «Вправо» SB2 з самоутриманням 13–14 KM1 → НЗ 21–22 KM2 → котушка KM1; так само «Вліво» SB3 → НЗ 21–22 KM1 → котушка KM2. Блокування не дає ввімкнути обидва контактори разом; щоб змінити напрям, спершу «Стоп». Відповідність картинці: Q1 → QF1, Q2 → QF2, F1 → KK1, S1 → SB1, S2 → SB3 (Left), S3 → SB2 (Right). Помилка на картинці: KM2 під’єднано до U, V, W у тому самому порядку фаз і вже після теплового реле — реверсу немає, а на зворотному ходу двигун без захисту від перевантаження. Перемикач «Схема з помилкою» показує, що з цього виходить.",
+  build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}], xn:6, xpe:3, xt:[{k:"U",l:"U",r:"P"},{k:"V",l:"V",r:"P"},{k:"W",l:"W",r:"P"},{k:"PE",l:"PE",r:"PE"}]});
+    const qf1=D("qf3p",0,0,"C16",{noGroup:true,cap:"Двигун M1"}), qf2=D("qf1p",0,3,"C6",{noGroup:true,cap:"Керування"}),
+      sb1=D("sbs",0,4), sb2=D("sbp",0,5,"",{lbl:"ВПРАВО",cap:"Вправо"}), sb3=D("sbp",0,6,"",{lbl:"ВЛІВО",cap:"Вліво"}),
+      hl1=D("hl",0,7,"",{cap:"Вправо"}), hl2=D("hl",0,8,"",{cap:"Вліво",col:"#f5a623"}),
+      km1=D("km3a",1,0,"",{cap:"Вправо"}), km2=D("km3a",1,4,"",{cap:"Вліво"}), kk=D("kk",1,8,"6–10 А",{Ir:8.5});
+    F("motor3",{U:"xt:U",V:"xt:V",W:"xt:W",PE:"xt:PE"});
+    ["1","3","5"].forEach((t,i)=>{ const L="L"+(i+1), o=String(+t+1), qt="t"+(i+1), qb="b"+(i+1); W("in:"+L,k(qf1,qt),L,2.5); W(k(qf1,qb),k(km1,t),L,2.5); W(k(qf1,qb),k(km2,t),L,2.5);
+      W(k(km1,o),k(kk,t),L,2.5); W(k(kk,o),"xt:"+"UVW"[i],L,2.5); });
+    ["2","4","6"].forEach((t,i)=>W(k(km2,t),k(kk,["5","3","1"][i]),"L"+(i+1),2.5));            // L1 ↔ L3 — реверс, струм через KK1
+    W("in:N","xn:0","N",1.5); W("in:PE","xpe:0","PE",2.5); W("xpe:1","xt:PE","PE",2.5);
+    W("in:L3",k(qf2,"t1"),"L3",1.5); W(k(qf2,"b1"),k(kk,"95"),"C",1.5); W(k(kk,"96"),k(sb1,"11"),"C",1.5);
+    W(k(sb1,"12"),k(sb2,"13"),"C",1.5); W(k(sb2,"13"),k(sb3,"13"),"C",1.5);
+    W(k(sb1,"12"),k(km1,"13"),"C",1.5); W(k(km1,"14"),k(sb2,"14"),"C",1.5); W(k(sb2,"14"),k(km2,"21"),"C",1.5); W(k(km2,"22"),k(km1,"A1"),"C",1.5);
+    W(k(sb3,"13"),k(km2,"13"),"C",1.5); W(k(km2,"14"),k(sb3,"14"),"C",1.5); W(k(sb3,"14"),k(km1,"21"),"C",1.5); W(k(km1,"22"),k(km2,"A1"),"C",1.5);
+    W(k(km1,"A1"),k(hl1,"X1"),"C",1.5); W(k(km2,"A1"),k(hl2,"X1"),"C",1.5);
+    W(k(km1,"A2"),"xn:1","N",1.5); W(k(hl1,"X2"),"xn:2","N",1.5); W(k(km2,"A2"),"xn:3","N",1.5); W(k(hl2,"X2"),"xn:4","N",1.5); },
+  demo:{ controls:[{type:"src",id:"in",label:"Мережа"},{type:"btn",label:"Вправо",cls:"go",act:()=>livePress("SB2")},{type:"btn",label:"Вліво",cls:"go",act:()=>livePress("SB3")},
+      {type:"btn",label:"Стоп",cls:"stop",act:()=>livePress("SB1")},
+      {type:"toggle",label:"Перевантаження вала (1,5 × Iн)",get:()=>!!(motor()||{}).ovl,set:v=>{ motor().ovl=v; }},
+      {type:"toggle",label:"Вал заклинило",get:()=>!!(motor()||{}).jam,set:v=>{ motor().jam=v; }},
+      {type:"toggle",label:"Схема з помилкою (як на картинці)",get:revBugOn,set:revBug},
+      {type:"btn",label:"Reset KK1",act:resetKK}],
+    status:()=>{ const m=motor()||{}, km1=byDes("KM1"), km2=byDes("KM2"), kk=byDes("KK1"), per=(S.sim&&S.sim.per[kk.id])||[];
+      return [["Двигун", m.run?(m.dir>0?"обертається вправо":"обертається вліво"):m.hum?"гуде, не обертається":"стоїть", m.run?"ok":m.hum?"e":""],
+        ["Контактори", km1.pulled?"KM1 — вправо":km2.pulled?"KM2 — вліво":"обидва вимкнені", km1.pulled||km2.pulled?"ok":""],
+        ["KK1, струм через реле", (kk.trip?"спрацювало · ":"")+(per.length?per.map(x=>fmt(x,1)).join(" / "):"0 / 0 / 0")+" А", kk.trip?"e":""],
+        ["Схема", revBugOn()?"як на картинці — з помилкою":"виправлена", revBugOn()?"e":"ok"]]; },
+    script:[
+      {say:"Подаємо три фази 400 В. Двигун стоїть, обидва контактори вимкнені.", do(){ say("in",true,230); if(revBugOn()) revBug(false); const m=motor(); m.ovl=false; m.jam=false; resetKK(); }, wait:2},
+      {say:"«Вправо»: KM1 вмикається і самоутримується через свій контакт 13–14. Двигун обертається вправо, світить HL1.", do(){ livePress("SB2"); }, wait:3},
+      {say:"Тиснемо «Вліво» на ходу — нічого: НЗ-контакт KM1 21–22 розірвав коло котушки KM2. Це блокування від міжфазного КЗ.", do(){ livePress("SB3"); }, wait:3},
+      {say:"«Стоп». Напрям змінюють лише після зупинки.", do(){ livePress("SB1"); }, wait:2},
+      {say:"«Вліво»: KM2 подає фази в порядку L3–L2–L1 — двигун обертається вліво. Струм іде через теплове реле KK1.", do(){ livePress("SB3"); }, wait:3},
+      {say:"Вал перевантажено: струм 1,5 × Iн. За кілька секунд KK1 розмикає 95–96, KM2 відпадає, двигун зупиняється.", do(){ motor().ovl=true; }, wait:9},
+      {say:"Причину усунули, тиснемо Reset на KK1. Двигун сам не стартує — потрібен новий пуск.", do(){ motor().ovl=false; resetKK(); }, wait:3},
+      {say:"Тепер схема як на картинці: KM2 під’єднано до U, V, W у тому самому порядку фаз і вже після теплового реле.", do(){ revBug(true); }, wait:3},
+      {say:"«Вліво» — а двигун крутиться вправо: реверсу немає.", do(){ livePress("SB3"); }, wait:4},
+      {say:"Те саме перевантаження: струм іде повз KK1 — реле показує нуль і мовчить. QF1 на 16 А такого струму не бачить, тож двигун гріється без захисту.", do(){ motor().ovl=true; }, wait:9},
+      {say:"«Стоп». Повертаємо правильну схему: KM2 — на вхід KK1 з L1 і L3 навхрест.", do(){ livePress("SB1"); motor().ovl=false; revBug(false); }, wait:3},
+      {say:"Кінець демонстрації.", do(){}, wait:1}]},
+  checks(add){ sandbox(()=>{ powerUp(); runFor(2); const m=motor(), sb=n=>pressBtn(byDes(n));
+    sb("SB2"); const r1=m.run, d1=m.dir; sb("SB3"); const both=byDes("KM1").pulled&&byDes("KM2").pulled; sb("SB1"); sb("SB3"); const r2=m.run, d2=m.dir;
+    if(r1&&r2&&d1!==d2) add("ok","Реверс працює","«Вправо» і «Вліво» обертають двигун у різні боки."); else if(r1&&r2) add("e","Реверсу немає","KM2 подає фази в тому самому порядку, що й KM1 — поміняйте місцями дві фази на KM2.");
+    else add("e","Двигун не запускається","Перевірте коло керування і силові перемички.");
+    if(!both) add("ok","Блокування працює","Два контактори не вмикаються разом."); else add("e","Немає блокування","KM1 і KM2 увімкнулися одночасно — міжфазне КЗ.");
+    m.ovl=true; runFor(12); const kk=byDes("KK1"); if(kk.trip&&!byDes("KM2").pulled) add("ok","Тепловий захист на зворотному ходу","KK1 вимкнув двигун при перевантаженні під час обертання вліво.");
+    else add("e","Немає теплового захисту на зворотному ходу","Струм KM2 іде повз KK1 — під’єднайте виходи KM2 до входу теплового реле."); }); }};

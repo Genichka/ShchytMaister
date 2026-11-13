@@ -41,6 +41,7 @@ function symSVG(n,x,y){ const L=(a,b2,c,d2,w)=>`<line x1="${a}" y1="${b2}" x2="$
   if(t.prot==="fuse") return L(x,y,x,y+8)+`<rect x="${x-5}" y="${y+8}" width="10" height="28" fill="#fff" stroke="#111" stroke-width="1.4"/>`+L(x,y+8,x,y+36,1)+L(x,y+36,x,y+44);
   if(t.rcd&&t.prot) return sw(true)+oval;
   if(t.rcd) return sw(false)+oval+`<text x="${x+10}" y="${y+42}" font-size="7">ΔI</text>`;
+  if(t.prot==="ovl") return box("KK");
   if(t.prot) return sw(true);
   if(t.meter) return box("kWh"); if(d.type==="kv") return box("U"); if(d.type==="tovpd1") return box("U·I"); if(d.type==="pef") return box("L→"); if(d.type==="ats"||d.type==="g2r"||d.type==="toq5"||d.type==="toq7") return box("АВР"); if(d.type==="to219"||d.type==="to119") return box("I-0-II");
   if(/^km|^kimp|^stair|^ssw|^photo|^rel/.test(d.type)) return sw(false,true);
