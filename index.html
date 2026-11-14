@@ -57,7 +57,8 @@ button{cursor:pointer}
 /* каркас прибитий до видимої області: висота = екран, вирізи й статус-бар — відступами всередині, тож нічого не з'їжджає вниз */
 .app{position:fixed;inset:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-columns:100%;
   padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px)}
-body.demo-on .app{bottom:38dvh} body.demo-on .bbar{display:none}
+body.demo-on .app{bottom:var(--dbh,38dvh)} body.demo-on .bbar{display:none}
+@media (min-width:1100px) and (min-aspect-ratio:4/3){ body.demo-on .app{bottom:0;right:400px} }
 
 /* ---- Шапка */
 .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
@@ -342,6 +343,11 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 .db-say{font-size:14.5px;line-height:1.45;color:var(--strong)}
 .db-stat{display:flex;flex-wrap:wrap;gap:4px 8px}
 .dbs{display:inline-block;padding:2px 8px;font-size:11.5px;color:var(--fg);border-color:var(--line2);background:var(--panel2)} .dbs i{font-style:normal;color:var(--muted)}
+@media (min-width:1100px) and (min-aspect-ratio:4/3){
+  .demobar{top:0;left:auto;width:400px;max-height:none;border-top:0;border-left:1px solid var(--line2);justify-content:flex-start;gap:16px;padding:24px 22px 22px}
+  .db-top,.db-say,.db-stat{max-width:none} .db-step{font-size:13px} .db-say{font-size:16px;line-height:1.55}
+  .db-stat{flex-direction:column;align-items:stretch;gap:6px} .dbs{font-size:12.5px;padding:6px 10px;line-height:1.35;box-sizing:border-box;max-width:100%;white-space:normal} }
+.dfoc{fill:none;stroke:var(--orange);stroke-width:5;pointer-events:none;animation:ghl 1.2s ease-in-out infinite}
 .dbs.ok{border-color:color-mix(in srgb,var(--green) 50%,transparent)} .dbs.e{border-color:var(--red);color:var(--red)} .dbs.w{border-color:color-mix(in srgb,var(--orange) 60%,transparent)}
 
 /* ---- Щиток (SVG) */
@@ -368,7 +374,7 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 [data-dev].dragging{opacity:.9;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));pointer-events:none}
 @keyframes flow{to{stroke-dashoffset:-16}} @keyframes heat{50%{opacity:.35}} @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes hum{50%{transform:rotate(6deg)}} @keyframes ghl{50%{stroke-width:7;opacity:.45}}
-@media (prefers-reduced-motion: reduce){ .flow,.heat,.spin,.hum,.ghl{animation:none} }
+@media (prefers-reduced-motion: reduce){ .flow,.heat,.spin,.hum,.ghl,.dfoc{animation:none} }
 
 /* ---- Адаптивність */
 @media (max-width:480px){
@@ -487,7 +493,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.35.0", date:"2026-11-14", dev:["ОВЕН ПЛК200-04","Перетворювач DC/DC 18–36 → 24 В","Реле проміжне 1CO, котушка 24 В=","Лампа сигнальна 24 В","Перемикач «Авто / Ручний»"], notes:["Новий шаблон «АВР на 2 вводи → АВР мережа ↔ інвертор 24 В на ОВЕН ПЛК200»: резервне живлення будинку від гібридного інвертора 24 В з АКБ LiFePO4. Поки є мережа, інвертор і BMS вимкнені. Мережа зникла — ПЛК забороняє KM1 реле K1, імпульсом 3 с вмикає BMS, через 2 с замикає Remote ON/OFF інвертора, а KM2 вмикається від його виходу. Мережа повернулась і стабільна — ПЛК вимикає інвертор, потім BMS, і лише тоді дозволяє KM1. Після кожного відключення — заряд АКБ через KM3 до SOC 100 %. Без живлення ПЛК мережа працює сама","Документи: нова вкладка «Принципова схема» для шаблонів, що її мають — аркуш А3 зі штампом, збереження в SVG і окрема сторінка в «Повному комплекті» PDF","Нові модулі: ОВЕН ПЛК200-04 (живлення 24 В, входи FDI1–FDI6, релейні виходи DO1–DO5, стан програми на панелі й у журналі), Перетворювач DC/DC 18–36 → 24 В, Реле проміжне 1CO, котушка 24 В=, Лампа сигнальна 24 В, Перемикач «Авто / Ручний»","Поза щитком: гібридний інвертор 24 В 3 кВт із входом Remote ON/OFF і АКБ LiFePO4 24 В 100 А·год з BMS — кнопка (утримати 3 с), клеми B± до BMS і P± після BMS","Симулятор: кола 24 В постійного струму. Напруга АКБ залежить від заряду; КЗ на виході BMS вимикає АКБ, від КЗ до BMS рятує лише запобіжник; DC/DC має захист від КЗ"]};
+const APP = { v:"4.35.1", date:"2026-11-14", dev:["ОВЕН ПЛК200-04","Перетворювач DC/DC 18–36 → 24 В","Реле проміжне 1CO, котушка 24 В=","Лампа сигнальна 24 В","Перемикач «Авто / Ручний»"], notes:["Демонстрація на ПК: на широкому екрані пояснення тепер праворуч на всю висоту, і щиток більше не обрізається знизу. На кожному кроці щиток сам наводиться на апарати, про які йде мова, і підсвічує їх помаранчевою рамкою — в усіх шаблонах","Демонстрація АВР на ПЛК200: довші кроки, щоб встигнути прочитати; на останньому кроці видно весь щиток","Новий шаблон «АВР на 2 вводи → АВР мережа ↔ інвертор 24 В на ОВЕН ПЛК200»: резервне живлення будинку від гібридного інвертора 24 В з АКБ LiFePO4. Поки є мережа, інвертор і BMS вимкнені. Мережа зникла — ПЛК забороняє KM1 реле K1, імпульсом 3 с вмикає BMS, через 2 с замикає Remote ON/OFF інвертора, а KM2 вмикається від його виходу. Мережа повернулась і стабільна — ПЛК вимикає інвертор, потім BMS, і лише тоді дозволяє KM1. Після кожного відключення — заряд АКБ через KM3 до SOC 100 %. Без живлення ПЛК мережа працює сама","Документи: нова вкладка «Принципова схема» для шаблонів, що її мають — аркуш А3 зі штампом, збереження в SVG і окрема сторінка в «Повному комплекті» PDF","Нові модулі: ОВЕН ПЛК200-04 (живлення 24 В, входи FDI1–FDI6, релейні виходи DO1–DO5, стан програми на панелі й у журналі), Перетворювач DC/DC 18–36 → 24 В, Реле проміжне 1CO, котушка 24 В=, Лампа сигнальна 24 В, Перемикач «Авто / Ручний»","Поза щитком: гібридний інвертор 24 В 3 кВт із входом Remote ON/OFF і АКБ LiFePO4 24 В 100 А·год з BMS — кнопка (утримати 3 с), клеми B± до BMS і P± після BMS","Симулятор: кола 24 В постійного струму. Напруга АКБ залежить від заряду; КЗ на виході BMS вимикає АКБ, від КЗ до BMS рятує лише запобіжник; DC/DC має захист від КЗ"]};
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // модулі на DIN-рейці
@@ -1863,10 +1869,14 @@ function render(){ if(S.noDoc){ renderEmpty(); return; }
       else if(S.moveEnd){ const mw=wireById(S.moveEnd.id); if(mw&&kindFits(mw.kind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`; }
       else if(S.pend&&kindFits(S.wireKind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`;
       s+=`<circle class="term-hit" data-term="${k}" cx="${p.x}" cy="${p.y}" r="15"/>`; } }
+  if(S.demo&&Array.isArray(S.demoFocus)) for(const id of S.demoFocus){ const b=devBox(id); if(b) s+=`<rect class="dfoc" x="${b.x0-6}" y="${b.y0-6}" width="${b.x1-b.x0+12}" height="${b.y1-b.y0+12}" rx="12"/>`; }
   s+=`<g class="eclose" data-closeboard role="button" aria-label="Закрити щиток"><title>Закрити щиток</title><circle cx="826" cy="70" r="14"/><path d="M820 64l12 12M832 64l-12 12"/></g>`;
   svg.innerHTML=s;
 }
 
+// Прямокутник апарата (модуль на рейці або обладнання поза щитком) у координатах креслення
+function devBox(id){ const d=S.devices.find(x=>x.id===id); if(d&&T[d.type]){ const x=G.X0+d.slot*G.MW; return {x0:x,y0:devTop(d.rail),x1:x+T[d.type].w*G.MW,y1:devBot(d.rail)}; }
+  const it=fieldLayout().items.find(i=>i.f.id===id); if(it){ const ft=FT[it.f.type]; return {x0:it.x,y0:it.y,x1:it.x+ft.fw,y1:it.y+(ft.fh||150)}; } return null; }
 // Прокрутити щиток так, щоб підсвічені клеми було видно
 function scrollToKeys(keys){ const sc=$("scroller"), svg=$("svg"), vb=svg.viewBox.baseVal; if(!vb||!vb.width) return; const k=svg.clientWidth/vb.width, ps=keys.map(termPos).filter(Boolean); if(!ps.length) return;
   const y0=Math.min(...ps.map(p=>p.y))*k, y1=Math.max(...ps.map(p=>p.y))*k, x0=(Math.min(...ps.map(p=>p.x))-vb.x)*k, x1=(Math.max(...ps.map(p=>p.x))-vb.x)*k, H=sc.clientHeight, W=sc.clientWidth;
@@ -2493,16 +2503,16 @@ TPL.ats_plc = { name:"АВР мережа ↔ інвертор 24 В на ОВЕ
         ["Інвертор U1",INV24_TXT[u.mode]||"вимкнено",u.mode==="fault"?"e":u.mode==="backup"?"w":u.mode==="grid"?"ok":""],
         ["ПЛК живиться з АКБ повз BMS","≈ 0,5 А — 12 А·год на добу","w"]]; },
     script:[
-      {say:"Мережа є. Реле напруги KV1 через 3 с вмикає K2 (сигнал на FDI1) і живить коло котушки KM1 — будинок на мережі. Інвертор і BMS вимкнені, а ПЛК живиться від АКБ до BMS через FU1 і DC/DC U2.", do(){ plcReset(90); say("in",true,230); }, wait:6},
-      {say:"Відключення світла! KV1, K2 і KM1 відпали. ПЛК вмикає K1 — заборону мережі — і дає імпульс 3 с на кнопку BMS (DO1).", do(){ say("in",false); }, wait:5},
-      {say:"BMS увімкнулась: K3 подає FDI4. Через 2 с ПЛК замикає DO2 (Remote ON/OFF) і тримає. Інвертор стартує й видає 230 В, а KM2 тягне сам через НЗ-контакт KM1.", do(){}, wait:7},
-      {say:"Будинок живиться від АКБ: світять HL2 «Інвертор» і HL3. 1 с симуляції — 1 хв.", do(){}, wait:4},
-      {say:"Мережа повернулась. KV1 перевіряє її 3 с, потім ПЛК чекає ще 10 с стабільної мережі (у щитку краще 60 с). KM1 тим часом заблокований контактом K1 і НЗ-контактом KM2.", do(){ say("in",true,230); }, wait:13},
-      {say:"ПЛК розмикає DO2: інвертор вимикається, KM2 відпадає. Ще 3 с — імпульс на кнопку BMS. Лише коли BMS вимкнулась (FDI4 = 0), ПЛК відпускає K1, і KM1 повертає мережу. Кілька секунд будинок без світла — плата за те, що інвертор і мережа ніколи не працюють разом.", do(){}, wait:9},
-      {say:"Режим «Заряд»: ПЛК знову вмикає BMS, через DO4 вмикає KM3 — мережа йде на AC IN, — а DO2 запускає інвертор. Він заряджає АКБ від мережі. KM2 при цьому не ввімкнеться: його котушку відсікає НЗ-контакт KM1.", do(){}, wait:10},
-      {say:"Пропускаємо час: АКБ заряджена. ПЛК розмикає DO2, через 3 с — DO4 (KM3), а тоді імпульсом вимикає BMS. Усе як до відключення.", do(){ S.env.soc=99.6; }, wait:9},
-      {say:"Відмова ПЛК: виймаємо FU1 — ПЛК без живлення. K1 відпущене, тому мережа однаково живить будинок через KM1.", do(){ const f=byDes("FU1"); if(f) f.on=false; }, wait:4},
-      {say:"FU1 на місці, ПЛК знову працює. Кінець демонстрації. Повна схема — кнопка «Принципова схема».", do(){ const f=byDes("FU1"); if(f){ f.on=true; f.trip=null; } }, wait:3}]},
+      {say:"Мережа є. Реле напруги KV1 через 3 с вмикає K2 (сигнал на FDI1) і живить коло котушки KM1 — будинок на мережі. Інвертор і BMS вимкнені, а ПЛК живиться від АКБ до BMS через FU1 і DC/DC U2.", do(){ plcReset(90); say("in",true,230); }, wait:8, focus:["QF1","KV1","K2","KM1"]},
+      {say:"Відключення світла! KV1, K2 і KM1 відпали. ПЛК вмикає K1 — заборону мережі — і дає імпульс 3 с на кнопку BMS (DO1).", do(){ say("in",false); }, wait:6, focus:["A1","K3","GB1"]},
+      {say:"BMS увімкнулась: K3 подає FDI4. Через 2 с ПЛК замикає DO2 (Remote ON/OFF) і тримає. Інвертор стартує й видає 230 В, а KM2 тягне сам через НЗ-контакт KM1.", do(){}, wait:7, focus:["KM2","A1","U1"]},
+      {say:"Будинок живиться від АКБ: світять HL2 «Інвертор» і HL3. 1 с симуляції — 1 хв.", do(){}, wait:6, focus:["KM2","HL2","HL3","U1","GB1"]},
+      {say:"Мережа повернулась. KV1 перевіряє її 3 с, потім ПЛК чекає ще 10 с стабільної мережі (у щитку краще 60 с). KM1 тим часом заблокований контактом K1 і НЗ-контактом KM2.", do(){ say("in",true,230); }, wait:13, focus:["KV1","K2","K1","KM1","A1"]},
+      {say:"ПЛК розмикає DO2: інвертор вимикається, KM2 відпадає. Ще 3 с — імпульс на кнопку BMS. Лише коли BMS вимкнулась (FDI4 = 0), ПЛК відпускає K1, і KM1 повертає мережу. Кілька секунд будинок без світла — плата за те, що інвертор і мережа ніколи не працюють разом.", do(){}, wait:10, focus:["KM1","KM2","A1"]},
+      {say:"Режим «Заряд»: ПЛК знову вмикає BMS, через DO4 вмикає KM3 — мережа йде на AC IN, — а DO2 запускає інвертор. Він заряджає АКБ від мережі. KM2 при цьому не ввімкнеться: його котушку відсікає НЗ-контакт KM1.", do(){}, wait:11, focus:["KM3","A1","U1","GB1"]},
+      {say:"Пропускаємо час: АКБ заряджена. ПЛК розмикає DO2, через 3 с — DO4 (KM3), а тоді імпульсом вимикає BMS. Усе як до відключення.", do(){ S.env.soc=99.6; }, wait:10, focus:["KM3","A1","GB1"]},
+      {say:"Відмова ПЛК: виймаємо FU1 — ПЛК без живлення. K1 відпущене, тому мережа однаково живить будинок через KM1.", do(){ const f=byDes("FU1"); if(f) f.on=false; }, wait:6, focus:["FU1","K1","KM1","A1"]},
+      {say:"FU1 на місці, ПЛК знову працює. Кінець демонстрації. Повна схема — кнопка «Принципова схема».", do(){ const f=byDes("FU1"); if(f){ f.on=true; f.trip=null; } }, wait:4, focus:"all"}]},
   checks(add){ sandbox(()=>{ powerUp(); plcReset(90); S.src.in.on=false; const km1=byDes("KM1"), km2=byDes("KM2"), a=plcA1(), b=plcGB(); let both=0;
     const run=s=>{ for(let t=0;t<s;t+=0.5){ solve(0.5); if(km1.pulled&&km2.pulled) both++; } };
     say("in",true,230); run(6); const onGrid=km1.pulled&&!km2.pulled&&!b.on;
@@ -3283,10 +3293,23 @@ function termTap(key){
   if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){ toast("Така перемичка вже є","w"); renderAll(); return; }
   if(S.wires.filter(w=>w.a===b||w.b===b).length>=2&&!/^x(n|pe):/.test(b)) toast("Під одну клему — не більше двох перемичок","w");
   S.wires.push({id:uid("w"),a,b,kind:S.wireKind,sec:S.wireSec}); commit(); }
-function demoStop(){ S.demo=null; hideDemoBar(); renderBar(); hint(); }
-function demoStart(){ resetRuntime(); S.demo={i:-1,left:0,paused:false}; showDemoBar(); demoNext(); }
+function demoStop(){ S.demo=null; S.demoFocus=null; hideDemoBar(); if(S.demoZ0!=null){ S.zoom=S.demoZ0; S.demoZ0=null; } renderAll(false); }
+function demoStart(){ resetRuntime(); S.demo={i:-1,left:0,paused:false}; S.demoZ0=S.zoom; showDemoBar(); demoNext(); }
+// Апарати, про які йде мова в кроці: явний focus (позначення або "all") чи позначення з тексту (KM1, A1, U1…)
+function demoFocusIds(st){ if(st.focus==="all") return "all";
+  const want=st.focus||(String(st.say||"").match(/\b(?:KM|KV|KK|KT|QF|QD|QS|FU|HL|SA|SB|GB|K|A|U|M|Q|F|T)\d{1,2}\b/g)||[]);
+  const ids=[]; for(const ds of new Set(want)){ const d=S.devices.find(x=>desig(x)===ds)||S.field.find(f=>desig(f)===ds); if(d) ids.push(d.id); } return ids; }
+function demoCamera(){ if(!S.demo||!S.demoFocus) return; const sc=$("scroller"), svg=$("svg"), vb=svg.viewBox.baseVal; if(!vb||!vb.width||!sc.clientWidth) return;
+  let b; if(S.demoFocus==="all") b={x0:vb.x+40,y0:10,x1:vb.x+vb.width-40,y1:vb.height};
+  else { const bs=S.demoFocus.map(devBox).filter(Boolean); if(!bs.length) return;
+    b={x0:Math.min(...bs.map(q=>q.x0))-30,y0:Math.min(...bs.map(q=>q.y0))-40,x1:Math.max(...bs.map(q=>q.x1))+30,y1:Math.max(...bs.map(q=>q.y1))+24}; }
+  const W=sc.clientWidth, H=sc.clientHeight; let k=Math.min(W/(b.x1-b.x0),H/(b.y1-b.y0))*0.96; k=Math.max(0.4,Math.min(1.3,k));
+  const z=Math.max(0.3,Math.min(4,Math.round(k*vb.width/W*100)/100)); if(Math.abs(z-S.zoom)>0.009){ S.zoom=z; renderAll(false); }
+  requestAnimationFrame(()=>{ const kk=svg.clientWidth/vb.width, sr=svg.getBoundingClientRect(), cr=sc.getBoundingClientRect(), ox=sr.left-cr.left+sc.scrollLeft, oy=sr.top-cr.top+sc.scrollTop;
+    const x0=ox+(b.x0-vb.x)*kk, x1=ox+(b.x1-vb.x)*kk, y0=oy+(b.y0-vb.y)*kk, y1=oy+(b.y1-vb.y)*kk;
+    sc.scrollTo({left:Math.max(0,x1-x0<W?(x0+x1-W)/2:x0),top:Math.max(0,y1-y0<H?(y0+y1-H)/2:y0),behavior:"smooth"}); }); }
 function demoNext(){ const sc=S.tplObj.demo.script; S.demo.i++; if(S.demo.i>=sc.length){ demoStop(); toast("Демонстрацію завершено","ok"); return; }
-  const st=sc[S.demo.i]; try{ st.do(); }catch(e){ console.error(e); } S.demo.left=st.wait; logp("ok","▶ "+st.say); commit(false); updateDemoBar(); }
+  const st=sc[S.demo.i]; try{ st.do(); }catch(e){ console.error(e); } S.demo.left=st.wait; S.demoFocus=demoFocusIds(st); logp("ok","▶ "+st.say); commit(false); updateDemoBar(); demoCamera(); }
 function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length;
   S.lastCheck={sig:elecSnap(),errors:ne,warns:nw};
   S.chk={list:C,i:0}; S.chkOpen=!!(ne||nw); solve(0);   // усе гаразд — без вікна з переліком «1 з N», лише повідомлення й підказка «що далі»
@@ -4421,14 +4444,17 @@ TPL.custom = { name:"Власний щиток", cat:"Конструктор", h
   build(){}, demo:{ get controls(){ return autoControls(); }, status:autoStatus, script:[] }};
 for(const key of ["empty","empty3","empty2"]) if(TPL[key]) TPL[key].demo={ get controls(){ return autoControls(); }, status:autoStatus, script:[] };
 
-// ---- Демо-панель (видно і пояснення, і щиток)
-function showDemoBar(){ $("demobar").hidden=false; document.body.classList.add("demo-on"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); }
+// ---- Демо-панель (видно і пояснення, і щиток). На широкому екрані — колонка праворуч на всю висоту
+const DEMO_SIDE = "(min-width:1100px) and (min-aspect-ratio:4/3)";
+function showDemoBar(){ const bar=$("demobar"); bar.hidden=false; document.body.classList.add("demo-on");
+  const sync=()=>{ document.documentElement.style.setProperty("--dbh",bar.offsetHeight+"px"); clearTimeout(showDemoBar.t); showDemoBar.t=setTimeout(demoCamera,250); };
+  if(window.ResizeObserver&&!showDemoBar.ro){ showDemoBar.ro=new ResizeObserver(sync); showDemoBar.ro.observe(bar); } sync(); }
 function hideDemoBar(){ $("demobar").hidden=true; document.body.classList.remove("demo-on"); }
 function updateDemoBar(){ if(!S.demo||$("demobar").hidden) return; const sc=S.tplObj.demo.script, st=sc[S.demo.i]; if(!st) return;
   $("dbStep").textContent=`Крок ${S.demo.i+1} з ${sc.length}`; $("dbSay").textContent=st.say; $("dbPause").textContent=S.demo.paused?"▶":"⏸";
   $("dbPause").setAttribute("aria-label",S.demo.paused?"Продовжити":"Пауза"); $("dbProg").style.width=((S.demo.i+1)/sc.length*100)+"%"; }
 function updateDemoStat(){ const el=$("dbStat"); if(!el||$("demobar").hidden||!S.tplObj.demo.status) return;
-  try{ el.innerHTML=S.tplObj.demo.status().slice(0,4).map(([a,b,c])=>`<span class="dbs ${c||""}"><i>${esc(a)}</i> ${esc(b)}</span>`).join(""); }catch(e){ el.innerHTML=""; } }
+  try{ el.innerHTML=S.tplObj.demo.status().slice(0,matchMedia(DEMO_SIDE).matches?8:4).map(([a,b,c])=>`<span class="dbs ${c||""}"><i>${esc(a)}</i> ${esc(b)}</span>`).join(""); }catch(e){ el.innerHTML=""; } }
 
 // ---- Події
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
@@ -4659,5 +4685,5 @@ document.addEventListener("input",e=>{ if(e.target.id!=="devQ") return; S.devQ=e
 })();
 
 // На широкому екрані щиток одразу вписується у висоту
-(function(){ const fit=()=>{ if(window.innerWidth>=900){ const z=fitZoom(); if(z<1){ S.zoom=z; renderAll(false); } } }; setTimeout(fit,50); let t=null; window.addEventListener("resize",()=>{ clearTimeout(t); t=setTimeout(fit,200); }); })();
+(function(){ const fit=()=>{ if(S.demo) return; if(window.innerWidth>=900){ const z=fitZoom(); if(z<1){ S.zoom=z; renderAll(false); } } }; setTimeout(fit,50); let t=null; window.addEventListener("resize",()=>{ clearTimeout(t); t=setTimeout(fit,200); }); })();
 </script></body></html>

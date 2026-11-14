@@ -22,4 +22,4 @@ document.addEventListener("input",e=>{ if(e.target.id!=="devQ") return; S.devQ=e
 })();
 
 // На широкому екрані щиток одразу вписується у висоту
-(function(){ const fit=()=>{ if(window.innerWidth>=900){ const z=fitZoom(); if(z<1){ S.zoom=z; renderAll(false); } } }; setTimeout(fit,50); let t=null; window.addEventListener("resize",()=>{ clearTimeout(t); t=setTimeout(fit,200); }); })();
+(function(){ const fit=()=>{ if(S.demo) return; if(window.innerWidth>=900){ const z=fitZoom(); if(z<1){ S.zoom=z; renderAll(false); } } }; setTimeout(fit,50); let t=null; window.addEventListener("resize",()=>{ clearTimeout(t); t=setTimeout(fit,200); }); })();

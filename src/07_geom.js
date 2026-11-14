@@ -173,10 +173,14 @@ function render(){ if(S.noDoc){ renderEmpty(); return; }
       else if(S.moveEnd){ const mw=wireById(S.moveEnd.id); if(mw&&kindFits(mw.kind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`; }
       else if(S.pend&&kindFits(S.wireKind,termRole(k))) s+=`<circle class="term-ok" cx="${p.x}" cy="${p.y}" r="12"/>`;
       s+=`<circle class="term-hit" data-term="${k}" cx="${p.x}" cy="${p.y}" r="15"/>`; } }
+  if(S.demo&&Array.isArray(S.demoFocus)) for(const id of S.demoFocus){ const b=devBox(id); if(b) s+=`<rect class="dfoc" x="${b.x0-6}" y="${b.y0-6}" width="${b.x1-b.x0+12}" height="${b.y1-b.y0+12}" rx="12"/>`; }
   s+=`<g class="eclose" data-closeboard role="button" aria-label="Закрити щиток"><title>Закрити щиток</title><circle cx="826" cy="70" r="14"/><path d="M820 64l12 12M832 64l-12 12"/></g>`;
   svg.innerHTML=s;
 }
 
+// Прямокутник апарата (модуль на рейці або обладнання поза щитком) у координатах креслення
+function devBox(id){ const d=S.devices.find(x=>x.id===id); if(d&&T[d.type]){ const x=G.X0+d.slot*G.MW; return {x0:x,y0:devTop(d.rail),x1:x+T[d.type].w*G.MW,y1:devBot(d.rail)}; }
+  const it=fieldLayout().items.find(i=>i.f.id===id); if(it){ const ft=FT[it.f.type]; return {x0:it.x,y0:it.y,x1:it.x+ft.fw,y1:it.y+(ft.fh||150)}; } return null; }
 // Прокрутити щиток так, щоб підсвічені клеми було видно
 function scrollToKeys(keys){ const sc=$("scroller"), svg=$("svg"), vb=svg.viewBox.baseVal; if(!vb||!vb.width) return; const k=svg.clientWidth/vb.width, ps=keys.map(termPos).filter(Boolean); if(!ps.length) return;
   const y0=Math.min(...ps.map(p=>p.y))*k, y1=Math.max(...ps.map(p=>p.y))*k, x0=(Math.min(...ps.map(p=>p.x))-vb.x)*k, x1=(Math.max(...ps.map(p=>p.x))-vb.x)*k, H=sc.clientHeight, W=sc.clientWidth;

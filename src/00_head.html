@@ -54,7 +54,8 @@ button{cursor:pointer}
 /* каркас прибитий до видимої області: висота = екран, вирізи й статус-бар — відступами всередині, тож нічого не з'їжджає вниз */
 .app{position:fixed;inset:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-columns:100%;
   padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px)}
-body.demo-on .app{bottom:38dvh} body.demo-on .bbar{display:none}
+body.demo-on .app{bottom:var(--dbh,38dvh)} body.demo-on .bbar{display:none}
+@media (min-width:1100px) and (min-aspect-ratio:4/3){ body.demo-on .app{bottom:0;right:400px} }
 
 /* ---- Шапка */
 .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
@@ -339,6 +340,11 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 .db-say{font-size:14.5px;line-height:1.45;color:var(--strong)}
 .db-stat{display:flex;flex-wrap:wrap;gap:4px 8px}
 .dbs{display:inline-block;padding:2px 8px;font-size:11.5px;color:var(--fg);border-color:var(--line2);background:var(--panel2)} .dbs i{font-style:normal;color:var(--muted)}
+@media (min-width:1100px) and (min-aspect-ratio:4/3){
+  .demobar{top:0;left:auto;width:400px;max-height:none;border-top:0;border-left:1px solid var(--line2);justify-content:flex-start;gap:16px;padding:24px 22px 22px}
+  .db-top,.db-say,.db-stat{max-width:none} .db-step{font-size:13px} .db-say{font-size:16px;line-height:1.55}
+  .db-stat{flex-direction:column;align-items:stretch;gap:6px} .dbs{font-size:12.5px;padding:6px 10px;line-height:1.35;box-sizing:border-box;max-width:100%;white-space:normal} }
+.dfoc{fill:none;stroke:var(--orange);stroke-width:5;pointer-events:none;animation:ghl 1.2s ease-in-out infinite}
 .dbs.ok{border-color:color-mix(in srgb,var(--green) 50%,transparent)} .dbs.e{border-color:var(--red);color:var(--red)} .dbs.w{border-color:color-mix(in srgb,var(--orange) 60%,transparent)}
 
 /* ---- Щиток (SVG) */
@@ -365,7 +371,7 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 [data-dev].dragging{opacity:.9;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));pointer-events:none}
 @keyframes flow{to{stroke-dashoffset:-16}} @keyframes heat{50%{opacity:.35}} @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes hum{50%{transform:rotate(6deg)}} @keyframes ghl{50%{stroke-width:7;opacity:.45}}
-@media (prefers-reduced-motion: reduce){ .flow,.heat,.spin,.hum,.ghl{animation:none} }
+@media (prefers-reduced-motion: reduce){ .flow,.heat,.spin,.hum,.ghl,.dfoc{animation:none} }
 
 /* ---- Адаптивність */
 @media (max-width:480px){

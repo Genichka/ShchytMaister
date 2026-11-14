@@ -194,14 +194,17 @@ TPL.custom = { name:"Власний щиток", cat:"Конструктор", h
   build(){}, demo:{ get controls(){ return autoControls(); }, status:autoStatus, script:[] }};
 for(const key of ["empty","empty3","empty2"]) if(TPL[key]) TPL[key].demo={ get controls(){ return autoControls(); }, status:autoStatus, script:[] };
 
-// ---- Демо-панель (видно і пояснення, і щиток)
-function showDemoBar(){ $("demobar").hidden=false; document.body.classList.add("demo-on"); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); }
+// ---- Демо-панель (видно і пояснення, і щиток). На широкому екрані — колонка праворуч на всю висоту
+const DEMO_SIDE = "(min-width:1100px) and (min-aspect-ratio:4/3)";
+function showDemoBar(){ const bar=$("demobar"); bar.hidden=false; document.body.classList.add("demo-on");
+  const sync=()=>{ document.documentElement.style.setProperty("--dbh",bar.offsetHeight+"px"); clearTimeout(showDemoBar.t); showDemoBar.t=setTimeout(demoCamera,250); };
+  if(window.ResizeObserver&&!showDemoBar.ro){ showDemoBar.ro=new ResizeObserver(sync); showDemoBar.ro.observe(bar); } sync(); }
 function hideDemoBar(){ $("demobar").hidden=true; document.body.classList.remove("demo-on"); }
 function updateDemoBar(){ if(!S.demo||$("demobar").hidden) return; const sc=S.tplObj.demo.script, st=sc[S.demo.i]; if(!st) return;
   $("dbStep").textContent=`Крок ${S.demo.i+1} з ${sc.length}`; $("dbSay").textContent=st.say; $("dbPause").textContent=S.demo.paused?"▶":"⏸";
   $("dbPause").setAttribute("aria-label",S.demo.paused?"Продовжити":"Пауза"); $("dbProg").style.width=((S.demo.i+1)/sc.length*100)+"%"; }
 function updateDemoStat(){ const el=$("dbStat"); if(!el||$("demobar").hidden||!S.tplObj.demo.status) return;
-  try{ el.innerHTML=S.tplObj.demo.status().slice(0,4).map(([a,b,c])=>`<span class="dbs ${c||""}"><i>${esc(a)}</i> ${esc(b)}</span>`).join(""); }catch(e){ el.innerHTML=""; } }
+  try{ el.innerHTML=S.tplObj.demo.status().slice(0,matchMedia(DEMO_SIDE).matches?8:4).map(([a,b,c])=>`<span class="dbs ${c||""}"><i>${esc(a)}</i> ${esc(b)}</span>`).join(""); }catch(e){ el.innerHTML=""; } }
 
 // ---- Події
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;

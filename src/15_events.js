@@ -24,10 +24,23 @@ function termTap(key){
   if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){ toast("Така перемичка вже є","w"); renderAll(); return; }
   if(S.wires.filter(w=>w.a===b||w.b===b).length>=2&&!/^x(n|pe):/.test(b)) toast("Під одну клему — не більше двох перемичок","w");
   S.wires.push({id:uid("w"),a,b,kind:S.wireKind,sec:S.wireSec}); commit(); }
-function demoStop(){ S.demo=null; hideDemoBar(); renderBar(); hint(); }
-function demoStart(){ resetRuntime(); S.demo={i:-1,left:0,paused:false}; showDemoBar(); demoNext(); }
+function demoStop(){ S.demo=null; S.demoFocus=null; hideDemoBar(); if(S.demoZ0!=null){ S.zoom=S.demoZ0; S.demoZ0=null; } renderAll(false); }
+function demoStart(){ resetRuntime(); S.demo={i:-1,left:0,paused:false}; S.demoZ0=S.zoom; showDemoBar(); demoNext(); }
+// Апарати, про які йде мова в кроці: явний focus (позначення або "all") чи позначення з тексту (KM1, A1, U1…)
+function demoFocusIds(st){ if(st.focus==="all") return "all";
+  const want=st.focus||(String(st.say||"").match(/\b(?:KM|KV|KK|KT|QF|QD|QS|FU|HL|SA|SB|GB|K|A|U|M|Q|F|T)\d{1,2}\b/g)||[]);
+  const ids=[]; for(const ds of new Set(want)){ const d=S.devices.find(x=>desig(x)===ds)||S.field.find(f=>desig(f)===ds); if(d) ids.push(d.id); } return ids; }
+function demoCamera(){ if(!S.demo||!S.demoFocus) return; const sc=$("scroller"), svg=$("svg"), vb=svg.viewBox.baseVal; if(!vb||!vb.width||!sc.clientWidth) return;
+  let b; if(S.demoFocus==="all") b={x0:vb.x+40,y0:10,x1:vb.x+vb.width-40,y1:vb.height};
+  else { const bs=S.demoFocus.map(devBox).filter(Boolean); if(!bs.length) return;
+    b={x0:Math.min(...bs.map(q=>q.x0))-30,y0:Math.min(...bs.map(q=>q.y0))-40,x1:Math.max(...bs.map(q=>q.x1))+30,y1:Math.max(...bs.map(q=>q.y1))+24}; }
+  const W=sc.clientWidth, H=sc.clientHeight; let k=Math.min(W/(b.x1-b.x0),H/(b.y1-b.y0))*0.96; k=Math.max(0.4,Math.min(1.3,k));
+  const z=Math.max(0.3,Math.min(4,Math.round(k*vb.width/W*100)/100)); if(Math.abs(z-S.zoom)>0.009){ S.zoom=z; renderAll(false); }
+  requestAnimationFrame(()=>{ const kk=svg.clientWidth/vb.width, sr=svg.getBoundingClientRect(), cr=sc.getBoundingClientRect(), ox=sr.left-cr.left+sc.scrollLeft, oy=sr.top-cr.top+sc.scrollTop;
+    const x0=ox+(b.x0-vb.x)*kk, x1=ox+(b.x1-vb.x)*kk, y0=oy+(b.y0-vb.y)*kk, y1=oy+(b.y1-vb.y)*kk;
+    sc.scrollTo({left:Math.max(0,x1-x0<W?(x0+x1-W)/2:x0),top:Math.max(0,y1-y0<H?(y0+y1-H)/2:y0),behavior:"smooth"}); }); }
 function demoNext(){ const sc=S.tplObj.demo.script; S.demo.i++; if(S.demo.i>=sc.length){ demoStop(); toast("Демонстрацію завершено","ok"); return; }
-  const st=sc[S.demo.i]; try{ st.do(); }catch(e){ console.error(e); } S.demo.left=st.wait; logp("ok","▶ "+st.say); commit(false); updateDemoBar(); }
+  const st=sc[S.demo.i]; try{ st.do(); }catch(e){ console.error(e); } S.demo.left=st.wait; S.demoFocus=demoFocusIds(st); logp("ok","▶ "+st.say); commit(false); updateDemoBar(); demoCamera(); }
 function checkNow(){ const C=runChecks(), ne=C.filter(c=>c.sev==="e").length, nw=C.filter(c=>c.sev==="w").length;
   S.lastCheck={sig:elecSnap(),errors:ne,warns:nw};
   S.chk={list:C,i:0}; S.chkOpen=!!(ne||nw); solve(0);   // усе гаразд — без вікна з переліком «1 з N», лише повідомлення й підказка «що далі»
