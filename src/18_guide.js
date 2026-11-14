@@ -54,6 +54,9 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), G=groupsOf(), has=(..
     {id:"groups", t:"Групи й обладнання",
       h:kind==="3ph"?"Кожен автомат — окрема лінія: світло, розетки, котел. «Автомат захисту двигуна» одразу додасть і сам двигун.":"Кожен автомат — окрема лінія: світло, розетки, котел. Назву й прилади групи помічник підставить сам.",
       done:()=>(G.length>0||S.field.length>0)&&!!S.guide.gDone, short:"Групові автомати", act:["Обрати автомат",null], next:G.length||S.field.length?`Усі групи поставлено (${G.length}) →`:null},
+    {id:"busq", short:"Шини N і PE", t:"Скільки отворів на шинах N і PE?",
+      h:"Кожна група займає отвір на шині N, а кабель до обладнання — ще й на шині PE. Ще по отвору — для живлення шини N від ПЗВ і для PE вводу. Беріть із запасом під нові групи.",
+      done:()=>!!(S.guide&&S.guide.busOK)||S.wires.some(w=>/^x(n|pe):/.test(w.a)||/^x(n|pe):/.test(w.b))},
     {id:"inwire", short:"Ввід → ввідний автомат", t:"Перемички: заведіть ввід на верхні клеми ввідного автомата",
       h:"Торкніться клеми 1, потім клеми 2 — їх підсвічено. Або «Покроково (Авто)» — програма проведе його сама, «Усі перемички (Авто)» — увесь щиток одразу.",
       todo:()=>gTodo("inwire"), done:()=>wireDone("inwire"), wire:true},
@@ -110,10 +113,26 @@ function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return 
       +`<div class="br"><span class="bl">Автоматично — програма проведе перемичку за вас. «Проведу сам» — торкніться клеми 1, потім клеми 2.</span></div>`; }
   if(s.id==="check"&&S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors)
     return `<div class="br gd">${num}<b class="gt">Перевірка: помилок ${S.lastCheck.errors}</b>${GX}</div><div class="br"><button class="btn sm primary" data-gall>Виправити все</button><button class="btn sm" data-gact="${g.cur}">Перевірити ще раз</button></div>`;
+  if(s.id==="busq"){ const rec=busRec(), mn=busMin(), ch=(p,cur,min)=>BUS_N.map(v=>`<button class="chip mono" data-gbus="${p}:${v}" aria-pressed="${cur===v}"${v<min?" disabled":""}>${v}</button>`).join("");
+    return `<div class="br gd">${num}<b class="gt">${esc(s.t)}</b>${GX}</div>`
+      +`<div class="br wrap"><span class="bl">Шина N</span>${ch("xn",S.board.xn,mn.xn)}</div><div class="br wrap"><span class="bl">Шина PE</span>${ch("xpe",S.board.xpe,mn.xpe)}</div>`
+      +`<div class="br wrap"><span class="bl">Колодка XT2 для кабелів груп</span><button class="chip" data-gtb="1" aria-pressed="${!!S.board.tb}">Так</button><button class="chip" data-gtb="0" aria-pressed="${!S.board.tb}">Ні</button></div>`
+      +`<div class="br wrap"><span class="bl">Груп: ${groupsOf().length} — раджу N ${rec.xn}, PE ${rec.xpe}</span>${S.board.xn!==rec.xn||S.board.xpe!==rec.xpe?`<button class="btn sm" data-gbusrec>Як радить помічник</button>`:""}<button class="btn sm primary" data-gbusok>Далі →</button></div>`; }
   if(s.next) return `<div class="br gd">${num}<b class="gt">${esc(s.short||s.t)}</b>${GX}</div>`
     +`<div class="br">${s.act?`<button class="btn sm" data-gact="${g.cur}">＋ ${esc(s.act[0])}</button>`:""}<button class="btn sm primary" data-gnext="${s.id}">${esc(s.next)}</button></div>`;
   const act=s.act&&!(s.id==="test"&&S.mode==="test"&&S.board.inputs.every(i=>(S.src[i.id]||{}).on));
-  return `<div class="br gd">${num}<b class="gt">${esc(s.short||s.t)}</b>${act?`<button class="btn sm primary" data-gact="${g.cur}">${esc(s.act[0])}</button>`:""}${s.opt?`<button class="btn sm" data-gskip="${s.id}">Пропустити</button>`:""}${GX}</div>`; }
+  return `<div class="br gd">${num}<b class="gt">${esc(s.short||s.t)}</b>${act?`<button class="btn sm primary" data-gact="${g.cur}">${esc(s.act[0])}</button>`:""}${s.opt?`<button class="btn sm" data-gskip="${s.id}">Пропустити</button>`:""}${s.id==="rcd"?`<button class="btn sm" data-gnorcd>Без ПЗВ</button>`:""}${GX}</div>`; }
+// Шини: варіанти кількості отворів, порада помічника (по отвору на групу + живлення шини / PE вводу + запас) і найменше можливе (зайняті отвори)
+const BUS_N = [4,6,8,10,12];
+const busFit = n => BUS_N.find(v=>v>=n)||12;
+function busRec(){ const G=groupsOf().length, F=S.field.length; return {xn:busFit(G+2), xpe:busFit(G+F+2)}; }   // PE кабелю кожної групи — на шину PE (і без колодки XT2)
+function busMin(){ const used=p=>Math.max(0,...S.wires.flatMap(w=>[w.a,w.b]).filter(k=>k.startsWith(p+":")).map(k=>+k.split(":")[1]+1)); return {xn:used("xn"),xpe:Math.max(2,used("xpe"))}; }
+document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
+  if(el=q("[data-gbus]")){ const [p,v]=el.dataset.gbus.split(":"); S.board[p]=+v; GEO=null; commit(); return; }
+  if(q("[data-gbusrec]")){ const r=busRec(), m=busMin(); S.board.xn=Math.max(r.xn,m.xn); S.board.xpe=Math.max(r.xpe,m.xpe); GEO=null; commit(); return; }
+  if(el=q("[data-gtb]")){ const on=el.dataset.gtb==="1"; if(!!S.board.tb===on) return; S.board.tb=on; if(!on) S.wires=S.wires.filter(x=>!/^tb:/.test(x.a)&&!/^tb:/.test(x.b)); const r=busRec(); S.board.xn=Math.max(S.board.xn,r.xn); S.board.xpe=Math.max(S.board.xpe,r.xpe); GEO=null; commit(); return; }
+  if(q("[data-gbusok]")){ if(S.guide) S.guide.busOK=true; save(); renderAll(true); toast(`Шини: N ${S.board.xn}, PE ${S.board.xpe}${S.board.tb?", колодка XT2":""}`,"ok"); return; }
+  if(q("[data-gnorcd]")){ S.board.noRcd=true; commit(); toast("Щиток без ПЗВ: перевірка попереджатиме про групи без захисту людей","w"); } });
 
 // ---- Кроки прокладання перемичок: що з чим з’єднати (план — wirePlan) + перемички, які треба виправити
 function kName(k){ if(k==="xn:*") return "шина N (XN1)"; if(k==="xpe:*") return "шина PE (XPE1)"; const n=termName(k), t=termDef(k), d=S.devices.find(x=>x.id===k.split(":")[0]);
