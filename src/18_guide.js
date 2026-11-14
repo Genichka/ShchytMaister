@@ -4,7 +4,7 @@
 const R = (type,list,lbl) => list.map(r=>[type,r,(lbl?lbl+" ":(T[type].name+" "))+r+(T[type].unit||"")]);
 const GOPT = (type,rating,label,gname,gloads,more) => [type,rating,label,Object.assign({gname,gloads},more||{})];
 function stepOpts(id,kind){
-  if(id==="main") return kind==="3ph"?[...R("qf3p",["C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"]),...R("qf4p",["C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"])]:R("qf2p",["C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"]);
+  if(id==="main") return kind==="3ph"?[...R("qf3p",["C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"]),...R("qf4p",["C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"])]:[...R("qf2p",["C16","C20","C25","C32","C40","C50","C63","C80","C100","C125"]),...(kind==="2in"||kind==="2inv"?["C16","C20","C25","C32","C40"].map(r=>["qf1p",r,`Автомат 1P ${r} — ввідний, лише фаза (напр. для інвертора)`,{noGroup:true,inMain:true,cap:"Ввідний"}]):[])];
   if(id==="prot") return kind==="3ph"?[["kvf",null,"Реле контролю фаз (обрив, чергування, напруга)"],["spd3",null,"УЗІП Т2 3P+N — від блискавки"]]
     :[...R("kv",["16","25","32","40","63"],"Реле напруги"),["tovpd1","60","TOMZN TOVPD1-60 — реле напруги й струму (V + A)"],["spdac",null,"УЗІП Т2 1P+N — від блискавки"]];
   if(id==="ats") return [["ats",null,"Модуль АВР TOMZN (тип TOQ5)",{variant:"tomzn"}],["toq5","125","TOMZN TOQ5-125/2 — АВР з ручкою, 6 модулів"],["toq7","125","TOMZN TOQ7-125/2 — АВР з ручкою, чорний, 6 модулів"],

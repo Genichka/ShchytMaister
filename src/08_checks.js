@@ -75,7 +75,7 @@ function runChecks(){
     const bk=res.back; if(bk.err.length||bk.trips.length) for(const e of [...bk.err,...bk.trips]) add("e","Повернення на основний ввід: аварія",e);
     else add("ok","Перемикання туди й назад без зустрічного ввімкнення","Основний ввід вимкнули, потім повернули."); }
   // 3. Групи, кабелі, номінали
-  const main=S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group&&b.inputs.some(i=>f0(d.id+":t1")===f0(i.id+":"+i.terms[0])));
+  const main=S.devices.filter(d=>isMain(d)&&b.inputs.some(i=>f0(d.id+":t1")===f0(i.id+":"+i.terms[0])));
   const mainIn=main.length?Math.min(...main.map(protIn)):0;
   if(!main.length&&G.length) add("e","Немає ввідного автомата одразу після вводу","Ввід має заходити на верхні клеми ввідного автомата.");
   else if(main.length) add("ok",`Ввідн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);

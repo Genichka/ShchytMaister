@@ -7,7 +7,7 @@ function dialog(title, body, buttons){
 const closeDlg = () => { $("dlg").hidden=true; };
 
 // ---- Структурний знімок і «Скасувати»
-const SKEYS=["id","type","rail","slot","rating","group","cap","model","Ir","variant","col","uc","delay","plug","th","noGroup","sid","n","name","map","brand","pre"];
+const SKEYS=["id","type","rail","slot","rating","group","cap","model","Ir","variant","col","uc","delay","plug","th","noGroup","inMain","sid","n","name","map","brand","pre"];
 const pickS = o => { const r={}; for(const key of SKEYS) if(o[key]!==undefined) r[key]=o[key]; return r; };
 // «Електричний» підпис щитка: без трас перемичок і положення шин — перевірка лишається чинною, якщо перемички лише охайно розклали
 function elecSnap(){ const b={...S.board}; delete b.bx; return JSON.stringify({board:b, devices:S.devices.map(pickS), field:S.field.map(pickS), wires:S.wires.map(w=>[w.a,w.b,w.kind,w.sec,w.col||""]), comb:S.comb, plan:S.plan||null}); }

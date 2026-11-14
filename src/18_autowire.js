@@ -6,7 +6,8 @@
 const SWITCH_T = ["g2r","ats","toq5","toq7","to219","to119"];
 const N_OWN = ["rcbo","qfn","afdd"];            // групові модулі з власним полюсом N
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
-function mainsOf(){ return S.devices.filter(d=>["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group).sort(byPosD); }
+const isMain = d => (["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group)||(d.type==="qf1p"&&d.inMain&&!d.group);
+function mainsOf(){ return S.devices.filter(isMain).sort(byPosD); }
 function wirePlan(){
   const b=S.board, kind=boardKind(b), three=kind==="3ph", two=kind==="2in"||kind==="2inv", out=[], use={};
   const K2=(d,t)=>d.id+":"+t, pos=(...ts)=>S.devices.filter(d=>ts.includes(d.type)).sort(byPosD);
@@ -25,17 +26,20 @@ function wirePlan(){
   const rc4=three?pos("rcd4")[0]:null, rc1=!three?pos("rcd")[0]:null, kvs=!three?pos("kv","tovpd1"):[], kvIn=two&&kvs.length>=2?kvs.slice(0,2):null, kv=!kvIn?kvs[0]||null:null, kvf=three?pos("kvf","kvf2")[0]:null;
   const spd=!three?pos("spdac")[0]:null, spd3=three?pos("spd3")[0]:null, sw=two?pos(...SWITCH_T)[0]:null;
   const secMain=Math.max(...mains.map(m=>secFor(protIn(m))));
+  const MI=(()=>{ if(!two) return [m0]; const f0=build({allOpen:true}), res=[], left=mains.slice();
+    feeds.forEach((inp,ix)=>{ const L=inp.id+":"+inp.terms[0], m=left.find(q=>tops(q).some(k=>f0(k)===f0(L))); if(m){ res[ix]=m; left.splice(left.indexOf(m),1); } });
+    feeds.forEach((inp,ix)=>{ if(!res[ix]&&left.length) res[ix]=left.shift(); }); return res; })();
   // 1. Ввід → ввідний автомат; два вводи — кожен на свій автомат
-  feeds.forEach((inp,ix)=>{ const m=two?mains[ix]:m0; if(!m) return; const sec=secFor(protIn(m)), ph=tops(m);
+  feeds.forEach((inp,ix)=>{ const m=two?MI[ix]:m0; if(!m) return; const sec=secFor(protIn(m)), ph=tops(m);
     for(const t of inp.terms){ if(t==="PE") continue;
-      if(t==="N") add("inwire",inp.id+":N",nT(m)||(rc4?K2(rc4,"t4"):"xn:*"),"N",sec);
+      if(t==="N"){ if(m.type!=="qf1p") add("inwire",inp.id+":N",nT(m)||(rc4?K2(rc4,"t4"):"xn:*"),"N",sec); }   // ввідний 1P: нуль вводу не через автомат — його беруть далі прямо з клеми вводу
       else { const q=ph[t==="L"?0:+t.slice(1)-1]; if(q) add("inwire",inp.id+":"+t,q,t==="L"?"L":t,sec); } } });
   const pe=b.inputs.find(i=>i.terms.includes("PE")); if(pe&&b.xpe) add("bus",pe.id+":PE","xpe:*","PE",secMain);
   // 2. Після ввідного: для двох вводів — через АВР
   let ph, n, n2j=null;                              // n2j — нуль вводу 2 для TO119G (1P перемикає лише фазу)
-  if(two){ const m1=mains[0], m2=mains[1];
-    if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат 2P — для вводу 2":"Поставте АВР: GEYA G2R-63, модуль АВР, TOQ5/TOQ7 або перемикач I–0–II TO219G / TO119G — без нього вводи нема чим перемикати"}); return out; }
-    let L1=K2(m1,"b1"), L2=K2(m2,"b1"); const N1=K2(m1,"b2"), N2=K2(m2,"b2"), s1=secFor(protIn(m1)), s2=secFor(protIn(m2));
+  if(two){ const m1=MI[0], m2=MI[1];
+    if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат для вводу 2: 2P або 1P (у картці автомата 1P — «Роль → Ввідний»)":"Поставте АВР: GEYA G2R-63, модуль АВР, TOQ5/TOQ7 або перемикач I–0–II TO219G / TO119G — без нього вводи нема чим перемикати"}); return out; }
+    let L1=K2(m1,"b1"), L2=K2(m2,"b1"); const N1=nB(m1)||feeds[0].id+":N", N2=nB(m2)||feeds[1].id+":N", s1=secFor(protIn(m1)), s2=secFor(protIn(m2));
     // два реле напруги — кожен ввід через своє: ввідний → реле (фаза через реле, нуль — лише на вимір) → АВР
     if(kvIn){ add("jump",L1,K2(kvIn[0],"t2"),"L",s1); add("jump",N1,K2(kvIn[0],"t1"),"N",1.5); L1=K2(kvIn[0],"b2");
       add("jump",L2,K2(kvIn[1],"t2"),"L",s2); add("jump",N2,K2(kvIn[1],"t1"),"N",1.5); L2=K2(kvIn[1],"b2"); }

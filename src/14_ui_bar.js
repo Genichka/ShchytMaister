@@ -98,13 +98,17 @@ function quickGroup(i,atOverride){ const p=GQ[i], type=S.gType||"qf1p", t=T[type
   const G=groupsOf(), same=G.filter(g=>g.group.name===p[1]||g.group.name.startsWith(p[1]+" ")).length, nm=same?`${p[1]} ${same+1}`:p[1];
   const ex={group:mkGroup(G.length,nm,p[3],p[4])}; if(S.brand&&S.brand!=="eua"&&MODELS[type]&&MODELS[type][S.brand]) ex.brand=S.brand;
   const d=mkDev(type,at[0],at[1],r,ex); S.devices.push(d); commit(); toast(`${desig(d)} ${r} — «${nm}» встановлено`,"ok"); }
+document.addEventListener("click",e=>{ const el=e.target.closest("[data-qrole]"); if(!el) return; const d=S.devices.find(x=>x.id===S.selDev); if(!d||d.type!=="qf1p") return;
+  if(el.dataset.qrole==="main"){ if(d.inMain) return; delete d.group; d.noGroup=true; d.inMain=true; d.cap=d.cap||"Ввідний"; toast(`${desig(d)} — ввідний автомат (лише фаза)`,"ok"); }
+  else { if(d.group) return; d.inMain=false; d.noGroup=false; if(d.cap==="Ввідний") delete d.cap; d.group=mkGroup(groupsOf().length,"Група "+(groupsOf().length+1),2.5,[]); toast(`${desig(d)} — групова лінія`,"ok"); }
+  commit(); });
 document.addEventListener("click",e=>{ const el=e.target.closest("[data-gq],[data-gqt],[data-gqrcd]"); if(!el) return; if(el.dataset.gqrcd!==undefined){ quickRcd(); return; }
   if(el.dataset.gqt){ S.gType=el.dataset.gqt; renderBar(); return; } quickGroup(+el.dataset.gq); });
 
 // ---- Картка модуля
 function devBar(d){ const t=T[d.type], g=d.group, m=modelOf(d), bl=brandsFor(d.type), set=devSet(d);
   const L=[...(t.ratings?[["rate",d.type==="qm"?"Діапазон":"Номінал"]]:[]),...(g?[["load","Навантаження"]]:[]),...(g&&S.mode==="test"?[["fault","Аварії"]]:[]),...(bl.length>1?[["brand","Виробник"]]:[]),
-    ...(set?[["set","Налаштування"]]:[]),["cap","Підпис"],["pos","Місце"]];
+    ...(set?[["set","Налаштування"]]:[]),...(d.type==="qf1p"?[["role","Роль"]]:[]),["cap","Підпис"],["pos","Місце"]];
   const cur=bseg(d.id,L,g&&S.mode==="test"?"load":L[0][0]);
   let s=bhead(`${esc(desig(d))} · ${esc(t.short)}${d.rating?" "+esc(d.rating)+(t.unit||""):""}${m?` <span class="bm">${esc(m)}</span>`:""}${g?` <span class="bm">«${esc(g.name)}»</span>`:""}`,bdel("data-devdel")+bx)+segRow(L,cur);
   if(cur==="rate") s+=brow(t.ratings.map(r=>chip(`data-rate="${r}"`,d.rating===r,`${r}${t.unit||""}`,"mono")).join("")+(d.type==="qm"?`<span class="volt sm"><input type="range" id="irset" min="${mprLo(d.rating)}" max="${mprHi(d.rating)}" step="0.1" value="${d.Ir}" aria-label="Уставка Ir"><output class="mono" id="irout">${fmt(d.Ir,1)} А</output></span>`:""));
@@ -118,6 +122,8 @@ function devBar(d){ const t=T[d.type], g=d.group, m=modelOf(d), bl=brandsFor(d.t
       +(du===null?"":`<span class="bl mono" style="color:${du>4?"var(--red)":"var(--muted)"}">ΔU ${fmt(du,1)} %</span>`)); }
   if(cur==="fault") s+=brow(chip(`data-leak="${d.id}"`,S.leak.has(d.id),"Витік на корпус")+chip(`data-short="${d.id}"`,S.short.has(d.id),"Коротке замикання")+chip(`data-arc="${d.id}"`,S.arc.has(d.id),"Іскріння")+`<span class="bl" data-gstat="${d.id}">${gStatus(d)}</span>`);
   if(cur==="set") s+=brow(set);
+  if(cur==="role") s+=brow(chip(`data-qrole="group"`,!!g,"Групова лінія")+chip(`data-qrole="main"`,!!d.inMain,"Ввідний")
+    +`<span class="bl">${d.inMain?"Ввідний 1P розриває лише фазу, нуль вводу йде напряму. Підходить, наприклад, для виходу інвертора.":"Окрема лінія з навантаженням: світло, розетки, котел."}</span>`,"wrap");
   if(cur==="pos") s+=brow(``
     +(d.type==="qf1p"?`<button class="btn sm" id="combBtn">${S.comb?"Зняти гребінку":"Гребінка 1P"}</button>`:"")
     +(t.prot||t.rcd?`<button class="btn sm" id="devToggle">${d.on&&!d.trip?"Вимкнути":"Увімкнути"}</button>`:"")+`<button class="btn sm danger" data-devdel>Зняти з рейки</button>`)+brow(`<span class="bl">Щоб пересунути, перетягніть модуль по рейці: мишею або затисніть пальцем і тягніть</span>`);
@@ -148,7 +154,7 @@ function fieldBar(f){ const L=FIELD_LIB.find(x=>x.type===f.type)||{name:FT[f.typ
 
 // ---- Перемички
 function wireToolsBar(){ const sw=k=>`<span class="sw" style="background:${k==="PE"?"linear-gradient(90deg,var(--wPEy) 50%,var(--wPEg) 50%)":WK[k][1]}"></span>`;
-  const bad=!mainsOf().length?{t:"Спершу поставте ввідний автомат 2P (вкладка «Захист»)"}:wirePlan().find(x=>x.bad);
+  const bad=!mainsOf().length?{t:"Спершу поставте ввідний автомат: 2P (вкладка «Захист») або 1P з роллю «Ввідний»"}:wirePlan().find(x=>x.bad);
   return brow(`<button class="btn sm primary" data-gall>⚡ Прокласти всі перемички автоматично</button>`+(bad?`<span class="bl" style="color:var(--orange)">${esc(bad.t)}</span>`:`<span class="bl">перемички, шини N і PE, групи — за схемою</span>`))+brow(`<span class="bl">Нова перемичка</span>`+Object.keys(WK).map(x=>chip(`data-kind="${x}"`,S.wireKind===x,sw(x)+WK[x][0])).join(""))
     +brow(SECS.map(x=>chip(`data-sec="${x}"`,S.wireSec===x,fmt(x,x%1?1:0),"mono")).join("")+`<span class="bl">мм²</span>`
       +(S.wires.some(w=>["ry","rya","ryb","rx"].some(k=>w[k]!=null))||S.board.bx?`<button class="btn sm" data-wautoall>↺ Вирівняти всі траси й шини</button>`:"")
