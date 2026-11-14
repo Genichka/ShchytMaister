@@ -50,9 +50,12 @@ function clearCheck(){ S.chk=null; S.chkOpen=false; }
 function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ const g=groupsOf()[0]; if(g){ S.selDev=g.id; S.bsegFor=g.id; S.bseg="load"; } } renderAll(false); }
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
 function closeDrawer(){ $("drawer").hidden=true; }
+// Відкрито готовий приклад (не власний щиток і ще не збережений як свій проєкт)
+const isExample = () => S.tpl!=="custom"&&!!TPL[S.tpl]&&!(S.proj&&S.proj.id);
 // Меню: лише те, чого немає на панелі (проєкти — кнопка «Проєкт», документи — вкладка «Документи»)
 function openDrawer(tpl){ renderTplMenu(); tplLabel();
   for(const el of document.querySelectorAll("#drawer [data-needdoc]")) el.hidden=!!S.noDoc;
+  { const sh=$("shDet"); if(sh&&!S.noDoc) sh.hidden=isExample(); }   // готовий приклад уже зібраний: корпус і помічник не потрібні
   for(const el of document.querySelectorAll("#drawer [data-nodoconly]")) el.hidden=!S.noDoc;
   const g=$("mGuide"); if(g) g.textContent=S.guide&&S.guide.on?"🧭 Вимкнути покрокового помічника":"🧭 Увімкнути покрокового помічника";
   for(const x of document.querySelectorAll("#drawer details.dr-d")) x.open=false;   // за замовчуванням усі розділи згорнуті
