@@ -35,15 +35,19 @@ function powerOn(){ for(const inp of S.board.inputs){ const s=S.src[inp.id]||(S.
   for(const d of S.devices) if(T[d.type].prot||T[d.type].rcd){ d.on=true; d.trip=null; }
   logp("ok","Напругу подано на всі вводи"); S.mode="test"; save(); solve(0); renderAll(true); $("scroller").scrollIntoView({behavior:"smooth",block:"start"}); }
 const wireDone = id => { const t=gTodo(id); return t.every(x=>x.ok); };
-function guideSteps(){ const b=S.board, kind=boardKind(b), G=groupsOf(), has=(...ts)=>S.devices.some(d=>ts.includes(d.type)), two=kind==="2in"||kind==="2inv";
+function guideSteps(){ const b=S.board, kind=boardKind(b), G=groupsOf(), has=(...ts)=>S.devices.some(d=>ts.includes(d.type)), two=kind==="2in"||kind==="2inv", kvN=()=>S.devices.filter(d=>d.type==="kv"||d.type==="tovpd1").length;
   const hasOut=wirePlan().some(x=>x.step==="out");
   return [
     {id:"main", t:kind==="2inv"?"Поставте два автомати 2P: ввідний від мережі й на виході інвертора":two?"Поставте два ввідні автомати 2P — по одному на кожен ввід":kind==="3ph"?"Поставте ввідний автомат 3P або 4P":"Поставте ввідний автомат 2P",
       h:"Ввідний автомат стоїть першим і захищає весь щиток. Номінал — за дозволеною потужністю вводу (для квартири зазвичай C25–C40).",
       done:()=>mainsOf().length>=(two?2:1), short:two?"Два ввідні автомати":"Ввідний автомат", act:["Обрати автомат",null]},
     {id:"prot", opt:true, t:kind==="3ph"?"Захист від аварій мережі: реле контролю фаз, УЗІП":"Захист від перенапруги: реле напруги, УЗІП",
-      h:kind==="3ph"?"Реле контролю фаз стежить за обривом і чергуванням фаз, УЗІП відводить імпульс блискавки на PE. Крок можна пропустити.":"Реле напруги відключить щиток при стрибку напруги, УЗІП відведе імпульс блискавки на PE. Крок можна пропустити.",
-      done:()=>has("kv","tovpd1","kvf","kvf2","spdac","spd3"), short:"Захист від перенапруги", act:["Обрати реле",null]},
+      h:kind==="3ph"?"Реле контролю фаз стежить за обривом і чергуванням фаз, УЗІП відводить імпульс блискавки на PE. Крок можна пропустити."
+        :two?"На два вводи можна поставити по реле напруги на кожен: QF1 → KV1 → АВР, QF2 → KV2 → АВР — ставте реле в тому ж порядку, що й ввідні автомати. Або одне реле — тоді воно стоїть після АВР. Крок можна пропустити."
+        :"Реле напруги відключить щиток при стрибку напруги, УЗІП відведе імпульс блискавки на PE. Крок можна пропустити.",
+      // два вводи: крок не закривається після першого реле — можна поставити друге (по реле на ввід) або натиснути «Одного реле досить»
+      done:()=>two?kvN()>=2||(has("spdac")&&!kvN())||(kvN()===1&&!!(S.guide&&S.guide.protDone)):has("kv","tovpd1","kvf","kvf2","spdac","spd3"),
+      next:two&&kvN()===1?"Одного реле досить →":null, short:two&&kvN()===1?"Реле напруги: друге — на ввід 2?":"Захист від перенапруги", act:[two&&kvN()===1?"Друге реле":"Обрати реле",null]},
     ...(two?[{id:"ats", t:kind==="2inv"?"Перемикання мережа ↔ інвертор: модуль АВР":"Перемикання вводів: модуль АВР або перемикач",
       h:kind==="2inv"?"Мережа — на ввід I модуля АВР, вихід інвертора — на ввід II. АВР перемикає і фазу, і нуль, тож інвертор ніколи не з’єднається з мережею."
         :"Модуль АВР перемикає сам, перемикач I–0–II — вручну. TO219G розриває фазу й нуль, TO119G на 1 модуль — лише фазу (нулі вводів з’єднуються перед ПЗВ). Головне, щоб вводи ніколи не з’єдналися фазами.",
@@ -181,4 +185,4 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); const it=
   if(q("[data-gfixkind]")){ w.kind=it.fixKind; delete w.col; toast(`Вид перемички: ${WK[w.kind][0]}`,"ok"); commit(); return; }
   if(q("[data-gshow]")){ S.mode="wire"; selectWire(w.id); return; } });
 
-document.addEventListener("click",e=>{ const el=e.target.closest("[data-gnext]"); if(!el||!S.guide) return; if(el.dataset.gnext==="groups") S.guide.gDone=true; S.pick=null; S.devFilter=null; save(); renderAll(true); });
+document.addEventListener("click",e=>{ const el=e.target.closest("[data-gnext]"); if(!el||!S.guide) return; if(el.dataset.gnext==="groups") S.guide.gDone=true; if(el.dataset.gnext==="prot") S.guide.protDone=true; S.pick=null; S.devFilter=null; save(); renderAll(true); });
