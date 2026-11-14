@@ -22,7 +22,7 @@ function wirePlan(){
   const bots=m=>T[m.type].terms.filter(x=>x.s==="bot"&&x.r!=="N"&&x.r!=="C").map(x=>K2(m,x.k));
   const nT=m=>{ const t=T[m.type].terms.find(x=>x.s==="top"&&x.r==="N"); return t?K2(m,t.k):null; };
   const nB=m=>{ const t=T[m.type].terms.find(x=>x.s==="bot"&&x.r==="N"); return t?K2(m,t.k):null; };
-  const rc4=three?pos("rcd4")[0]:null, rc1=!three?pos("rcd")[0]:null, kv=!three?pos("kv","tovpd1")[0]:null, kvf=three?pos("kvf","kvf2")[0]:null;
+  const rc4=three?pos("rcd4")[0]:null, rc1=!three?pos("rcd")[0]:null, kvs=!three?pos("kv","tovpd1"):[], kvIn=two&&kvs.length>=2?kvs.slice(0,2):null, kv=!kvIn?kvs[0]||null:null, kvf=three?pos("kvf","kvf2")[0]:null;
   const spd=!three?pos("spdac")[0]:null, spd3=three?pos("spd3")[0]:null, sw=two?pos(...SWITCH_T)[0]:null;
   const secMain=Math.max(...mains.map(m=>secFor(protIn(m))));
   // 1. Ввід → ввідний автомат; два вводи — кожен на свій автомат
@@ -35,7 +35,10 @@ function wirePlan(){
   let ph, n, n2j=null;                              // n2j — нуль вводу 2 для TO119G (1P перемикає лише фазу)
   if(two){ const m1=mains[0], m2=mains[1];
     if(!m2||!sw){ out.push({step:"jump",bad:true,ok:false,t:!m2?"Поставте другий ввідний автомат 2P — для вводу 2":"Поставте АВР: GEYA G2R-63, модуль АВР, TOQ5/TOQ7 або перемикач I–0–II TO219G / TO119G — без нього вводи нема чим перемикати"}); return out; }
-    const L1=K2(m1,"b1"), N1=K2(m1,"b2"), L2=K2(m2,"b1"), N2=K2(m2,"b2"), s1=secFor(protIn(m1)), s2=secFor(protIn(m2));
+    let L1=K2(m1,"b1"), L2=K2(m2,"b1"); const N1=K2(m1,"b2"), N2=K2(m2,"b2"), s1=secFor(protIn(m1)), s2=secFor(protIn(m2));
+    // два реле напруги — кожен ввід через своє: ввідний → реле (фаза через реле, нуль — лише на вимір) → АВР
+    if(kvIn){ add("jump",L1,K2(kvIn[0],"t2"),"L",s1); add("jump",N1,K2(kvIn[0],"t1"),"N",1.5); L1=K2(kvIn[0],"b2");
+      add("jump",L2,K2(kvIn[1],"t2"),"L",s2); add("jump",N2,K2(kvIn[1],"t1"),"N",1.5); L2=K2(kvIn[1],"b2"); }
     if(sw.type==="ats"||sw.type==="g2r"){ add("jump",L1,K2(sw,"IL"),"L",s1); add("jump",N1,K2(sw,"IN"),"N",s1); add("jump",L2,K2(sw,"IIL"),"L",s2); add("jump",N2,K2(sw,"IIN"),"N",s2); ph=[K2(sw,"L")]; n=K2(sw,"N"); }
     else if(sw.type==="toq5"||sw.type==="toq7"){ add("jump",L1,K2(sw,"RA"),"L",s1); add("jump",N1,K2(sw,"NA"),"N",s1); add("jump",L2,K2(sw,"RB"),"L",s2); add("jump",N2,K2(sw,"NB"),"N",s2);
       add("jump",K2(sw,"RA"),K2(sw,"AR"),"L",1.5); add("jump",K2(sw,"NA"),K2(sw,"AN"),"N",1.5); add("jump",K2(sw,"RB"),K2(sw,"BR"),"L",1.5); add("jump",K2(sw,"NB"),K2(sw,"BN"),"N",1.5);
