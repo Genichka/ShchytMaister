@@ -43,11 +43,13 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), G=groupsOf(), has=(..
       done:()=>mainsOf().length>=(two?2:1), short:two?"Два ввідні автомати":"Ввідний автомат", act:["Обрати автомат",null]},
     {id:"prot", opt:true, t:kind==="3ph"?"Захист від аварій мережі: реле контролю фаз, УЗІП":"Захист від перенапруги: реле напруги, УЗІП",
       h:kind==="3ph"?"Реле контролю фаз стежить за обривом і чергуванням фаз, УЗІП відводить імпульс блискавки на PE. Крок можна пропустити."
-        :two?"На два вводи можна поставити по реле напруги на кожен: QF1 → KV1 → АВР, QF2 → KV2 → АВР — ставте реле в тому ж порядку, що й ввідні автомати. Або одне реле — тоді воно стоїть після АВР. Крок можна пропустити."
+        :two?"Реле напруги стоїть між ввідним автоматом і АВР: коли напруга на його вводі погана, відключає цей ввід, і АВР переходить на інший. Ставте реле в тому ж порядку, що й ввідні автомати: KV1 — для вводу 1, KV2 — для вводу 2."
         :"Реле напруги відключить щиток при стрибку напруги, УЗІП відведе імпульс блискавки на PE. Крок можна пропустити.",
-      // два вводи: крок не закривається після першого реле — можна поставити друге (по реле на ввід) або натиснути «Одного реле досить»
-      done:()=>two?kvN()>=2||(has("spdac")&&!kvN())||(kvN()===1&&!!(S.guide&&S.guide.protDone)):has("kv","tovpd1","kvf","kvf2","spdac","spd3"),
-      next:two&&kvN()===1?"Одного реле досить →":null, short:two&&kvN()===1?"Реле напруги: друге — на ввід 2?":"Захист від перенапруги", act:[two&&kvN()===1?"Друге реле":"Обрати реле",null]},
+      // два вводи: спершу питаємо, реле на обидва вводи чи лише на ввід 1 (S.board.kvMode), далі — скільки реле треба поставити
+      ask:two&&!b.kvMode&&kvN()<2,
+      done:()=>two?kvN()>=2||(b.kvMode==="in1"&&kvN()>=1):has("kv","tovpd1","kvf","kvf2","spdac","spd3"),
+      short:!two||!b.kvMode?"Захист від перенапруги":b.kvMode==="both"?`Реле напруги: поставлено ${kvN()} з 2 — KV1 для вводу 1, KV2 для вводу 2`:"Реле напруги для вводу 1 (мережа)",
+      act:["Обрати реле",null]},
     ...(two?[{id:"ats", t:kind==="2inv"?"Перемикання мережа ↔ інвертор: модуль АВР":"Перемикання вводів: модуль АВР або перемикач",
       h:kind==="2inv"?"Мережа — на ввід I модуля АВР, вихід інвертора — на ввід II. АВР перемикає і фазу, і нуль, тож інвертор ніколи не з’єднається з мережею."
         :"Модуль АВР перемикає сам, перемикач I–0–II — вручну. TO219G розриває фазу й нуль, TO119G на 1 модуль — лише фазу (нулі вводів з’єднуються перед ПЗВ). Головне, щоб вводи ніколи не з’єдналися фазами.",
@@ -117,6 +119,10 @@ function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return 
       +`<div class="br"><span class="bl">Автоматично — програма проведе перемичку за вас. «Проведу сам» — торкніться клеми 1, потім клеми 2.</span></div>`; }
   if(s.id==="check"&&S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors)
     return `<div class="br gd">${num}<b class="gt">Перевірка: помилок ${S.lastCheck.errors}</b>${GX}</div><div class="br"><button class="btn sm primary" data-gall>Виправити все</button><button class="btn sm" data-gact="${g.cur}">Перевірити ще раз</button></div>`;
+  if(s.id==="prot"&&s.ask) return `<div class="br gd">${num}<b class="gt">Реле напруги: на ввід 1 і ввід 2 чи тільки на ввід 1?</b>${GX}</div>`
+    +`<div class="br wrap"><button class="btn sm primary" data-gkv="both">На ввід 1 і ввід 2</button><button class="btn sm" data-gkv="in1">Тільки на ввід 1 (мережа)</button><button class="btn sm" data-gskip="prot">Без реле напруги</button></div>`
+    +`<div class="br"><span class="bl">Реле відключає свій ввід, коли напруга на ньому погана, — і АВР переходить на інший.</span></div>`;
+  if(s.id==="prot"&&!s.ask&&S.board.kvMode&&boardKind(S.board).startsWith("2")) return `<div class="br gd">${num}<b class="gt">${esc(s.short)}</b><button class="btn sm primary" data-gact="${g.cur}">${esc(s.act[0])}</button><button class="btn sm" data-gkv="reset">Змінити вибір</button>${GX}</div>`;
   if(s.id==="busq"){ const rec=busRec(), mn=busMin(), ch=(p,cur,min)=>BUS_N.map(v=>`<button class="chip mono" data-gbus="${p}:${v}" aria-pressed="${cur===v}"${v<min?" disabled":""}>${v}</button>`).join("");
     return `<div class="br gd">${num}<b class="gt">${esc(s.t)}</b>${GX}</div>`
       +`<div class="br wrap"><span class="bl">Шина N</span>${ch("xn",S.board.xn,mn.xn)}</div><div class="br wrap"><span class="bl">Шина PE</span>${ch("xpe",S.board.xpe,mn.xpe)}</div>`
@@ -136,6 +142,8 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(q("[data-gbusrec]")){ const r=busRec(), m=busMin(); S.board.xn=Math.max(r.xn,m.xn); S.board.xpe=Math.max(r.xpe,m.xpe); GEO=null; commit(); return; }
   if(el=q("[data-gtb]")){ const on=el.dataset.gtb==="1"; if(!!S.board.tb===on) return; S.board.tb=on; if(!on) S.wires=S.wires.filter(x=>!/^tb:/.test(x.a)&&!/^tb:/.test(x.b)); const r=busRec(); S.board.xn=Math.max(S.board.xn,r.xn); S.board.xpe=Math.max(S.board.xpe,r.xpe); GEO=null; commit(); return; }
   if(q("[data-gbusok]")){ if(S.guide) S.guide.busOK=true; save(); renderAll(true); toast(`Шини: N ${S.board.xn}, PE ${S.board.xpe}${S.board.tb?", колодка XT2":""}`,"ok"); return; }
+  if(el=q("[data-gkv]")){ const v=el.dataset.gkv; if(v==="reset") delete S.board.kvMode; else S.board.kvMode=v;
+    if(v!=="reset") toast(v==="both"?"Реле напруги на обидва вводи: поставте KV1 для вводу 1 і KV2 для вводу 2":"Реле напруги тільки на ввід 1 (мережа)","ok"); commit(); return; }
   if(q("[data-gnorcd]")){ S.board.noRcd=true; commit(); toast("Щиток без ПЗВ: перевірка попереджатиме про групи без захисту людей","w"); } });
 
 // ---- Кроки прокладання перемичок: що з чим з’єднати (план — wirePlan) + перемички, які треба виправити
@@ -185,4 +193,4 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); const it=
   if(q("[data-gfixkind]")){ w.kind=it.fixKind; delete w.col; toast(`Вид перемички: ${WK[w.kind][0]}`,"ok"); commit(); return; }
   if(q("[data-gshow]")){ S.mode="wire"; selectWire(w.id); return; } });
 
-document.addEventListener("click",e=>{ const el=e.target.closest("[data-gnext]"); if(!el||!S.guide) return; if(el.dataset.gnext==="groups") S.guide.gDone=true; if(el.dataset.gnext==="prot") S.guide.protDone=true; S.pick=null; S.devFilter=null; save(); renderAll(true); });
+document.addEventListener("click",e=>{ const el=e.target.closest("[data-gnext]"); if(!el||!S.guide) return; if(el.dataset.gnext==="groups") S.guide.gDone=true; S.pick=null; S.devFilter=null; save(); renderAll(true); });
