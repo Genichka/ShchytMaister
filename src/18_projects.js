@@ -102,7 +102,10 @@ function openWizard(edit){ const b=S.board;
   WZ=edit?{edit:true,step:1,name:(S.proj&&S.proj.name)||"Мій щиток",kind:boardKind(b),rails:b.rails,xn:b.xn,xpe:b.xpe,tb:!!b.tb,noRcd:!!b.noRcd,guide:false,ikw:iv.kw,ikwh:iv.kwh}
     :{edit:false,step:0,name:"Мій щиток "+(projDB().list.length+1),kind:"1ph",rails:2,xn:8,xpe:8,tb:false,guide:true,ikw:5,ikwh:5};
   renderWizard(); $("dlg").hidden=false; }
-function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпус","Шини","Готово"], first=w.edit?1:0, last=4; let b="";
+// Крок «Шини» (отвори N / PE, ПЗВ, колодка XT2) — лише в «Меню → Корпус, ввід, шини»; новий щиток бере типові значення
+const wzSteps = w => w.edit?[1,2,3,4]:[0,1,2,4];
+const wzBus = w => { if(!w.edit){ w.xn=w.xpe=w.rails>=3?12:8; w.tb=false; w.noRcd=false; } };
+function renderWizard(){ const w=WZ, ST=wzSteps(w), NM={0:"Назва",1:"Ввід",2:"Корпус",3:"Шини",4:"Готово"}, first=ST[0], last=ST[ST.length-1]; let b=""; wzBus(w);
   if(w.step===0) b=`<label class="lbl2" for="wzName">Як назвати щиток?</label><input class="inp" id="wzName" value="${esc(w.name)}" maxlength="60"><p class="hint">Назва з’явиться в «Проєктах», щиток зберігатиметься автоматично.</p>`
     +`<p class="lbl2">Як будемо збирати?</p><button class="wz-opt" data-wg="1" aria-pressed="${!!w.guide}"><b>🧭 З помічником</b><span>Підказує кожен крок: що поставити на рейку, куди підключити перемички, як перевірити</span></button>`
     +`<button class="wz-opt" data-wg="0" aria-pressed="${!w.guide}"><b>✋ Самостійно</b><span>Модулі й перемички ставиш сам, без підказок; помічник можна ввімкнути пізніше в «Меню»</span></button>`;
@@ -116,8 +119,8 @@ function renderWizard(){ const w=WZ, names=["Назва","Ввід","Корпу�
     <div class="volt"><span class="lbl">Шина PE</span><input type="range" id="wzXpe" min="2" max="12" value="${w.xpe}"><output class="mono" id="wzXpeO">${w.xpe}</output></div>
     <div class="row"><span class="lbl">ПЗВ</span><button class="chip" data-wrcd="0" aria-pressed="${!w.noRcd}">З ПЗВ (рекомендовано)</button><button class="chip" data-wrcd="1" aria-pressed="${!!w.noRcd}">Без ПЗВ</button></div>
     <label class="chk"><input type="checkbox" id="wzTb" ${w.tb?"checked":""}> Клемна колодка XT2 для відхідних ліній</label><p class="hint">Кабель кожної групи підключається до колодки внизу щитка: L — від автомата, N — від шини N, PE — від шини PE.</p>`;
-  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li><li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}${w.tb?" · колодка XT2":""}</b></li><li><span>ПЗВ</span><b>${w.noRcd?"без ПЗВ":"з ПЗВ"}</b></li>${w.edit?"":`<li><span>Збирання</span><b>${w.guide?"🧭 з помічником":"✋ самостійно"}</b></li>`}</ul>`;
-  $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щиток"}</h2><ol class="wz-steps">${names.slice(first).map((n,j)=>`<li class="${j+first<w.step?"done":j+first===w.step?"cur":""}">${n}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
+  if(w.step===4) b=`<ul class="wz-sum"><li><span>Назва</span><b>${esc(w.name)}</b></li><li><span>Ввід</span><b>${esc(kindTitle(w))}</b></li><li><span>Корпус</span><b>ЩРН-${w.rails*12}</b></li>${w.edit?`<li><span>Шини</span><b>N ${w.xn} · PE ${w.xpe}${w.tb?" · колодка XT2":""}</b></li><li><span>ПЗВ</span><b>${w.noRcd?"без ПЗВ":"з ПЗВ"}</b></li>`:`<li><span>Збирання</span><b>${w.guide?"🧭 з помічником":"✋ самостійно"}</b></li>`}</ul>`;
+  $("dlgCard").innerHTML=`<h2>${w.edit?"Корпус і ввід":"Новий щиток"}</h2><ol class="wz-steps">${ST.map(s=>`<li class="${s<w.step?"done":s===w.step?"cur":""}">${NM[s]}</li>`).join("")}</ol><div class="dlg-b">${b}</div>
     <div class="row dlg-f"><button class="btn" data-wz="cancel">Скасувати</button>${w.step>first?`<button class="btn" data-wz="prev">Назад</button>`:""}${w.step<last?`<button class="btn primary" data-wz="next">Далі</button>`:`<button class="btn primary" data-wz="${w.edit?"apply":"create"}">${w.edit?"Застосувати":"Створити щиток"}</button>`}</div>`;
   const f=$("dlgCard").querySelector("input.inp,.wz-opt[aria-pressed=true],.btn.primary"); if(f) f.focus(); }
 function wizardCreate(){ const w=WZ; tplStart(boardFor(w)); S.tpl="custom"; S.tplObj=TPL.custom; S.env={sun:60,lux:60,soc:70}; S.env0=JSON.parse(JSON.stringify(S.env));
@@ -230,7 +233,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
     return; }
   if(el=q("[data-wz]")){ const a=el.dataset.wz, w=WZ;
     if(w.step===0){ const n=$("wzName"); if(n) w.name=(n.value||"").trim()||"Мій щиток"; }
-    if(a==="cancel") closeDlg(); if(a==="prev"){ w.step--; renderWizard(); } if(a==="next"){ w.step++; renderWizard(); }
+    if(a==="cancel") closeDlg(); const ST=wzSteps(w), si=ST.indexOf(w.step); if(a==="prev"){ w.step=ST[Math.max(0,si-1)]; renderWizard(); } if(a==="next"){ w.step=ST[Math.min(ST.length-1,si+1)]; renderWizard(); }
     if(a==="create") wizardCreate(); if(a==="apply") wizardApply(); return; }
   if(el=q("[data-wg]")){ const n=$("wzName"); if(n) WZ.name=(n.value||"").trim()||WZ.name; WZ.guide=el.dataset.wg==="1"; renderWizard(); return; }
   if(el=q("[data-wk]")){ WZ.kind=el.dataset.wk; if(WZ.kind==="3ph"&&WZ.xn<4) WZ.xn=4; renderWizard(); return; }
