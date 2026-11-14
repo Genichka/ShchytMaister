@@ -98,6 +98,10 @@ h1{margin:0;font-size:27px;line-height:1.1;font-weight:500;letter-spacing:0;whit
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px),linear-gradient(color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px);
   background-size:100px 100px,100px 100px,20px 20px,20px 20px}
 .scroller.empty #svg{max-width:620px}
+.scroller.empty{flex-direction:column;gap:6px;padding:16px} .scroller.empty #svg{margin:0 auto;width:100%}
+.empty-act{display:flex;flex-direction:column;align-items:center;gap:12px;max-width:520px;text-align:center} .empty-act[hidden]{display:none} .bbar[hidden]{display:none}
+.empty-act .ea-main{min-height:52px;padding:10px 26px;font-size:17px;font-weight:600;border-radius:10px} .empty-act .ea-note{margin:0;color:var(--muted);font-size:13.5px;line-height:1.45}
+.ea-row{display:flex;flex-wrap:wrap;justify-content:center;gap:8px} .ea-row .btn{min-height:40px;padding:6px 16px}
 .shop{display:flex;flex-direction:column;gap:10px}
 .shop-i{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line2);border-radius:var(--r);background:var(--panel2,rgba(255,255,255,.02))}
 .shop-ph{display:block;width:100%;max-height:200px;object-fit:contain;background:#fff;border-radius:var(--r)}
@@ -459,7 +463,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
 
   <main class="work" id="work">
     <div class="hint" id="hint"></div>
-    <div class="scroller" id="scroller"><svg id="svg" viewBox="0 0 840 612" role="img" aria-label="Електрощит" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="scroller" id="scroller"><svg id="svg" viewBox="0 0 840 612" role="img" aria-label="Електрощит" xmlns="http://www.w3.org/2000/svg"></svg><div class="empty-act" id="emptyAct" hidden><button class="btn primary ea-main" data-pa="new"><span aria-hidden="true">＋</span> Створити власний щиток</button><p class="ea-note">Майстер запитає назву, ввід (1 чи 3 фази, генератор, інвертор), корпус і шини — далі ставите модулі й перемички самі або з покроковим помічником.</p><div class="ea-row"><button class="btn" data-nodoc="tpl">Приклади щитків</button><button class="btn" data-nodoc="open">Мої проєкти</button></div></div></div>
     <button class="btn wclose" id="closeBtn" aria-label="Закрити щиток" title="Закрити щиток">✕</button>
     <div class="fab"><button class="btn" id="zIn" aria-label="Збільшити">+</button><button class="btn mono" id="zFit" aria-label="Масштаб 100%">100%</button><button class="btn" id="zOut" aria-label="Зменшити">−</button><button class="btn" id="zAll" aria-label="Вписати в екран">⤢</button></div>
   </main>

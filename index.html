@@ -101,6 +101,10 @@ h1{margin:0;font-size:27px;line-height:1.1;font-weight:500;letter-spacing:0;whit
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px),linear-gradient(color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px);
   background-size:100px 100px,100px 100px,20px 20px,20px 20px}
 .scroller.empty #svg{max-width:620px}
+.scroller.empty{flex-direction:column;gap:6px;padding:16px} .scroller.empty #svg{margin:0 auto;width:100%}
+.empty-act{display:flex;flex-direction:column;align-items:center;gap:12px;max-width:520px;text-align:center} .empty-act[hidden]{display:none} .bbar[hidden]{display:none}
+.empty-act .ea-main{min-height:52px;padding:10px 26px;font-size:17px;font-weight:600;border-radius:10px} .empty-act .ea-note{margin:0;color:var(--muted);font-size:13.5px;line-height:1.45}
+.ea-row{display:flex;flex-wrap:wrap;justify-content:center;gap:8px} .ea-row .btn{min-height:40px;padding:6px 16px}
 .shop{display:flex;flex-direction:column;gap:10px}
 .shop-i{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line2);border-radius:var(--r);background:var(--panel2,rgba(255,255,255,.02))}
 .shop-ph{display:block;width:100%;max-height:200px;object-fit:contain;background:#fff;border-radius:var(--r)}
@@ -462,7 +466,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
 
   <main class="work" id="work">
     <div class="hint" id="hint"></div>
-    <div class="scroller" id="scroller"><svg id="svg" viewBox="0 0 840 612" role="img" aria-label="Електрощит" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="scroller" id="scroller"><svg id="svg" viewBox="0 0 840 612" role="img" aria-label="Електрощит" xmlns="http://www.w3.org/2000/svg"></svg><div class="empty-act" id="emptyAct" hidden><button class="btn primary ea-main" data-pa="new"><span aria-hidden="true">＋</span> Створити власний щиток</button><p class="ea-note">Майстер запитає назву, ввід (1 чи 3 фази, генератор, інвертор), корпус і шини — далі ставите модулі й перемички самі або з покроковим помічником.</p><div class="ea-row"><button class="btn" data-nodoc="tpl">Приклади щитків</button><button class="btn" data-nodoc="open">Мої проєкти</button></div></div></div>
     <button class="btn wclose" id="closeBtn" aria-label="Закрити щиток" title="Закрити щиток">✕</button>
     <div class="fab"><button class="btn" id="zIn" aria-label="Збільшити">+</button><button class="btn mono" id="zFit" aria-label="Масштаб 100%">100%</button><button class="btn" id="zOut" aria-label="Зменшити">−</button><button class="btn" id="zAll" aria-label="Вписати в екран">⤢</button></div>
   </main>
@@ -493,7 +497,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.35.2", date:"2026-11-15", dev:["ОВЕН ПЛК200-04","Перетворювач DC/DC 18–36 → 24 В","Реле проміжне 1CO, котушка 24 В=","Лампа сигнальна 24 В","Перемикач «Авто / Ручний»"], notes:["Меню: коли відкрито готовий приклад, розділу «Щиток» (корпус, ввід, шини, покроковий помічник) більше немає — щиток уже зібраний. Збережіть приклад як свій проєкт, і розділ з’явиться знову","Демонстрація на ПК: на широкому екрані пояснення тепер праворуч на всю висоту, і щиток більше не обрізається знизу. На кожному кроці щиток сам наводиться на апарати, про які йде мова, і підсвічує їх помаранчевою рамкою — в усіх шаблонах","Демонстрація АВР на ПЛК200: довші кроки, щоб встигнути прочитати; на останньому кроці видно весь щиток","Новий шаблон «АВР на 2 вводи → АВР мережа ↔ інвертор 24 В на ОВЕН ПЛК200»: резервне живлення будинку від гібридного інвертора 24 В з АКБ LiFePO4. Поки є мережа, інвертор і BMS вимкнені. Мережа зникла — ПЛК забороняє KM1 реле K1, імпульсом 3 с вмикає BMS, через 2 с замикає Remote ON/OFF інвертора, а KM2 вмикається від його виходу. Мережа повернулась і стабільна — ПЛК вимикає інвертор, потім BMS, і лише тоді дозволяє KM1. Після кожного відключення — заряд АКБ через KM3 до SOC 100 %. Без живлення ПЛК мережа працює сама","Документи: нова вкладка «Принципова схема» для шаблонів, що її мають — аркуш А3 зі штампом, збереження в SVG і окрема сторінка в «Повному комплекті» PDF","Нові модулі: ОВЕН ПЛК200-04 (живлення 24 В, входи FDI1–FDI6, релейні виходи DO1–DO5, стан програми на панелі й у журналі), Перетворювач DC/DC 18–36 → 24 В, Реле проміжне 1CO, котушка 24 В=, Лампа сигнальна 24 В, Перемикач «Авто / Ручний»","Поза щитком: гібридний інвертор 24 В 3 кВт із входом Remote ON/OFF і АКБ LiFePO4 24 В 100 А·год з BMS — кнопка (утримати 3 с), клеми B± до BMS і P± після BMS","Симулятор: кола 24 В постійного струму. Напруга АКБ залежить від заряду; КЗ на виході BMS вимикає АКБ, від КЗ до BMS рятує лише запобіжник; DC/DC має захист від КЗ"]};
+const APP = { v:"4.35.3", date:"2026-11-15", dev:["ОВЕН ПЛК200-04","Перетворювач DC/DC 18–36 → 24 В","Реле проміжне 1CO, котушка 24 В=","Лампа сигнальна 24 В","Перемикач «Авто / Ручний»"], notes:["Коли щиток не відкрито, на порожньому полі тепер є кнопка «Створити власний щиток» з майстром, а також «Приклади щитків» і «Мої проєкти». Дубль цих кнопок у нижній панелі прибрано","Приклади щитків: розділ «Конструктор» з порожніми щитками прибрано — власний щиток створює кнопка «Створити власний щиток»","Меню: коли відкрито готовий приклад, розділу «Щиток» (корпус, ввід, шини, покроковий помічник) більше немає — щиток уже зібраний. Збережіть приклад як свій проєкт, і розділ з’явиться знову","Демонстрація на ПК: на широкому екрані пояснення тепер праворуч на всю висоту, і щиток більше не обрізається знизу. На кожному кроці щиток сам наводиться на апарати, про які йде мова, і підсвічує їх помаранчевою рамкою — в усіх шаблонах","Демонстрація АВР на ПЛК200: довші кроки, щоб встигнути прочитати; на останньому кроці видно весь щиток","Новий шаблон «АВР на 2 вводи → АВР мережа ↔ інвертор 24 В на ОВЕН ПЛК200»: резервне живлення будинку від гібридного інвертора 24 В з АКБ LiFePO4. Поки є мережа, інвертор і BMS вимкнені. Мережа зникла — ПЛК забороняє KM1 реле K1, імпульсом 3 с вмикає BMS, через 2 с замикає Remote ON/OFF інвертора, а KM2 вмикається від його виходу. Мережа повернулась і стабільна — ПЛК вимикає інвертор, потім BMS, і лише тоді дозволяє KM1. Після кожного відключення — заряд АКБ через KM3 до SOC 100 %. Без живлення ПЛК мережа працює сама","Документи: нова вкладка «Принципова схема» для шаблонів, що її мають — аркуш А3 зі штампом, збереження в SVG і окрема сторінка в «Повному комплекті» PDF","Нові модулі: ОВЕН ПЛК200-04 (живлення 24 В, входи FDI1–FDI6, релейні виходи DO1–DO5, стан програми на панелі й у журналі), Перетворювач DC/DC 18–36 → 24 В, Реле проміжне 1CO, котушка 24 В=, Лампа сигнальна 24 В, Перемикач «Авто / Ручний»","Поза щитком: гібридний інвертор 24 В 3 кВт із входом Remote ON/OFF і АКБ LiFePO4 24 В 100 А·год з BMS — кнопка (утримати 3 с), клеми B± до BMS і P± після BMS","Симулятор: кола 24 В постійного струму. Напруга АКБ залежить від заряду; КЗ на виході BMS вимикає АКБ, від КЗ до BMS рятує лише запобіжник; DC/DC має захист від КЗ"]};
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // модулі на DIN-рейці
@@ -1807,7 +1811,7 @@ function devSVG(d){
   return s+"</g>";
 }
 function renderEmpty(){ const svg=$("svg"); svg.setAttribute("viewBox","0 0 600 120"); let s="";   // сітку малює CSS (.scroller.empty) — на все поле
-  s+=`<text x="300" y="52" text-anchor="middle" font-size="30" font-weight="600" fill="var(--muted)">Немає відкритого щитка</text><text x="300" y="90" text-anchor="middle" font-size="17" fill="var(--muted)">Створіть новий щиток або відкрийте приклад — кнопки внизу</text>`;
+  s+=`<text x="300" y="52" text-anchor="middle" font-size="30" font-weight="600" fill="var(--muted)">Немає відкритого щитка</text><text x="300" y="90" text-anchor="middle" font-size="17" fill="var(--muted)">Складіть власний щиток з нуля або відкрийте приклад</text>`;
   svg.innerHTML=s; }
 function render(){ if(S.noDoc){ renderEmpty(); return; } 
   geoCache(); const R=S.sim||{liveW:new Set()}, svg=$("svg"), H=totalH(), B=busY(), b=S.board, inx=GEO.inx; let s="";
@@ -2030,13 +2034,13 @@ TPL.flat = { name:"Квартира: ввід, реле напруги, ПЗВ, 
       {say:"Прибираємо аварію і знову вмикаємо QD1.", do(){ S.leak.clear(); S.leakWarned.clear(); const q=byDes("QD1"); q.on=true; q.trip=null; }, wait:3},
       {say:"Коротке замикання на кухні: спрацьовує лише QF3, решта квартири працює.", do(){ S.short.add(byDes("QF3").id); }, wait:3},
       {say:"Готово. Прибираємо КЗ і вмикаємо QF3.", do(){ S.short.clear(); const q=byDes("QF3"); q.on=true; q.trip=null; }, wait:1}]}};
-TPL.empty = { name:"Порожній щиток · 1 фаза · 2 рейки", cat:"Конструктор", info:"Збирайте власну схему: оберіть модуль у списку «Додати модуль», торкніться вільного місця на рейці й прокладіть перемички в режимі «Перемички».",
+TPL.empty = { name:"Порожній щиток · 1 фаза · 2 рейки", cat:"Конструктор", hidden:true, info:"Збирайте власну схему: оберіть модуль у списку «Додати модуль», торкніться вільного місця на рейці й прокладіть перемички в режимі «Перемички».",
   build(){ tplStart({rails:2}); }, demo:{controls:[{type:"src",id:"in"}], script:[]}};
-TPL.empty3 = { name:"Порожній щиток · 3 фази + двигун", cat:"Конструктор", info:"Трифазний ввід і двигун 4 кВт, уже підключений до клемника XT1 (U, V, W, PE). Зберіть схему пуску: автомат захисту двигуна, контактор, кнопки «Пуск» і «Стоп».",
+TPL.empty3 = { name:"Порожній щиток · 3 фази + двигун", cat:"Конструктор", hidden:true, info:"Трифазний ввід і двигун 4 кВт, уже підключений до клемника XT1 (U, V, W, PE). Зберіть схему пуску: автомат захисту двигуна, контактор, кнопки «Пуск» і «Стоп».",
   build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}], xt:[{k:"U",l:"U",r:"P"},{k:"V",l:"V",r:"P"},{k:"W",l:"W",r:"P"},{k:"PE",l:"PE",r:"PE"}]});
     F("motor3",{U:"xt:U",V:"xt:V",W:"xt:W",PE:"xt:PE"}); },
   demo:{controls:[{type:"src",id:"in",label:"Мережа 3~"},{type:"toggle",label:"Обрив фази L3",get:()=>!!S.src.in.lost.L3,set:v=>{ S.src.in.lost.L3=v; }}], script:[]}};
-TPL.empty2 = { name:"Порожній щиток · 2 вводи (мережа + генератор)", cat:"Конструктор", info:"Два вводи: мережа і генератор. Зберіть власний АВР на модулі, контакторах або LOGO! і перевірте, чи немає зустрічного ввімкнення.",
+TPL.empty2 = { name:"Порожній щиток · 2 вводи (мережа + генератор)", cat:"Конструктор", hidden:true, info:"Два вводи: мережа і генератор. Зберіть власний АВР на модулі, контакторах або LOGO! і перевірте, чи немає зустрічного ввімкнення.",
   build(){ tplStart({rails:2, inputs:[{id:"in",label:"Ввід 1 · мережа",terms:["L","N","PE"]},{id:"in2",label:"Ввід 2 · генератор",terms:["L","N"]}], xn:8, xpe:8}); },
   demo:{controls:[{type:"src",id:"in",label:"Мережа"},{type:"src",id:"in2",label:"Генератор",noU:true}], script:[]}};
 /* ===== Шаблони АВР на 2 вводи (1 фаза) ===== */
@@ -3017,7 +3021,7 @@ function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=2
 function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
-function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щиток або відкрийте приклад; збережені проєкти та імпорт — кнопка «Проєкт» справа вгорі.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
+function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть власний щиток, відкрийте приклад або свій збережений проєкт — кнопки на полі нижче.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
   if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця на рейці${S.pickQty>1?` — поставиться ${S.pickQty} шт. підряд`:""}. ✕ унизу — скасувати.`:"Перетягніть модуль із нижньої панелі на рейку (мишею; пальцем — затисніть і тягніть). Модуль на рейці, шини N і PE, колодку XT2 — затисніть і тягніть, щоб пересунути; дотик — налаштування.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для перемички, яку переносимо.":S.selWire?"Перемичку вибрано: кружечок на кінці — на іншу клему; середину перемички — тягніть, щоб прокласти інакше.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Нова перемичка — тягніть від клеми до клеми. Перемичку — затисніть посередині й тягніть, щоб відвести вбік. Модуль — затисніть і тягніть.";
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:`Подайте напругу, тисніть кнопки й важелі на модулях або запустіть демонстрацію. Щось забули? <button class="hlink" data-hgo="add">＋ Додати модуль</button> · <button class="hlink" data-hgo="wire">〰 Перемички</button>`;
@@ -3054,7 +3058,7 @@ function renderAll(full=true){ render(); hint(); renderBar(); if(!full) updateLi
   for(const [id,c] of [[S.moveDev,"mv"],[S.repl,"rp"]]) if(id){ const g=document.querySelector(`[data-dev="${id}"]`); if(g) g.classList.add(c); }
   document.querySelectorAll(".tb[data-mode]").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
   $("undoTop").disabled=S.noDoc||!(S.hist&&S.hist.length); $("redoTop").disabled=S.noDoc||!(S.fut&&S.fut.length);
-  document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc; $("closeBtn").hidden=!!S.noDoc; $("scroller").classList.toggle("empty",!!S.noDoc);
+  document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc; $("closeBtn").hidden=!!S.noDoc; $("scroller").classList.toggle("empty",!!S.noDoc); { const ea=$("emptyAct"); if(ea) ea.hidden=!S.noDoc; $("bar").hidden=!!S.noDoc; }
   $("svg").style.width=(S.noDoc?100:S.zoom*100)+"%"; $("zFit").textContent=Math.round(S.zoom*100)+"%"; }
 function commit(full=true){ if(typeof trackHistory==="function") trackHistory(); save(); solve(0); renderAll(full); }
 /* ===== Нижня панель на один екран: усе в кількох рядках, без вертикальної прокрутки й спливних вікон ===== */
@@ -3320,7 +3324,7 @@ function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ co
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
 function closeDrawer(){ $("drawer").hidden=true; }
 // Відкрито готовий приклад (не власний щиток і ще не збережений як свій проєкт)
-const isExample = () => S.tpl!=="custom"&&!!TPL[S.tpl]&&!(S.proj&&S.proj.id);
+const isExample = () => !!TPL[S.tpl]&&!TPL[S.tpl].hidden&&!(S.proj&&S.proj.id);
 // Меню: лише те, чого немає на панелі (проєкти — кнопка «Проєкт», документи — вкладка «Документи»)
 function openDrawer(tpl){ renderTplMenu(); tplLabel();
   for(const el of document.querySelectorAll("#drawer [data-needdoc]")) el.hidden=!!S.noDoc;

@@ -51,7 +51,7 @@ function showTab(t){ if(t==="check"&&S.chk) S.chkOpen=true; if(t==="groups"){ co
 function fitZoom(){ const sc=$("scroller"), vb=$("svg").viewBox.baseVal; if(!vb||!vb.width) return 1; return Math.max(0.3,Math.min(1,Math.floor((sc.clientHeight-6)/(sc.clientWidth*vb.height/vb.width)*20)/20)); }
 function closeDrawer(){ $("drawer").hidden=true; }
 // Відкрито готовий приклад (не власний щиток і ще не збережений як свій проєкт)
-const isExample = () => S.tpl!=="custom"&&!!TPL[S.tpl]&&!(S.proj&&S.proj.id);
+const isExample = () => !!TPL[S.tpl]&&!TPL[S.tpl].hidden&&!(S.proj&&S.proj.id);
 // Меню: лише те, чого немає на панелі (проєкти — кнопка «Проєкт», документи — вкладка «Документи»)
 function openDrawer(tpl){ renderTplMenu(); tplLabel();
   for(const el of document.querySelectorAll("#drawer [data-needdoc]")) el.hidden=!!S.noDoc;

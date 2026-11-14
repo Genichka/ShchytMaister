@@ -16,7 +16,7 @@ function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=2
 function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }
 
-function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть новий щиток або відкрийте приклад; збережені проєкти та імпорт — кнопка «Проєкт» справа вгорі.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
+function hint(){ let h=""; if(S.noDoc){ $("hint").innerHTML="<span>Робоча зона порожня. Створіть власний щиток, відкрийте приклад або свій збережений проєкт — кнопки на полі нижче.</span>"; return; } const gh0=(!S.pick&&!S.selDev&&!S.selWire&&typeof guideHint==="function")?guideHint():"";
   if(S.mode==="mount") h=S.pick?`<b>${T[S.pick].name}${S.pickRating?" "+S.pickRating+(T[S.pick].unit||""):""}</b>: торкніться вільного місця на рейці${S.pickQty>1?` — поставиться ${S.pickQty} шт. підряд`:""}. ✕ унизу — скасувати.`:"Перетягніть модуль із нижньої панелі на рейку (мишею; пальцем — затисніть і тягніть). Модуль на рейці, шини N і PE, колодку XT2 — затисніть і тягніть, щоб пересунути; дотик — налаштування.";
   if(S.mode==="wire") h=S.moveEnd?"Торкніться нової клеми для перемички, яку переносимо.":S.selWire?"Перемичку вибрано: кружечок на кінці — на іншу клему; середину перемички — тягніть, щоб прокласти інакше.":S.pend?`Початок: <b>${esc(termName(S.pend))}</b>. Торкніться другої клеми.`:"Нова перемичка — тягніть від клеми до клеми. Перемичку — затисніть посередині й тягніть, щоб відвести вбік. Модуль — затисніть і тягніть.";
   if(S.mode==="test") h=S.demo?`Демонстрація: крок ${S.demo.i+1} з ${S.tplObj.demo.script.length}`:`Подайте напругу, тисніть кнопки й важелі на модулях або запустіть демонстрацію. Щось забули? <button class="hlink" data-hgo="add">＋ Додати модуль</button> · <button class="hlink" data-hgo="wire">〰 Перемички</button>`;
@@ -53,6 +53,6 @@ function renderAll(full=true){ render(); hint(); renderBar(); if(!full) updateLi
   for(const [id,c] of [[S.moveDev,"mv"],[S.repl,"rp"]]) if(id){ const g=document.querySelector(`[data-dev="${id}"]`); if(g) g.classList.add(c); }
   document.querySelectorAll(".tb[data-mode]").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===S.mode));
   $("undoTop").disabled=S.noDoc||!(S.hist&&S.hist.length); $("redoTop").disabled=S.noDoc||!(S.fut&&S.fut.length);
-  document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc; $("closeBtn").hidden=!!S.noDoc; $("scroller").classList.toggle("empty",!!S.noDoc);
+  document.querySelectorAll(".tb[data-mode],#btnCheck,#docsBtn").forEach(b=>b.disabled=!!S.noDoc); document.querySelector(".fab").hidden=!!S.noDoc; $("closeBtn").hidden=!!S.noDoc; $("scroller").classList.toggle("empty",!!S.noDoc); { const ea=$("emptyAct"); if(ea) ea.hidden=!S.noDoc; $("bar").hidden=!!S.noDoc; }
   $("svg").style.width=(S.noDoc?100:S.zoom*100)+"%"; $("zFit").textContent=Math.round(S.zoom*100)+"%"; }
 function commit(full=true){ if(typeof trackHistory==="function") trackHistory(); save(); solve(0); renderAll(full); }
