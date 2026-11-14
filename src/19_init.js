@@ -21,5 +21,11 @@ document.addEventListener("input",e=>{ if(e.target.id!=="devQ") return; S.devQ=e
   resetHistory(); commit(); tplLabel(); renderProjBtn();
 })();
 
+// Після оновлення (і на старті): власний щиток, де модуль стоїть без перемичок, а помічник тепер уміє його підключити, — пропонуємо перепрокласти
+setTimeout(()=>{ try{ if(S.tpl!=="custom") return; const gaps=planGaps(); if(!gaps.length) return;
+  const sig=structSnap(), skip=JSON.parse(localStorage.getItem("pc-replan-skip")||"[]"); if(skip.includes(sig)) return; const many=gaps.length>1;
+  dialog("Прокласти перемички за новою схемою?",`<p>На щитку ${many?"модулі":"модуль"} <b>${esc(gaps.map(desig).join(", "))}</b> без перемичок, а помічник тепер уміє ${many?"їх":"його"} підключити.</p>`
+    +`<p class="hint">Перемички між модулями буде прокладено заново за схемою помічника, модулі лишаться на своїх місцях. Не сподобається — «Назад» поверне як було.</p>`,
+    [{label:"Пізніше",act:()=>{ try{ skip.push(sig); localStorage.setItem("pc-replan-skip",JSON.stringify(skip.slice(-20))); }catch(e){} }},{label:"Перепрокласти",cls:"primary",act:()=>autoWire()}]); }catch(e){} },900);
 // На широкому екрані щиток одразу вписується у висоту
 (function(){ const fit=()=>{ if(S.demo) return; if(window.innerWidth>=900){ const z=fitZoom(); if(z<1){ S.zoom=z; renderAll(false); } } }; setTimeout(fit,50); let t=null; window.addEventListener("resize",()=>{ clearTimeout(t); t=setTimeout(fit,200); }); })();

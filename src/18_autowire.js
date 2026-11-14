@@ -100,6 +100,10 @@ function fixRatings(){ const fix=[], mains=mainsOf(); if(!mains.length) return f
   return fix; }
 
 // Прокласти весь щиток за схемою. Перемички між модулями зі схеми, яких у ній немає, прибираються; перемички до інших модулів лишаються.
+// Модулі, які за схемою помічника мають бути підключені, а на щитку стоять зовсім без перемичок (напр. друге реле напруги після оновлення)
+function planGaps(){ if(S.noDoc||!S.wires.length) return []; let plan; try{ plan=wirePlan(); }catch(e){ return []; } if(!plan.length||plan.some(x=>x.bad)) return [];
+  const ids=new Set(plan.flatMap(x=>[x.a,x.b]).map(k=>String(k).split(":")[0]));
+  return S.devices.filter(d=>ids.has(d.id)&&!S.wires.some(w=>w.a.startsWith(d.id+":")||w.b.startsWith(d.id+":"))); }
 function autoWire(){ const plan=wirePlan(), bad=plan.find(x=>x.bad);
   if(!mainsOf().length){ toast("Спершу поставте ввідний автомат","w"); return false; }
   if(bad){ toast(bad.t,"w"); return false; }
