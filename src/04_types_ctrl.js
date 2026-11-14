@@ -215,7 +215,7 @@ defType("toq5",{name:"АВР TOMZN TOQ5 2P з ручкою (мережа + ге�
   ratings:["63","100","125"], def:"125", unit:" А",
   terms:[{k:"RA",s:"top",r:"L",l:"R (A)",m:0.3,nl:1},{k:"NA",s:"top",r:"N",l:"N (A)",m:1.5,nl:1},
     {k:"AR",s:"top",r:"L",l:"AR",m:3.0,nl:1},{k:"AN",s:"top",r:"N",l:"AN",m:3.55,nl:1},{k:"NCA",s:"top",r:"C",l:"NC (A)",m:4.1,nl:1},{k:"CA",s:"top",r:"C",l:"C (A)",m:4.65,nl:1},{k:"NOA",s:"top",r:"C",l:"NO (A)",m:5.2,nl:1},
-    {k:"RB",s:"bot",r:"L",l:"R (B)",m:0.05,nl:1},{k:"NB",s:"bot",r:"N",l:"N (B)",m:0.75,nl:1},{k:"RL",s:"bot",r:"L",l:"R (Load)",m:1.45,nl:1},{k:"NL",s:"bot",r:"N",l:"N (Load)",m:2.15,nl:1},
+    {k:"RB",s:"bot",r:"L",l:"R (B)",m:0.03,nl:1},{k:"RL",s:"bot",r:"L",l:"R (Load)",m:0.57,nl:1},{k:"NB",s:"bot",r:"N",l:"N (B)",m:1.23,nl:1},{k:"NL",s:"bot",r:"N",l:"N (Load)",m:1.77,nl:1},
     {k:"BR",s:"bot",r:"L",l:"BR",m:3.0,nl:1},{k:"BN",s:"bot",r:"N",l:"BN",m:3.55,nl:1},{k:"NCB",s:"bot",r:"C",l:"NC (B)",m:4.1,nl:1},{k:"CB",s:"bot",r:"C",l:"C (B)",m:4.65,nl:1},{k:"NOB",s:"bot",r:"C",l:"NO (B)",m:5.2,nl:1}],
   poles:[{a:"RA",b:"RL",r:"L"},{a:"NA",b:"NL",r:"N"},{a:"RB",b:"RL",r:"L"},{a:"NB",b:"NL",r:"N"},
     {a:"CA",b:"NOA",r:"C"},{a:"CA",b:"NCA",r:"C"},{a:"CB",b:"NOB",r:"C"},{a:"CB",b:"NCB",r:"C"}],
@@ -233,8 +233,11 @@ defType("toq5",{name:"АВР TOMZN TOQ5 2P з ручкою (мережа + ге�
     let s=`<line x1="${g.x+176}" y1="${g.y+48}" x2="${g.x+176}" y2="${g.y+162}" stroke="#b9bcc4"/>`;
     // надписи клем, як на корпусі
     [["RA","R"],["NA","N"],["AR","AR"],["AN","AN"],["NCA","NC"],["CA","C"],["NOA","NO"]].forEach(([k,l])=>{ const m=T.toq5.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+42,l,{fs:k.length>2||k==="AR"||k==="AN"?6.4:8,fw:700}); });
-    [["RB","R"],["NB","N"],["RL","R"],["NL","N"],["BR","BR"],["BN","BN"],["NCB","NC"],["CB","C"],["NOB","NO"]].forEach(([k,l])=>{ const m=T.toq5.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+160,l,{fs:l.length>1?6.4:8,fw:700}); });
-    s+=lab(g.x+76,g.y+62,"Source A")+lab((tx_(0.05)+tx_(0.75))/2,g.y+146,"Source B")+lab((tx_(1.45)+tx_(2.15))/2,g.y+146,"Load");
+    // низ, як на корпусі: «Source B», великі R і N над колонками; під гвинтами — ярус клеми (B — вхід генератора, Load — вихід на навантаження) і клеми керування
+    s+=tx(tx_(0.3),g.y+161,"R",{fs:10,fw:800})+tx(tx_(1.5),g.y+161,"N",{fs:10,fw:800});
+    for(const [a,b] of [[0.03,0.57],[1.23,1.77]]) s+=`<rect x="${tx_(a)-14}" y="${g.y+205}" width="${tx_(b)-tx_(a)+28}" height="29" rx="4" fill="none" stroke="#8f949c" stroke-width="1.2"/>`;
+    [["RB","B"],["RL","Load"],["NB","B"],["NL","Load"],["BR","BR"],["BN","BN"],["NCB","NC"],["CB","C"],["NOB","NO"]].forEach(([k,l])=>{ const m=T.toq5.terms.find(t=>t.k===k).m; s+=tx(tx_(m)+5,g.y+238,l,{fs:6.4,fw:700,a:"start"}); });   // правіше від гвинта — перемичка не закриває
+    s+=lab(g.x+76,g.y+62,"Source A")+lab(tx_(0.9),g.y+147,"Source B");
     // поворотна ручка
     s+=`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${cx0}" cy="${cy0}" r="31" fill="#f1f2f4" stroke="#b9bcc4" stroke-width="1.5"/>`
       +`<path d="M${cx0+24} ${cy0-20} A31 31 0 0 1 ${cx0+24} ${cy0+20}" fill="none" stroke="#5c616b" stroke-width="1.2" marker-end="none"/>`
@@ -264,8 +267,11 @@ defType("toq7",{...T.toq5, name:"АВР TOMZN TOQ7 2P з ручкою (мере�
       +`<line x1="${g.x+176}" y1="${g.y+48}" x2="${g.x+176}" y2="${g.y+162}" stroke="#454a54"/>`;
     // надписи клем на корпусі (зверху — Source A і керування A, знизу — Source B, Load і керування B)
     [["RA","R"],["NA","N"],["AR","AR"],["AN","AN"],["NCA","NC"],["CA","C"],["NOA","NO"]].forEach(([k,l])=>{ const m=T.toq7.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+42,l,{fs:l.length>1?6.4:8,fw:700,fill:W_}); });
-    [["RB","R"],["NB","N"],["RL","R"],["NL","N"],["BR","BR"],["BN","BN"],["NCB","NC"],["CB","C"],["NOB","NO"]].forEach(([k,l])=>{ const m=T.toq7.terms.find(t=>t.k===k).m; s+=tx(tx_(m),g.y+160,l,{fs:l.length>1?6.4:8,fw:700,fill:W_}); });
-    s+=lab(g.x+76,g.y+62,"Source A")+lab((tx_(0.05)+tx_(0.75))/2,g.y+146,"Source B")+lab((tx_(1.45)+tx_(2.15))/2,g.y+146,"Load");
+    // низ, як на корпусі: «Source B», великі R і N над колонками; під гвинтами — ярус клеми (B — вхід генератора, Load — вихід на навантаження) і клеми керування
+    s+=tx(tx_(0.3),g.y+161,"R",{fs:10,fw:800,fill:W_})+tx(tx_(1.5),g.y+161,"N",{fs:10,fw:800,fill:W_});
+    for(const [a,b] of [[0.03,0.57],[1.23,1.77]]) s+=`<rect x="${tx_(a)-14}" y="${g.y+205}" width="${tx_(b)-tx_(a)+28}" height="29" rx="4" fill="none" stroke="#5a606b" stroke-width="1.2"/>`;
+    [["RB","B"],["RL","Load"],["NB","B"],["NL","Load"],["BR","BR"],["BN","BN"],["NCB","NC"],["CB","C"],["NOB","NO"]].forEach(([k,l])=>{ const m=T.toq7.terms.find(t=>t.k===k).m; s+=tx(tx_(m)+5,g.y+238,l,{fs:6.4,fw:700,a:"start",fill:W_}); });   // правіше від гвинта — перемичка не закриває
+    s+=lab(g.x+76,g.y+62,"Source A")+lab(tx_(0.9),g.y+147,"Source B");
     // поворотна червона ручка на чорній основі
     s+=`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${cx0}" cy="${cy0}" r="31" fill="#121316" stroke="#4a4f59" stroke-width="1.5"/>`
       +`<path d="M${cx0+24} ${cy0-20} A31 31 0 0 1 ${cx0+24} ${cy0+20}" fill="none" stroke="${M_}" stroke-width="1.2"/>`
