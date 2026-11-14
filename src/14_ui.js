@@ -3,15 +3,15 @@ const $ = id => document.getElementById(id);
 let toastT=null;
 function toast(msg,cls=""){ if(S.quiet) return; const t=$("toast"); t.textContent=msg; t.className="toast "+cls; t.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,2600); }
 const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","tovpd1","kvf","kvf2","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","g2r","ats","toq5","toq7","to219","to119","qs","km2a","km3a","km4a"]],
-  ["Керування",["sbp","sbs","hl","rel","kt","ktb","ktm","tmr","kimp","stair","photo","logo","kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc","lc1d"]],["Двигуни",["qm","kk"]],["Розподіл",["xtb","sock"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
+  ["Керування",["sbp","sbs","hl","rel","kt","ktb","ktm","tmr","kimp","stair","photo","logo","plc200","rel24","hl24","sa","dcdc","kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc","lc1d"]],["Двигуни",["qm","kk"]],["Розподіл",["xtb","sock"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
 const TPL_ORDER = ["Конструктор","Квартира і будинок","АВР на 2 вводи","3 фази + інвертор","Сонячна станція","Двигуни"];
 let clearArm=0;
 function applyTemplate(name){ const t=TPL[name]||TPL.flat; t.build(); S.tpl=TPL[name]?name:"flat"; S.tplObj=t; S.env0=JSON.parse(JSON.stringify(S.env||{})); S.proj={id:null,name:t.name}; S.guide=null; S.lastCheck=null;
   Object.assign(S,{pend:null,selWire:null,selDev:null,pick:null,heat:{},log:[],demo:null}); S.leak.clear(); S.short.clear(); S.leakWarned.clear(); S.arc.clear(); S.arcWarned.clear();
   if(typeof resetHistory==="function"){ resetHistory(); S.baseSig=structSnap(); } if(typeof hideDemoBar==="function") hideDemoBar(); save(); }
 function resetRuntime(){ for(const s of Object.values(S.src)){ s.on=false; s.U=230; s.lost={}; }
-  for(const d of S.devices){ const t=T[d.type]; if(t.prot||t.rcd){ d.on=true; d.trip=null; } d.pulled=false; d.pressed=false; if(d.type==="logo"||d.type==="kv"||d.type==="tovpd1") { delete d.ks; if(t.init) t.init(d); } if(d.type==="ats"||d.type==="toq5") d.manual=false; if(d.type==="spdc") d.wear=0; }
-  for(const f of S.field){ Object.assign(f,{jam:false,cap:true,fault:false,faultT:0,en:true,run:false,dead:false}); if(f.type==="valve") f.pos=100; }
+  for(const d of S.devices){ const t=T[d.type]; if(t.prot||t.rcd){ d.on=true; d.trip=null; } d.pulled=false; d.pressed=false; if(d.type==="logo"||d.type==="kv"||d.type==="tovpd1") { delete d.ks; if(t.init) t.init(d); } if(d.type==="ats"||d.type==="toq5") d.manual=false; if(d.type==="spdc") d.wear=0; if(d.type==="plc200"){ const r=d.ret; t.init(d); d.ret=r; } if(d.type==="dcdc") t.init(d); if(d.type==="sa") d.man=false; }
+  for(const f of S.field){ Object.assign(f,{jam:false,cap:true,fault:false,faultT:0,en:true,run:false,dead:false}); if(f.type==="valve") f.pos=100; if(f.type==="bat24"){ f.on=false; FT.bat24.init(f); } if(f.type==="inv24") FT.inv24.init(f); }
   S.env=JSON.parse(JSON.stringify(S.env0||{})); S.heat={}; S.log=[]; S.leak.clear(); S.short.clear(); S.leakWarned.clear(); S.arc.clear(); S.arcWarned.clear(); }
 function livePress(des){ const d=typeof des==="string"?byDes(des):des; if(!d) return; d.pressed=true; solve(0); renderAll(false);
   setTimeout(()=>{ d.pressed=false; solve(0); renderAll(false); },700); }

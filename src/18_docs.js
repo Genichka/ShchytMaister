@@ -105,15 +105,20 @@ const shopSpec = () => { const L=shopUsed(); if(!L.length) return "";
     +L.map(e=>`<div class="shopq-i">${qrSVG(e.it.link,104)}<div><b>${esc(e.it.name||"Модуль")}</b><small>На щитку: ${esc(e.ds.join(", "))}</small><a href="${esc(e.it.link)}" target="_blank" rel="noopener">${esc(e.it.link.replace(/^https?:\/\//,""))}</a></div></div>`).join("")+`</div>`; };
 // ---- Вікно документів
 const DOCT = [["sld","Однолінійна схема"],["cab","Кабельний журнал"],["spec","Специфікація"],["lab","Маркування"]];
-function openDocs(t){ S.docTab=t||S.docTab||"sld"; $("docs").hidden=false; renderDocs(); }
+// шаблон із принциповою схемою (напр. АВР на ПЛК200) — окрема вкладка «Принципова схема»
+const schemeOf = () => S.tplObj&&S.tplObj.scheme ? S.tplObj.scheme() : "";
+const docTabs = () => (schemeOf()?[["pr","Принципова схема"]]:[]).concat(DOCT);
+const schemeFile = () => schemeOf().replace(/var\(--sans\)/g,"'Segoe UI',Roboto,Arial,sans-serif").replace(/var\(--mono\)/g,"Consolas,'Roboto Mono',monospace");
+function openDocs(t){ S.docTab=t||S.docTab||"sld"; if(S.docTab==="pr"&&!schemeOf()) S.docTab="sld"; $("docs").hidden=false; renderDocs(); }
 function renderDocs(){ const t=S.docTab;
-  $("docTabs").innerHTML=DOCT.map(([k,l])=>`<button data-doct="${k}" aria-selected="${t===k}">${l}</button>`).join("")+(t==="all"?`<button data-doct="all" aria-selected="true">Повний комплект</button>`:"");
-  $("docSvg").textContent=t==="sld"?"SVG":t==="lab"||t==="all"?"—":"CSV"; $("docSvg").disabled=t==="lab"||t==="all";
+  if(t==="pr"&&!schemeOf()) S.docTab="sld"; $("docTabs").innerHTML=docTabs().map(([k,l])=>`<button data-doct="${k}" aria-selected="${t===k}">${l}</button>`).join("")+(t==="all"?`<button data-doct="all" aria-selected="true">Повний комплект</button>`:"");
+  $("docSvg").textContent=t==="sld"||t==="pr"?"SVG":t==="lab"||t==="all"?"—":"CSV"; $("docSvg").disabled=t==="lab"||t==="all";
   $("docsB").innerHTML=t==="all"?docAll():docBody(t); }
 function docBody(t){ const nm=esc((S.proj&&S.proj.name)||"Щиток");
   let h="";
   if(t==="sld"){ const noLen=groupsOf().some(g=>!groupLen(g));
     h=`<div class="doc"><div class="sld">${sldSVG()}</div><p class="note">Кабель — ВВГнг(А)-LS, мідь. Iр — за встановленою потужністю групи, cos φ = 1. ΔU — втрата напруги в лінії (ρ = 0,0178 Ом·мм²/м); понад 4 % виділено червоним.${noLen?" Довжини ліній задайте в картці групи.":""}</p></div>`; }
+  if(t==="pr") h=`<div class="doc"><h3>Принципова схема · ${esc(S.tplObj.name)}</h3><p class="note">Схема шаблону: позначення апаратів і клем такі самі, як на щитку. Зміни, які ви робите на щитку, на цю схему не впливають. Кнопка «SVG» зберігає аркуш А3 окремим файлом.</p><div class="sld prs">${schemeOf()}</div></div>`;
   if(t==="cab"){ const c=cabData(); h=`<div class="doc"><h3>Кабельний журнал · ${nm}</h3><p class="note">Перемички в щитку (довжина — за трасою на щитку, з запасом 4 см на зачистку)</p>`
     +tbl(["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],c.inner,[0,6])
     +`<h3 style="margin-top:14px">Кабельні лінії від щитка</h3>`+tbl(["Автомат","Група","Кабель","Довжина, м","ΔU, %"],c.lines,[3,4])+`</div>`; }
@@ -131,7 +136,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(q("#docsX")){ $("docs").hidden=true; return; }
   if(q("#docPrint")){ window.print(); return; }
   if(q("#docSvg")){ const nm=fileBase();
-    if(S.docTab==="sld") download(nm+"_odnolinijna.svg",sldSVG(),"image/svg+xml");
+    if(S.docTab==="sld") download(nm+"_odnolinijna.svg",sldSVG(),"image/svg+xml"); else if(S.docTab==="pr") download(nm+"_pryncypova.svg",schemeFile(),"image/svg+xml");
     else { const rows=S.docTab==="cab"?[["№","Маркування","Звідки","Куди","Провідник","Переріз","Довжина, см","Наконечник"],...cabData().inner,[],["Автомат","Група","Кабель","Довжина, м","ΔU, %"],...cabData().lines]
         :[["Найменування","Тип / модель","Кіл.","Од."],...specData()];
       download(nm+(S.docTab==="cab"?"_kabelnyj_zhurnal.csv":"_specyfikacija.csv"),"﻿"+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(";")).join("\n"),"text/csv"); }
@@ -141,4 +146,4 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
 function docAll(){ const nm=esc((S.proj&&S.proj.name)||"Щиток"), sm=boardSummary();
   return `<div class="doc dpage"><h2 class="dtitle">${nm}</h2><p class="note">PanelCraft ${esc(APP.v)} · ${new Date().toLocaleDateString("uk-UA")} · перевірку пройдено без зауважень</p>`
     +tbl(["Показник","Значення"],sm.rows,[])+`<div class="bview">${boardSVG()}</div></div>`
-    +["sld","cab","spec","lab"].map(t=>`<div class="dpage">${docBody(t)}</div>`).join(""); }
+    +[...(schemeOf()?["pr"]:[]),"sld","cab","spec","lab"].map(t=>`<div class="dpage">${docBody(t)}</div>`).join(""); }

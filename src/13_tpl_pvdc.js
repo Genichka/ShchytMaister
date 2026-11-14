@@ -10,7 +10,7 @@ defType("fudc",{name:"Запобіжник DC 10×38 у тримачі", short:"
     return tx(g.cx,g.y+64,d.model||"10×38",{fs:6.3,fw:700})+tx(g.cx,g.y+74,"DC "+(d.uc||1100)+" В",{fs:6})
       +`<g data-lever="${d.id}" style="cursor:pointer"><g transform="rotate(${open?-14:0} ${g.cx} ${g.y+156})"><rect x="${g.x+6}" y="${g.y+80}" width="${g.w-12}" height="76" rx="4" fill="#c9ccd2" stroke="#8a8f98"/>`
       +`<rect x="${g.cx-11}" y="${g.y+92}" width="22" height="34" rx="3" fill="${blown?"#3a2a2a":"#f2efe6"}" stroke="#8a8f98"/>`+(blown?`<path d="M${g.cx-8} ${g.y+96} l16 26 M${g.cx+8} ${g.y+96} l-16 26" stroke="#e23b3b" stroke-width="3"/>`:"")
-      +`<rect x="${g.cx-12}" y="${g.y+136}" width="24" height="10" rx="3" fill="#8a8f98"/></g></g>`+tx(g.cx,g.y+163,blown?"згоріла":"gPV "+d.rating,{fs:6.5,fw:700,fill:blown?"#c0261c":undefined}); }});
+      +`<rect x="${g.cx-12}" y="${g.y+136}" width="24" height="10" rx="3" fill="#8a8f98"/></g></g>`+tx(g.cx,g.y+163,blown?"згоріла":(d.cls||"gPV")+" "+d.rating,{fs:6.5,fw:700,fill:blown?"#c0261c":undefined}); }});
 const PV_PAIRS = [["p","m"],["p2","m2"]];
 const pvStrings = () => S.field.filter(f=>f.type==="pv");
 const pvName = s => (s.sid||"pv")==="pv"?"PV":(s.sid||"").toUpperCase();

@@ -320,6 +320,7 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 .doc th,.doc td{border:1px solid #9aa0a6;padding:4px 6px;text-align:left;vertical-align:top} .doc th{background:#eef0f2;font-weight:600}
 .doc td.n{text-align:right;font-family:var(--mono);white-space:nowrap}
 .doc .sld{overflow:auto} .doc .sld svg{display:block;width:100%;height:auto}
+.doc .prs svg{min-width:1080px}
 .doc .tw{overflow:auto;-webkit-overflow-scrolling:touch} .doc .tw table{min-width:620px}
 .doc .note{margin:6px 0;color:#555;font-size:11px}
 .labels{display:flex;flex-direction:column;gap:10px}
@@ -384,7 +385,7 @@ details.dr-d>summary::after{content:"▸";margin-left:auto;font-size:13px;transi
 @media print{
   body{overflow:visible!important;height:auto} .app{position:static} .app,.drawer,.toast,.modal,.demobar,.docs-bar{display:none!important}
   .docs{position:static;display:block!important;background:#fff} .docs-b{overflow:visible;padding:0} .doc{max-width:none;padding:0;border-radius:0}
-  .dpage{break-after:page;page-break-after:always} .dpage:last-child{break-after:auto;page-break-after:auto} .dpage+.dpage{margin-top:0} .bview svg{max-height:23cm} }
+  .dpage{break-after:page;page-break-after:always} .dpage:last-child{break-after:auto;page-break-after:auto} .dpage+.dpage{margin-top:0} .bview svg{max-height:23cm} .doc .prs svg{min-width:0} }
 /* ===== v4.19.1: запас унизу під жести телефона + згортання нижньої панелі ===== */
 .bbar{padding-bottom:calc(34px + env(safe-area-inset-bottom,0px))}
 .bar-handle{position:sticky;top:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;min-height:22px;margin:-6px 0 6px;padding:6px 0 4px;background:var(--panel);border:0;color:var(--muted);touch-action:none}

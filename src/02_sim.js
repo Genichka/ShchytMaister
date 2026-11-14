@@ -1,6 +1,8 @@
 /* ===== Рушій v2: мережі, потенціали, логіка модулів, аварії, струми ===== */
 const isPh = p => /\.(L|L1|L2|L3)$/.test(p);
-const isDC = p => /^(pv\d*|bat)[+-]$/.test(p);
+const isDC = p => /^(pv\d*|bat|gb|d24)[+-]$/.test(p);
+// АКБ 24 В (gb±, напруга за SOC) і вихід DC/DC 24 В (d24±)
+const gbU = () => { const c=S.env.soc||0; return c>=10 ? 25.6+(c-10)/90*1.6 : 22+c*0.36; };
 const pvDev = sid => S.field.find(f=>f.type==="pv"&&(f.sid||"pv")===sid);
 const pvKW = sid => { const d=pvDev(sid); return d&&!d.fault ? (d.n||10)*0.55*(S.env.sun||0)/100*(1-(S.env["shade_"+sid]||0)/100) : 0; };
 const pvVmp = sid => ((pvDev(sid)||{}).n||10)*41.7;
@@ -73,6 +75,7 @@ function makeX(f){
           for(const pb of B) if(isPh(pb)&&pb!==pa&&srcOf(pb)===srcOf(pa)) return srcU(pa)*1.732; } }
       for(const pb of B) if(isPh(pb)&&(A.has("N")||A.has("PE"))) return srcU(pb);
       for(const pa of A){ const m=/^(pv\d*)\+$/.exec(pa); if(m&&B.has(m[1]+"-")) return S.env.sun>0?pvVmp(m[1]):0; } if(A.has("bat+")&&B.has("bat-")) return 51;
+      if(A.has("d24+")&&B.has("d24-")) return 24; if(A.has("gb+")&&B.has("gb-")) return gbU();
       return 0; } };
   return X;
 }
@@ -88,7 +91,7 @@ function conflicts(X){
   for(const [r,ps] of X.pot){ const a=[...ps]; const ph=a.filter(isPh), dc=a.filter(isDC);
     let kind=null;
     if(dc.length&&(ph.length||ps.has("N"))) kind="ACDC";
-    else if(a.some(p=>{ const m=/^(pv\d*)\+$/.exec(p); return m&&ps.has(m[1]+"-"); })||(ps.has("bat+")&&ps.has("bat-"))) kind="DC";
+    else if(a.some(p=>{ const m=/^(pv\d*)\+$/.exec(p); return m&&ps.has(m[1]+"-"); })||(ps.has("bat+")&&ps.has("bat-"))||(ps.has("gb+")&&ps.has("gb-"))||(ps.has("d24+")&&ps.has("d24-"))) kind="DC";
     else if(ph.length>1) kind=new Set(ph.map(srcOf)).size>1?"FEED":"LL";
     else if(ph.length&&ps.has("N")) kind="LN";
     else if(ph.length&&ps.has("PE")) kind="LPE";
@@ -130,7 +133,7 @@ function resolveFaults(){
       for(const p of c.pots){ if(isPh(p)&&invInp(srcOf(p))&&srcLive(invInp(srcOf(p)),S.src[srcOf(p)])){ invFault(srcOf(p),10,`${FAULT[c.kind]} на виході — внутрішній захист вимкнув вихід на 10 с`); acted=true; continue; }
         if(isPh(p)&&S.src[srcOf(p)]&&S.src[srcOf(p)].on){ S.src[srcOf(p)].on=false; acted=true;
           logp("e",`${FAULT[c.kind]} до захисних модулів: спрацював захист джерела «${(S.board.inputs.find(i=>i.id===srcOf(p))||{}).label}», його вимкнено`); } }
-      for(const d of S.field){ const t=FT[d.type]; if(t.onFault&&t.onFault(d,c)) acted=true; }
+      for(const d of [...S.field,...S.devices]){ const t=tdef(d); if(t.onFault&&t.onFault(d,c)) acted=true; }
       if(typeof toast==="function") toast("Аварія: "+FAULT[c.kind],"e");
       if(acted) continue; return;
     }
