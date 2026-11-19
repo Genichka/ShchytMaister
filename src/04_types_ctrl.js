@@ -100,8 +100,9 @@ defType("ats",{name:"Модуль АВР 2P 63 А", short:"АВР-модуль",
       +tx(g.x+26,g.y+153,"I",{fs:7,a:"start"})+tx(g.x+g.w-26,g.y+153,"II",{fs:7,a:"end"}); }});
 // АВР GEYA G2R-63 2P з контролем напруги — 3 модулі (50,5 мм). Зверху (I) N1 A1 — основне живлення, (II) N2 A2 — резерв;
 // знизу LOAD N A. Пріоритет вводу I, перемикання < 50 мс. Ввід вважається нормальним при 187–242 В (85–110 % від 220 В);
-// коли ввід I знову в нормі, АВР чекає 30 с і лише тоді повертає навантаження. Auto / Manual — повзунок на лицьовій панелі.
-const G2R_OK = u => u>=187&&u<=242;
+// за паспортом і повернення на ввід I — < 50 мс (окремої затримки в G2R немає; витримку перед поверненням дає реле напруги на вводі I).
+// У симуляторі — 1 с, щоб не «смикався» від стрибка напруги. Auto / Manual — повзунок на лицьовій панелі.
+const G2R_OK = u => u>=187&&u<=242, G2R_BACK = 1;
 defType("g2r",{name:"АВР GEYA G2R-63 2P з контролем напруги", short:"АВР GEYA G2R-63", cat:"Комутація", w:3, pre:"QA", maker:"GEYA",
   ratings:["25","40","63"], def:"63", unit:" А",
   terms:[{k:"IN",s:"top",r:"N",l:"N1"},{k:"IL",s:"top",r:"L",l:"A1"},{k:"IIN",s:"top",r:"N",l:"N2"},{k:"IIL",s:"top",r:"L",l:"A2"},{k:"N",s:"bot",r:"N",l:"N"},{k:"L",s:"bot",r:"L",l:"A"}],
@@ -109,9 +110,9 @@ defType("g2r",{name:"АВР GEYA G2R-63 2P з контролем напруги"
   closed:(d,pi)=>pi<2?d.pos==="I":d.pos==="II", init:d=>{ d.pos=d.pos||"I"; d.manual=!!d.manual; }, cap:"Перемикання вводів",
   logic(d,X){ const u1=X.volt(K(d,"IL"),K(d,"IN")), u2=X.volt(K(d,"IIL"),K(d,"IIN")); d.u=[u1,u2]; d.ok=[G2R_OK(u1),G2R_OK(u2)];
     if(d.manual) return false;
-    const backI=d.ok[0]&&(d.pos==="I"||(d.wI||0)>=30), t=backI?"I":d.ok[1]?"II":d.pos;
+    const backI=d.ok[0]&&(d.pos==="I"||(d.wI||0)>=G2R_BACK), t=backI?"I":d.ok[1]?"II":d.pos;
     if(t!==d.pos){ d.pos=t; d.wI=0;
-      logp(t==="I"?"ok":"w",t==="I"?`${desig(d)}: напруга на вводі I в нормі 30 с — навантаження повернуто на ввід I (мережа)`
+      logp(t==="I"?"ok":"w",t==="I"?`${desig(d)}: на вводі I знову ${Math.round(u1)} В — навантаження повернуто на ввід I (мережа), < 50 мс`
         :`${desig(d)}: на вводі I ${u1<1?"немає напруги":`${Math.round(u1)} В — поза 187–242 В`}, навантаження переведено на ввід II (резерв), < 50 мс`); return true; }
     return false; },
   tick(d,X,dt){ if(!d.manual&&d.ok&&d.ok[0]&&d.pos!=="I") d.wI=(d.wI||0)+dt; else d.wI=0; },
