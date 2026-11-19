@@ -9,7 +9,7 @@ defType("sft232",{name:"Перемикач I–0–II Hager SFT232 2P 32 А", sh
   closed:(d,pi)=>pi<2?d.pos===1:d.pos===2, init:d=>{ if(d.pos===undefined) d.pos=1; }, cap:"Мережа / генератор",
   tap(d){ const seq=[1,0,2,0]; d.seqI=((d.seqI??seq.indexOf(d.pos))+1)%4; d.pos=seq[d.seqI]; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); return true; },
   // вигляд — за фото виробу: синя смужка й «:hager» угорі, «SFT 232 / 32A / 230 V~» ліворуч, схема контактів праворуч,
-  // дві клавіші з рифленням «||» (рухаються разом), зелене/червоне поле на важелі, внизу — прозора відкидна кришка для маркування
+  // дві клавіші зі знаком положення «I» / «0» / «II» (рухаються разом), зелене/червоне поле на важелі, внизу — прозора відкидна кришка для маркування
   face(d,g){ const x=g.x, y=g.y, p=d.pos, B="#1f74c2", ink="#2b2f36", i=p===1?0:p===0?1:2, cx=g.cx;
     let s=`<rect x="${x+4}" y="${y+48}" width="${g.w-8}" height="37" rx="2" fill="#e9ebee" stroke="#c6c9ce"/><path d="M${cx} ${y+48}v37" stroke="#c6c9ce"/>`
       +`<rect x="${x+7}" y="${y+50.5}" width="${g.w-52}" height="2.4" fill="${B}"/>`+tx(x+g.w-6,y+57.5,":hager",{fs:8.8,fw:800,a:"end",fill:B})
@@ -23,7 +23,9 @@ defType("sft232",{name:"Перемикач I–0–II Hager SFT232 2P 32 А", sh
     const r0=x+13, r1=x+g.w-5, kw=(r1-r0)/2-8, ky=y+89+i*8, ind=p?"#e0352b":"#2ea043";
     s+=`<rect x="${r0}" y="${y+87}" width="${r1-r0}" height="36" rx="2.5" fill="#b9bdc3" stroke="#9da1a8"/><path d="M${cx+4} ${y+87}v36" stroke="#9da1a8"/>`;
     s+=`<g data-lever="${d.id}" style="cursor:pointer">`+[r0+4,cx+8].map(lx=>`<rect x="${lx}" y="${ky}" width="${kw}" height="17" rx="2.5" fill="#f1f2f4" stroke="#9aa0a8"/>`
-      +`<rect x="${lx+kw/2-4.2}" y="${ky+2.5}" width="2.2" height="9" rx="1" fill="#8d9198"/><rect x="${lx+kw/2+2}" y="${ky+2.5}" width="2.2" height="9" rx="1" fill="#8d9198"/>`
+      +(p===1?`<rect x="${lx+kw/2-1.1}" y="${ky+2.5}" width="2.2" height="9" rx="1" fill="#8d9198"/>`   // знак на клавіші: угорі «I», посередині «0», унизу «II»
+        :p===0?`<ellipse cx="${lx+kw/2}" cy="${ky+7}" rx="3" ry="4.3" fill="none" stroke="#8d9198" stroke-width="1.8"/>`
+        :`<rect x="${lx+kw/2-4.2}" y="${ky+2.5}" width="2.2" height="9" rx="1" fill="#8d9198"/><rect x="${lx+kw/2+2}" y="${ky+2.5}" width="2.2" height="9" rx="1" fill="#8d9198"/>`)
       +`<rect x="${lx+3}" y="${ky+13}" width="${kw-6}" height="2.6" rx="1" fill="${ind}"/>`).join("")+`</g>`;
     s+=[["I",y+99.3],["0",y+107.3],["II",y+115.3]].map(([l,ly],j)=>tx(x+8,ly,l,{fs:6,fw:j===i?800:500,fill:j===i?B:ink})).join("");
     // прозора відкидна кришка, під нею — наліпка зі станом
