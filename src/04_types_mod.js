@@ -39,7 +39,7 @@ const SOCK_LOADS = [null,["Зарядка ноутбука",0.09],["Паяльн
 defType("sockex",{name:"Розетка на DIN-рейку E.NEXT e.socket.stand.din 16 А", short:"Розетка E.NEXT", cat:"Розподіл", w:3, bw:2.5, pre:"XS", maker:"E.NEXT", noBrand:true,
   body:"#efe9dc", faceFill:"#e9e2d3",
   terms:[{k:"PE",s:"top",r:"PE",l:"PE",m:0.75,nl:true},{k:"L",s:"bot",r:"L",l:"L",m:0.16},{k:"N",s:"bot",r:"N",l:"N",m:1.34}],
-  cap:"Розетка 16 А", init:d=>{ d.plug=d.plug||0; },
+  cap:"Розетка 16 А", init:d=>{ d.plug=d.plug===true?3:(+d.plug||0); },
   tap(d){ d.plug=((d.plug||0)+1)%SOCK_LOADS.length; const l=SOCK_LOADS[d.plug]; logp("ok",`${desig(d)}: ${l?`увімкнено ${l[0]} ${String(l[1]).replace(".",",")} кВт`:"вилку вийнято"}`); return true; },
   load:(d,X)=>{ const l=SOCK_LOADS[d.plug||0], U=X.volt(K(d,"L"),K(d,"N")); return l&&U>=150?[{a:"L",b:"N",I:l[1]*1000/U,U}]:[]; },
   // гніздо Schuko на всю ширину, як на кресленні: подвійний обідок, бічні пази, скоби заземлення вгорі й унизу, два отвори

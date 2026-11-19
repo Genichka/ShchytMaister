@@ -52,9 +52,10 @@ function save(){
     src:S.src, env:S.env, env0:S.env0, proj:S.proj, guide:S.guide, baseSig:S.baseSig, plan:S.plan||null, noDoc:!!S.noDoc, UID})); }catch(e){}
   if(typeof storeProject==="function") storeProject();
 }
+const fixDevs = list => { for(const d of list||[]) if(d.type==="sock"){ d.type="sockex"; d.plug=d.plug===true?3:0; } return list||[]; };   // стара схематична «Розетка на DIN» → розетка E.NEXT
 function load(){
   try{ const j=JSON.parse(localStorage.getItem(KEY)||"null");
-    if(j && Array.isArray(j.devices) && j.board){ Object.assign(S,{tpl:j.tpl, board:j.board, devices:j.devices, field:j.field||[], wires:j.wires||[],
+    if(j && Array.isArray(j.devices) && j.board){ Object.assign(S,{tpl:j.tpl, board:j.board, devices:fixDevs(j.devices), field:j.field||[], wires:j.wires||[],
       comb:j.comb||null, src:j.src||{}, env:j.env||{}, env0:j.env0, proj:j.proj||null, guide:j.guide||null, baseSig:j.baseSig||null, plan:j.plan||null, noDoc:!!j.noDoc}); UID=Math.max(UID,j.UID||1);
       for(const k of Object.keys(S.src)) S.src[k].on=false;   // після перезавантаження джерела вимкнені
       return true; } }catch(e){}

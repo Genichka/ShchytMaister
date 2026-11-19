@@ -83,7 +83,7 @@ function runChecks(){
   for(const K of S.devices.filter(d=>d.type==="kv"||d.type==="tovpd1")) if(mainIn&&inA(K.rating)<mainIn) add("e",`${desig(K)} ${K.rating} А слабше за ввідний ${mainIn} А`,"Через контакт реле напруги йде струм усього щитка. Номінал реле — не менший за ввідний автомат: до C40 — реле 40 А, C50–C63 — реле 63 А.",{dev:K.id});
   for(const Q of S.devices.filter(d=>T[d.type].In)) if(mainIn&&T[Q.type].In<mainIn) add("e",`${desig(Q)} ${T[Q.type].In} А слабший за ввідний ${mainIn} А`,`Через ${T[Q.type].short} іде струм усього щитка. Ввідні автомати — не більше ${T[Q.type].In} А (C${T[Q.type].In}), або перемикач на більший струм.`,{dev:Q.id});
   // розетки: заземлення і ПЗВ перед розеткою
-  const socks=S.devices.filter(d=>d.type==="sock"||d.type==="sockex");
+  const socks=S.devices.filter(d=>d.type==="sockex");
   if(socks.length){ const ex=[]; for(const d of S.devices){ const t=T[d.type]; if(!t.rcd) for(const p of t.poles||[]) ex.push([K(d,p.a),K(d,p.b)]); }
     const fr=build({allOpen:true,extra:ex}), phs=b.inputs.map(i=>i.id+":"+i.terms[0]);   // усе замкнене, крім ПЗВ і диф-автоматів
     for(const X of socks){ if(b.xpe&&f0(K(X,"PE"))!==f0("xpe:0")) add("e",`${desig(X)}: розетку не заземлено`,"Клему PE розетки з’єднайте з шиною PE (XPE1) жовто-зеленим проводом. Без PE корпус приладу не захищений.",{dev:X.id});

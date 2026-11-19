@@ -54,11 +54,6 @@ defType("photo",{name:"Фотореле", short:"Фотореле", cat:"Кер�
   logic(d,X){ const pw=X.volt(K(d,"L"),K(d,"N"))>=150, dark=(S.env.lux??60)<d.th, r=pw&&dark; d.pw=pw; if(r!==!!d.rel){ d.rel=r; return true; } return false; },
   load:(d,X)=>[{a:"L",b:"N",I:d.pw?0.005:0}],
   face(d,g){ const dark=(S.env.lux??60)<d.th; return tx(g.cx,g.y+68,"ФОТО",{fs:6.8,fw:700})+`<circle cx="${g.cx}" cy="${g.y+96}" r="12" fill="${dark?"#2a3550":"#ffd23f"}"/>`+led(g.cx,g.y+124,d.rel?"#ffd23f":"#5a5e66")+tx(g.cx,g.y+142,dark?"темно":"світло",{fs:6.3}); }});
-defType("sock",{name:"Розетка на DIN-рейку", short:"Розетка DIN", cat:"Розподіл", w:3, pre:"XS",
-  terms:[{k:"L",s:"top",r:"L",l:"L"},{k:"N",s:"top",r:"N",l:"N"},{k:"PE",s:"top",r:"PE",l:"PE"}], cap:"Сервісна розетка",
-  load(d,X){ const U=X.volt(K(d,"L"),K(d,"N")); d.live=U>=150; return [{a:"L",b:"N",I:d.plug&&U>=150?1200/U:0,U}]; },
-  face(d,g){ return tx(g.cx,g.y+64,"16 А · 250 В",{fs:7,fw:700})+`<circle cx="${g.cx}" cy="${g.y+104}" r="30" fill="#f4f5f7" stroke="#9aa0aa"/><circle cx="${g.cx-11}" cy="${g.y+104}" r="4" fill="#222"/><circle cx="${g.cx+11}" cy="${g.y+104}" r="4" fill="#222"/>`
-    +`<rect x="${g.cx-3}" y="${g.y+75}" width="6" height="7" fill="#b0b4bb"/><rect x="${g.cx-3}" y="${g.y+126}" width="6" height="7" fill="#b0b4bb"/>`+tx(g.cx,g.y+150,d.plug?"інструмент 1,2 кВт":d.live?"під напругою":"—",{fs:6.5}); }});
 defType("xtb",{name:"Клемник прохідний", short:"Клемник", cat:"Розподіл", w:1, pre:"X", terms:[{k:"a",s:"top",r:"any",l:"1"},{k:"b",s:"bot",r:"any",l:"2"}],
   links:()=>[["a","b"]], init:d=>{ d.col=d.col||"grey"; }, cap:"Розподіл",
   face(d,g){ const f={grey:"#8f949c",blue:"#2f6fdf",pe:"#f2c400"}[d.col]||"#8f949c";
