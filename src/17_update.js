@@ -27,7 +27,7 @@
     catch(e){ if(!silent) toast("Не вдалося перевірити оновлення. Перевірте підключення до інтернету.","w"); } }
   const swUpdate = () => new Promise((res,rej)=>{ const ch=new MessageChannel(); ch.port1.onmessage=e=>e.data&&e.data.ok?res():rej(new Error("sw"));
     navigator.serviceWorker.controller.postMessage({type:"update"},[ch.port2]); setTimeout(()=>rej(new Error("timeout")),15000); });
-  async function apply(){ save(); toast("Завантажую нову версію…");
+  async function apply(){ save(); toast("Завантажую нову версію…"); try{ sessionStorage.setItem("pc-nosplash","1"); }catch(e){}
     if(navigator.serviceWorker&&navigator.serviceWorker.controller){ try{ await swUpdate(); location.reload(); return; }catch(e){ toast("Не вдалося завантажити оновлення. Спробуйте пізніше.","w"); return; } }
     const u=new URL(location.href); u.searchParams.set("v",remote.v); location.replace(u.toString()); }
   document.addEventListener("click",e=>{

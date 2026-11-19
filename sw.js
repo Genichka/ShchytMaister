@@ -6,7 +6,7 @@ self.addEventListener("activate", e => { e.waitUntil(self.clients.claim()); });
 self.addEventListener("fetch", e => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== location.origin) return;
-  if (url.pathname.endsWith("/version.json") || url.pathname.endsWith("/sw.js")) return; // завжди з мережі
+  if (url.pathname.endsWith("/version.json") || url.pathname.endsWith("/sw.js") || url.pathname.endsWith(".mp4")) return; // завжди з мережі (відео заставки браузер тягне частинами — Range)
   if (url.pathname.endsWith("/shop.json") || url.pathname.includes("/shop/")) {   // «Замовити апарат»: свіжий список і фото, без мережі — з кешу
     e.respondWith(fetch(req, {cache: "no-store"}).then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; }).catch(() => caches.match(req, {ignoreSearch: true})));
     return; }
