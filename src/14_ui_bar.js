@@ -5,7 +5,7 @@ const CATALOG = [["⚡ Групи","G"],
   ["ПЗВ, дифавтомати",[["ПЗВ",["rcd","rcd4"]],["Дифавтомати (RCBO)",["rcbo"]],["AFDD",["afdd"]]],"Диференційний захист"],
   ["Реле",[["Контроль напруги",["kv","tovpd1"]],["Контроль фаз",["kvf","kvf2","pef"]],["Реле часу",["kt","ktb","ktm","tmr","stair"]],["Імпульсні реле",["kimp"]],["Фотореле",["photo"]],["Програмовані",["logo","plc200"]],["Живлення 24 В",["dcdc"]]],"Реле та автоматика"],
   ["Контактори",[["Модульні контактори",["km2a","km3a","km4a","lc1d"]],["Контактори NO / NC",["kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc"]],["Проміжні реле",["rel","rel24"]],["Вимикачі",["sw2"]]],"Контактори, пускачі, вимикачі"],
-  ["АВР",[["Автоматичні",["g2r","ats","toq5","toq7"]],["Ручні I–0–II",["to219","sft232","to119","qs"]]],"АВР і перемикачі вводів"],
+  ["АВР",[["Автоматичні",["g2r","toq5","toq7"]],["Ручні I–0–II",["to219","sft232","to119","qs"]]],"АВР і перемикачі вводів"],
   ["ПЗІП",[["ПЗІП AC",["spdac","spd3"]],["ПЗІП DC",["spdc"]]],"Захист від перенапруг"],
   ["Шини",[["Гребінчасті шини 1P","C"]],"Розподільчі шини"],
   ["Клеми",[["Прохідні клеми",["xtb"]]],"Клеми та з’єднання"],
@@ -15,7 +15,7 @@ const CATALOG = [["⚡ Групи","G"],
   ["Розумний дім",[["Розумний дім",["ssw","hub","kr2","pm","tr"]]],"Розумний дім"],
   ["Поза щитком","F"]];
 (function(){ const have=new Set(CATALOG.flatMap(c=>Array.isArray(c[1])?c[1].flatMap(g=>Array.isArray(g[1])?g[1]:[]):[]));   // що не потрапило до списку — у «Інше»
-  const rest=Object.keys(T).filter(k=>!have.has(k)); if(rest.length) CATALOG.splice(CATALOG.length-1,0,["Інше",[["Інше",rest]],"Інше"]); })();
+  const rest=Object.keys(T).filter(k=>!have.has(k)&&!T[k].retired); if(rest.length) CATALOG.splice(CATALOG.length-1,0,["Інше",[["Інше",rest]],"Інше"]); })();
 // номінали (C25, B16, 40 А, 30 мА…) підсвічуємо окремим кольором
 const hlr = t => esc(t).replace(/(\b[A-DZ]\d{1,3}\b|\b\d{1,4}(?:[.,]\d+)? ?(?:мА|А|A)(?![\p{L}\d]))/gu,'<em class="rt">$1</em>');
 const bx = `<button class="bx" data-bclose aria-label="Закрити">✕</button>`;
@@ -63,7 +63,7 @@ function mountBar(){ const mv=S.moveDev&&S.devices.find(x=>x.id===S.moveDev);
 const modW = x => String(T[x].bw||T[x].w).replace(".",",");   // ширина корпусу в модулях (розетка E.NEXT — 2,5)
 const devCard = x => { const nw=isNewDev(x); return `<button class="dc${nw?" nd":""}" data-pick="${x}" aria-pressed="${S.pick===x}" title="${esc(T[x].name)}${nw?" — новий модуль":""}"><b>${esc(T[x].short)}</b><small>${nw?`<em class="ndt">нове</em> · `:""}${modW(x)} мод.${brandsFor(x).length>1?" · "+(brandsFor(x).length-1)+" вир.":""}</small></button>` };
 function catBody(){ const q=(S.devQ||"").trim().toLowerCase();
-  if(q){ const hit=Object.keys(T).filter(k=>[T[k].name,T[k].short,T[k].pre,T[k].maker||""].join(" ").toLowerCase().includes(q));
+  if(q){ const hit=Object.keys(T).filter(k=>!T[k].retired&&[T[k].name,T[k].short,T[k].pre,T[k].maker||""].join(" ").toLowerCase().includes(q));
     return brow(`<span class="bl">Знайдено: ${hit.length}</span>`)+(hit.length?brow(hit.map(devCard).join(""),"cards"):brow(`<span class="bl">Нічого не знайдено — спробуйте інше слово</span>`)); }
   const ci=Math.min(S.cat??0,CATALOG.length-1), c=CATALOG[ci], subs=Array.isArray(c[1])?c[1]:null, si=subs?Math.min(S.sub||0,subs.length-1):0;
   if(S.repl&&(c[1]==="G"||c[1]==="F")) return brow(`<span class="bl">Для заміни оберіть категорію модулів вище</span>`);

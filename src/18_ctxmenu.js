@@ -11,7 +11,7 @@ function ctxOpen(d,cx,cy){ ctxClose(); const t=T[d.type], m=document.createEleme
   if(x+r.width>W-8) x=Math.max(8,cx-r.width-6); if(y+r.height>H-8) y=Math.max(8,cy-r.height-6);
   m.style.left=x+"px"; m.style.top=y+"px"; }
 // де в каталозі лежить тип — щоб заміна одразу показала схожі модулі
-function catOf(type){ for(let i=0;i<CATALOG.length;i++){ const s=CATALOG[i][1]; if(!Array.isArray(s)) continue;
+function catOf(type){ type=T[type]&&T[type].like||type; for(let i=0;i<CATALOG.length;i++){ const s=CATALOG[i][1]; if(!Array.isArray(s)) continue;
     for(let j=0;j<s.length;j++) if(Array.isArray(s[j][1])&&s[j][1].includes(type)) return [i,j]; } return [1,0]; }
 // Заміна модуля на тому ж місці: id лишається, перемички на клеми, що є й у нового, — теж
 function doReplace(id,type){ const i=S.devices.findIndex(x=>x.id===id); if(i<0){ S.repl=null; renderAll(); return; }

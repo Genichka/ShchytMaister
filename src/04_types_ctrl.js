@@ -84,7 +84,7 @@ defType("logo",{name:"Siemens LOGO! 230RCE", short:"LOGO! 230RCE", cat:"Керу
       +lcd(g.x+14,g.y+68,g.w-28,40,l,d.pw,"#a6e3ff")+[i1,i2].map((v,i)=>led(g.x+22+i*20,g.y+122,d.pw&&v?"#3fbf4a":"#7a7e86")+tx(g.x+22+i*20,g.y+138,"I"+(i+1),{fs:6.5})).join("")
       +[0,1].map(i=>led(g.x+g.w-62+i*22,g.y+122,d.pw&&d.q[i]?"#ffb21f":"#7a7e86")+tx(g.x+g.w-62+i*22,g.y+138,"Q"+(i+1),{fs:6.5})).join(""); }});
 // Модульний АВР (тип TOQ5 TOMZN / G2R GEYA): пріоритет вводу I, без витримок
-defType("ats",{name:"Модуль АВР 2P 63 А", short:"АВР-модуль", cat:"Комутація", w:4, pre:"QA",
+defType("ats",{name:"Модуль АВР 2P 63 А", short:"АВР-модуль", cat:"Комутація", w:4, pre:"QA", retired:true, like:"toq5",   // retired — прибрано з каталогу й помічника, лишається лише для вже складених щитків і прикладів
   terms:[{k:"IL",s:"top",r:"L",l:"I L"},{k:"IN",s:"top",r:"N",l:"I N"},{k:"IIL",s:"top",r:"L",l:"II L"},{k:"IIN",s:"top",r:"N",l:"II N"},{k:"L",s:"bot",r:"L",l:"L"},{k:"N",s:"bot",r:"N",l:"N"}],
   poles:[{a:"IL",b:"L",r:"L"},{a:"IN",b:"N",r:"N"},{a:"IIL",b:"L",r:"L"},{a:"IIN",b:"N",r:"N"}],
   closed:(d,pi)=>pi<2?d.pos==="I":d.pos==="II", init:d=>{ d.pos=d.pos||"I"; d.manual=!!d.manual; d.variant=d.variant||"tomzn"; },
