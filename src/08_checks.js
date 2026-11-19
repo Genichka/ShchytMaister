@@ -17,6 +17,20 @@ function rcdNBypass(f0){ f0=f0||build({allOpen:true});
   return S.devices.filter(R=>T[R.type].rcd&&nPole(R)>=0).filter(R=>{ const p=T[R.type].poles[nPole(R)]; return f0(R.id+":"+p.a)===f0(R.id+":"+p.b); }); }
 const isPhRole = r => r==="L"||r==="P"||PHK.includes(r);
 
+// Скільки приладів увімкнено разом. Якщо більше, ніж витримує автомат групи, ввідний чи інвертор, — одна зрозуміла помилка, а не ланцюжок наслідків
+// (вибило ввідний → групи без живлення → інвертор у захисті…). cut — які прилади вимкнути (найпотужніші спершу), щоб усе вмістилось: прогін під напругою
+// робиться вже без них, а «Виправити все» вимикає саме їх.
+function loadCut(){ const b=S.board, G=groupsOf(), out={issues:[],cut:[]}; if(!G.length) return out;
+  const on=[]; for(const g of G) g.group.loads.forEach(l=>{ if(l.on&&l.kw>0) on.push({g,l}); }); on.sort((a,c)=>c.l.kw-a.l.kw);
+  const off=new Set(), kw=f=>on.filter(x=>!off.has(x)&&f(x)).reduce((a,x)=>a+x.l.kw,0), cutTo=(f,lim)=>{ for(const x of on){ if(kw(f)<=lim+1e-9) break; if(f(x)) off.add(x); } };
+  for(const g of G){ if(g3(g)) continue; const In=inA(g.rating), f=x=>x.g===g, tot=kw(f); if(In&&tot*1000/230>In){ cutTo(f,In*0.23); out.issues.push({k:"group",g,kw:tot,In}); } }
+  // ввідний першого вводу (мережа) — лише для однофазних щитків; у трифазних прилади розходяться по фазах
+  const one=b.inputs.every(i=>!i.terms.includes("L2")), f0=build({allOpen:true}), in0=b.inputs[0], ms=mainsOf();
+  const m0=ms.find(m=>T[m.type].terms.some(q=>q.s==="top"&&f0(K(m,q.k))===f0(in0.id+":"+in0.terms[0])))||(S.wires.length?null:ms[0]);
+  if(m0&&one){ const In=protIn(m0), lim=In*0.23, tot=kw(()=>true); if(tot>lim){ cutTo(()=>true,lim); out.issues.push({k:"main",dev:m0,kw:tot,lim,In}); } }
+  const inv=b.inputs.find(i=>i.inv); if(inv&&inv.inv.kw){ const f=x=>!x.g.group.nobk, lim=inv.inv.kw, tot=on.filter(f).reduce((a,x)=>a+x.l.kw,0); if(kw(f)>lim){ cutTo(f,lim); out.issues.push({k:"inv",kw:tot,lim}); } }
+  out.cut=on.filter(x=>off.has(x)); return out; }
+const cutNames = cut => { const L=cut.map(x=>`${x.l.n} (${desig(x.g)})`); return L.length>4?L.slice(0,4).join(", ")+` і ще ${L.length-4}`:L.join(", "); };
 function runChecks(){
   const Cl=[], add=(sev,t,d="",ref=null)=>Cl.push({sev,t,d,ref}), b=S.board, f0=build({allOpen:true}), G=groupsOf();
   // 1. Кольори перемичок і клеми
@@ -45,9 +59,15 @@ function runChecks(){
     const fp=build({ideal:true,open:new Set(S.devices.filter(d=>!T[d.type].prot).map(d=>d.id))});   // автомати замкнені, комутація (АВР, контактори) розімкнена
     if(gi&&iv.terms.includes("N")&&fp(gi.id+":N")===fp(iv.id+":N")) add("w","Нуль інвертора з’єднано з нулем мережі напряму","АВР має перемикати і фазу, і нуль (2P). Багато інверторів у резервному режимі з’єднують N з PE всередині — спільний нуль з мережею дає хибні спрацювання ПЗВ.");
   }
-  // 2. Прогін під напругою
+  // 2. Навантаження: забагато приладів разом — одна помилка з причиною; прогін нижче — уже без «зайвих» приладів
+  const lc=loadCut(), cn=cutNames(lc.cut);
+  for(const z of lc.issues){
+    if(z.k==="group") add("e",`${desig(z.g)} «${z.g.group.name}»: увімкнено ${fmt(z.kw,1)} кВт ≈ ${Math.round(z.kw*1000/230)} А при автоматі ${z.In} А`,`Від приладів, увімкнених разом, автомат вимкнеться. Вимкніть частину (кнопки ● у навантаженні групи) або розділіть групу. «Виправити все» вимкне в тесті найпотужніші.`,{dev:z.g.id});
+    if(z.k==="main") add("e",`Увімкнено забагато приладів: ${fmt(z.kw,1)} кВт ≈ ${Math.round(z.kw*1000/230)} А`,`Ввідний ${desig(z.dev)} ${z.dev.rating} витримує ${z.In} А (≈ ${fmt(z.lim,1)} кВт), тож від усіх приладів разом він вимкнеться, а з ним — усі групи. «Виправити все» вимкне в тесті найпотужніші: ${cn}. Інший шлях — ввідний на більший струм (і кабель вводу товщий).`,{dev:z.dev.id});
+    if(z.k==="inv") add("e",`Від інвертора: увімкнено ${fmt(z.kw,1)} кВт при номіналі ${fmt(z.lim,1)} кВт`,`Без мережі інвертор вимкнеться від перевантаження. «Виправити все» вимкне в тесті найпотужніші: ${cn}. На резерв залиште лише потрібне — холодильник, котел, світло, роутер, а бойлер чи плиту живіть лише від мережі (до АВР).`); }
   const multi=b.inputs.length>1, man=v=>{ for(const d of S.devices) if(d.type==="to219"||d.type==="to119"||d.type==="sft232") d.pos=v; }, res=sandbox(()=>{
-    const out={}; man(1); powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
+    const out={}, was=lc.cut.map(x=>x.l); for(const l of was) l.on=false;   // прогін — без приладів, що не вміщаються (причину вже названо вище)
+    man(1); powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
     out.g=G.map(g=>({id:g.id, ok:!!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)}));
     out.trips=S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip);
     if(multi){ out.alt=b.inputs.slice(1).map(inp=>{ S.log=[]; man(2); powerUp([inp.id]); runFor(1);
@@ -55,6 +75,7 @@ function runChecks(){
         return {inp, fed, err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip), g:G.filter(g=>!g.group.nobk&&!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)).map(desig)}; });
       S.log=[]; man(1); powerUp(); runFor(8); S.src[b.inputs[0].id].on=false; man(0); runFor(1); man(2); runFor(9); S.src[b.inputs[0].id].on=true; man(0); runFor(1); man(1); runFor(11);
       out.back={err:sbErrors(), trips:S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip)}; }
+    for(const l of was) l.on=true;
     if(S.tplObj&&S.tplObj.checks){ out.tpl=[]; S.tplObj.checks((s,t,d)=>out.tpl.push({sev:s,t,d})); }
     return out; });
   const hasFault=res.err.length||res.trips.length;
@@ -69,7 +90,7 @@ function runChecks(){
         if(a.g.length) add("e",`Лише «${a.inp.label}»: групи без живлення`,a.g.join(", ")+". АВР не перевів навантаження на резерв."); }
       else add("ok",`Від «${a.inp.label}» живляться ${G.some(g=>g.group.nobk)?"всі резервні":"всі"} групи`,"Перевірено з вимкненим основним вводом.");
       if(a.inp.inv){ const fg=G.filter(g=>a.fed.includes(g.id)), kw=a.inp.inv.kw, on=fg.reduce((x,g)=>x+kwOf(g),0), all=fg.reduce((x,g)=>x+kwOf(g,true),0);
-        if(on>kw) add("e",`Від інвертора: увімкнено ${fmt(on,1)} кВт при номіналі ${fmt(kw,1)} кВт`,"Без мережі інвертор вимкнеться від перевантаження. На резерв залиште лише потрібне: холодильник, котел, світло, роутер — а бойлер чи плиту живіть лише від мережі (до АВР).");
+        if(on>kw) {}   // уже назване вище (loadCut)
         else if(all>kw) add("w",`Усі прилади на резерві разом ${fmt(all,1)} кВт — більше за інвертор ${fmt(kw,1)} кВт`,"Від інвертора не вмикайте одночасно чайник, бойлер, праску.");
         else if(fg.length) add("ok",`Інвертора ${fmt(kw,1)} кВт вистачає на всі групи резерву`); } }
     const bk=res.back; if(bk.err.length||bk.trips.length) for(const e of [...bk.err,...bk.trips]) add("e","Повернення на основний ввід: аварія",e);

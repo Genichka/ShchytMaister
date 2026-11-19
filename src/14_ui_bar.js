@@ -200,7 +200,7 @@ function chkBar(){ const C=S.chk.list, ne=C.filter(c=>c.sev==="e").length, nw=C.
   const r=c.ref, gOn=!!(S.guide&&S.guide.on), gp=(ne||c.sev!=="ok")&&guidePending(), next=!ne&&gOn&&guidePending();
   if((r&&(r.dev||r.wire))||gp||next||ne) s+=brow((r&&(r.dev||r.wire)?`<button class="btn sm" data-cshow>Показати ${r.wire?"перемичку":"на щитку"}</button>`:"")
     +(next?`<button class="btn sm primary" data-gon>Далі →</button>`:gp?`<button class="btn sm primary" data-gon>${gOn?"До помічника":"Виправити з помічником"}</button>`:"")
-    +(ne&&mainsOf().length&&!wirePlan().some(x=>x.bad)?`<button class="btn sm" data-gall>Виправити все</button>`:""));
+    +(ne&&mainsOf().length&&!wirePlan().some(x=>x.bad)?(S.fixNoop===elecSnap()?`<span class="bl">«Виправити все» це вже не виправить — зробіть, як написано вище.</span>`:`<button class="btn sm" data-gall title="Перекласти перемички за схемою, підібрати номінали й вимкнути в тесті прилади, які не вміщаються">Виправити все</button>`):""));
   return s; }
 // ---- Події панелі
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;

@@ -90,6 +90,7 @@ function guideSteps(){ const b=S.board, kind=boardKind(b), G=groupsOf(), has=(..
       done:()=>G.every(g=>g.group.loads.length>0), act:["До карток груп",()=>showTab("groups",true)]}]; }
 let GSTEPS=[];
 document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
+  if(q("[data-gchk]")){ if(S.chk){ S.chkOpen=true; S.chk.i=0; } else checkNow(); renderAll(false); return; }
   if(el=q("[data-gact]")){ const s=GSTEPS[+el.dataset.gact]; if(s&&s.act){ if(s.act[1]) s.act[1](); else showOpts(s); } return; }
   if(el=q("[data-gskip]")){ (S.guide.skip||(S.guide.skip=[])).push(el.dataset.gskip); S.devFilter=null; save(); renderAll(false); return; }
   if(q("[data-gx]")){ S.guide.on=false; save(); renderAll(true); toast("Помічника вимкнено. Увімкнути знову — кнопка «Помічник» унизу"); return; } });
@@ -103,7 +104,7 @@ function guideHint(){ const g=guideCur(); if(!g) return ""; if(g.cur<0) return S
   const td=g.s.todo?g.s.todo():[]; if(td.length){ const ok=td.filter(x=>x.ok).length, bad=td.find(x=>x.bad);
     return `<b>Крок ${g.cur+1} з ${g.st.length} · ${esc(g.s.short||g.s.t)}</b> · з’єднано ${ok} з ${td.filter(x=>!x.bad).length}. `
       +(bad?`<span style="color:var(--red)">${esc(bad.t)}</span>`:`Торкніться клеми <span class="gn">1</span>, потім <span class="gn">2</span> — їх підсвічено. «Усі перемички (Авто)» прокладе решту перемичок сам.`); }
-  if(g.s.id==="check"&&S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors) return `<b>Крок ${g.cur+1}:</b> перевірка знайшла помилок: ${S.lastCheck.errors}. «Виправити все» перекладе перемички за правильною схемою й підбере номінали.`;
+  if(g.s.id==="check"&&S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors) return `<b>Крок ${g.cur+1}:</b> перевірка знайшла помилок: ${S.lastCheck.errors}. ${S.fixNoop===elecSnap()?"Автоматично їх не виправити — що зробити, написано під кожною помилкою.":"«Виправити все» перекладе перемички за схемою, підбере номінали й вимкне в тесті прилади, які не вміщаються."}`;
   return `<b>Крок ${g.cur+1}:</b> ${esc(g.s.h)}`; }
 const GX = `<button class="bx" data-gx aria-label="Сховати помічника">✕</button>`;
 function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return "";
@@ -118,7 +119,7 @@ function guideBar(){ const g=guideCur(); guideOn=!!(g&&g.cur>=0); if(!g) return 
       +`<div class="br">${all}<button class="btn sm primary" data-gauto title="Програма сама проведе цю одну перемичку">✓ Покроково (Авто)</button>${S.mode==="wire"?"":`<button class="btn sm" data-gwire title="Перейти в режим «Перемички» і провести перемичку самому">✋ Проведу сам</button>`}</div>`
       +`<div class="br"><span class="bl">Автоматично — програма проведе перемичку за вас. «Проведу сам» — торкніться клеми 1, потім клеми 2.</span></div>`; }
   if(s.id==="check"&&S.lastCheck&&S.lastCheck.sig===elecSnap()&&S.lastCheck.errors)
-    return `<div class="br gd">${num}<b class="gt">Перевірка: помилок ${S.lastCheck.errors}</b>${GX}</div><div class="br"><button class="btn sm primary" data-gall>Виправити все</button><button class="btn sm" data-gact="${g.cur}">Перевірити ще раз</button></div>`;
+    return `<div class="br gd">${num}<b class="gt">Перевірка: помилок ${S.lastCheck.errors}</b>${GX}</div><div class="br">${S.fixNoop===elecSnap()?`<span class="bl">Автоматично не виправити — відкрийте помилку й зробіть, як там написано.</span><button class="btn sm primary" data-gchk>Показати помилки</button>`:`<button class="btn sm primary" data-gall>Виправити все</button>`}<button class="btn sm" data-gact="${g.cur}">Перевірити ще раз</button></div>`;
   if(s.id==="prot"&&s.ask) return `<div class="br gd">${num}<b class="gt">Реле напруги: на ввід 1 і ввід 2 чи тільки на ввід 1?</b>${GX}</div>`
     +`<div class="br wrap"><button class="btn sm primary" data-gkv="both">На ввід 1 і ввід 2</button><button class="btn sm" data-gkv="in1">Тільки на ввід 1 (мережа)</button><button class="btn sm" data-gskip="prot">Без реле напруги</button></div>`
     +`<div class="br"><span class="bl">Реле відключає свій ввід, коли напруга на ньому погана, — і АВР переходить на інший.</span></div>`;

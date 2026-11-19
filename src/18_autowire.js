@@ -100,6 +100,8 @@ function fixRatings(){ const fix=[], mains=mainsOf(); if(!mains.length) return f
   for(const d of S.devices){ const t=T[d.type];
     if((d.type==="rcd"||d.type==="rcd4"||d.type==="kv"||d.type==="tovpd1")&&inA(d.rating)<mainIn){ const r=t.ratings.find(x=>inA(x)>=mainIn)||t.ratings[t.ratings.length-1];
       if(r!==d.rating){ fix.push(`${desig(d)}: ${d.rating} → ${r}${t.unit||""}`); d.rating=r; } } }
+  for(const Q of S.devices.filter(d=>T[d.type].In)){ const In=T[Q.type].In; for(const m of mains) if(protIn(m)>In){ const r=[...T[m.type].ratings].reverse().find(x=>inA(x)<=In&&x[0]===String(m.rating)[0])||[...T[m.type].ratings].reverse().find(x=>inA(x)<=In);
+      if(r&&r!==m.rating){ fix.push(`${desig(m)}: ${m.rating} → ${r} (під ${desig(Q)} ${In} А)`); m.rating=r; } } }
   for(const g of groupsOf()){ const In=inA(g.rating); if(In>CAB[g.group.sec]){ const s=secFor(In); fix.push(`${desig(g)}: кабель ${fmt(g.group.sec,1)} → ${fmt(s,1)} мм²`); g.group.sec=s; } }
   return fix; }
 
@@ -108,19 +110,25 @@ function fixRatings(){ const fix=[], mains=mainsOf(); if(!mains.length) return f
 function planGaps(){ if(S.noDoc||!S.wires.length) return []; let plan; try{ plan=wirePlan(); }catch(e){ return []; } if(!plan.length||plan.some(x=>x.bad)) return [];
   const ids=new Set(plan.flatMap(x=>[x.a,x.b]).map(k=>String(k).split(":")[0]));
   return S.devices.filter(d=>ids.has(d.id)&&!S.wires.some(w=>w.a.startsWith(d.id+":")||w.b.startsWith(d.id+":"))); }
+// однакові виправлення — одним рядком: «QF3…QF8: кабель 2,5 → 4,0 мм²»
+const fixShort = L => { const m=new Map(); for(const f of L){ const i=f.indexOf(": "); const k=i>0?f.slice(i+2):f, d=i>0?f.slice(0,i):""; (m.get(k)||m.set(k,[]).get(k)).push(d); }
+  return [...m].map(([k,ds])=>ds[0]?`${ds.length>2?ds[0]+"…"+ds[ds.length-1]:ds.join(", ")}: ${k}`:k); };
 function autoWire(){ const plan=wirePlan(), bad=plan.find(x=>x.bad);
   if(!mainsOf().length){ toast("Спершу поставте ввідний автомат","w"); return false; }
   if(bad){ toast(bad.t,"w"); return false; }
-  const fix=fixRatings();
+  const sig0=elecSnap(), fix=fixShort(fixRatings()), lc=loadCut(); for(const x of lc.cut) x.l.on=false;
+  if(lc.cut.length) fix.push(`вимкнено в тесті: ${cutNames(lc.cut)}`);
   const own=k=>{ const p=k.split(":"); return p[0]==="tb"?"tb:"+p[1]:p[0]==="xt"?k:p[0]; };
   const known=new Set(["xn","xpe",...S.board.inputs.map(i=>i.id),...plan.flatMap(x=>[own(x.a),own(x.b)])]);
   const before=S.wires.length; S.wires=S.wires.filter(w=>![w.a,w.b].every(k=>known.has(own(k)))); const removed=before-S.wires.length;
   let added=0; for(const it of plan){ const f0=build({allOpen:true}), m=x=>x==="xn:*"?"xn:0":x==="xpe:*"?"xpe:0":x;
     if(f0(m(it.a))===f0(m(it.b))) continue; gConnect(it); added++; }
+  { const f1=build({allOpen:true}); for(const X of S.devices.filter(d=>d.type==="sockex")) if(S.board.xpe&&f1(K(X,"PE"))!==f1("xpe:0")){ gConnect({a:"xpe:*",b:K(X,"PE"),kind:"PE",sec:2.5}); fix.push(`${desig(X)}: PE розетки на шину XPE1`); added++; } }   // розетка без заземлення
   S.pend=null; S.selWire=null; S.selDev=null; S.mode="wire"; commit();
   logp("ok",`Помічник проклав перемички (${added}) за схемою${fix.length?"; виправлено: "+fix.join(", "):""}`);
   checkNow();
-  const e=S.lastCheck?S.lastCheck.errors:0;
-  toast(e?`Перемички прокладено (${added}), але перевірка знайшла помилок: ${e}`:`Щиток зібрано: перемичок — ${added}${fix.length?", виправлено номінали":""}. Перевірка пройдена${removed?" · «Назад» поверне попередні перемички":""}`,e?"w":"ok");
+  const e=S.lastCheck?S.lastCheck.errors:0; S.fixNoop=e&&elecSnap()===sig0?elecSnap():null;   // нічого не змінилось, а помилки лишились — автоматично їх не виправити
+  if(e&&S.chk){ const f=S.chk.list.find(c=>c.sev==="e"); toast(`${S.fixNoop?"Автоматично це не виправити":"Лишилось помилок: "+e}. ${f?"Перша: «"+f.t+"» — що робити, написано під нею.":""}`,"w"); return false; }
+  toast(`Щиток зібрано: перемичок — ${added}${fix.length?"; виправлено: "+fix.join("; "):""}. Перевірка пройдена${removed?" · «Назад» поверне попередні перемички":""}`,"ok");
   return !e; }
 document.addEventListener("click",e=>{ if(e.target.closest("[data-gall]")) autoWire(); });
