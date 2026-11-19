@@ -46,7 +46,7 @@ function runChecks(){
     if(gi&&iv.terms.includes("N")&&fp(gi.id+":N")===fp(iv.id+":N")) add("w","Нуль інвертора з’єднано з нулем мережі напряму","АВР має перемикати і фазу, і нуль (2P). Багато інверторів у резервному режимі з’єднують N з PE всередині — спільний нуль з мережею дає хибні спрацювання ПЗВ.");
   }
   // 2. Прогін під напругою
-  const multi=b.inputs.length>1, man=v=>{ for(const d of S.devices) if(d.type==="to219"||d.type==="to119") d.pos=v; }, res=sandbox(()=>{
+  const multi=b.inputs.length>1, man=v=>{ for(const d of S.devices) if(d.type==="to219"||d.type==="to119"||d.type==="sft232") d.pos=v; }, res=sandbox(()=>{
     const out={}; man(1); powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
     out.g=G.map(g=>({id:g.id, ok:!!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)}));
     out.trips=S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip);
@@ -81,6 +81,13 @@ function runChecks(){
   else if(main.length) add("ok",`Ввідн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);
   for(const R of S.devices.filter(d=>d.type==="rcd"||d.type==="rcd4")) if(mainIn&&inA(R.rating)<mainIn) add("e",`${desig(R)} ${R.rating} А слабший за ввідний ${mainIn} А`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за ввідний автомат.",{dev:R.id});
   for(const K of S.devices.filter(d=>d.type==="kv"||d.type==="tovpd1")) if(mainIn&&inA(K.rating)<mainIn) add("e",`${desig(K)} ${K.rating} А слабше за ввідний ${mainIn} А`,"Через контакт реле напруги йде струм усього щитка. Номінал реле — не менший за ввідний автомат: до C40 — реле 40 А, C50–C63 — реле 63 А.",{dev:K.id});
+  for(const Q of S.devices.filter(d=>T[d.type].In)) if(mainIn&&T[Q.type].In<mainIn) add("e",`${desig(Q)} ${T[Q.type].In} А слабший за ввідний ${mainIn} А`,`Через ${T[Q.type].short} іде струм усього щитка. Ввідні автомати — не більше ${T[Q.type].In} А (C${T[Q.type].In}), або перемикач на більший струм.`,{dev:Q.id});
+  // розетки: заземлення і ПЗВ перед розеткою
+  const socks=S.devices.filter(d=>d.type==="sock"||d.type==="sockex");
+  if(socks.length){ const ex=[]; for(const d of S.devices){ const t=T[d.type]; if(!t.rcd) for(const p of t.poles||[]) ex.push([K(d,p.a),K(d,p.b)]); }
+    const fr=build({allOpen:true,extra:ex}), phs=b.inputs.map(i=>i.id+":"+i.terms[0]);   // усе замкнене, крім ПЗВ і диф-автоматів
+    for(const X of socks){ if(b.xpe&&f0(K(X,"PE"))!==f0("xpe:0")) add("e",`${desig(X)}: розетку не заземлено`,"Клему PE розетки з’єднайте з шиною PE (XPE1) жовто-зеленим проводом. Без PE корпус приладу не захищений.",{dev:X.id});
+      if(phs.some(p=>fr(p)===fr(K(X,"L")))) add("w",`${desig(X)}: розетка без ПЗВ`,"Розеткову лінію захистіть ПЗВ 30 мА або диф-автоматом — від ураження струмом через прилад чи шнур.",{dev:X.id}); } }
   const byp=rcdNBypass(f0);
   for(const R of byp) add("e",`${desig(R)}: нуль іде в обхід ПЗВ`,`Верхня і нижня клеми N ${desig(R)} з’єднані напряму (через шину N або перемичку). ПЗВ вимикатиметься від будь-якого приладу. Нуль від ввідного — лише на верхню N ПЗВ, а на шину XN1 — лише з нижньої N.`,{dev:R.id});
   for(const g of G){ const In=inA(g.rating), max=CAB[g.group.sec], I=kwOf(g,true)*1000/(g3(g)?690:230);

@@ -497,7 +497,7 @@ em.rt{font-style:normal;font-weight:700;color:var(--brass)}
   <div class="db-say" id="dbSay" aria-live="polite"></div><div class="db-stat" id="dbStat"></div></div>
 <div class="modal" id="upd" hidden role="dialog" aria-modal="true" aria-labelledby="updTitle"><div class="modal-card" id="updCard"></div></div>
 <script>
-const APP = { v:"4.35.11", date:"2026-11-15", dev:["ОВЕН ПЛК200-04","Перетворювач DC/DC 18–36 → 24 В","Реле проміжне 1CO, котушка 24 В=","Лампа сигнальна 24 В","Перемикач «Авто / Ручний»"], notes:["Помічник на двох вводах сам питає про реле напруги: «На ввід 1 і ввід 2», «Тільки на ввід 1 (мережа)» або «Без реле напруги». Далі підказує, скільки реле поставити, а «Усі перемички (Авто)» обв’язує їх за вашим вибором: QF1 → KV1 → АВР і (якщо на обидва) QF2 → KV2 → АВР. Вибір можна змінити кнопкою «Змінити вибір»","Ввідний автомат 1P: у картці автомата 1P нова вкладка «Роль» — «Групова лінія» або «Ввідний». Ввідний 1P розриває лише фазу, нуль вводу йде напряму — наприклад, на виході інвертора. «Усі перемички (Авто)» підключає його як ввід; на двох вводах помічник сам визначає, який автомат для якого вводу, за вже прокладеними перемичками, а в кроці «Ввідний автомат» пропонує й 1P","Після оновлення щиток не треба складати заново: якщо модуль стоїть без перемичок, а помічник тепер уміє його підключити (як друге реле напруги), програма сама запропонує перепрокласти перемички. «Назад» поверне як було","Два вводи і два реле напруги: «Усі перемички (Авто)» тепер заводить кожен ввід через своє реле — ввідний QF1 → KV1 → АВР (Source A / ввід I), QF2 → KV2 → АВР (Source B / ввід II). Нуль на реле — лише на вимір. Якщо реле одне, воно, як і раніше, стоїть після АВР","АВР TOMZN TOQ5 і TOQ7 намальовано як на корпусі: нижній силовий блок стоїть під тими самими колонками R і N, що й верхній, і в кожній колонці двоярусна клема — B (вхід генератора, Source B) і Load (вихід на навантаження). Підписи нижніх клем — біля самих гвинтів","Майстер нового щитка коротший: назва → ввід → корпус → готово. Шини N і PE стоять завжди, а скільки в них отворів, помічник питає сам — після вибору груп, з порадою за їх кількістю; там же — колодка XT2. У кроці ПЗВ помічника є кнопка «Без ПЗВ». Для власного щитка все це є й у «Меню → Корпус, ввід, шини, колодка XT2»","Коли щиток не відкрито, на порожньому полі тепер є кнопка «Створити власний щиток» з майстром, а також «Приклади щитків» і «Мої проєкти». Дубль цих кнопок у нижній панелі прибрано","Приклади щитків: розділ «Конструктор» з порожніми щитками прибрано — власний щиток створює кнопка «Створити власний щиток»","Меню: коли відкрито готовий приклад, розділу «Щиток» (корпус, ввід, шини, покроковий помічник) більше немає — щиток уже зібраний. Збережіть приклад як свій проєкт, і розділ з’явиться знову","Демонстрація на ПК: на широкому екрані пояснення тепер праворуч на всю висоту, і щиток більше не обрізається знизу. На кожному кроці щиток сам наводиться на апарати, про які йде мова, і підсвічує їх помаранчевою рамкою — в усіх шаблонах","Демонстрація АВР на ПЛК200: довші кроки, щоб встигнути прочитати; на останньому кроці видно весь щиток","Новий шаблон «АВР на 2 вводи → АВР мережа ↔ інвертор 24 В на ОВЕН ПЛК200»: резервне живлення будинку від гібридного інвертора 24 В з АКБ LiFePO4. Поки є мережа, інвертор і BMS вимкнені. Мережа зникла — ПЛК забороняє KM1 реле K1, імпульсом 3 с вмикає BMS, через 2 с замикає Remote ON/OFF інвертора, а KM2 вмикається від його виходу. Мережа повернулась і стабільна — ПЛК вимикає інвертор, потім BMS, і лише тоді дозволяє KM1. Після кожного відключення — заряд АКБ через KM3 до SOC 100 %. Без живлення ПЛК мережа працює сама","Документи: нова вкладка «Принципова схема» для шаблонів, що її мають — аркуш А3 зі штампом, збереження в SVG і окрема сторінка в «Повному комплекті» PDF","Нові модулі: ОВЕН ПЛК200-04 (живлення 24 В, входи FDI1–FDI6, релейні виходи DO1–DO5, стан програми на панелі й у журналі), Перетворювач DC/DC 18–36 → 24 В, Реле проміжне 1CO, котушка 24 В=, Лампа сигнальна 24 В, Перемикач «Авто / Ручний»","Поза щитком: гібридний інвертор 24 В 3 кВт із входом Remote ON/OFF і АКБ LiFePO4 24 В 100 А·год з BMS — кнопка (утримати 3 с), клеми B± до BMS і P± після BMS","Симулятор: кола 24 В постійного струму. Напруга АКБ залежить від заряду; КЗ на виході BMS вимикає АКБ, від КЗ до BMS рятує лише запобіжник; DC/DC має захист від КЗ"]};
+const APP = { v:"4.36.0", date:"2026-11-19", dev:["Перемикач Hager SFT232","Розетка E.NEXT"], notes:["Новий модуль Перемикач Hager SFT232 — ручний перемикач вводів I–0–II 2P 32 А на 2 модулі, намальований як справжній: синя смужка й логотип :hager, дві клавіші з рифленням, зелене/червоне поле на важелі (0 — зелене, I і II — червоне), прозора кришка, під якою видно стан. Клеми: зверху спільні 1 і 5, знизу 2 і 6 — ввід I, 4 і 8 — ввід II. Є в каталозі «АВР → Ручні I–0–II» і в помічнику на кроці «АВР»; кнопка «Усі перемички (Авто)» підключає його сама. Перевірка попередить, якщо ввідний автомат більший за 32 А","Новий модуль Розетка E.NEXT на DIN-рейку 16 А — корпус 45 мм (2,5 модуля), велике гніздо із заземленням, зверху клема PE, знизу L і N. У «Тесті» торкніться розетки або оберіть у картці, що в неї ввімкнено: зарядка ноутбука, паяльник, дриль, чайник 2 кВт чи обігрівач 3,5 кВт — струм іде через автомат, як у житті","Перевірка розеток: попередить, якщо розетку (і нову, і звичайну «Розетку на DIN») не заземлено або перед нею немає ПЗВ чи диф-автомата","Помічник на двох вводах сам питає про реле напруги: «На ввід 1 і ввід 2», «Тільки на ввід 1 (мережа)» або «Без реле напруги». Далі підказує, скільки реле поставити, а «Усі перемички (Авто)» обв’язує їх за вашим вибором: QF1 → KV1 → АВР і (якщо на обидва) QF2 → KV2 → АВР. Вибір можна змінити кнопкою «Змінити вибір»","Ввідний автомат 1P: у картці автомата 1P нова вкладка «Роль» — «Групова лінія» або «Ввідний». Ввідний 1P розриває лише фазу, нуль вводу йде напряму — наприклад, на виході інвертора. «Усі перемички (Авто)» підключає його як ввід; на двох вводах помічник сам визначає, який автомат для якого вводу, за вже прокладеними перемичками, а в кроці «Ввідний автомат» пропонує й 1P","Після оновлення щиток не треба складати заново: якщо модуль стоїть без перемичок, а помічник тепер уміє його підключити (як друге реле напруги), програма сама запропонує перепрокласти перемички. «Назад» поверне як було","Два вводи і два реле напруги: «Усі перемички (Авто)» тепер заводить кожен ввід через своє реле — ввідний QF1 → KV1 → АВР (Source A / ввід I), QF2 → KV2 → АВР (Source B / ввід II). Нуль на реле — лише на вимір. Якщо реле одне, воно, як і раніше, стоїть після АВР","АВР TOMZN TOQ5 і TOQ7 намальовано як на корпусі: нижній силовий блок стоїть під тими самими колонками R і N, що й верхній, і в кожній колонці двоярусна клема — B (вхід генератора, Source B) і Load (вихід на навантаження). Підписи нижніх клем — біля самих гвинтів","Майстер нового щитка коротший: назва → ввід → корпус → готово. Шини N і PE стоять завжди, а скільки в них отворів, помічник питає сам — після вибору груп, з порадою за їх кількістю; там же — колодка XT2. У кроці ПЗВ помічника є кнопка «Без ПЗВ». Для власного щитка все це є й у «Меню → Корпус, ввід, шини, колодка XT2»","Коли щиток не відкрито, на порожньому полі тепер є кнопка «Створити власний щиток» з майстром, а також «Приклади щитків» і «Мої проєкти». Дубль цих кнопок у нижній панелі прибрано","Приклади щитків: розділ «Конструктор» з порожніми щитками прибрано — власний щиток створює кнопка «Створити власний щиток»","Меню: коли відкрито готовий приклад, розділу «Щиток» (корпус, ввід, шини, покроковий помічник) більше немає — щиток уже зібраний. Збережіть приклад як свій проєкт, і розділ з’явиться знову","Демонстрація на ПК: на широкому екрані пояснення тепер праворуч на всю висоту, і щиток більше не обрізається знизу. На кожному кроці щиток сам наводиться на апарати, про які йде мова, і підсвічує їх помаранчевою рамкою — в усіх шаблонах","Демонстрація АВР на ПЛК200: довші кроки, щоб встигнути прочитати; на останньому кроці видно весь щиток","Новий шаблон «АВР на 2 вводи → АВР мережа ↔ інвертор 24 В на ОВЕН ПЛК200»: резервне живлення будинку від гібридного інвертора 24 В з АКБ LiFePO4. Поки є мережа, інвертор і BMS вимкнені. Мережа зникла — ПЛК забороняє KM1 реле K1, імпульсом 3 с вмикає BMS, через 2 с замикає Remote ON/OFF інвертора, а KM2 вмикається від його виходу. Мережа повернулась і стабільна — ПЛК вимикає інвертор, потім BMS, і лише тоді дозволяє KM1. Після кожного відключення — заряд АКБ через KM3 до SOC 100 %. Без живлення ПЛК мережа працює сама","Документи: нова вкладка «Принципова схема» для шаблонів, що її мають — аркуш А3 зі штампом, збереження в SVG і окрема сторінка в «Повному комплекті» PDF","Нові модулі: ОВЕН ПЛК200-04 (живлення 24 В, входи FDI1–FDI6, релейні виходи DO1–DO5, стан програми на панелі й у журналі), Перетворювач DC/DC 18–36 → 24 В, Реле проміжне 1CO, котушка 24 В=, Лампа сигнальна 24 В, Перемикач «Авто / Ручний»","Поза щитком: гібридний інвертор 24 В 3 кВт із входом Remote ON/OFF і АКБ LiFePO4 24 В 100 А·год з BMS — кнопка (утримати 3 с), клеми B± до BMS і P± після BMS","Симулятор: кола 24 В постійного струму. Напруга АКБ залежить від заряду; КЗ на виході BMS вимикає АКБ, від КЗ до BMS рятує лише запобіжник; DC/DC має захист від КЗ"]};
 "use strict";
 /* ===== Модель v2: реєстр типів, стан, допоміжні функції ===== */
 const T = {};   // модулі на DIN-рейці
@@ -1159,6 +1159,61 @@ defType("toq7",{...T.toq5, name:"АВР TOMZN TOQ7 2P з ручкою (мере�
       +`<rect x="${g.x+290}" y="${g.y+104}" width="16" height="32" rx="4" fill="#0d0e11" stroke="#454a54"/><rect x="${g.x+292}" y="${d.manual?g.y+106:g.y+120}" width="12" height="14" rx="3" fill="#e0352b"/></g>`
       +tx(g.x+232,g.y+128,d.manual?"РУЧНИЙ":"АВТО",{fs:7,fw:700,fill:d.manual?"#ffa04d":"#5fd38a"});
     return s; }});
+/* ===== Модульні: перемикач Hager SFT232 I–0–II і розетка E.NEXT на DIN-рейку ===== */
+// Hager SFT232 — перемикач I–0–II 2P 32 А 230 В~, 2 модулі (35 мм), загальні клеми зверху.
+// Зверху 1 (L) і 5 (N) — спільні, на навантаження; знизу 2 і 6 — положення I, 4 і 8 — положення II.
+// I: з'єднано 1–2 і 5–6; «0»: усе розімкнено; II: 1–4 і 5–8. Важіль угорі — I, посередині — 0, унизу — II.
+defType("sft232",{name:"Перемикач I–0–II Hager SFT232 2P 32 А", short:"Перемикач SFT232", cat:"Комутація", w:2, In:32, pre:"QS", maker:"Hager", noBrand:true,
+  body:"#e3e5e8", faceFill:"#d9dce0",
+  terms:[{k:"1",s:"top",r:"L",l:"1"},{k:"5",s:"top",r:"N",l:"5"},{k:"2",s:"bot",r:"L",l:"2"},{k:"4",s:"bot",r:"L",l:"4"},{k:"6",s:"bot",r:"N",l:"6"},{k:"8",s:"bot",r:"N",l:"8"}],
+  poles:[{a:"2",b:"1",r:"L"},{a:"6",b:"5",r:"N"},{a:"4",b:"1",r:"L"},{a:"8",b:"5",r:"N"}],
+  closed:(d,pi)=>pi<2?d.pos===1:d.pos===2, init:d=>{ if(d.pos===undefined) d.pos=1; }, cap:"Мережа / генератор",
+  tap(d){ const seq=[1,0,2,0]; d.seqI=((d.seqI??seq.indexOf(d.pos))+1)%4; d.pos=seq[d.seqI]; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); return true; },
+  // вигляд — за фото виробу: синя смужка й «:hager» угорі, «SFT 232 / 32A / 230 V~» ліворуч, схема контактів праворуч,
+  // дві клавіші з рифленням «||» (рухаються разом), зелене/червоне поле на важелі, внизу — прозора відкидна кришка для маркування
+  face(d,g){ const x=g.x, y=g.y, p=d.pos, B="#1f74c2", ink="#2b2f36", i=p===1?0:p===0?1:2, cx=g.cx;
+    let s=`<rect x="${x+4}" y="${y+48}" width="${g.w-8}" height="37" rx="2" fill="#e9ebee" stroke="#c6c9ce"/><path d="M${cx} ${y+48}v37" stroke="#c6c9ce"/>`
+      +`<rect x="${x+7}" y="${y+50.5}" width="${g.w-52}" height="2.4" fill="${B}"/>`+tx(x+g.w-6,y+57.5,":hager",{fs:8.8,fw:800,a:"end",fill:B})
+      +tx(x+7,y+63.5,"SFT 232",{fs:6.8,fw:600,a:"start",fill:ink})+tx(x+7,y+71.5,"32A",{fs:6.2,a:"start",fill:ink})+tx(x+7,y+79,"230 V~",{fs:5.6,a:"start",fill:ink});
+    // схема контактів під логотипом: ніж від 1 (5) до 2 (6) у положенні I, до 4 (8) у II, посередині — у «0»
+    s+=`<g fill="none" stroke="#3a3f47" stroke-width=".8" stroke-linecap="round">`;
+    for(const px of [x+g.w-45,x+g.w-24]){ const tip=[px+3,px+8,px+13][i]; s+=`<path d="M${px+8} ${y+65}v3L${tip} ${y+75}M${px+3} ${y+76.5}v3M${px+13} ${y+76.5}v3"/>`; }
+    s+=`</g>`+[[x+g.w-37,"1"],[x+g.w-16,"5"]].map(([lx,l])=>tx(lx,y+63.6,l,{fs:4.6,fill:"#3a3f47"})).join("")
+      +[[x+g.w-42,"2"],[x+g.w-32,"4"],[x+g.w-21,"6"],[x+g.w-11,"8"]].map(([lx,l])=>tx(lx,y+84.2,l,{fs:4.6,fill:"#3a3f47"})).join("");
+    // ручка: дві клавіші у своїх модулях, хід I (угорі) – 0 – II (унизу)
+    const r0=x+13, r1=x+g.w-5, kw=(r1-r0)/2-8, ky=y+89+i*8, ind=p?"#e0352b":"#2ea043";
+    s+=`<rect x="${r0}" y="${y+87}" width="${r1-r0}" height="36" rx="2.5" fill="#b9bdc3" stroke="#9da1a8"/><path d="M${cx+4} ${y+87}v36" stroke="#9da1a8"/>`;
+    s+=`<g data-lever="${d.id}" style="cursor:pointer">`+[r0+4,cx+8].map(lx=>`<rect x="${lx}" y="${ky}" width="${kw}" height="17" rx="2.5" fill="#f1f2f4" stroke="#9aa0a8"/>`
+      +`<rect x="${lx+kw/2-4.2}" y="${ky+2.5}" width="2.2" height="9" rx="1" fill="#8d9198"/><rect x="${lx+kw/2+2}" y="${ky+2.5}" width="2.2" height="9" rx="1" fill="#8d9198"/>`
+      +`<rect x="${lx+3}" y="${ky+13}" width="${kw-6}" height="2.6" rx="1" fill="${ind}"/>`).join("")+`</g>`;
+    s+=[["I",y+99.3],["0",y+107.3],["II",y+115.3]].map(([l,ly],j)=>tx(x+8,ly,l,{fs:6,fw:j===i?800:500,fill:j===i?B:ink})).join("");
+    // прозора відкидна кришка, під нею — наліпка зі станом
+    s+=`<rect x="${x+6}" y="${y+126}" width="${g.w-12}" height="36" rx="2" fill="#cfe0ec" fill-opacity=".6" stroke="#9fb6c8"/><path d="M${x+7} ${y+129.5}H${x+g.w-7}" stroke="#9fb6c8" stroke-width=".8"/>`;
+    return s+tx(cx,y+142,p===1?"I · 1–2, 5–6":p===2?"II · 1–4, 5–8":"0 · розімкнено",{fs:6.6,fw:700,fill:"#24303b"})+tx(cx,y+152,p===1?"мережа":p===2?"генератор":"",{fs:5.8,fill:"#24303b"}); }});
+
+// Розетка E.NEXT e.socket.stand.din на DIN-рейку, 16 А 250 В~, із заземленням. Зверху клема PE, знизу L і N.
+// У тесті дотик до розетки вставляє вилку й міняє прилад; без PE — попередження в перевірці.
+const SOCK_LOADS = [null,["Зарядка ноутбука",0.09],["Паяльник",0.06],["Дриль",0.8],["Чайник",2],["Обігрівач",3.5]];
+// Корпус 45 × 80 мм — 2,5 модуля (bw), на рейці займає 3 місця; гвинт PE — посередині зверху, L і N — знизу, ±10 мм від осі.
+defType("sockex",{name:"Розетка на DIN-рейку E.NEXT e.socket.stand.din 16 А", short:"Розетка E.NEXT", cat:"Розподіл", w:3, bw:2.5, pre:"XS", maker:"E.NEXT", noBrand:true,
+  body:"#efe9dc", faceFill:"#e9e2d3",
+  terms:[{k:"PE",s:"top",r:"PE",l:"PE",m:0.75,nl:true},{k:"L",s:"bot",r:"L",l:"L",m:0.16},{k:"N",s:"bot",r:"N",l:"N",m:1.34}],
+  cap:"Розетка 16 А", init:d=>{ d.plug=d.plug||0; },
+  tap(d){ d.plug=((d.plug||0)+1)%SOCK_LOADS.length; const l=SOCK_LOADS[d.plug]; logp("ok",`${desig(d)}: ${l?`увімкнено ${l[0]} ${String(l[1]).replace(".",",")} кВт`:"вилку вийнято"}`); return true; },
+  load:(d,X)=>{ const l=SOCK_LOADS[d.plug||0], U=X.volt(K(d,"L"),K(d,"N")); return l&&U>=150?[{a:"L",b:"N",I:l[1]*1000/U,U}]:[]; },
+  // гніздо Schuko на всю ширину, як на кресленні: подвійний обідок, бічні пази, скоби заземлення вгорі й унизу, два отвори
+  face(d,g){ const cx=g.cx, cy=g.y+105, R=56, r=50, l=SOCK_LOADS[d.plug||0], X=S.sim&&S.sim.X, U=X?X.volt(K(d,"L"),K(d,"N")):0;
+    let s=`<path d="M${cx} ${g.y+35}v5M${cx-6} ${g.y+40}h12M${cx-4} ${g.y+42.6}h8M${cx-2} ${g.y+45.2}h4" stroke="#3a3f47" stroke-width="1.2" fill="none"/>`;   // знак заземлення під гвинтом PE, як на корпусі
+    s+=`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${cx}" cy="${cy}" r="${R}" fill="#e4dccb" stroke="#c9bda3" stroke-width="1.4"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="#efe8da" stroke="#d3c8b1"/>`
+      +[cx-r,cx+r-9].map(nx=>`<rect x="${nx}" y="${cy-18}" width="9" height="36" fill="#ddd3bf" stroke="#c9bda3" stroke-width=".8"/>`).join("")
+      +[cy-r,cy+r-7].map(ny=>`<rect x="${cx-9}" y="${ny}" width="18" height="7" rx="1" fill="#c3c7cc" stroke="#8e939a"/>`).join("")
+      +`<circle cx="${cx-26}" cy="${cy}" r="8" fill="#3a352c"/><circle cx="${cx+26}" cy="${cy}" r="8" fill="#3a352c"/>`
+      +tx(cx,cy-30,"16/25",{fs:6,fill:"#9b927f"})+tx(cx,cy-22,"250",{fs:6,fill:"#9b927f"})
+      +`<text x="${cx}" y="${cy+29}" font-size="10" text-anchor="middle" font-weight="800" letter-spacing=".6" style="fill:#d4202b">E.NEXT</text>`;
+    if(l) s+=`<path d="M${cx+30} ${cy+36} Q${cx+46} ${cy+50} ${cx+g.w/2-9} ${g.y+161}" fill="none" stroke="#2b2e33" stroke-width="8" stroke-linecap="round"/>`
+      +`<circle cx="${cx}" cy="${cy}" r="47" fill="#2b2e33" stroke="#17191c" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="38" fill="#383c42"/>`
+      +tx(cx,cy-3,l[0],{fs:l[0].length>10?6.4:7.6,fw:700,fill:"#f2f3f5"})+tx(cx,cy+10,(U>=150?"⚡ ":"")+String(l[1]).replace(".",",")+" кВт",{fs:7.6,fw:700,fill:U>=150?"#ffd23f":"#c9ced6"});
+    return s+`</g>`; }});
 /* ===== Керування 24 В: ОВЕН ПЛК200-04, реле й лампа 24 В=, DC/DC 24 В, перемикач «Авто / Ручний» ===== */
 // Котушка 24 В постійного струму тягне від 16 до 40 В; 230 В на ній — помилка монтажу (у журналі)
 function coil24(d,X,a,b){ const U=X.volt(K(d,a),K(d,b));
@@ -1789,7 +1844,7 @@ function capLines(cap,w){ const cw=w-6, words=String(cap).split(/\s+/).filter(Bo
   const lines=last.lines.slice(0,2).map((l,i)=>l.length>last.maxc||(i===1&&last.lines.length>2)?l.slice(0,last.maxc-1)+"…":l);
   return {fs:last.fs,lines,y0:lines.length>1?205.5-last.fs-1:203}; }
 function devSVG(d){
-  const t=T[d.type], r=d.rail||0, x=G.X0+d.slot*G.MW+1, w=t.w*G.MW-2, y=devTop(r), cx=x+w/2, on=d.on&&!d.trip, heat=S.heat[d.id]||0, H=240;
+  const t=T[d.type], r=d.rail||0, x=G.X0+d.slot*G.MW+1, w=(t.bw||t.w)*G.MW-2, y=devTop(r), cx=x+w/2, on=d.on&&!d.trip, heat=S.heat[d.id]||0, H=240;
   let s=`<g data-dev="${d.id}">`;
   if(heat>0.15) s+=`<rect class="heat" x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--orange)" stroke-width="3"/>`;
   if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
@@ -1804,7 +1859,7 @@ function devSVG(d){
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-3,tm.l,{fs:6})); } }
   const bn=brandName(d), shp=shopFor(d), own=t.maker||brandOf(d)!=="eua";   // модуль є в «Замовити» — замість напису EnergyUA маленька наліпка QR; дотик — великий код
   if(shp){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if(own&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
-  else s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
+  else if(!t.noBrand) s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   const des=desig(d), pw=Math.max(38,des.length*7+12);
   s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});
@@ -1939,7 +1994,7 @@ function runChecks(){
     if(gi&&iv.terms.includes("N")&&fp(gi.id+":N")===fp(iv.id+":N")) add("w","Нуль інвертора з’єднано з нулем мережі напряму","АВР має перемикати і фазу, і нуль (2P). Багато інверторів у резервному режимі з’єднують N з PE всередині — спільний нуль з мережею дає хибні спрацювання ПЗВ.");
   }
   // 2. Прогін під напругою
-  const multi=b.inputs.length>1, man=v=>{ for(const d of S.devices) if(d.type==="to219"||d.type==="to119") d.pos=v; }, res=sandbox(()=>{
+  const multi=b.inputs.length>1, man=v=>{ for(const d of S.devices) if(d.type==="to219"||d.type==="to119"||d.type==="sft232") d.pos=v; }, res=sandbox(()=>{
     const out={}; man(1); powerUp(); runFor(8); out.err=sbErrors(); out.chatter=S.sim.chatter;
     out.g=G.map(g=>({id:g.id, ok:!!(S.sim.g[g.id]&&S.sim.g[g.id].phase&&S.sim.g[g.id].neutral)}));
     out.trips=S.devices.filter(d=>d.trip).map(d=>desig(d)+": "+d.trip);
@@ -1974,6 +2029,13 @@ function runChecks(){
   else if(main.length) add("ok",`Ввідн${main.length>1?"і автомати":"ий автомат"} ${main.map(d=>desig(d)+" "+d.rating).join(", ")}`);
   for(const R of S.devices.filter(d=>d.type==="rcd"||d.type==="rcd4")) if(mainIn&&inA(R.rating)<mainIn) add("e",`${desig(R)} ${R.rating} А слабший за ввідний ${mainIn} А`,"ПЗВ не має теплового захисту. Його номінал має бути не меншим за ввідний автомат.",{dev:R.id});
   for(const K of S.devices.filter(d=>d.type==="kv"||d.type==="tovpd1")) if(mainIn&&inA(K.rating)<mainIn) add("e",`${desig(K)} ${K.rating} А слабше за ввідний ${mainIn} А`,"Через контакт реле напруги йде струм усього щитка. Номінал реле — не менший за ввідний автомат: до C40 — реле 40 А, C50–C63 — реле 63 А.",{dev:K.id});
+  for(const Q of S.devices.filter(d=>T[d.type].In)) if(mainIn&&T[Q.type].In<mainIn) add("e",`${desig(Q)} ${T[Q.type].In} А слабший за ввідний ${mainIn} А`,`Через ${T[Q.type].short} іде струм усього щитка. Ввідні автомати — не більше ${T[Q.type].In} А (C${T[Q.type].In}), або перемикач на більший струм.`,{dev:Q.id});
+  // розетки: заземлення і ПЗВ перед розеткою
+  const socks=S.devices.filter(d=>d.type==="sock"||d.type==="sockex");
+  if(socks.length){ const ex=[]; for(const d of S.devices){ const t=T[d.type]; if(!t.rcd) for(const p of t.poles||[]) ex.push([K(d,p.a),K(d,p.b)]); }
+    const fr=build({allOpen:true,extra:ex}), phs=b.inputs.map(i=>i.id+":"+i.terms[0]);   // усе замкнене, крім ПЗВ і диф-автоматів
+    for(const X of socks){ if(b.xpe&&f0(K(X,"PE"))!==f0("xpe:0")) add("e",`${desig(X)}: розетку не заземлено`,"Клему PE розетки з’єднайте з шиною PE (XPE1) жовто-зеленим проводом. Без PE корпус приладу не захищений.",{dev:X.id});
+      if(phs.some(p=>fr(p)===fr(K(X,"L")))) add("w",`${desig(X)}: розетка без ПЗВ`,"Розеткову лінію захистіть ПЗВ 30 мА або диф-автоматом — від ураження струмом через прилад чи шнур.",{dev:X.id}); } }
   const byp=rcdNBypass(f0);
   for(const R of byp) add("e",`${desig(R)}: нуль іде в обхід ПЗВ`,`Верхня і нижня клеми N ${desig(R)} з’єднані напряму (через шину N або перемичку). ПЗВ вимикатиметься від будь-якого приладу. Нуль від ввідного — лише на верхню N ПЗВ, а на шину XN1 — лише з нижньої N.`,{dev:R.id});
   for(const g of G){ const In=inA(g.rating), max=CAB[g.group.sec], I=kwOf(g,true)*1000/(g3(g)?690:230);
@@ -2991,7 +3053,7 @@ TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, л�
 /* ===== Нові модулі після оновлення: їхні назви в каталозі червоні, доки модуль не відкрили ===== */
 // Застосунок пам'ятає список модулів, які вже бачив (localStorage). Після оновлення все, чого в списку не було, — нове.
 // Нове лишається червоним, доки його не торкнулися в каталозі (вибрали або потягли на рейку), але не довше 30 днів.
-const NEW_SEED = ["to119","g2r","kk","plc200","dcdc","rel24","hl24","sa"];          // нові модулі останніх версій — для тих, у кого ще немає списку відомих модулів
+const NEW_SEED = ["to119","g2r","kk","plc200","dcdc","rel24","hl24","sa","sft232","sockex"];          // нові модулі останніх версій — для тих, у кого ще немає списку відомих модулів
 const NEW_DAYS = 30;
 const NEW_DEV = (() => { const now = Date.now(), all = Object.keys(T); let fresh = {};
   try {
@@ -3013,8 +3075,8 @@ const NEW_DOT = `<i class="ndot" title="Є нові модулі"></i>`;
 const $ = id => document.getElementById(id);
 let toastT=null;
 function toast(msg,cls=""){ if(S.quiet) return; const t=$("toast"); t.textContent=msg; t.className="toast "+cls; t.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,2600); }
-const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","tovpd1","kvf","kvf2","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","g2r","ats","toq5","toq7","to219","to119","qs","km2a","km3a","km4a"]],
-  ["Керування",["sbp","sbs","hl","rel","kt","ktb","ktm","tmr","kimp","stair","photo","logo","plc200","rel24","hl24","sa","dcdc","kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc","lc1d"]],["Двигуни",["qm","kk"]],["Розподіл",["xtb","sock"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
+const DEV_GROUPS = [["Захист ліній",["qf1p","qfn","qf2p","qf3p","qf4p","rcbo","afdd","rcd","rcd4","fuac"]],["Контроль напруги і УЗІП",["kv","tovpd1","kvf","kvf2","pef","vm","spdac","spd3"]],["Облік",["pm1","pm3"]],["Комутація і АВР",["sw2","g2r","ats","toq5","toq7","to219","sft232","to119","qs","km2a","km3a","km4a"]],
+  ["Керування",["sbp","sbs","hl","rel","kt","ktb","ktm","tmr","kimp","stair","photo","logo","plc200","rel24","hl24","sa","dcdc","kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc","lc1d"]],["Двигуни",["qm","kk"]],["Розподіл",["xtb","sock","sockex"]],["Розумний дім",["ssw","pm","tr","hub","kr2"]],["Сонячна станція (DC)",["qfdc","fudc","spdc"]]];
 const TPL_ORDER = ["Конструктор","Квартира і будинок","АВР на 2 вводи","3 фази + інвертор","Сонячна станція","Двигуни"];
 let clearArm=0;
 function applyTemplate(name){ const t=TPL[name]||TPL.flat; t.build(); S.tpl=TPL[name]?name:"flat"; S.tplObj=t; S.env0=JSON.parse(JSON.stringify(S.env||{})); S.proj={id:null,name:t.name}; S.guide=null; S.lastCheck=null;
@@ -3074,10 +3136,10 @@ const CATALOG = [["⚡ Групи","G"],
   ["ПЗВ, дифавтомати",[["ПЗВ",["rcd","rcd4"]],["Дифавтомати (RCBO)",["rcbo"]],["AFDD",["afdd"]]],"Диференційний захист"],
   ["Реле",[["Контроль напруги",["kv","tovpd1"]],["Контроль фаз",["kvf","kvf2","pef"]],["Реле часу",["kt","ktb","ktm","tmr","stair"]],["Імпульсні реле",["kimp"]],["Фотореле",["photo"]],["Програмовані",["logo","plc200"]],["Живлення 24 В",["dcdc"]]],"Реле та автоматика"],
   ["Контактори",[["Модульні контактори",["km2a","km3a","km4a","lc1d"]],["Контактори NO / NC",["kmc1no","kmc1nc","kmc2no","kmc11","kmc2nc","kmc4no","kmc31","kmc22","kmc4nc"]],["Проміжні реле",["rel","rel24"]],["Вимикачі",["sw2"]]],"Контактори, пускачі, вимикачі"],
-  ["АВР",[["Автоматичні",["g2r","ats","toq5","toq7"]],["Ручні I–0–II",["to219","to119","qs"]]],"АВР і перемикачі вводів"],
+  ["АВР",[["Автоматичні",["g2r","ats","toq5","toq7"]],["Ручні I–0–II",["to219","sft232","to119","qs"]]],"АВР і перемикачі вводів"],
   ["ПЗІП",[["ПЗІП AC",["spdac","spd3"]],["ПЗІП DC",["spdc"]]],"Захист від перенапруг"],
   ["Шини",[["Гребінчасті шини 1P","C"]],"Розподільчі шини"],
-  ["Клеми",[["Прохідні клеми",["xtb"]],["Розетка на DIN",["sock"]]],"Клеми та з’єднання"],
+  ["Клеми",[["Прохідні клеми",["xtb"]],["Розетка на DIN",["sock","sockex"]]],"Клеми та з’єднання"],
   ["Прилади",[["Лічильники",["pm1","pm3"]],["Вольтметри",["vm"]]],"Вимірювальні прилади"],
   ["Кнопки, лампи",[["Кнопки",["sbp","sbs"]],["Перемикачі",["sa"]],["Сигнальні лампи",["hl","hl24"]]],"Кнопки та сигналізація"],
   ["Розумний дім",[["Розумний дім",["ssw","hub","kr2","pm","tr"]]],"Розумний дім"],
@@ -3205,10 +3267,11 @@ function devSet(d){ const t=T[d.type]; let s="";
     +`<span class="bl">Режим</span>`+Object.entries(TMR_MODE).map(([k,l])=>chip(`data-tmrm="${k}"`,d.mode===k,l)).join("");
   if(d.type==="stair") s+=[10,30,60,120].map(v=>chip(`data-delay="${v}"`,d.delay===v,v+" с")).join("");
   if(d.type==="sock") s+=chip("data-plug",!!d.plug,d.plug?"Інструмент 1,2 кВт увімкнено":"Увімкнути інструмент 1,2 кВт");
+  if(d.type==="sockex") s+=`<span class="bl">У розетці</span>`+SOCK_LOADS.map((l,i)=>chip(`data-sockp="${i}"`,(d.plug||0)===i,l?`${l[0]} ${String(l[1]).replace(".",",")} кВт`:"Без вилки")).join("");
   if(d.type==="xtb") s+=[["grey","Сірий · L"],["blue","Синій · N"],["pe","Жовто-зелений · PE"]].map(([c,l])=>chip(`data-xcol="${c}"`,d.col===c,l)).join("");
   if(d.type==="photo") s+=[10,20,40].map(v=>chip(`data-th="${v}"`,d.th===v,"поріг "+v+" %")).join("");
   if(d.type==="tovpd1") s+=`<span class="bl">Відключення за струмом</span>`+[16,25,32,40,50,60,63].filter(v=>v<=inA(d.rating)).map(v=>chip(`data-iset="${v}"`,d.iset===v,v+" А","mono")).join("");
-  if(d.type==="to219"||d.type==="to119"||d.type==="qs") s+=`<span class="bl">Положення</span>`+[[1,"I"],[0,"0"],[2,"II"]].map(([v,l])=>chip(`data-qpos="${v}"`,d.pos===v,l,"mono")).join("");
+  if(d.type==="to219"||d.type==="sft232"||d.type==="to119"||d.type==="qs") s+=`<span class="bl">Положення</span>`+[[1,"I"],[0,"0"],[2,"II"]].map(([v,l])=>chip(`data-qpos="${v}"`,d.pos===v,l,"mono")).join("");
   if(d.type==="ats") s+=chip(`data-atsm="0"`,!d.manual,"Автоматичний")+chip(`data-atsm="1"`,!!d.manual,"Ручний")+chip(`data-atsv="tomzn"`,d.variant==="tomzn","TOMZN")+chip(`data-atsv="geya"`,d.variant==="geya","GEYA");
   if(d.type==="g2r") s+=chip(`data-atsm="0"`,!d.manual,"Auto — автоматичний")+chip(`data-atsm="1"`,!!d.manual,"Manual — ручний")+(d.manual?`<span class="bl">Ручка</span>`+["I","II"].map(v=>chip(`data-g2rpos="${v}"`,d.pos===v,v==="I"?"I · основне":"II · резерв","mono")).join(""):"");
   if(d.type==="toq5"||d.type==="toq7") s+=chip(`data-atsm="0"`,!d.manual,"Auto — автоматичний")+chip(`data-atsm="1"`,!!d.manual,"Manual — ручний")+`<span class="bl">Ручка</span>`+["A","B"].map(v=>chip(`data-tqpos="${v}"`,d.pos===v,v==="A"?"A · мережа":"B · генератор","mono")).join("");
@@ -3732,7 +3795,7 @@ document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("dra
      inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між модулями;  out — колодка XT2 і обладнання поза щитком.
    Пункт: {step, a, b, kind, sec, alt}. «xn:*» / «xpe:*» — будь-який вільний отвір шини.
    autoWire() прокладає всю схему одним натиском, а fixRatings() підганяє номінали й перерізи, щоб перевірка пройшла. */
-const SWITCH_T = ["g2r","ats","toq5","toq7","to219","to119"];
+const SWITCH_T = ["g2r","ats","toq5","toq7","to219","sft232","to119"];
 const N_OWN = ["rcbo","qfn","afdd"];            // групові модулі з власним полюсом N
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
 const isMain = d => (["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group)||(d.type==="qf1p"&&d.inMain&&!d.group);
@@ -3943,7 +4006,7 @@ function sldModel(){ const f=build({allOpen:true}), b=S.board, nodes=[], byId={}
   for(const fd of S.field){ const ft=FT[fd.type], k0=fd.map[ft.terms[0]]; if(!k0||/^(pv|bat|invpv|inv)/.test(fd.type)) continue;
     const net=f(k0), m=nodes.find(x=>x.out.includes(net)); if(!m) continue; const n=add({id:fd.id, kind:"fld", fd, ph:ft.terms.includes("U")?3:1, inn:[net], out:[]}); n.par=[m]; }
   // бічні: УЗІП, вольтметр, розетка DIN, реле контролю фаз
-  for(const d of S.devices){ if(Lp(d).length) continue; const t=T[d.type], tm=t.terms.find(q=>["L","P","L1"].includes(q.r)&&q.s==="top"); if(!tm||!["spdac","spd3","vm","sock","kvf"].includes(d.type)) continue;
+  for(const d of S.devices){ if(Lp(d).length) continue; const t=T[d.type], tm=t.terms.find(q=>["L","P","L1"].includes(q.r)&&(q.s==="top"||d.type==="sockex")); if(!tm||!["spdac","spd3","vm","sock","sockex","kvf"].includes(d.type)) continue;
     const net=f(K(d,tm.k)), m=nodes.find(x=>x.out.includes(net)); if(m) m.side.push(d); }
   for(const n of nodes){ if(!n.par||!n.par.length) continue; n.par[0].kids.push(n); for(const p of n.par.slice(1)) p.extra.push(n); }
   const roots=nodes.filter(n=>n.kind==="in"), orphan=nodes.filter(n=>n.kind!=="in"&&(!n.par||!n.par.length));
@@ -3964,7 +4027,7 @@ function symSVG(n,x,y){ const L=(a,b2,c,d2,w)=>`<line x1="${a}" y1="${b2}" x2="$
   if(t.rcd) return sw(false)+oval+`<text x="${x+10}" y="${y+42}" font-size="7">ΔI</text>`;
   if(t.prot==="ovl") return box("KK");
   if(t.prot) return sw(true);
-  if(t.meter) return box("kWh"); if(d.type==="kv") return box("U"); if(d.type==="tovpd1") return box("U·I"); if(d.type==="pef") return box("L→"); if(d.type==="ats"||d.type==="g2r"||d.type==="toq5"||d.type==="toq7") return box("АВР"); if(d.type==="to219"||d.type==="to119") return box("I-0-II");
+  if(t.meter) return box("kWh"); if(d.type==="kv") return box("U"); if(d.type==="tovpd1") return box("U·I"); if(d.type==="pef") return box("L→"); if(d.type==="ats"||d.type==="g2r"||d.type==="toq5"||d.type==="toq7") return box("АВР"); if(d.type==="to219"||d.type==="to119"||d.type==="sft232") return box("I-0-II");
   if(/^km|^kimp|^stair|^ssw|^photo|^rel/.test(d.type)) return sw(false,true);
   return sw(false); }
 
@@ -3982,7 +4045,7 @@ function sldSVG(){ const M=sldModel(), CW=104, LH=112, X0=128, top=26; let col=0
   for(const n of M.nodes){ if(n.x===undefined) continue; const y=Y(n);
     s+=symSVG(n,n.x,y)+lbl(n,n.x,y)+(n.ph===3?`<g stroke="#111" stroke-width="1.1"><line x1="${n.x-5}" y1="${y+48}" x2="${n.x+5}" y2="${y+42}"/><line x1="${n.x-5}" y1="${y+52}" x2="${n.x+5}" y2="${y+46}"/><line x1="${n.x-5}" y1="${y+56}" x2="${n.x+5}" y2="${y+50}"/></g>`:"");
     n.side.forEach((sd,i)=>{ const sx=n.x+58+i*34, sy=y+52; s+=`<line x1="${n.x}" y1="${sy}" x2="${sx}" y2="${sy}" stroke="#111" stroke-width="1.2"/><circle cx="${n.x}" cy="${sy}" r="2" fill="#111"/>`
-      +`<rect x="${sx-10}" y="${sy}" width="20" height="18" fill="#fff" stroke="#111" stroke-width="1.2"/><text x="${sx}" y="${sy+12}" font-size="7" text-anchor="middle">${/^spd/.test(sd.type)?"УЗІП":sd.type==="vm"?"V":sd.type==="sock"?"XS":"KV"}</text><text x="${sx}" y="${sy+28}" font-size="7" text-anchor="middle">${esc(desig(sd))}</text>`; });
+      +`<rect x="${sx-10}" y="${sy}" width="20" height="18" fill="#fff" stroke="#111" stroke-width="1.2"/><text x="${sx}" y="${sy+12}" font-size="7" text-anchor="middle">${/^spd/.test(sd.type)?"УЗІП":sd.type==="vm"?"V":/^sock/.test(sd.type)?"XS":"KV"}</text><text x="${sx}" y="${sy+28}" font-size="7" text-anchor="middle">${esc(desig(sd))}</text>`; });
     if(n.kids.length){ const yb=y+LH-20; s+=`<line x1="${n.x}" y1="${y+44}" x2="${n.x}" y2="${yb}" stroke="#111" stroke-width="1.6"/>`;
       if(n.kids.length>1) s+=`<line x1="${n.kids[0].x}" y1="${yb}" x2="${n.kids[n.kids.length-1].x}" y2="${yb}" stroke="#111" stroke-width="2.4"/>`;
       for(const k of n.kids) s+=`<line x1="${k.x}" y1="${yb}" x2="${k.x}" y2="${Y(k)}" stroke="#111" stroke-width="1.6"/>`; }
@@ -4123,7 +4186,7 @@ function stepOpts(id,kind){
   if(id==="prot") return kind==="3ph"?[["kvf",null,"Реле контролю фаз (обрив, чергування, напруга)"],["spd3",null,"УЗІП Т2 3P+N — від блискавки"]]
     :[...R("kv",["16","25","32","40","63"],"Реле напруги"),["tovpd1","60","TOMZN TOVPD1-60 — реле напруги й струму (V + A)"],["spdac",null,"УЗІП Т2 1P+N — від блискавки"]];
   if(id==="ats") return [["ats",null,"Модуль АВР TOMZN (тип TOQ5)",{variant:"tomzn"}],["toq5","125","TOMZN TOQ5-125/2 — АВР з ручкою, 6 модулів"],["toq7","125","TOMZN TOQ7-125/2 — АВР з ручкою, чорний, 6 модулів"],
-    ["g2r","40","GEYA G2R-63 40 А — автоматичний АВР з контролем напруги, 3 модулі"],["g2r","63","GEYA G2R-63 63 А — автоматичний АВР з контролем напруги, 3 модулі"],["to219",null,"TOMZN TO219G — механічний АВР I–0–II, ручний"],
+    ["g2r","40","GEYA G2R-63 40 А — автоматичний АВР з контролем напруги, 3 модулі"],["g2r","63","GEYA G2R-63 63 А — автоматичний АВР з контролем напруги, 3 модулі"],["to219",null,"TOMZN TO219G — механічний АВР I–0–II, ручний"],["sft232",null,"Hager SFT232 32 А — перемикач I–0–II 2P, 2 модулі, ручний"],
     ["to119","40","TOMZN TO119G 40 А — перемикач I–0–II на 1 модуль, ручний, лише фаза"],["to119","63","TOMZN TO119G 63 А — перемикач I–0–II на 1 модуль, ручний, лише фаза"]];
   if(id==="rcd") return kind==="3ph"?R("rcd4",["16","25","32","40","63","80","100"]):[...R("rcd",["16","25","32","40","63","80","100"]),...R("rcbo",["B6","B10","B16","B20","B25","B32","C6","C10","C16","C20","C25","C32"])];
   if(id==="groups") return [GOPT("qf1p","B10","Автомат 1P B10 — освітлення","Освітлення",[["Освітлення",0.1,1]]),
@@ -4560,6 +4623,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(d){ if(q("[data-gtoggle]")){ d.group=d.group?null:mkGroup(groupsOf().length,"Нова група",2.5,[]); commit(); return; }
     if(el=q("[data-delay]")){ d.delay=+el.dataset.delay; commit(false); return; }
     if(q("[data-plug]")){ d.plug=!d.plug; commit(false); return; }
+    if(el=q("[data-sockp]")){ d.plug=+el.dataset.sockp; commit(false); return; }
     if(el=q("[data-xcol]")){ d.col=el.dataset.xcol; commit(false); return; }
     if(el=q("[data-th]")){ d.th=+el.dataset.th; commit(false); return; } }
   if(q("#dbPause")){ if(S.demo){ S.demo.paused=!S.demo.paused; updateDemoBar(); } return; }

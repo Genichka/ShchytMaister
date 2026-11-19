@@ -249,6 +249,7 @@ document.addEventListener("click",e=>{ const q=s=>e.target.closest(s); let el;
   if(d){ if(q("[data-gtoggle]")){ d.group=d.group?null:mkGroup(groupsOf().length,"Нова група",2.5,[]); commit(); return; }
     if(el=q("[data-delay]")){ d.delay=+el.dataset.delay; commit(false); return; }
     if(q("[data-plug]")){ d.plug=!d.plug; commit(false); return; }
+    if(el=q("[data-sockp]")){ d.plug=+el.dataset.sockp; commit(false); return; }
     if(el=q("[data-xcol]")){ d.col=el.dataset.xcol; commit(false); return; }
     if(el=q("[data-th]")){ d.th=+el.dataset.th; commit(false); return; } }
   if(q("#dbPause")){ if(S.demo){ S.demo.paused=!S.demo.paused; updateDemoBar(); } return; }

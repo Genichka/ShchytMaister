@@ -83,7 +83,7 @@ function capLines(cap,w){ const cw=w-6, words=String(cap).split(/\s+/).filter(Bo
   const lines=last.lines.slice(0,2).map((l,i)=>l.length>last.maxc||(i===1&&last.lines.length>2)?l.slice(0,last.maxc-1)+"…":l);
   return {fs:last.fs,lines,y0:lines.length>1?205.5-last.fs-1:203}; }
 function devSVG(d){
-  const t=T[d.type], r=d.rail||0, x=G.X0+d.slot*G.MW+1, w=t.w*G.MW-2, y=devTop(r), cx=x+w/2, on=d.on&&!d.trip, heat=S.heat[d.id]||0, H=240;
+  const t=T[d.type], r=d.rail||0, x=G.X0+d.slot*G.MW+1, w=(t.bw||t.w)*G.MW-2, y=devTop(r), cx=x+w/2, on=d.on&&!d.trip, heat=S.heat[d.id]||0, H=240;
   let s=`<g data-dev="${d.id}">`;
   if(heat>0.15) s+=`<rect class="heat" x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--orange)" stroke-width="3"/>`;
   if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
@@ -98,7 +98,7 @@ function devSVG(d){
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-3,tm.l,{fs:6})); } }
   const bn=brandName(d), shp=shopFor(d), own=t.maker||brandOf(d)!=="eua";   // модуль є в «Замовити» — замість напису EnergyUA маленька наліпка QR; дотик — великий код
   if(shp){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if(own&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
-  else s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
+  else if(!t.noBrand) s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   const des=desig(d), pw=Math.max(38,des.length*7+12);
   s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});

@@ -3,7 +3,7 @@
      inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між модулями;  out — колодка XT2 і обладнання поза щитком.
    Пункт: {step, a, b, kind, sec, alt}. «xn:*» / «xpe:*» — будь-який вільний отвір шини.
    autoWire() прокладає всю схему одним натиском, а fixRatings() підганяє номінали й перерізи, щоб перевірка пройшла. */
-const SWITCH_T = ["g2r","ats","toq5","toq7","to219","to119"];
+const SWITCH_T = ["g2r","ats","toq5","toq7","to219","sft232","to119"];
 const N_OWN = ["rcbo","qfn","afdd"];            // групові модулі з власним полюсом N
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
 const isMain = d => (["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group)||(d.type==="qf1p"&&d.inMain&&!d.group);

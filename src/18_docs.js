@@ -22,7 +22,7 @@ function sldModel(){ const f=build({allOpen:true}), b=S.board, nodes=[], byId={}
   for(const fd of S.field){ const ft=FT[fd.type], k0=fd.map[ft.terms[0]]; if(!k0||/^(pv|bat|invpv|inv)/.test(fd.type)) continue;
     const net=f(k0), m=nodes.find(x=>x.out.includes(net)); if(!m) continue; const n=add({id:fd.id, kind:"fld", fd, ph:ft.terms.includes("U")?3:1, inn:[net], out:[]}); n.par=[m]; }
   // бічні: УЗІП, вольтметр, розетка DIN, реле контролю фаз
-  for(const d of S.devices){ if(Lp(d).length) continue; const t=T[d.type], tm=t.terms.find(q=>["L","P","L1"].includes(q.r)&&q.s==="top"); if(!tm||!["spdac","spd3","vm","sock","kvf"].includes(d.type)) continue;
+  for(const d of S.devices){ if(Lp(d).length) continue; const t=T[d.type], tm=t.terms.find(q=>["L","P","L1"].includes(q.r)&&(q.s==="top"||d.type==="sockex")); if(!tm||!["spdac","spd3","vm","sock","sockex","kvf"].includes(d.type)) continue;
     const net=f(K(d,tm.k)), m=nodes.find(x=>x.out.includes(net)); if(m) m.side.push(d); }
   for(const n of nodes){ if(!n.par||!n.par.length) continue; n.par[0].kids.push(n); for(const p of n.par.slice(1)) p.extra.push(n); }
   const roots=nodes.filter(n=>n.kind==="in"), orphan=nodes.filter(n=>n.kind!=="in"&&(!n.par||!n.par.length));
@@ -43,7 +43,7 @@ function symSVG(n,x,y){ const L=(a,b2,c,d2,w)=>`<line x1="${a}" y1="${b2}" x2="$
   if(t.rcd) return sw(false)+oval+`<text x="${x+10}" y="${y+42}" font-size="7">ΔI</text>`;
   if(t.prot==="ovl") return box("KK");
   if(t.prot) return sw(true);
-  if(t.meter) return box("kWh"); if(d.type==="kv") return box("U"); if(d.type==="tovpd1") return box("U·I"); if(d.type==="pef") return box("L→"); if(d.type==="ats"||d.type==="g2r"||d.type==="toq5"||d.type==="toq7") return box("АВР"); if(d.type==="to219"||d.type==="to119") return box("I-0-II");
+  if(t.meter) return box("kWh"); if(d.type==="kv") return box("U"); if(d.type==="tovpd1") return box("U·I"); if(d.type==="pef") return box("L→"); if(d.type==="ats"||d.type==="g2r"||d.type==="toq5"||d.type==="toq7") return box("АВР"); if(d.type==="to219"||d.type==="to119"||d.type==="sft232") return box("I-0-II");
   if(/^km|^kimp|^stair|^ssw|^photo|^rel/.test(d.type)) return sw(false,true);
   return sw(false); }
 
@@ -61,7 +61,7 @@ function sldSVG(){ const M=sldModel(), CW=104, LH=112, X0=128, top=26; let col=0
   for(const n of M.nodes){ if(n.x===undefined) continue; const y=Y(n);
     s+=symSVG(n,n.x,y)+lbl(n,n.x,y)+(n.ph===3?`<g stroke="#111" stroke-width="1.1"><line x1="${n.x-5}" y1="${y+48}" x2="${n.x+5}" y2="${y+42}"/><line x1="${n.x-5}" y1="${y+52}" x2="${n.x+5}" y2="${y+46}"/><line x1="${n.x-5}" y1="${y+56}" x2="${n.x+5}" y2="${y+50}"/></g>`:"");
     n.side.forEach((sd,i)=>{ const sx=n.x+58+i*34, sy=y+52; s+=`<line x1="${n.x}" y1="${sy}" x2="${sx}" y2="${sy}" stroke="#111" stroke-width="1.2"/><circle cx="${n.x}" cy="${sy}" r="2" fill="#111"/>`
-      +`<rect x="${sx-10}" y="${sy}" width="20" height="18" fill="#fff" stroke="#111" stroke-width="1.2"/><text x="${sx}" y="${sy+12}" font-size="7" text-anchor="middle">${/^spd/.test(sd.type)?"УЗІП":sd.type==="vm"?"V":sd.type==="sock"?"XS":"KV"}</text><text x="${sx}" y="${sy+28}" font-size="7" text-anchor="middle">${esc(desig(sd))}</text>`; });
+      +`<rect x="${sx-10}" y="${sy}" width="20" height="18" fill="#fff" stroke="#111" stroke-width="1.2"/><text x="${sx}" y="${sy+12}" font-size="7" text-anchor="middle">${/^spd/.test(sd.type)?"УЗІП":sd.type==="vm"?"V":/^sock/.test(sd.type)?"XS":"KV"}</text><text x="${sx}" y="${sy+28}" font-size="7" text-anchor="middle">${esc(desig(sd))}</text>`; });
     if(n.kids.length){ const yb=y+LH-20; s+=`<line x1="${n.x}" y1="${y+44}" x2="${n.x}" y2="${yb}" stroke="#111" stroke-width="1.6"/>`;
       if(n.kids.length>1) s+=`<line x1="${n.kids[0].x}" y1="${yb}" x2="${n.kids[n.kids.length-1].x}" y2="${yb}" stroke="#111" stroke-width="2.4"/>`;
       for(const k of n.kids) s+=`<line x1="${k.x}" y1="${yb}" x2="${k.x}" y2="${Y(k)}" stroke="#111" stroke-width="1.6"/>`; }
