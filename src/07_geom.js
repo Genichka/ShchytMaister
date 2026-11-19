@@ -30,14 +30,21 @@ function termPos(key){
   if(o==="xn"||o==="xpe"||o==="xt"){ const x=g.bus.pos[key]; return x===undefined?null:{x, y:busY(), c:R, s:"u"}; }
   if(o==="tb"){ const x=g.bus.pos[key]; return x===undefined?null:{x, y:tbY(), c:R, s:"u"}; }
   const d=S.devices.find(x=>x.id===o); if(!d) return null; const t=T[d.type].terms.find(t=>t.k===k); if(!t) return null; const r=d.rail||0;
+  if(t.s==="L"||t.s==="R") return {x:G.X0+d.slot*G.MW+t.sx, y:devTop(r)+t.sy, c:r, s:"l", side:t.s, d, r};
   return t.s==="top" ? {x:termX(d,t), y:devTop(r)+22, c:r, s:"l"} : {x:termX(d,t), y:devBot(r)-22, c:r+1, s:"u"};
 }
 // межі каналу c (між рейкою c-1 і c): куди можна відвести горизонтальну ділянку перемички пальцем чи мишею
 const chanLim = c => { const R=S.board.rails; return [c===0?60:devBot(c-1)+4, c===R?(S.board.tb&&groupsOf().length?tbY()-20:busY()-14):devTop(c)-4]; };
 const clampV = (v,[a,b]) => Math.max(a,Math.min(b,v));
 function route(){
-  const items=[];
-  for(const w of S.wires){ let A=termPos(w.a), B=termPos(w.b); if(!A||!B) continue;
+  const items=[], ends=[];
+  const sideEnd=(P,O)=>{ if(!P.side) return; const up=O.y<P.y; P.c=up?P.r:P.r+1; P.s=up?"l":"u"; P.up=up; ends.push(P); };
+  const pairs=S.wires.map(w=>[w,termPos(w.a),termPos(w.b)]).filter(([,A,B])=>A&&B);
+  for(const [,A,B] of pairs){ sideEnd(A,B); sideEnd(B,A); }
+  { const grp={}; for(const P of ends) (grp[P.d.id+P.side+P.up]||(grp[P.d.id+P.side+P.up]=[])).push(P);
+    for(const L of Object.values(grp)){ const t=T[L[0].d.type], x0=G.X0+(L[0].d.slot+(t.bx||0))*G.MW, gw=(t.bx||0)*G.MW-6, sp=Math.max(2.5,Math.min(6,gw/(L.length+0.5)));
+      L.sort((p,q)=>L[0].up?p.y-q.y:q.y-p.y).forEach((P,i)=>{ P.stub=P.x; P.x=P.side==="R"?x0+(t.bw||t.w)*G.MW+4+i*sp:x0-4-i*sp; }); } }
+  for(const [w,A0,B0] of pairs){ let A=A0, B=B0;
     if(A.c===B.c){ const set=(A.s==="u"||B.s==="u")?"u":"l"; items.push({w,A,B,cross:false,set,span:Math.abs(A.x-B.x)}); }
     else { let sw=false; if(A.c>B.c){ [A,B]=[B,A]; sw=true; } const side=(A.x+B.x)/2<G.W/2?"L":"R", sx=sideX(side,0);
       items.push({w,A,B,sw,cross:true,side,span:Math.abs(A.x-sx)+Math.abs(B.x-sx)+Math.abs(A.c-B.c)*50}); } }
@@ -59,7 +66,8 @@ function route(){
     if(!it.cross){ let y=laneY(A.c,it.set,it.lane); if(w.ry!=null) y=clampV(w.ry,chanLim(A.c)); out[w.id]=[[A.x,A.y],[A.x,y],[B.x,y],[B.x,B.y]]; }
     else { let sx=sideX(it.side,it.ls), ya=laneY(A.c,A.s,it.la), yb=laneY(B.c,B.s,it.lb);
       if(w.rx!=null) sx=clampV(w.rx,[20,820]); if(w.rya!=null) ya=clampV(w.rya,chanLim(A.c)); if(w.ryb!=null) yb=clampV(w.ryb,chanLim(B.c));
-      out[w.id]=[[A.x,A.y],[A.x,ya],[sx,ya],[sx,yb],[B.x,yb],[B.x,B.y]]; out[w.id].sw=it.sw; } }   // sw — траса намальована від кінця b до a
+      out[w.id]=[[A.x,A.y],[A.x,ya],[sx,ya],[sx,yb],[B.x,yb],[B.x,B.y]]; out[w.id].sw=it.sw; }
+    if(A.stub!==undefined) out[w.id].unshift([A.stub,A.y]); if(B.stub!==undefined) out[w.id].push([B.stub,B.y]); }   // sw — траса намальована від кінця b до a
   return out;
 }
 function rpath(pts,r=7){
@@ -82,17 +90,18 @@ function capLines(cap,w){ const cw=w-6, words=String(cap).split(/\s+/).filter(Bo
     last={fs:+fs.toFixed(1),lines,maxc}; if(lines.length<=2&&lines.every(l=>l.length<=maxc)) break; }
   const lines=last.lines.slice(0,2).map((l,i)=>l.length>last.maxc||(i===1&&last.lines.length>2)?l.slice(0,last.maxc-1)+"…":l);
   return {fs:last.fs,lines,y0:lines.length>1?205.5-last.fs-1:203}; }
+const desPill = (cx,y,des) => { const pw=Math.max(38,des.length*7+12); return `<rect x="${cx-pw/2}" y="${y}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+11,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"}); };
 function devSVG(d){
-  const t=T[d.type], r=d.rail||0, x=G.X0+d.slot*G.MW+1, w=(t.bw||t.w)*G.MW-2, y=devTop(r), cx=x+w/2, on=d.on&&!d.trip, heat=S.heat[d.id]||0, H=240;
+  const t=T[d.type], r=d.rail||0, x=G.X0+(d.slot+(t.bx||0))*G.MW+1, w=(t.bw||t.w)*G.MW-2, y=devTop(r), cx=x+w/2, on=d.on&&!d.trip, heat=S.heat[d.id]||0, H=240;
   let s=`<g data-dev="${d.id}">`;
   if(heat>0.15) s+=`<rect class="heat" x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--orange)" stroke-width="3"/>`;
   if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
-  const fillB=t.body||devFill(d); s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"${fillB?` style="fill:${fillB}"`:""}/><rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"${t.faceFill?` style="fill:${t.faceFill}"`:""}/>`;
-  const sr=t.terms.filter(q=>q.s==="top").length>w/27?9:11;
+  const fillB=t.body||devFill(d); s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"${fillB?` style="fill:${fillB}"`:""}/>`+(t.full?"":`<rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"${t.faceFill?` style="fill:${t.faceFill}"`:""}/>`);
+  const sr=t.sr||(t.terms.filter(q=>q.s==="top").length>w/27?9:11);
   const bx=t.terms.filter(q=>q.s==="bot").map(q=>termX(d,q)).sort((a,c)=>a-c), side=bx.every((v,i)=>!i||v-bx[i-1]>=44);
   for(const tm of t.terms){ const X=termX(d,tm);
     if(tm.s==="top") s+=screw(X,y+22,sr)+(tm.nl?"":tx(X,y+42,tm.l,{fs:6.8}));   // nl — підпис малює сам модуль
-    else { const lw=String(tm.l).length*3.9, pv=bx.filter(v=>v<X-1).pop(), nx=bx.find(v=>v>X+1);   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку і сусідній гвинт
+    else if(tm.s==="bot"){ const lw=String(tm.l).length*3.9, pv=bx.filter(v=>v<X-1).pop(), nx=bx.find(v=>v>X+1);   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку і сусідній гвинт
       const fitL=X-sr-2-lw>=Math.max(x+2,pv!==undefined?pv+sr+2:-1e9), fitR=X+sr+2+lw<=Math.min(x+w-2,nx!==undefined?nx-sr-2:1e9);
       s+=screw(X,y+H-22,sr)+(tm.nl?"":side&&(fitL||fitR)
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-3,tm.l,{fs:6})); } }
@@ -100,11 +109,11 @@ function devSVG(d){
   if(shp){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if(own&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
   else if(!t.noBrand) s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
-  const des=desig(d), pw=Math.max(38,des.length*7+12);
-  s+=`<rect x="${cx-pw/2}" y="${y+168}" width="${pw}" height="15" rx="7.5" fill="#fade2a" stroke="#b39800"/>`+tx(cx,y+179,des,{fs:9.5,fw:700,ff:"var(--mono)",fill:"#222"});
+  if(!t.full){ const des=desig(d);   // full — позначення й підпис модуль малює сам (desPill)
+  s+=desPill(cx,y+168,des);
   const gc=d.group?d.group.color:(d.capColor||"#8f93a2"); s+=`<rect x="${x+2}" y="${y+188}" width="${w-4}" height="5" fill="${gc}"/>`;
   const cl=capLines(d.group?d.group.name:(d.cap||t.cap||t.short),w);
-  cl.lines.forEach((ln,i)=>{ s+=tx(cx,y+cl.y0+i*(cl.fs+1),ln,{fs:cl.fs}); });
+  cl.lines.forEach((ln,i)=>{ s+=tx(cx,y+cl.y0+i*(cl.fs+1),ln,{fs:cl.fs}); }); }
   if(S.mode==="test"&&S.sim&&S.sim.I&&S.sim.I[d.id]!==undefined&&(t.prot||t.rcd||t.meter)){ const I=S.sim.I[d.id], tw=Math.min(w-8,46), ov=I>protIn(d)&&t.prot;
     s+=`<rect x="${cx-tw/2}" y="${y+155}" width="${tw}" height="9.5" rx="2" fill="#16181c"/>`+tx(cx,y+162.4,fmt(I,I<10?1:0)+" А",{fs:7,ff:"var(--mono)",fw:600,fill:ov?"#ff6b5a":I>0.05?"#5fe36b":"#7c828c"}); }
   if(d.trip) s+=`<circle cx="${x+w-8}" cy="${y+8}" r="7" fill="var(--red)"/><text x="${x+w-8}" y="${y+12}" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">!</text>`;
