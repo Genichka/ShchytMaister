@@ -8,7 +8,8 @@ const CATALOG = [["⚡ Групи","G"],
   ["АВР",[["Автоматичні",["g2r","ats","toq5","toq7"]],["Ручні I–0–II",["to219","sft232","to119","qs"]]],"АВР і перемикачі вводів"],
   ["ПЗІП",[["ПЗІП AC",["spdac","spd3"]],["ПЗІП DC",["spdc"]]],"Захист від перенапруг"],
   ["Шини",[["Гребінчасті шини 1P","C"]],"Розподільчі шини"],
-  ["Клеми",[["Прохідні клеми",["xtb"]],["Розетка на DIN",["sock","sockex"]]],"Клеми та з’єднання"],
+  ["Клеми",[["Прохідні клеми",["xtb"]]],"Клеми та з’єднання"],
+  ["Розетки",[["Розетки на DIN-рейку",["sockex","sock"]]],"Розетки на DIN-рейку"],
   ["Прилади",[["Лічильники",["pm1","pm3"]],["Вольтметри",["vm"]]],"Вимірювальні прилади"],
   ["Кнопки, лампи",[["Кнопки",["sbp","sbs"]],["Перемикачі",["sa"]],["Сигнальні лампи",["hl","hl24"]]],"Кнопки та сигналізація"],
   ["Розумний дім",[["Розумний дім",["ssw","hub","kr2","pm","tr"]]],"Розумний дім"],
@@ -44,7 +45,7 @@ function noDocBar(){
   return bhead("Немає відкритого щитка")+brow(`<button class="btn sm primary" data-pa="new">＋ Створити новий щиток</button><button class="btn sm" data-nodoc="tpl">Приклади щитків</button><button class="btn sm" data-nodoc="open">Відкрити збережений</button>`); }
 // ---- Модулі: категорії + картки
 function pickBar(){ const t=T[S.pick], q=S.pickQty||1, rate=S.pickRating||t.def||"";
-  return bhead(`Ставимо: ${esc(t.short)}${rate?" "+hlr(rate+(t.unit||"")):""} <span class="bm">${t.w} мод.</span>`,`<button class="bx" data-pickx aria-label="Скасувати">✕</button>`)
+  return bhead(`Ставимо: ${esc(t.short)}${rate?" "+hlr(rate+(t.unit||"")):""} <span class="bm">${modW(S.pick)} мод.</span>`,`<button class="bx" data-pickx aria-label="Скасувати">✕</button>`)
     +(t.ratings?brow(`<span class="bl">Номінал</span>`+t.ratings.map(r=>chip(`data-prate="${r}"`,rate===r,r+(t.unit||""),"mono rt")).join("")):"")
     +brow(`<span class="bl">Скільки</span>`+[1,2,3,4,5,6,8].map(n=>chip(`data-pqty="${n}"`,q===n,"×"+n,"mono")).join("")+`<button class="btn sm" data-pauto>Поставити ×${q} у вільні місця</button>`); }
 function mountBar(){ const mv=S.moveDev&&S.devices.find(x=>x.id===S.moveDev);
@@ -59,7 +60,8 @@ function mountBar(){ const mv=S.moveDev&&S.devices.find(x=>x.id===S.moveDev);
       +`<span class="bl mono">${mods}/${SLOTS*S.board.rails} мод.</span>`,"cats cattop")
     +`<div class="br cats wrap" id="devCats">${CATALOG.map((c,i)=>{ const [l,,full]=c; return chip(`data-cat="${i}" title="${esc(full||l)}"`,i===ci&&!(S.devQ||"").trim(),l+(catHasNew(c)?NEW_DOT:"")); }).join("")}</div>`;
   return s+`<div id="devRes">${catBody()}</div>`; }
-const devCard = x => { const nw=isNewDev(x); return `<button class="dc${nw?" nd":""}" data-pick="${x}" aria-pressed="${S.pick===x}" title="${esc(T[x].name)}${nw?" — новий модуль":""}"><b>${esc(T[x].short)}</b><small>${nw?`<em class="ndt">нове</em> · `:""}${T[x].w} мод.${brandsFor(x).length>1?" · "+(brandsFor(x).length-1)+" вир.":""}</small></button>` };
+const modW = x => String(T[x].bw||T[x].w).replace(".",",");   // ширина корпусу в модулях (розетка E.NEXT — 2,5)
+const devCard = x => { const nw=isNewDev(x); return `<button class="dc${nw?" nd":""}" data-pick="${x}" aria-pressed="${S.pick===x}" title="${esc(T[x].name)}${nw?" — новий модуль":""}"><b>${esc(T[x].short)}</b><small>${nw?`<em class="ndt">нове</em> · `:""}${modW(x)} мод.${brandsFor(x).length>1?" · "+(brandsFor(x).length-1)+" вир.":""}</small></button>` };
 function catBody(){ const q=(S.devQ||"").trim().toLowerCase();
   if(q){ const hit=Object.keys(T).filter(k=>[T[k].name,T[k].short,T[k].pre,T[k].maker||""].join(" ").toLowerCase().includes(q));
     return brow(`<span class="bl">Знайдено: ${hit.length}</span>`)+(hit.length?brow(hit.map(devCard).join(""),"cards"):brow(`<span class="bl">Нічого не знайдено — спробуйте інше слово</span>`)); }
