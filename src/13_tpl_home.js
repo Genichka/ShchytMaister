@@ -76,7 +76,7 @@ TPL.boiler_night = { name:"Бойлер на нічному тарифі: тай
     const qf1=D("qf2p",0,0,"C40"), kv=D("kv",0,2,"40"), pm=D("pm1",0,4), qd=D("rcd",0,6,"40");
     const g1=G1(0,8,"B10",0,"Освітлення",1.5,[["Освітлення",0.15,1]]);
     G1(0,9,"C16",1,"Розетки",2.5,[["Холодильник",0.15,1],["Телевізор",0.15,1]]);
-    const q4=D("qf1p",0,10,"C16",{noGroup:true,cap:"Бойлер"}), kt=D("tmr",1,0,"",{brand:"tomzn"}), km=D("km2a",1,1,"",{cap:"Бойлер 2 кВт"});
+    const q4=D("qf1p",0,10,"C16",{noGroup:true,cap:"Бойлер"}), kt=D("tmr",1,0,"",{brand:"tomzn"}), km=D("lc1d",1,1,"25",{cap:"Бойлер 2 кВт"});
     S.comb={rail:0,from:8,to:10};
     F("boiler",{L:"xt:bL",N:"xt:bN"});
     wireIn(qf1);

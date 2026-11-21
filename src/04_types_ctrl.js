@@ -3,25 +3,6 @@ const coilOn = (d,X,a,b) => X.volt(K(d,a),K(d,b))>=150;
 function coilLogic(d,X){ const p=coilOn(d,X,"A1","A2"); if(p!==!!d.pulled){ d.pulled=p; return true; } return false; }
 const C = (k,s,l,r="C") => ({k,s,l,r});
 const TCOIL = [C("A1","top","A1"),{k:"1",s:"top",r:"L",l:"1"},C("A2","bot","A2"),{k:"2",s:"bot",r:"L",l:"2"}];
-function kmFace(d,g,label){ const p=!!d.pulled;
-  return tx(g.cx,g.y+68,label,{fs:7,fw:700})+tx(g.cx,g.y+79,"AC-3 · котушка 230 В",{fs:6.3})
-    +`<rect x="${g.cx-22}" y="${g.y+88}" width="44" height="30" rx="3" fill="#2a2d33"/><rect x="${g.cx-16}" y="${g.y+(p?100:93)}" width="32" height="12" rx="2" fill="${p?"#e0352b":"#8e9196"}"/>`
-    +tx(g.cx,g.y+132,p?"I · увімкнено":"O · вимкнено",{fs:7,fw:600,fill:p?"#c0261c":"#555"})+led(g.x+12,g.y+148,p?"#3fbf4a":"#9aa0aa"); }
-defType("km2a",{name:"Контактор 2НВ+1НВ/1НЗ", short:"Контактор 2P", cat:"Керування", w:3, pre:"KM",
-  terms:[C("A1","top","A1"),{k:"1",s:"top",r:"L",l:"1"},{k:"3",s:"top",r:"N",l:"3"},C("13","top","13"),C("21","top","21"),
-         C("A2","bot","A2"),{k:"2",s:"bot",r:"L",l:"2"},{k:"4",s:"bot",r:"N",l:"4"},C("14","bot","14"),C("22","bot","22")],
-  poles:[{a:"1",b:"2",r:"L"},{a:"3",b:"4",r:"N"}], closed:d=>!!d.pulled, aux:d=>d.pulled?[["13","14"]]:[["21","22"]],
-  logic:coilLogic, cap:"Контактор", face:(d,g)=>kmFace(d,g,mdl(d,"КОНТАКТОР 25 А"))});
-defType("km3a",{name:"Контактор 3НВ+1НВ/1НЗ", short:"Контактор 3P", cat:"Керування", w:4, pre:"KM",
-  terms:[C("A1","top","A1"),{k:"1",s:"top",r:"P",l:"1"},{k:"3",s:"top",r:"P",l:"3"},{k:"5",s:"top",r:"P",l:"5"},C("13","top","13"),C("21","top","21"),
-         C("A2","bot","A2"),{k:"2",s:"bot",r:"P",l:"2"},{k:"4",s:"bot",r:"P",l:"4"},{k:"6",s:"bot",r:"P",l:"6"},C("14","bot","14"),C("22","bot","22")],
-  poles:[{a:"1",b:"2",r:"L"},{a:"3",b:"4",r:"L"},{a:"5",b:"6",r:"L"}], closed:d=>!!d.pulled, aux:d=>d.pulled?[["13","14"]]:[["21","22"]],
-  logic:coilLogic, cap:"Пускач двигуна", face:(d,g)=>kmFace(d,g,"КОНТАКТОР 25 А · 3P")});
-defType("km4a",{name:"Контактор 4НВ+1НВ/1НЗ", short:"Контактор 4P", cat:"Керування", w:5, pre:"KM",
-  terms:[C("A1","top","A1"),{k:"1",s:"top",r:"P",l:"1"},{k:"3",s:"top",r:"P",l:"3"},{k:"5",s:"top",r:"P",l:"5"},{k:"7",s:"top",r:"N",l:"7"},C("13","top","13"),C("21","top","21"),
-         C("A2","bot","A2"),{k:"2",s:"bot",r:"P",l:"2"},{k:"4",s:"bot",r:"P",l:"4"},{k:"6",s:"bot",r:"P",l:"6"},{k:"8",s:"bot",r:"N",l:"8"},C("14","bot","14"),C("22","bot","22")],
-  poles:[{a:"1",b:"2",r:"L"},{a:"3",b:"4",r:"L"},{a:"5",b:"6",r:"L"},{a:"7",b:"8",r:"N"}], closed:d=>!!d.pulled, aux:d=>d.pulled?[["13","14"]]:[["21","22"]],
-  logic:coilLogic, cap:"Контактор вводу 3P+N", face:(d,g)=>kmFace(d,g,"КОНТАКТОР 25 А · 4P")});
 defType("rel",{name:"Реле проміжне 1CO", short:"Реле проміжне", cat:"Керування", w:2, pre:"K",
   terms:[C("A1","top","A1"),C("11","top","11"),C("A2","bot","A2"),C("12","bot","12"),C("14","bot","14")],
   aux:d=>d.pulled?[["11","14"]]:[["11","12"]], logic:coilLogic, cap:"Проміжне реле",
@@ -83,21 +64,6 @@ defType("logo",{name:"Siemens LOGO! 230RCE", short:"LOGO! 230RCE", cat:"Керу
     return `<rect x="${g.x+4}" y="${g.y+44}" width="${g.w-8}" height="118" fill="#cfd3d8"/>`+tx(g.x+10,g.y+60,"LOGO! 230RCE",{fs:8,fw:700,a:"start"})
       +lcd(g.x+14,g.y+68,g.w-28,40,l,d.pw,"#a6e3ff")+[i1,i2].map((v,i)=>led(g.x+22+i*20,g.y+122,d.pw&&v?"#3fbf4a":"#7a7e86")+tx(g.x+22+i*20,g.y+138,"I"+(i+1),{fs:6.5})).join("")
       +[0,1].map(i=>led(g.x+g.w-62+i*22,g.y+122,d.pw&&d.q[i]?"#ffb21f":"#7a7e86")+tx(g.x+g.w-62+i*22,g.y+138,"Q"+(i+1),{fs:6.5})).join(""); }});
-// Модульний АВР (тип TOQ5 TOMZN / G2R GEYA): пріоритет вводу I, без витримок
-defType("ats",{name:"Модуль АВР 2P 63 А", short:"АВР-модуль", cat:"Комутація", w:4, pre:"QA", retired:true, like:"toq5",   // retired — прибрано з каталогу й помічника, лишається лише для вже складених щитків і прикладів
-  terms:[{k:"IL",s:"top",r:"L",l:"I L"},{k:"IN",s:"top",r:"N",l:"I N"},{k:"IIL",s:"top",r:"L",l:"II L"},{k:"IIN",s:"top",r:"N",l:"II N"},{k:"L",s:"bot",r:"L",l:"L"},{k:"N",s:"bot",r:"N",l:"N"}],
-  poles:[{a:"IL",b:"L",r:"L"},{a:"IN",b:"N",r:"N"},{a:"IIL",b:"L",r:"L"},{a:"IIN",b:"N",r:"N"}],
-  closed:(d,pi)=>pi<2?d.pos==="I":d.pos==="II", init:d=>{ d.pos=d.pos||"I"; d.manual=!!d.manual; d.variant=d.variant||"tomzn"; },
-  cap:"Перемикання вводів",
-  logic(d,X){ const okI=X.volt(K(d,"IL"),K(d,"IN"))>=187, okII=X.volt(K(d,"IIL"),K(d,"IIN"))>=187; d.ok=[okI,okII];
-    if(d.manual) return false; const t=okI?"I":okII?"II":d.pos;
-    if(t!==d.pos){ d.pos=t; logp(t==="I"?"ok":"w",`${desig(d)}: навантаження переведено на ввід ${t} (${t==="I"?"мережа":"резерв"}), < ${d.variant==="geya"?50:8} мс`); return true; } return false; },
-  tap(d){ if(!d.manual){ toast("АВР в автоматичному режимі. Перемкніть «Ручний» у налаштуваннях модуля","w"); return false; } d.pos=d.pos==="I"?"II":"I"; return true; },
-  face(d,g){ const ang=d.pos==="I"?-40:d.pos==="II"?40:0, ok=d.ok||[false,false];
-    return tx(g.cx,g.y+64,d.variant==="geya"?"GEYA · тип G2R-63 2P":"TOMZN · тип TOQ5-63/2P",{fs:7,fw:700})+tx(g.cx,g.y+75,d.manual?"РУЧНИЙ":"АВТО",{fs:7,fw:700,fill:d.manual?"#c25e00":"#1b855e"})
-      +`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+112}" r="24" fill="#2a2d33"/><g transform="rotate(${ang} ${g.cx} ${g.y+112})"><rect x="${g.cx-5}" y="${g.y+88}" width="10" height="30" rx="4" fill="#e0352b"/></g></g>`
-      +tx(g.cx-36,g.y+92,"I",{fs:10,fw:700})+tx(g.cx+36,g.y+92,"II",{fs:10,fw:700})+led(g.x+14,g.y+150,ok[0]?"#3fbf4a":"#9aa0aa")+led(g.x+g.w-14,g.y+150,ok[1]?"#3fbf4a":"#9aa0aa")
-      +tx(g.x+26,g.y+153,"I",{fs:7,a:"start"})+tx(g.x+g.w-26,g.y+153,"II",{fs:7,a:"end"}); }});
 // АВР GEYA G2R-63 2P з контролем напруги — 3 модулі (50,5 мм). Зверху (I) N1 A1 — основне живлення, (II) N2 A2 — резерв;
 // знизу LOAD N A. Пріоритет вводу I, перемикання < 50 мс. Ввід вважається нормальним при 187–242 В (85–110 % від 220 В);
 // за паспортом і повернення на ввід I — < 50 мс (окремої затримки в G2R немає; витримку перед поверненням дає реле напруги на вводі I).

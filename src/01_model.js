@@ -22,6 +22,7 @@ function kindFits(kind, role){
   if(!role || role==="any") return true;
   if(role==="DC") return kind==="DC+"||kind==="DC-";
   if(role==="P"||role==="L") return PHK.includes(kind)||kind==="C";
+  if(role==="PN") return PHK.includes(kind)||kind==="N"||kind==="C";   // силовий полюс контактора: фаза або нуль (однофазне ввімкнення через 3P)
   if(role==="C") return kind!=="PE" && kind!=="DC+" && kind!=="DC-";
   if(PHK.includes(role)) return PHK.includes(kind)||kind==="C";
   return kind===role;
@@ -53,12 +54,18 @@ function save(){
   if(typeof storeProject==="function") storeProject();
 }
 // TO219G: на місцях «3» і «7» гвинтів немає — перемички зі старих щитків переходять на спільні 1 і 5
-// вигаданий «Перемикач 1-0-2» (qs) → TOMZN TO219G: 1L/1N → 2/6 (I), 2L/2N → 4/8 (II), вихід L/N → 1/5
-const fixWires = (devs,ws) => { const qs=new Set((devs||[]).filter(d=>d.type==="to219"||d.type==="qs").map(d=>d.id)), m={"3":"1","7":"5","1L":"2","1N":"6","2L":"4","2N":"8","L":"1","N":"5"};
-  const out=(ws||[]).map(w=>{ for(const e of ["a","b"]){ const v=w[e]; if(typeof v!=="string") continue; const i=v.lastIndexOf(":"); if(i>0&&qs.has(v.slice(0,i))&&m[v.slice(i+1)]) w[e]=v.slice(0,i)+":"+m[v.slice(i+1)]; } return w; });
+// Перемички вигаданих модулів, яких більше немає, переходять на клеми справжніх:
+// «Перемикач 1-0-2» (qs) → TOMZN TO219G: 1L/1N → 2/6 (I), 2L/2N → 4/8 (II), вихід L/N → 1/5; у TO219G місць 3 і 7 немає → 1 і 5;
+// «Контактор 4P + 1НВ/1НЗ» (km4a) → Schneider LC1DT + LADN11: 13-14 → 53-54, 21-22 → 61-62
+const WMAP = { to219:{"3":"1","7":"5","1L":"2","1N":"6","2L":"4","2N":"8","L":"1","N":"5"}, qs:"to219", lc1dt:{"13":"53","14":"54","21":"61","22":"62"}, km4a:"lc1dt" };
+const fixWires = (devs,ws) => { const mp={}; for(const d of devs||[]){ let m=WMAP[d.type]; if(typeof m==="string") m=WMAP[m]; if(m) mp[d.id]=m; }
+  const out=(ws||[]).map(w=>{ for(const e of ["a","b"]){ const v=w[e]; if(typeof v!=="string") continue; const i=v.lastIndexOf(":"), m=i>0&&mp[v.slice(0,i)]; if(m&&m[v.slice(i+1)]) w[e]=v.slice(0,i)+":"+m[v.slice(i+1)]; } return w; });
   return out.filter(w=>w.a!==w.b); };
 const fixDevs = list => { for(const d of list||[]){ if(d.type==="sock"){ d.type="sockex"; d.plug=d.plug===true?3:0; }   // стара схематична «Розетка на DIN» → розетка E.NEXT
-    if(d.type==="qs"){ d.type="to219"; d.rating=""; d.seqI=undefined; if(d.pos===undefined) d.pos=2; if(!d.cap) d.cap="Обхід інвертора"; } }   // вигаданий «Перемикач 1-0-2» → TOMZN TO219G
+    if(d.type==="qs"){ d.type="to219"; d.rating=""; d.seqI=undefined; if(d.pos===undefined) d.pos=2; if(!d.cap) d.cap="Обхід інвертора"; }   // вигаданий «Перемикач 1-0-2» → TOMZN TO219G
+    if(d.type==="km2a"||d.type==="km3a"){ d.type="lc1d"; d.rating="25"; delete d.brand; }   // вигадані контактори 2P / 3P з 13-14 і 21-22 → Schneider TeSys D LC1D25 (ті самі клеми)
+    if(d.type==="km4a"){ d.type="lc1dt"; d.rating="25"; delete d.brand; }   // вигаданий 4P + 1НВ/1НЗ → LC1DT25 + блок LADN11
+    if(d.type==="ats"){ d.type="g2r"; d.rating="63"; delete d.variant; if(d.pos!=="II") d.pos="I"; } }   // вигаданий «Модуль АВР 2P 63 А» → GEYA G2R-63 (ті самі клеми I, II і навантаження)
   return list||[]; };   // стара схематична «Розетка на DIN» → розетка E.NEXT
 function load(){
   try{ const j=JSON.parse(localStorage.getItem(KEY)||"null");

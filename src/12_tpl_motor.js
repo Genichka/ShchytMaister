@@ -14,7 +14,7 @@ const resetQM = () => { const q=byDes("QM1"); q.on=true; q.trip=null; S.heat[q.i
 TPL.motor1 = { name:"Пуск однофазного двигуна (кнопки, самоутримання)", cat:"Двигуни",
   info:"Двигун 1,1 кВт з робочим конденсатором. Автомат захисту двигуна QM1: фаза проходить послідовно через усі три полюси, щоб тепловий розчіплювач працював коректно. Коло керування: QF2 → допоміжний контакт QM1 (13–14) → «Стоп» (НЗ) → «Пуск» (НВ) → котушка KM1. Контакт KM1 13–14 підхоплює кнопку «Пуск».",
   build(){ tplStart({inputs:[{id:"in",label:"Ввід 230 В",terms:["L","N","PE"]}], xn:4, xpe:4, xt:[{k:"L",l:"L",r:"L"},{k:"N",l:"N",r:"N"},{k:"PE",l:"PE",r:"PE"}]});
-    const qm=D("qm",0,0,"6–10 А",{Ir:8}), qf2=D("qf1p",0,3,"B6",{noGroup:true,cap:"Керування"}), sb1=D("sbs",0,4), sb2=D("sbp",0,5), km=D("km2a",0,6,"",{cap:"Пускач M1"}), hl=D("hl",0,9);
+    const qm=D("qm",0,0,"6–10 А",{Ir:8}), qf2=D("qf1p",0,3,"B6",{noGroup:true,cap:"Керування"}), sb1=D("sbs",0,4), sb2=D("sbp",0,5), km=D("lc1d",0,6,"25",{cap:"Пускач M1"}), hl=D("hl",0,9);
     F("motor1",{L:"xt:L",N:"xt:N",PE:"xt:PE"});
     W("in:L",k(qm,"1"),"L",2.5); W(k(qm,"2"),k(qm,"3"),"L",2.5); W(k(qm,"4"),k(qm,"5"),"L",2.5); W(k(qm,"6"),k(km,"1"),"L",2.5); W(k(km,"2"),"xt:L","L",2.5);
     W("in:N","xn:0","N",2.5); W("xn:1",k(km,"3"),"N",2.5); W(k(km,"4"),"xt:N","N",2.5); W("in:PE","xpe:0","PE",2.5); W("xpe:1","xt:PE","PE",2.5);
@@ -36,7 +36,7 @@ TPL.motor1 = { name:"Пуск однофазного двигуна (кнопк�
 TPL.motor3 = { name:"Пуск трифазного двигуна (прямий пуск)", cat:"Двигуни",
   info:"Двигун 4 кВт, 400 В. QM1 захищає від КЗ, перевантаження і обриву фази. Коло керування 230 В від L1 через QF2. Поміняйте дві фази місцями — двигун обертатиметься у зворотний бік.",
   build(){ tplStart({inputs:[{id:"in",label:"Ввід 3~ 400 В",terms:["L1","L2","L3","N","PE"]}], xn:4, xpe:4, xt:[{k:"U",l:"U",r:"P"},{k:"V",l:"V",r:"P"},{k:"W",l:"W",r:"P"},{k:"PE",l:"PE",r:"PE"}]});
-    const qm=D("qm",0,0,"6–10 А",{Ir:8.5}), qf2=D("qf1p",0,3,"C6",{noGroup:true,cap:"Керування"}), sb1=D("sbs",0,4), sb2=D("sbp",0,5), km=D("km3a",0,6,"",{cap:"Пускач M1"}), hl=D("hl",0,10);
+    const qm=D("qm",0,0,"6–10 А",{Ir:8.5}), qf2=D("qf1p",0,3,"C6",{noGroup:true,cap:"Керування"}), sb1=D("sbs",0,4), sb2=D("sbp",0,5), km=D("lc1d",0,6,"25",{cap:"Пускач M1"}), hl=D("hl",0,9);
     F("motor3",{U:"xt:U",V:"xt:V",W:"xt:W",PE:"xt:PE"});
     ["1","3","5"].forEach((t,i)=>{ const L="L"+(i+1); W("in:"+L,k(qm,t),L,2.5); W(k(qm,String(+t+1)),k(km,t),L,2.5); W(k(km,String(+t+1)),"xt:"+"UVW"[i],L,2.5); });
     W("in:N","xn:0","N",1.5); W("in:PE","xpe:0","PE",2.5); W("xpe:1","xt:PE","PE",2.5);
@@ -74,7 +74,7 @@ TPL.motor3rev = { name:"Реверс трифазного двигуна (впр
     const qf1=D("qf3p",0,0,"C16",{noGroup:true,cap:"Двигун M1"}), qf2=D("qf1p",0,3,"C6",{noGroup:true,cap:"Керування"}),
       sb1=D("sbs",0,4), sb2=D("sbp",0,5,"",{lbl:"ВПРАВО",cap:"Вправо"}), sb3=D("sbp",0,6,"",{lbl:"ВЛІВО",cap:"Вліво"}),
       hl1=D("hl",0,7,"",{cap:"Вправо"}), hl2=D("hl",0,8,"",{cap:"Вліво",col:"#f5a623"}),
-      km1=D("km3a",1,0,"",{cap:"Вправо"}), km2=D("km3a",1,4,"",{cap:"Вліво"}), kk=D("kk",1,8,"6–10 А",{Ir:8.5});
+      km1=D("lc1d",1,0,"25",{cap:"Вправо"}), km2=D("lc1d",1,3,"25",{cap:"Вліво"}), kk=D("kk",1,6,"6–10 А",{Ir:8.5});
     F("motor3",{U:"xt:U",V:"xt:V",W:"xt:W",PE:"xt:PE"});
     ["1","3","5"].forEach((t,i)=>{ const L="L"+(i+1), o=String(+t+1), qt="t"+(i+1), qb="b"+(i+1); W("in:"+L,k(qf1,qt),L,2.5); W(k(qf1,qb),k(km1,t),L,2.5); W(k(qf1,qb),k(km2,t),L,2.5);
       W(k(km1,o),k(kk,t),L,2.5); W(k(kk,o),"xt:"+"UVW"[i],L,2.5); });

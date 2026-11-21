@@ -3,7 +3,7 @@
      inwire — ввід → ввідний автомат;  bus — PE і нуль на шини;  jump — між модулями;  out — колодка XT2 і обладнання поза щитком.
    Пункт: {step, a, b, kind, sec, alt}. «xn:*» / «xpe:*» — будь-який вільний отвір шини.
    autoWire() прокладає всю схему одним натиском, а fixRatings() підганяє номінали й перерізи, щоб перевірка пройшла. */
-const SWITCH_T = ["g2r","ats","toq5","toq7","to219","sft232","to119"];
+const SWITCH_T = ["g2r","toq5","toq7","to219","sft232","to119"];
 const N_OWN = ["rcbo","qfn","afdd"];            // групові модулі з власним полюсом N
 const byPosD = (a,c) => ((a.rail||0)-(c.rail||0))||(a.slot-c.slot);
 const isMain = d => (["qf2p","qf3p","qf4p"].includes(d.type)&&!d.group)||(d.type==="qf1p"&&d.inMain&&!d.group);
@@ -43,7 +43,7 @@ function wirePlan(){
     // два реле напруги — кожен ввід через своє: ввідний → реле (фаза через реле, нуль — лише на вимір) → АВР
     if(kvIn&&kvIn[0]){ add("jump",L1,K2(kvIn[0],"t2"),"L",s1); add("jump",N1,K2(kvIn[0],"t1"),"N",1.5); L1=K2(kvIn[0],"b2"); }
     if(kvIn&&kvIn[1]){ add("jump",L2,K2(kvIn[1],"t2"),"L",s2); add("jump",N2,K2(kvIn[1],"t1"),"N",1.5); L2=K2(kvIn[1],"b2"); }
-    if(sw.type==="ats"||sw.type==="g2r"){ add("jump",L1,K2(sw,"IL"),"L",s1); add("jump",N1,K2(sw,"IN"),"N",s1); add("jump",L2,K2(sw,"IIL"),"L",s2); add("jump",N2,K2(sw,"IIN"),"N",s2); ph=[K2(sw,"L")]; n=K2(sw,"N"); }
+    if(sw.type==="g2r"){ add("jump",L1,K2(sw,"IL"),"L",s1); add("jump",N1,K2(sw,"IN"),"N",s1); add("jump",L2,K2(sw,"IIL"),"L",s2); add("jump",N2,K2(sw,"IIN"),"N",s2); ph=[K2(sw,"L")]; n=K2(sw,"N"); }
     else if(sw.type==="toq5"||sw.type==="toq7"){ add("jump",L1,K2(sw,"RA"),"L",s1); add("jump",N1,K2(sw,"NA"),"N",s1); add("jump",L2,K2(sw,"RB"),"L",s2); add("jump",N2,K2(sw,"NB"),"N",s2);
       add("jump",K2(sw,"RA"),K2(sw,"AR"),"L",1.5); add("jump",K2(sw,"NA"),K2(sw,"AN"),"N",1.5); add("jump",K2(sw,"RB"),K2(sw,"BR"),"L",1.5); add("jump",K2(sw,"NB"),K2(sw,"BN"),"N",1.5);
       ph=[K2(sw,"RL")]; n=K2(sw,"NL"); }

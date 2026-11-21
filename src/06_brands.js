@@ -23,7 +23,6 @@ const MODELS = {
   pm1:{ nik:()=>"NIK 2104", eastron:()=>"SDM120"}, pm3:{ nik:()=>"NIK 2303", eastron:()=>"SDM630"},
   spdac:{ abb:()=>"OVR T2 1N 40 275", se:()=>"iPRD40r 1P+N", hager:()=>"УЗІП T2 1P+N 40 кА", iek:()=>"ОПС1-C 1P+N"},
   spd3:{ abb:()=>"OVR T2 3N 40 275", se:()=>"iPRD40r 3P+N", hager:()=>"УЗІП T2 3P+N 40 кА", iek:()=>"ОПС1-C 3P+N"},
-  km2a:{ abb:()=>"ESB20-20N", se:()=>"iCT 25A 2NO", hager:()=>"ESC225", eaton:()=>"Z-SCH230/25-20", iek:()=>"КМ20-20"},
   kimp:{ abb:()=>"E290-16", se:()=>"iTL 16A", finder:()=>"26.01", hager:()=>"EPN510"},
   stair:{ abb:()=>"E232", se:()=>"MIN", finder:()=>"14.01"},
   kt:{ finder:()=>"80.01", abb:()=>"CT-ERD", geya:()=>"GRT8-A1", tomzn:()=>"TORT7-A1"},

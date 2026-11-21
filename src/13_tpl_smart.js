@@ -9,7 +9,7 @@ TPL.smart = { name:"Розумний будинок: Wi-Fi реле, хаб, л�
     const qf1=D("qf2p",0,0,"C40"), kv=D("kv",0,2,"63"), pm=D("pm",0,4), qd=D("rcd",0,6,"63"),
       q2=D("qf1p",0,8,"B6",{noGroup:true,cap:"Автоматика"}), q3=D("qf1p",0,9,"B10",{noGroup:true,cap:"Освітлення"}), q4=D("qf1p",0,10,"B16",{noGroup:true,cap:"Бойлер"}), q5=D("qf1p",0,11,"B16",{noGroup:true,cap:"Тепла підлога"});
     S.comb={rail:0,from:8,to:11};
-    const hub=D("hub",1,0), sr1=D("ssw",1,2,"",{cap:"Світло",cmd:true}), sr2=D("ssw",1,3,"",{cap:"Котушка KM1",cmd:false}), km=D("km2a",1,4,"",{cap:"Бойлер 2 кВт"}), tr=D("tr",1,7), kr=D("kr2",1,9);
+    const hub=D("hub",1,0), sr1=D("ssw",1,2,"",{cap:"Світло",cmd:true}), sr2=D("ssw",1,3,"",{cap:"Котушка KM1",cmd:false}), km=D("lc1d",1,4,"25",{cap:"Бойлер 2 кВт"}), tr=D("tr",1,7), kr=D("kr2",1,9);
     F("lamp",{L:"xt:lL",N:"xt:lN"}); F("boiler",{L:"xt:bL",N:"xt:bN"}); F("floor",{L:"xt:fL",N:"xt:fN"}); F("valve",{N:"xt:vN",O:"xt:vO",Cl:"xt:vC"});
     wireIn(qf1);
     W(k(qf1,"b1"),k(kv,"t2"),"L",10); W(k(qf1,"b2"),k(kv,"t1"),"N",10); W(k(kv,"b2"),k(pm,"L"),"L",10); W(k(kv,"t1"),k(pm,"N"),"N",10);
