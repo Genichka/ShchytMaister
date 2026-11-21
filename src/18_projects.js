@@ -19,7 +19,7 @@ function trackHistory(){ const cur=structSnap(); if(S.lastSnap===null){ S.lastSn
 function redo(){ if(!S.fut||!S.fut.length){ toast("Немає дій для повтору","w"); return; } S.hist.push(structSnap()); applySnap(JSON.parse(S.fut.pop())); toast("Повторено","ok"); }
 function undo(){ if(!S.hist.length){ toast("Немає дій для скасування","w"); return; } (S.fut||(S.fut=[])).push(structSnap()); applySnap(JSON.parse(S.hist.pop())); toast("Скасовано","ok"); }
 function applySnap(j){
-  S.board=j.board; S.comb=j.comb; S.wires=j.wires;
+  S.board=j.board; S.comb=j.comb; S.wires=fixWires(j.devices,j.wires);
   S.devices=fixDevs(j.devices).map(d=>{ const nd={...d,on:true,trip:null}; if(T[d.type]&&T[d.type].init) T[d.type].init(nd); return nd; });
   S.field=j.field.map(f=>{ const nd={...f}; if(FT[f.type].init) FT[f.type].init(nd); return nd; });
   S.plan=j.plan||null; S.lastSnap=structSnap(); GEO=null; Object.assign(S,{selDev:null,selWire:null,pend:null}); save(); solve(0); renderAll(true); }
@@ -34,7 +34,7 @@ function storeProject(){ if(!S.proj||!S.proj.id) return; const db=projDB(), p=db
 function newProjectFromCurrent(name){ const db=projDB(), id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   db.list.push({id,name,updated:Date.now(),data:curData()}); db.cur=id; if(!projSave(db)) return;
   S.proj={id,name}; S.baseSig=structSnap(); save(); renderProjBtn(); toast(`Проєкт «${name}» збережено`,"ok"); }
-function loadData(d){ S.noDoc=false; Object.assign(S,{tpl:d.tpl||"custom", board:d.board, devices:fixDevs(d.devices), field:d.field||[], wires:d.wires||[], comb:d.comb||null,
+function loadData(d){ S.noDoc=false; Object.assign(S,{tpl:d.tpl||"custom", board:d.board, devices:fixDevs(d.devices), field:d.field||[], wires:fixWires(d.devices,d.wires), comb:d.comb||null,
   src:d.src||{}, env:d.env||{}, env0:d.env0||d.env||{}, guide:d.guide||null, plan:d.plan||null}); UID=Math.max(UID,d.UID||1);
   for(const i of S.board.inputs){ S.src[i.id]=S.src[i.id]||{U:230,lost:{}}; S.src[i.id].on=false; } S.tplObj=TPL[S.tpl]||TPL.custom; }
 function openProject(id){ const db=projDB(), p=db.list.find(x=>x.id===id); if(!p) return; loadData(p.data); plcMigrate(); S.proj={id:p.id,name:p.name}; db.cur=id; projSave(db); afterSwitch(); toast(`Відкрито: «${p.name}»`,"ok"); }

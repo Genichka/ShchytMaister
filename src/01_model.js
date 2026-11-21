@@ -52,10 +52,14 @@ function save(){
     src:S.src, env:S.env, env0:S.env0, proj:S.proj, guide:S.guide, baseSig:S.baseSig, plan:S.plan||null, noDoc:!!S.noDoc, UID})); }catch(e){}
   if(typeof storeProject==="function") storeProject();
 }
+// TO219G: на місцях «3» і «7» гвинтів немає — перемички зі старих щитків переходять на спільні 1 і 5
+const fixWires = (devs,ws) => { const qs=new Set((devs||[]).filter(d=>d.type==="to219").map(d=>d.id)), m={"3":"1","7":"5"};
+  const out=(ws||[]).map(w=>{ for(const e of ["a","b"]){ const v=w[e]; if(typeof v!=="string") continue; const i=v.lastIndexOf(":"); if(i>0&&qs.has(v.slice(0,i))&&m[v.slice(i+1)]) w[e]=v.slice(0,i)+":"+m[v.slice(i+1)]; } return w; });
+  return out.filter(w=>w.a!==w.b); };
 const fixDevs = list => { for(const d of list||[]) if(d.type==="sock"){ d.type="sockex"; d.plug=d.plug===true?3:0; } return list||[]; };   // стара схематична «Розетка на DIN» → розетка E.NEXT
 function load(){
   try{ const j=JSON.parse(localStorage.getItem(KEY)||"null");
-    if(j && Array.isArray(j.devices) && j.board){ Object.assign(S,{tpl:j.tpl, board:j.board, devices:fixDevs(j.devices), field:j.field||[], wires:j.wires||[],
+    if(j && Array.isArray(j.devices) && j.board){ Object.assign(S,{tpl:j.tpl, board:j.board, devices:fixDevs(j.devices), field:j.field||[], wires:fixWires(j.devices,j.wires),
       comb:j.comb||null, src:j.src||{}, env:j.env||{}, env0:j.env0, proj:j.proj||null, guide:j.guide||null, baseSig:j.baseSig||null, plan:j.plan||null, noDoc:!!j.noDoc}); UID=Math.max(UID,j.UID||1);
       for(const k of Object.keys(S.src)) S.src[k].on=false;   // після перезавантаження джерела вимкнені
       return true; } }catch(e){}

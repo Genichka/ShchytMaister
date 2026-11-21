@@ -106,7 +106,7 @@ function devSVG(d){
       s+=screw(X,y+H-22,sr)+(tm.nl?"":side&&(fitL||fitR)
         ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-3,tm.l,{fs:6})); } }
   const bn=brandName(d), shp=shopFor(d), own=t.maker||brandOf(d)!=="eua";   // модуль є в «Замовити» — замість напису EnergyUA маленька наліпка QR; дотик — великий код
-  if(shp){ const sz=w<60?15:17; s+=qrSticker(shp,cx,y+40,sz); if(own&&w>=100) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }
+  if(shp){ const sz=w<60?15:17, [qx,qy]=t.qrPos?t.qrPos({x,y,w,cx}):[cx,y+40]; s+=qrSticker(shp,qx,qy,sz); if(own&&w>=100&&!t.noBrand) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }   // qrPos — модуль сам каже, де клеїти QR; noBrand — логотип малює сам модуль
   else if(!t.noBrand) s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});
   if(t.face) s+=t.face(d,{x,y,w,cx,on});
   if(!t.full){ const des=desig(d);   // full — позначення й підпис модуль малює сам (desPill)

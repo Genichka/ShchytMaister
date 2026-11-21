@@ -141,20 +141,51 @@ defType("qs",{name:"Перемикач 1-0-2", short:"Перемикач 1-0-2",
   face(d,g){ const ang=d.pos===1?-45:d.pos===2?45:0;
     return tx(g.cx,g.y+64,"1 – 0 – 2 · 63 А",{fs:7,fw:700})+`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+110}" r="24" fill="#2a2d33"/><g transform="rotate(${ang} ${g.cx} ${g.y+110})"><rect x="${g.cx-6}" y="${g.y+84}" width="12" height="34" rx="5" fill="#1d1f23" stroke="#666"/></g></g>`
       +tx(g.cx-34,g.y+90,"1",{fs:10,fw:700})+tx(g.cx,g.y+80,"0",{fs:9})+tx(g.cx+34,g.y+90,"2",{fs:10,fw:700})+tx(g.cx,g.y+150,d.pos===1?"Мережа напряму":d.pos===2?"Від інвертора":"Вимкнено",{fs:7,fw:600}); }});
-// Перемикач вводів I–0–II, 2P 63 А, 4 модулі (як TOMZN TO219G). I: з’єднано 1–2 і 5–6; «0»: усе розімкнено; II: 1–4 і 5–8.
-// Спільні клеми 1 і 5 (3 і 7 — їх дублі) — на навантаження; 2 і 6 — ввід I (мережа); 4 і 8 — ввід II (генератор).
-defType("to219",{name:"Механічний АВР TOMZN TO219G — перемикач I–0–II 2P 63 А", short:"Мех. АВР TO219G", cat:"Комутація", w:4, pre:"QS", maker:"TOMZN",
-  terms:[{k:"1",s:"top",r:"L",l:"1"},{k:"3",s:"top",r:"L",l:"3"},{k:"5",s:"top",r:"N",l:"5"},{k:"7",s:"top",r:"N",l:"7"},
+// Перемикач вводів I–0–II TOMZN TO219G 2P 63 А — 72 мм (4 модулі): два корпуси по 2 модулі, одна синя ручка на обидва.
+// Зверху спільні клеми 1 і 5, на місцях «3» і «7» гвинтів немає (лише отвір). Знизу 2 і 6 — ввід I, 4 і 8 — ввід II.
+// I (ручка вгорі): 1–2, 5–6; «0» (посередині): усе розімкнено; II (ручка внизу): 1–4, 5–8 — як на корпусі (↑ I · O · ↓ II).
+defType("to219",{name:"Механічний АВР TOMZN TO219G — перемикач I–0–II 2P 63 А", short:"Мех. АВР TO219G", cat:"Комутація", w:4, pre:"QS", maker:"TOMZN", noBrand:true,
+  faceFill:"#f6f7f9",
+  terms:[{k:"1",s:"top",r:"L",l:"1",m:0},{k:"5",s:"top",r:"N",l:"5",m:2},
     {k:"2",s:"bot",r:"L",l:"2"},{k:"4",s:"bot",r:"L",l:"4"},{k:"6",s:"bot",r:"N",l:"6"},{k:"8",s:"bot",r:"N",l:"8"}],
-  poles:[{a:"2",b:"1",r:"L"},{a:"6",b:"5",r:"N"},{a:"4",b:"1",r:"L"},{a:"8",b:"5",r:"N"}], links:()=>[["1","3"],["5","7"]],
+  poles:[{a:"2",b:"1",r:"L"},{a:"6",b:"5",r:"N"},{a:"4",b:"1",r:"L"},{a:"8",b:"5",r:"N"}],
   closed:(d,pi)=>pi<2?d.pos===1:d.pos===2, init:d=>{ if(d.pos===undefined) d.pos=1; }, cap:"Мережа / генератор",
+  qrPos:g=>[g.cx+g.w/4,g.y+63],   // QR «Замовити» — на правому корпусі під синіми смугами, логотип TOMZN лишається
   tap(d){ const seq=[1,0,2,0]; d.seqI=((d.seqI??seq.indexOf(d.pos))+1)%4; d.pos=seq[d.seqI]; logp("w",`${desig(d)}: положення ${["0","I","II"][d.pos]}`); return true; },
-  face(d,g){ const p=d.pos, hy=p===2?g.y+76:p===0?g.y+100:g.y+124, ww=g.w/2-24,
-      win=x=>`<rect x="${x}" y="${g.y+72}" width="${ww}" height="72" rx="3" fill="#2a63b8" stroke="#1d4c93"/><rect x="${x+ww/2-3}" y="${g.y+79}" width="6" height="14" rx="2" fill="#3f7fd6"/>`;
-    return tx(g.cx,g.y+66,"тип TO219G · 63 A · 400 В",{fs:6.6})+win(g.x+12)+win(g.cx+4)
-      +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${g.x+8}" y="${hy}" width="${g.w-30}" height="20" rx="10" fill="#2f80e6" stroke="#1b5aae"/><rect x="${g.x+14}" y="${hy+4}" width="${g.w-42}" height="5" rx="2.5" fill="#6aa8f2" opacity=".7"/></g>`
-      +tx(g.x+g.w-6,g.y+90,"II",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+114,"0",{fs:8,fw:700,a:"end"})+tx(g.x+g.w-6,g.y+138,"I",{fs:8,fw:700,a:"end"})
-      +tx(g.cx,g.y+157,p===1?"I · 1–2, 5–6 · мережа":p===2?"II · 1–4, 5–8 · генератор":"0 · усе розімкнено",{fs:6.8,fw:600}); }});
+  face(d,g){ const x=g.x, y=g.y, w=g.w, cx=g.cx, R=x+w-4, i=d.pos===1?0:d.pos===0?1:2, B="#1d3f8f", ink="#3a3f47", act="#1f74c2";
+    // два корпуси: шов посередині на всю висоту
+    let s=`<path d="M${cx} ${y+1}V${y+239}" stroke="#b9bec6" stroke-width="1.3"/>`;
+    // «3» і «7»: гвинтів немає — круглий отвір у корпусі
+    for(const [hx,l] of [[x+80,"3"],[x+188,"7"]]) s+=`<circle cx="${hx}" cy="${y+22}" r="10.5" fill="#fafbfc" stroke="#b3b9c1" stroke-width="1.4"/><circle cx="${hx}" cy="${y+22}" r="7.2" fill="none" stroke="#e2e5e9" stroke-width="1.6"/>`+tx(hx,y+42,l,{fs:6.8});
+    // верхня наліпка: логотип TOMZN ≡, тип і номінал; на правому корпусі — три сині смуги
+    s+=`<rect x="${x+7}" y="${y+49}" width="52" height="12.5" rx="3" fill="#fff" stroke="${B}" stroke-width="1.3"/>`+tx(x+33,y+58.6,"TOMZN",{fs:8.2,fw:800,fill:B,ff:"Georgia,'Times New Roman',serif"});
+    for(const k of [0,1,2]) s+=`<rect x="${x+62}" y="${y+50.4+k*3.7}" width="${cx-x-68}" height="1.9" fill="${B}"/><rect x="${cx+6}" y="${y+50.4+k*3.7}" width="${R-cx-8}" height="1.9" fill="${B}"/>`;
+    s+=tx(x+7,y+71.5,"TO219G",{fs:6.6,fw:700,a:"start",fill:ink})+tx(x+37,y+72,"63A",{fs:9.4,fw:700,a:"start",fill:ink})
+      +tx(x+7,y+79.5,"400V~ 50/60Hz",{fs:5.4,a:"start",fill:ink})+tx(x+51,y+79.8,"CE",{fs:6.6,fw:700,a:"start",fill:ink});
+    // віконця з синіми клавішами й спільна синя ручка: I — угорі, 0 — посередині, II — унизу
+    const wy=y+83, wh=44, by=[wy+1,wy+wh/2-6.5,wy+wh-14][i];
+    s+=`<g data-lever="${d.id}" style="cursor:pointer">`;
+    for(const [wx,ww] of [[x+11,cx-x-20],[cx+9,R-cx-16]])
+      s+=`<rect x="${wx-2.5}" y="${wy-2.5}" width="${ww+5}" height="${wh+5}" rx="3" fill="#e1e4e8" stroke="#bfc4cb"/>`
+        +`<rect x="${wx}" y="${wy}" width="${ww}" height="${wh}" rx="2" fill="#1c4a96"/>`
+        +`<rect x="${wx+3}" y="${wy+3}" width="${ww-6}" height="${wh-6}" rx="2" fill="#2961bb" stroke="#3b77d4" stroke-width=".8"/>`
+        +`<path d="M${wx+ww/2} ${wy+4.5}v7" stroke="#86b0ee" stroke-width="1.3"/>`;
+    s+=`<rect x="${x+5}" y="${by+1.5}" width="${w-10}" height="13" rx="6.5" fill="#123d80" opacity=".35"/>`
+      +`<rect x="${x+5}" y="${by}" width="${w-10}" height="13" rx="6.5" fill="#2f80e6" stroke="#1b5aae"/>`
+      +`<rect x="${x+10}" y="${by+2.6}" width="${w-20}" height="3.4" rx="1.7" fill="#9cc8f8" opacity=".85"/></g>`;
+    // нижня наліпка ліворуч: категорія, ізоляція, стандарти; стрілки положень ↑ I · O · ↓ II
+    s+=["AC-22A","Ui:690V","GB/T14048.3","IEC/EN60947-3"].map((l,k)=>tx(x+7,y+137.5+k*7.4,l,{fs:5.3,fw:k?500:700,a:"start",fill:ink})).join("");
+    const ax=x+72; s+=`<path d="M${ax} ${y+132}l-3.2 5h2.2v5h2v-5h2.2z" fill="${i===0?act:ink}"/><path d="M${ax} ${y+163}l-3.2 -5h2.2v-5h2v5h2.2z" fill="${i===2?act:ink}"/>`;
+    s+=[["I",y+139],["O",y+148.5],["II",y+158]].map(([l,ly],j)=>tx(ax+5,ly,l,{fs:j===i?7.2:6.2,fw:j===i?800:600,a:"start",fill:j===i?act:ink})).join("");
+    // праворуч — схема контактів: ніж від 1 (5) до 2 (6) у I, до 4 (8) у II, посередині — у «0»
+    const P=[cx+31,x+w-27], tip=px=>px+[-6.5,0,6.5][i];
+    s+=`<g fill="none" stroke="${ink}" stroke-width=".9" stroke-linecap="round">`;
+    for(const px of P) s+=`<circle cx="${px}" cy="${y+137}" r="1.9"/><path d="M${px} ${y+139}L${tip(px)} ${y+150.5}M${px-6.5} ${y+152}v5M${px+6.5} ${y+152}v5"/>`;
+    s+=`<path d="M${(P[0]+tip(P[0]))/2} ${y+144.8}H${(P[1]+tip(P[1]))/2}" stroke-dasharray="2.2 1.8"/></g>`;
+    s+=[[P[0]-6,"1"],[P[1]-6,"5"]].map(([lx,l])=>tx(lx,y+137.5,l,{fs:5,a:"end",fill:ink})).join("")
+      +[[P[0]-6.5,"2"],[P[0]+6.5,"4"],[P[1]-6.5,"6"],[P[1]+6.5,"8"]].map(([lx,l])=>tx(lx,y+163.5,l,{fs:5,fill:ink})).join("")
+      +tx(cx+8,y+152,"I",{fs:6,fw:i===0?800:600,a:"start",fill:i===0?act:ink})+tx(R,y+152,"II",{fs:6,fw:i===2?800:600,a:"end",fill:i===2?act:ink});
+    return s; }});
 // Перемикач I–0–II 1P 40 / 63 А, 1 модуль (як TOMZN TO119G). Зверху клема 1 (спільна), місце «3» — заглушка;
 // знизу 2 — положення I, 4 — положення II. Важіль угорі — I, посередині — 0, унизу — II. Нуль не комутує.
 defType("to119",{name:"Перемикач I–0–II TOMZN TO119G 1P 40 / 63 А", short:"Перемикач TO119G", cat:"Комутація", w:1, pre:"QS", maker:"TOMZN",
