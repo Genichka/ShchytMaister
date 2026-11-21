@@ -127,9 +127,15 @@ function runChecks(){
                :"Нуль групи йде через ПЗВ, а фаза взята до нього. ПЗВ вимкнеться, щойно запрацює прилад. Фазу групи беріть із нижньої клеми ПЗВ.",{dev:g.id}); }
     if(!rc) add(/освітл|світл/i.test(g.group.name)||S.board.noRcd?"w":"e",`${desig(g)} «${g.group.name}» без ПЗВ`,S.board.noRcd?"Щиток зібрано без ПЗВ: проводку захищено, а людей від ураження — ні. Для розеток і вологих приміщень рекомендовано ПЗВ або диф-автомат 30 мА.":"Розеткові групи й вологі приміщення потребують ПЗВ або диф-автомата 30 мА.",{dev:g.id}); }
   if(mainIn&&b.inputs.length===1){ let low=0;
+    const prots=S.devices.filter(P=>T[P.type].prot&&protIn(P)<mainIn).sort((p,q)=>protIn(p)-protIn(q)), cut={};
+    const cutBy=P=>cut[P.id]||(cut[P.id]=build({ideal:true,openPole:new Set(tdef(P).poles.map((p,i)=>P.id+":"+i))}));
     for(const w of S.wires){ if(!["L","N"].includes(w.kind)) continue; const g2=build({ideal:true,skip:w.id}), g1=build({ideal:true});
       const aff=G.filter(g=>(g1(gL(g))===g1("in:L")&&g2(gL(g))!==g2("in:L"))||(g1(gN(g))===g1("in:N")&&g2(gN(g))!==g2("in:N")));
-      if(!aff.length) continue; const own=g=>[w.a,w.b].some(k=>k.startsWith(g.id+":")||k.startsWith("tb:"+g.id+":")), req=aff.length>1||!aff.some(own)?mainIn:inA(aff[0].rating);
+      if(!aff.length) continue; const own=g=>[w.a,w.b].some(k=>k.startsWith(g.id+":")||k.startsWith("tb:"+g.id+":"));
+      let req=aff.length>1||!aff.some(own)?mainIn:inA(aff[0].rating);
+      // перемичка стоїть після меншого автомата (як обхід інвертора після автомата GRID): струм через неї обмежує він
+      if(CAB[w.sec]<req){ const src=w.kind==="L"?"in:L":"in:N";
+        for(const P of prots){ if(protIn(P)>=req) break; const g3=cutBy(P); if(g3(w.a)!==g3(src)&&g3(w.b)!==g3(src)){ req=protIn(P); break; } } }
       if(CAB[w.sec]<req){ low++; add("e",`Замалий переріз ${fmt(w.sec)} мм²`,`${termName(w.a)} → ${termName(w.b)}: потрібно від ${fmt(secFor(req))} мм² (струм до ${req} А).`,{wire:w.id}); } }
     if(!low&&S.wires.length) add("ok","Перерізи силових перемичок відповідають ввідному автомату"); }
   if(G.length&&b.inputs.length===1&&!S.devices.some(d=>["kv","tovpd1","kvf","kvf2","pef"].includes(d.type))&&!S.field.some(f=>f.type==="inv")) add("w","Немає реле напруги","Без нього техніка не захищена від перенапруги.");

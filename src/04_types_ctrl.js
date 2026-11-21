@@ -133,14 +133,6 @@ defType("g2r",{name:"АВР GEYA G2R-63 2P з контролем напруги"
       +`<g data-lever="${d.id}" style="cursor:pointer"><rect x="${kx}" y="${ky}" width="${kw}" height="24" rx="7" fill="#cfd3d8" stroke="#9aa0aa"/>`
       +[0,1,2].map(i=>`<circle cx="${kx+kw*0.3+i*kw*0.2}" cy="${ky+12}" r="2.6" fill="#8a9099"/>`).join("")+`</g>`
       +tx(wx+ww/2,g.y+157,`${d.pos} · ${d.pos==="I"?"основне":"резерв"} · ${man?"Manual":"Auto"}`,{fs:6,fw:600}); }});
-defType("qs",{name:"Перемикач 1-0-2", short:"Перемикач 1-0-2", cat:"Комутація", w:3, pre:"QS",
-  terms:[{k:"1L",s:"top",r:"L",l:"1 L"},{k:"1N",s:"top",r:"N",l:"1 N"},{k:"2L",s:"top",r:"L",l:"2 L"},{k:"2N",s:"top",r:"N",l:"2 N"},{k:"L",s:"bot",r:"L",l:"L"},{k:"N",s:"bot",r:"N",l:"N"}],
-  poles:[{a:"1L",b:"L",r:"L"},{a:"1N",b:"N",r:"N"},{a:"2L",b:"L",r:"L"},{a:"2N",b:"N",r:"N"}],
-  closed:(d,pi)=>pi<2?d.pos===1:d.pos===2, init:d=>{ if(d.pos===undefined) d.pos=2; }, cap:"Обхід інвертора",
-  tap(d){ const seq=[1,0,2,0]; d.seqI=((d.seqI??seq.indexOf(d.pos))+1)%4; d.pos=seq[d.seqI]; logp("w",`${desig(d)}: положення ${d.pos}`); return true; },
-  face(d,g){ const ang=d.pos===1?-45:d.pos===2?45:0;
-    return tx(g.cx,g.y+64,"1 – 0 – 2 · 63 А",{fs:7,fw:700})+`<g data-lever="${d.id}" style="cursor:pointer"><circle cx="${g.cx}" cy="${g.y+110}" r="24" fill="#2a2d33"/><g transform="rotate(${ang} ${g.cx} ${g.y+110})"><rect x="${g.cx-6}" y="${g.y+84}" width="12" height="34" rx="5" fill="#1d1f23" stroke="#666"/></g></g>`
-      +tx(g.cx-34,g.y+90,"1",{fs:10,fw:700})+tx(g.cx,g.y+80,"0",{fs:9})+tx(g.cx+34,g.y+90,"2",{fs:10,fw:700})+tx(g.cx,g.y+150,d.pos===1?"Мережа напряму":d.pos===2?"Від інвертора":"Вимкнено",{fs:7,fw:600}); }});
 // Перемикач вводів I–0–II TOMZN TO219G 2P 63 А — 36 × 82 мм, 2 модулі: два корпуси по 1 модулю (як два TO119G), одна синя ручка на обидва.
 // Зверху спільні клеми 1 і 5, на місцях «3» і «7» гвинтів немає (лише отвір). Знизу 2 і 6 — ввід I, 4 і 8 — ввід II.
 // I (ручка вгорі): 1–2, 5–6; «0» (посередині): усе розімкнено; II (ручка внизу): 1–4, 5–8 — як на корпусі (↑ I · O · ↓ II).

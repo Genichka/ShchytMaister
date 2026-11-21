@@ -53,10 +53,13 @@ function save(){
   if(typeof storeProject==="function") storeProject();
 }
 // TO219G: на місцях «3» і «7» гвинтів немає — перемички зі старих щитків переходять на спільні 1 і 5
-const fixWires = (devs,ws) => { const qs=new Set((devs||[]).filter(d=>d.type==="to219").map(d=>d.id)), m={"3":"1","7":"5"};
+// вигаданий «Перемикач 1-0-2» (qs) → TOMZN TO219G: 1L/1N → 2/6 (I), 2L/2N → 4/8 (II), вихід L/N → 1/5
+const fixWires = (devs,ws) => { const qs=new Set((devs||[]).filter(d=>d.type==="to219"||d.type==="qs").map(d=>d.id)), m={"3":"1","7":"5","1L":"2","1N":"6","2L":"4","2N":"8","L":"1","N":"5"};
   const out=(ws||[]).map(w=>{ for(const e of ["a","b"]){ const v=w[e]; if(typeof v!=="string") continue; const i=v.lastIndexOf(":"); if(i>0&&qs.has(v.slice(0,i))&&m[v.slice(i+1)]) w[e]=v.slice(0,i)+":"+m[v.slice(i+1)]; } return w; });
   return out.filter(w=>w.a!==w.b); };
-const fixDevs = list => { for(const d of list||[]) if(d.type==="sock"){ d.type="sockex"; d.plug=d.plug===true?3:0; } return list||[]; };   // стара схематична «Розетка на DIN» → розетка E.NEXT
+const fixDevs = list => { for(const d of list||[]){ if(d.type==="sock"){ d.type="sockex"; d.plug=d.plug===true?3:0; }   // стара схематична «Розетка на DIN» → розетка E.NEXT
+    if(d.type==="qs"){ d.type="to219"; d.rating=""; d.seqI=undefined; if(d.pos===undefined) d.pos=2; if(!d.cap) d.cap="Обхід інвертора"; } }   // вигаданий «Перемикач 1-0-2» → TOMZN TO219G
+  return list||[]; };   // стара схематична «Розетка на DIN» → розетка E.NEXT
 function load(){
   try{ const j=JSON.parse(localStorage.getItem(KEY)||"null");
     if(j && Array.isArray(j.devices) && j.board){ Object.assign(S,{tpl:j.tpl, board:j.board, devices:fixDevs(j.devices), field:j.field||[], wires:fixWires(j.devices,j.wires),
