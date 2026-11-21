@@ -138,7 +138,6 @@ function devSet(d){ const t=T[d.type]; let s="";
     +`<span class="bl">Режим</span>`+Object.entries(TMR_MODE).map(([k,l])=>chip(`data-tmrm="${k}"`,d.mode===k,l)).join("");
   if(d.type==="stair") s+=[10,30,60,120].map(v=>chip(`data-delay="${v}"`,d.delay===v,v+" с")).join("");
   if(d.type==="sockex") s+=`<span class="bl">У розетці</span>`+SOCK_LOADS.map((l,i)=>chip(`data-sockp="${i}"`,(d.plug||0)===i,l?`${l[0]} ${String(l[1]).replace(".",",")} кВт`:"Без вилки")).join("");
-  if(d.type==="xtb") s+=[["grey","Сірий · L"],["blue","Синій · N"],["pe","Жовто-зелений · PE"]].map(([c,l])=>chip(`data-xcol="${c}"`,d.col===c,l)).join("");
   if(d.type==="photo") s+=[10,20,40].map(v=>chip(`data-th="${v}"`,d.th===v,"поріг "+v+" %")).join("");
   if(d.type==="tovpd1") s+=`<span class="bl">Відключення за струмом</span>`+[16,25,32,40,50,60,63].filter(v=>v<=inA(d.rating)).map(v=>chip(`data-iset="${v}"`,d.iset===v,v+" А","mono")).join("");
   if(d.type==="to219"||d.type==="sft232"||d.type==="to119") s+=`<span class="bl">Положення</span>`+[[1,"I"],[0,"0"],[2,"II"]].map(([v,l])=>chip(`data-qpos="${v}"`,d.pos===v,l,"mono")).join("");

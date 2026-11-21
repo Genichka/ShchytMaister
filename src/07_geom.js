@@ -23,7 +23,7 @@ function busRow(){ const b=S.board, n=b.xn, m=b.xt.length, p=b.xpe, cnt=n+m+p, g
 let GEO=null;
 function geoCache(){ GEO={inx:inputX(), bus:busRow()}; return GEO; }
 function termX(d,t){ const def=T[d.type]; if(t.m!==undefined) return G.X0+(d.slot+t.m)*G.MW+G.MW/2;
-  const side=def.terms.filter(x=>x.s===t.s), i=side.indexOf(t); return G.X0+d.slot*G.MW+(i+0.5)*(def.w*G.MW)/side.length; }
+  const side=def.terms.filter(x=>x.s===t.s), i=side.indexOf(t); return G.X0+(d.slot+(def.bx||0))*G.MW+(i+0.5)*((def.bw||def.w)*G.MW)/side.length; }   // bw — справжня ширина корпусу (може бути вужчою за місця на рейці)
 function termPos(key){
   const [o,k]=key.split(":"), R=S.board.rails, g=GEO||geoCache();
   if(S.board.inputs.some(i=>i.id===o)) return {x:g.inx[key], y:G.INY, c:0, s:"l"};
@@ -31,7 +31,8 @@ function termPos(key){
   if(o==="tb"){ const x=g.bus.pos[key]; return x===undefined?null:{x, y:tbY(), c:R, s:"u"}; }
   const d=S.devices.find(x=>x.id===o); if(!d) return null; const t=T[d.type].terms.find(t=>t.k===k); if(!t) return null; const r=d.rail||0;
   if(t.s==="L"||t.s==="R") return {x:G.X0+d.slot*G.MW+t.sx, y:devTop(r)+t.sy, c:r, s:"l", side:t.s, d, r};
-  return t.s==="top" ? {x:termX(d,t), y:devTop(r)+22, c:r, s:"l"} : {x:termX(d,t), y:devBot(r)-22, c:r+1, s:"u"};
+  const iy=T[d.type].iy||22;   // iy — відступ клем від верху й низу (низькі модулі, як клеми WAGO)
+  return t.s==="top" ? {x:termX(d,t), y:devTop(r)+iy, c:r, s:"l"} : {x:termX(d,t), y:devBot(r)-iy, c:r+1, s:"u"};
 }
 // межі каналу c (між рейкою c-1 і c): куди можна відвести горизонтальну ділянку перемички пальцем чи мишею
 const chanLim = c => { const R=S.board.rails; return [c===0?60:devBot(c-1)+4, c===R?(S.board.tb&&groupsOf().length?tbY()-20:busY()-14):devTop(c)-4]; };
@@ -96,15 +97,15 @@ function devSVG(d){
   let s=`<g data-dev="${d.id}">`;
   if(heat>0.15) s+=`<rect class="heat" x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--orange)" stroke-width="3"/>`;
   if(S.selDev===d.id) s+=`<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${H+6}" rx="6" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
-  const fillB=t.body||devFill(d); s+=`<rect class="devb" x="${x}" y="${y}" width="${w}" height="${H}" rx="4"${fillB?` style="fill:${fillB}"`:""}/>`+(t.full?"":`<rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"${t.faceFill?` style="fill:${t.faceFill}"`:""}/>`);
+  const fillB=t.body||devFill(d), bh=t.bh||H, iy=t.iy||22; s+=`<rect class="devb" x="${x}" y="${y+(H-bh)/2}" width="${w}" height="${bh}" rx="${t.bh?2:4}"${fillB?` style="fill:${fillB}"`:""}/>`+(t.full?"":`<rect class="devf" x="${x+3}" y="${y+46}" width="${w-6}" height="118" rx="2"${t.faceFill?` style="fill:${t.faceFill}"`:""}/>`);
   const sr=t.sr||(t.terms.filter(q=>q.s==="top").length>w/27?9:11);
   const bx=t.terms.filter(q=>q.s==="bot").map(q=>termX(d,q)).sort((a,c)=>a-c), side=bx.every((v,i)=>!i||v-bx[i-1]>=44);
   for(const tm of t.terms){ const X=termX(d,tm);
-    if(tm.s==="top") s+=screw(X,y+22,sr)+(tm.nl?"":tx(X,y+42,tm.l,{fs:6.8}));   // nl — підпис малює сам модуль
+    if(tm.s==="top") s+=screw(X,y+iy,sr)+(tm.nl?"":tx(X,y+iy+20,tm.l,{fs:6.8}));   // nl — підпис малює сам модуль
     else if(tm.s==="bot"){ const lw=String(tm.l).length*3.9, pv=bx.filter(v=>v<X-1).pop(), nx=bx.find(v=>v>X+1);   // підпис нижньої клеми — збоку від гвинта, щоб не налазив на наклейку і сусідній гвинт
       const fitL=X-sr-2-lw>=Math.max(x+2,pv!==undefined?pv+sr+2:-1e9), fitR=X+sr+2+lw<=Math.min(x+w-2,nx!==undefined?nx-sr-2:1e9);
-      s+=screw(X,y+H-22,sr)+(tm.nl?"":side&&(fitL||fitR)
-        ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-19,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-19,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-3,tm.l,{fs:6})); } }
+      s+=screw(X,y+H-iy,sr)+(tm.nl?"":side&&(fitL||fitR)
+        ? ((X<cx-w/5&&fitL)||!fitR ? tx(X-sr-2,y+H-iy+3,tm.l,{fs:6.8,a:"end"}) : tx(X+sr+2,y+H-iy+3,tm.l,{fs:6.8,a:"start"})) : tx(X,y+H-iy+19,tm.l,{fs:6})); } }
   const bn=brandName(d), shp=shopFor(d), own=t.maker||brandOf(d)!=="eua";   // модуль є в «Замовити» — замість напису EnergyUA маленька наліпка QR; дотик — великий код
   if(shp){ const sz=w<60?15:17, [qx,qy]=t.qrPos?t.qrPos({x,y,w,cx}):[cx,y+40]; s+=qrSticker(shp,qx,qy,sz); if(own&&w>=100&&!t.noBrand) s+=tx(cx+sz/2+4,y+55,bn,{fs:6.4,fw:700,a:"start",fill:"#2f6fdf"}); }   // qrPos — модуль сам каже, де клеїти QR; noBrand — логотип малює сам модуль
   else if(!t.noBrand) s+=tx(cx,y+56,bn,{fs:bn.length>9?6.2:7,fw:700,fill:t.maker?"#2f6fdf":undefined});

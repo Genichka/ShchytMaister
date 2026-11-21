@@ -54,8 +54,19 @@ defType("photo",{name:"Фотореле", short:"Фотореле", cat:"Кер�
   logic(d,X){ const pw=X.volt(K(d,"L"),K(d,"N"))>=150, dark=(S.env.lux??60)<d.th, r=pw&&dark; d.pw=pw; if(r!==!!d.rel){ d.rel=r; return true; } return false; },
   load:(d,X)=>[{a:"L",b:"N",I:d.pw?0.005:0}],
   face(d,g){ const dark=(S.env.lux??60)<d.th; return tx(g.cx,g.y+68,"ФОТО",{fs:6.8,fw:700})+`<circle cx="${g.cx}" cy="${g.y+96}" r="12" fill="${dark?"#2a3550":"#ffd23f"}"/>`+led(g.cx,g.y+124,d.rel?"#ffd23f":"#5a5e66")+tx(g.cx,g.y+142,dark?"темно":"світло",{fs:6.3}); }});
-defType("xtb",{name:"Клемник прохідний", short:"Клемник", cat:"Розподіл", w:1, pre:"X", terms:[{k:"a",s:"top",r:"any",l:"1"},{k:"b",s:"bot",r:"any",l:"2"}],
-  links:()=>[["a","b"]], init:d=>{ d.col=d.col||"grey"; }, cap:"Розподіл",
-  face(d,g){ const f={grey:"#8f949c",blue:"#2f6fdf",pe:"#f2c400"}[d.col]||"#8f949c";
-    return `<rect x="${g.x+8}" y="${g.y+56}" width="${g.w-16}" height="104" rx="3" fill="${f}"/>`+(d.col==="pe"?[0,1,2,3].map(i=>`<rect x="${g.x+8}" y="${g.y+64+i*24}" width="${g.w-16}" height="10" fill="#2e9a3e"/>`).join(""):"")
-      +tx(g.cx,g.y+112,d.col==="blue"?"N":d.col==="pe"?"PE":"L",{fs:12,fw:700,fill:"#fff"}); }});
+// Клеми прохідні WAGO TOPJOB S 2002 (2,5 мм², 24 А): сіра 2002-1201 (L), синя 2002-1204 (N), жовто-зелена 2002-1207 (PE)
+// і торцева пластина 2002-1291. Кожна клема 5,2 мм, разом 16,4 мм — займає одне місце на рейці; довжина клеми 48,5 мм.
+// Вхід зверху й знизу — push-in з помаранчевою кнопкою; клема пропускає провід наскрізь (верх = низ).
+const XTB = [["L","#a7abb2","2002-1201"],["N","#2f6fdf","2002-1204"],["PE","#f2c400","2002-1207"]];
+defType("xtb",{name:"Клеми прохідні WAGO 2002 (L · N · PE), 2,5 мм²", short:"Клеми WAGO 2002", cat:"Розподіл", w:1, bw:16.4/17.5, bh:150, iy:56, sr:4.6, pre:"X", full:true, maker:"WAGO", noBrand:true,
+  body:"#2a2d33", terms:XTB.flatMap(([l],i)=>[{k:l+"a",s:"top",r:l,l,m:-0.339+i*0.2854,nl:true},{k:l+"b",s:"bot",r:l,l,m:-0.339+i*0.2854,nl:true}]),
+  links:()=>XTB.map(([l])=>[l+"a",l+"b"]), cap:"Розподіл",
+  face(d,g){ const x0=g.x, y0=g.y+45, h=150, pw=5.2/16.4*g.w; let s="";
+    XTB.forEach(([l,c],i)=>{ const x=x0+i*pw, cx=x+pw/2;
+      s+=`<rect x="${x+.4}" y="${y0}" width="${pw-.8}" height="${h}" rx="1.5" fill="${c}" stroke="#1d1f23" stroke-width=".8"/>`;
+      if(l==="PE") for(let k=0;k<7;k++) s+=`<rect x="${x+.4}" y="${y0+6+k*20.5}" width="${pw-.8}" height="9" fill="#2e9a3e"/>`;
+      for(const [ey,by] of [[g.y+56,g.y+63],[g.y+184,g.y+169]])   // отвір під провід і помаранчева кнопка push-in
+        s+=`<circle cx="${cx}" cy="${ey}" r="4.6" fill="#15171a" stroke="#4a4e56" stroke-width=".8"/><rect x="${cx-3.2}" y="${by}" width="6.4" height="8" rx="1.2" fill="#f28c1e" stroke="#b8620c" stroke-width=".6"/>`;
+      s+=`<rect x="${x+1.6}" y="${g.y+107}" width="${pw-3.2}" height="24" rx="1" fill="#fff" stroke="#9aa0aa" stroke-width=".5"/>`+tx(cx,g.y+122.5,l,{fs:l==="PE"?5.6:7,fw:800,fill:"#222"}); });
+    s+=`<rect x="${x0+3*pw}" y="${y0}" width="${g.w-3*pw}" height="${h}" rx="1" fill="#8a8f97"/>`;   // торцева пластина 2002-1291
+    return s+desPill(g.cx,g.y+86,desig(d)); }});

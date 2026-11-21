@@ -56,8 +56,8 @@ defType("ktm",{name:"Реле часу багатофункційне (A · B ·
 
 // ---- Schneider Electric TeSys D LC1D: контактор 3P (1-2, 3-4, 5-6) + допоміжні 1НВ (13-14) і 1НЗ (21-22), котушка A1–A2 230 В
 const lc1dN = d => "LC1D"+String(d.rating).padStart(2,"0");
-defType("lc1d",{name:"Контактор Schneider TeSys D LC1D (3P + 1НВ + 1НЗ)", short:"TeSys D LC1D", cat:"Керування", w:3, pre:"KM", maker:"Schneider",
-  ratings:["9","12","18","25","32","38"], def:"32", unit:" А", faceFill:"#24272c",
+defType("lc1d",{name:"Контактор Schneider TeSys D LC1D (3P + 1НВ + 1НЗ)", short:"TeSys D LC1D", cat:"Керування", w:3, bw:45/17.5, pre:"KM", maker:"Schneider",   // корпус 45 мм — на рейці займає 3 місця
+  ratings:["9","12","18","25","32","38"], def:"32", unit:" А", faceFill:"#24272c", qrPos:g=>[g.x+16,g.y+45],   // QR «Замовити» — у куті лицьової панелі, не на підписах клем
   // полюси — фаза або нуль: на одній фазі LC1D ставлять так, що L іде через 1-2, а N — через 3-4
   terms:[{k:"1",s:"top",r:"PN",l:"1"},{k:"3",s:"top",r:"PN",l:"3"},{k:"5",s:"top",r:"PN",l:"5"},C("13","top","13"),C("21","top","21"),C("A1","top","A1"),
          {k:"2",s:"bot",r:"PN",l:"2"},{k:"4",s:"bot",r:"PN",l:"4"},{k:"6",s:"bot",r:"PN",l:"6"},C("14","bot","14"),C("22","bot","22"),C("A2","bot","A2")],
@@ -73,8 +73,8 @@ defType("lc1d",{name:"Контактор Schneider TeSys D LC1D (3P + 1НВ + 1�
 
 // ---- Schneider TeSys D LC1DT: контактор 4P (4 НВ: 1-2, 3-4, 5-6, 7-8; AC-1 20…40 А) без власних допоміжних контактів,
 // тому зверху на ньому — блок LADN11 (1НВ 53-54 + 1НЗ 61-62). Так роблять контактори вводу 3P+N в АВР.
-defType("lc1dt",{name:"Контактор Schneider TeSys D LC1DT 4P + блок LADN11 (1НВ + 1НЗ)", short:"TeSys D LC1DT 4P", cat:"Керування", w:3, pre:"KM", maker:"Schneider",
-  ratings:["20","25","32","40"], def:"32", unit:" А", faceFill:"#24272c", sr:8.5,
+defType("lc1dt",{name:"Контактор Schneider TeSys D LC1DT 4P + блок LADN11 (1НВ + 1НЗ)", short:"TeSys D LC1DT 4P", cat:"Керування", w:3, bw:45/17.5, pre:"KM", maker:"Schneider",   // корпус 45 мм
+  ratings:["20","25","32","40"], def:"32", unit:" А", faceFill:"#24272c", sr:7.4,
   terms:[{k:"1",s:"top",r:"P",l:"1"},{k:"3",s:"top",r:"P",l:"3"},{k:"5",s:"top",r:"P",l:"5"},{k:"7",s:"top",r:"N",l:"7"},C("53","top","53"),C("61","top","61"),C("A1","top","A1"),
          {k:"2",s:"bot",r:"P",l:"2"},{k:"4",s:"bot",r:"P",l:"4"},{k:"6",s:"bot",r:"P",l:"6"},{k:"8",s:"bot",r:"N",l:"8"},C("54","bot","54"),C("62","bot","62"),C("A2","bot","A2")],
   poles:[{a:"1",b:"2",r:"L"},{a:"3",b:"4",r:"L"},{a:"5",b:"6",r:"L"},{a:"7",b:"8",r:"N"}], closed:d=>!!d.pulled, aux:d=>d.pulled?[["53","54"]]:[["61","62"]],
